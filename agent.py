@@ -77,8 +77,12 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
     if not api_key:
         raise ValueError("OPENAI_API_KEY environment variable not set")
     
+    # Get base URL and model from environment variables with defaults
+    base_url = os.environ.get('OPENAI_BASE_URL', None)
+    model = os.environ.get('OPENAI_MODEL', 'gpt-3.5-turbo')
+    
     # Initialize OpenAI client
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, base_url=base_url)
     
     # Get student profile and parse rules
     student_profile = get_student_profile(student_id)
@@ -88,28 +92,118 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
     # Parse plan_rules_blob to get rules
     rules = json.loads(student_profile['plan_rules_blob'])
     
-    # Get 5 filtered standards for the student
-    standards = get_filtered_standards(student_id, grade_level, subject, limit=5)
+    # Get standards for the student. We request more than 5 to have flexibility
+    # in how they're distributed across the week. Some complex standards may need
+    # multiple days, while simpler ones can be covered in a single day.
+    standards = get_filtered_standards(student_id, grade_level, subject, limit=10)
     
-    if len(standards) < 5:
-        raise ValueError(f"Not enough standards found. Only {len(standards)} standards available.")
+    if len(standards) == 0:
+        raise ValueError(f"No standards found for student {student_id}.")
     
-    # Days of the week
+    # First pass: Create a weekly overview/scaffold
+    # This helps ensure complex standards get multiple days if needed
+    scaffold_prompt = f"""You are an expert K-12 educator creating a weekly lesson plan scaffold.
+
+Grade Level: {grade_level}
+Subject: {subject}
+
+Available Standards (may use 1 or more):
+{json.dumps([{{'id': s.get('standard_id'), 'description': s.get('description')}} for s in standards[:5]], indent=2)}
+
+Parent Constraints:
+- Allowed materials: {rules.get('allowed_materials', [])}
+- Parent guidance: {rules.get('parent_notes', 'keep procedures under 3 steps')}
+
+Create a weekly plan that:
+1. Distributes standards across Monday-Friday appropriately
+2. Complex standards should span multiple days with scaffolding
+3. Simpler standards can be covered in a single day
+4. Each day should build on previous days
+
+Respond with a JSON object in this exact format:
+{{
+  "weekly_overview": "Brief description of how the week progresses",
+  "daily_assignments": [
+    {{
+      "day": "Monday",
+      "standard_ids": ["standard_id_1"],
+      "focus": "Brief description of this day's focus"
+    }},
+    ...
+  ]
+}}"""
+
+    # Get the weekly scaffold from LLM
+    try:
+        scaffold_response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
+                {"role": "user", "content": scaffold_prompt}
+            ],
+            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
+        
+        weekly_scaffold = json.loads(scaffold_response.choices[0].message.content)
+        daily_assignments = weekly_scaffold.get('daily_assignments', [])
+    except Exception as e:
+        # Fallback: simple 1:1 mapping for first 5 standards
+        daily_assignments = [
+            {"day": day, "standard_ids": [standards[i].get('standard_id')], "focus": f"Day {i+1} focus"}
+            for i, day in enumerate(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
+            if i < len(standards)
+        ]
+    
+    # Ensure we have exactly 5 days
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    if len(daily_assignments) != 5:
+        # Adjust to exactly 5 days
+        while len(daily_assignments) < 5:
+            daily_assignments.append({
+                "day": days[len(daily_assignments)],
+                "standard_ids": [standards[min(len(daily_assignments), len(standards)-1)].get('standard_id')],
+                "focus": "Additional practice"
+            })
+        daily_assignments = daily_assignments[:5]
     
-    # Build daily plan
+    # Create a lookup for standards by ID
+    standards_by_id = {s.get('standard_id'): s for s in standards}
+    
+    # Build daily plan based on scaffold
     daily_plan = []
     
-    for i, standard in enumerate(standards[:5]):
-        day = days[i]
+    for assignment in daily_assignments:
+        day = assignment.get('day')
+        standard_ids = assignment.get('standard_ids', [])
+        day_focus = assignment.get('focus', '')
         
-        # Create prompt for this standard
-        prompt = create_lesson_plan_prompt(standard, rules)
+        # Get the standards for this day
+        day_standards = [standards_by_id.get(sid) for sid in standard_ids if sid in standards_by_id]
+        day_standards = [s for s in day_standards if s is not None]  # Filter out None values
+        
+        if not day_standards:
+            # Fallback to first available standard if assignment references missing standards
+            day_standards = [standards[0]] if standards else []
+        
+        # Create a combined prompt for all standards assigned to this day
+        if len(day_standards) == 1:
+            prompt = create_lesson_plan_prompt(day_standards[0], rules)
+        else:
+            # Multiple standards for this day - create combined lesson
+            combined_descriptions = " AND ".join([s.get('description', '') for s in day_standards])
+            combined_standard = {
+                'description': combined_descriptions,
+                'subject': day_standards[0].get('subject'),
+                'grade_level': day_standards[0].get('grade_level')
+            }
+            prompt = create_lesson_plan_prompt(combined_standard, rules)
+            prompt += f"\n\nDay Focus: {day_focus}"
         
         # Call OpenAI API to generate lesson plan
         try:
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=model,
                 messages=[
                     {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
                     {"role": "user", "content": prompt}
@@ -125,7 +219,7 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
         except Exception as e:
             # If LLM call fails, provide a basic fallback
             lesson_plan = {
-                "objective": f"Learn about: {standard.get('description', '')}",
+                "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
                 "materials_needed": rules.get('allowed_materials', [])[:2],
                 "procedure": [
                     "Introduce the concept",
@@ -134,11 +228,13 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
                 ]
             }
         
-        # Add to daily plan
+        # Add to daily plan - include all standards for this day
         daily_plan.append({
             "day": day,
             "lesson_plan": lesson_plan,
-            "standard": standard
+            "standard": day_standards[0] if day_standards else {},  # Primary standard
+            "standards": day_standards,  # All standards for this day
+            "focus": day_focus
         })
     
     # Calculate week_of date (Monday of current week)
