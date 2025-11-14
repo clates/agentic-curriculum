@@ -22,7 +22,7 @@ def _connect_db():
     return sqlite3.connect(DB_FILE)
 
 
-def get_filtered_standards(student_id: str, grade_level: int, subject: str, limit: int = 5) -> list:
+def get_filtered_standards(student_id: str, grade_level: int, subject: str, limit: int = 15) -> list:
     """
     Get filtered standards for a student based on their progress and rules.
     
@@ -37,7 +37,7 @@ def get_filtered_standards(student_id: str, grade_level: int, subject: str, limi
         student_id: The unique identifier for the student
         grade_level: The grade level to filter by
         subject: The subject to filter by (may be overridden by theme rules)
-        limit: Maximum number of standards to return (default: 5)
+        limit: Maximum number of standards to return (default: 15)
         
     Returns:
         A list of dictionaries, where each dictionary represents a standard with keys:
