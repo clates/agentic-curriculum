@@ -55,11 +55,11 @@ print("\nTest 1: Basic filtering with theme rule...")
 try:
     # Setup: No mastered standards, Theme is "Math"
     rules = json.loads(original_rules)
-    rules["theme_rules"] = {"force_weekly_theme": True, "theme_subjects": ["Math", "Art"]}
+    rules["theme_rules"] = {"force_weekly_theme": True, "theme_subjects": ["Math", "Science"]}
     progress = {"mastered_standards": [], "developing_standards": []}
     set_student_data(progress, rules)
     
-    standards = get_filtered_standards(student_id, 0, "Art", limit=3) # "Art" param should be ignored
+    standards = get_filtered_standards(student_id, 0, "Science", limit=3) # "Science" param should be ignored
     
     check(len(standards) == 3, f"Expected 3 standards, got {len(standards)}")
     check(all(s['subject'] == 'Math' for s in standards), "Theme rule failed. Did not get 'Math' standards.")
@@ -70,18 +70,18 @@ except Exception as e:
 # --- Test 2: Mastered Standard Filtering ---
 print("\nTest 2: Filtering mastered standards...")
 try:
-    # Setup: Mastered "VA.MATH.K.1a", Theme is "Math"
+    # Setup: Mastered "VA.MATH.K.k.1", Theme is "Math"
     rules = json.loads(original_rules)
-    rules["theme_rules"] = {"force_weekly_theme": True, "theme_subjects": ["Math", "Art"]}
-    progress = {"mastered_standards": ["VA.MATH.K.1a"], "developing_standards": []}
+    rules["theme_rules"] = {"force_weekly_theme": True, "theme_subjects": ["Math", "Science"]}
+    progress = {"mastered_standards": ["VA.MATH.K.k.1"], "developing_standards": []}
     set_student_data(progress, rules)
 
-    standards = get_filtered_standards(student_id, 0, "Art", limit=5) # "Art" param ignored
+    standards = get_filtered_standards(student_id, 0, "Science", limit=5) # "Science" param ignored
     
     check(len(standards) == 5, f"Expected 5 standards, got {len(standards)}")
     check(all(s['subject'] == 'Math' for s in standards), "Theme rule failed. Did not get 'Math' standards.")
-    mastered_found = any(s['standard_id'] == 'VA.MATH.K.1a' for s in standards)
-    check(not mastered_found, "Mastered standard 'VA.MATH.K.1a' was returned. It should be filtered.")
+    mastered_found = any(s['standard_id'] == 'VA.MATH.K.k.1' for s in standards)
+    check(not mastered_found, "Mastered standard 'VA.MATH.K.k.1' was returned. It should be filtered.")
     
 except Exception as e:
     check(False, f"Test 2 crashed: {e}")
@@ -89,16 +89,16 @@ except Exception as e:
 # --- Test 3: Theme Rotation (Picks first subject) ---
 print("\nTest 3: Theme rule uses first subject in list...")
 try:
-    # Setup: No mastered standards, Theme is "Art" first
+    # Setup: No mastered standards, Theme is "Science" first
     rules = json.loads(original_rules)
-    rules["theme_rules"] = {"force_weekly_theme": True, "theme_subjects": ["Art", "Math"]}
+    rules["theme_rules"] = {"force_weekly_theme": True, "theme_subjects": ["Science", "Math"]}
     progress = {"mastered_standards": [], "developing_standards": []}
     set_student_data(progress, rules)
     
     standards = get_filtered_standards(student_id, 0, "Math", limit=3) # "Math" param should be ignored
     
     check(len(standards) == 3, f"Expected 3 standards, got {len(standards)}")
-    check(all(s['subject'] == 'Art' for s in standards), "Theme rule failed. Did not pick 'Art' from list.")
+    check(all(s['subject'] == 'Science' for s in standards), "Theme rule failed. Did not pick 'Science' from list.")
 except Exception as e:
     check(False, f"Test 3 crashed: {e}")
 
@@ -107,14 +107,14 @@ print("\nTest 4: No theme rule, uses 'subject' parameter...")
 try:
     # Setup: No mastered standards, Theme rule is OFF
     rules = json.loads(original_rules)
-    rules["theme_rules"] = {"force_weekly_theme": False, "theme_subjects": ["Math", "Art"]}
+    rules["theme_rules"] = {"force_weekly_theme": False, "theme_subjects": ["Math", "Science"]}
     progress = {"mastered_standards": [], "developing_standards": []}
     set_student_data(progress, rules)
     
-    standards = get_filtered_standards(student_id, 0, "Art", limit=3) # "Art" param should be USED
+    standards = get_filtered_standards(student_id, 0, "Science", limit=3) # "Science" param should be USED
     
     check(len(standards) == 3, f"Expected 3 standards, got {len(standards)}")
-    check(all(s['subject'] == 'Art' for s in standards), "Theme rule OFF failed. Did not use 'Art' parameter.")
+    check(all(s['subject'] == 'Science' for s in standards), "Theme rule OFF failed. Did not use 'Science' parameter.")
 except Exception as e:
     check(False, f"Test 4 crashed: {e}")
 
