@@ -25,7 +25,8 @@ def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
     """
     # Extract allowed materials and parent notes from rules
     allowed_materials = rules.get('allowed_materials', [])
-    parent_notes = rules.get('parent_notes', 'Keep procedures under 3 steps')
+    # Default to keeping procedures under 3 steps if parent_notes not provided
+    parent_notes = rules.get('parent_notes', 'keep procedures under 3 steps')
     
     # Build the prompt
     prompt = f"""You are an expert K-12 educator. Create a lesson plan for the following educational standard.
