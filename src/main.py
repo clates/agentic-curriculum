@@ -4,8 +4,14 @@ main.py
 FastAPI application for serving student data from curriculum.db
 """
 
+import os
+import sys
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+
+# Add src directory to path for imports
+sys.path.insert(0, os.path.dirname(__file__))
+
 from db_utils import get_student_profile
 from agent import generate_weekly_plan
 

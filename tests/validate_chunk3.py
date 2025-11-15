@@ -1,15 +1,19 @@
 # validate_chunk3.py
 import sqlite3
 import os
+import sys
 import json
 import copy
+
+# Add src directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Import the function we want to test
 try:
     from logic import get_filtered_standards
 except ImportError:
     print("FATAL: Could not import 'get_filtered_standards' from 'logic.py'.")
-    print("Please ensure 'logic.py' exists in the same directory.")
+    print("Please ensure 'logic.py' exists in the src directory.")
     exit(1)
 
 DB_FILE = "curriculum.db"

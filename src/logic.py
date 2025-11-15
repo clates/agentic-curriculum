@@ -4,8 +4,14 @@ logic.py
 Rules Engine for selecting educational standards based on student progress and parent-defined rules.
 """
 
+import os
+import sys
 import sqlite3
 import json
+
+# Add src directory to path for imports
+sys.path.insert(0, os.path.dirname(__file__))
+
 from db_utils import get_student_profile
 
 
