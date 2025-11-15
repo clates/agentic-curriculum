@@ -79,20 +79,17 @@ Place JSON files in the `standards_data/` directory with the following format:
 
 ```
 .
-├── src/                  # Python source code
-│   ├── agent.py         # LLM-based lesson plan generation
-│   ├── db_utils.py      # Database utility functions
-│   ├── ingest_standards.py  # Database initialization and data ingestion
-│   ├── logic.py         # Rules engine for standard selection
-│   └── main.py          # FastAPI application
-├── tests/               # Validation scripts
+├── src/
+│   ├── agent.py
+│   ├── db_utils.py
+│   ├── ingest_standards.py
+│   ├── logic.py
+│   └── main.py
+├── tests/
 │   ├── validate_chunk1.py
 │   ├── validate_chunk2.py
 │   ├── validate_chunk3.py
 │   └── validate_chunk4.py
-├── docs/                # Agent documentation
-│   ├── ARCHITECTURE_IMPROVEMENTS.md
-│   ├── CHUNK4_COMPLETION.md
-│   └── ERROR_HANDLING_UPDATE.md
-├── standards_data/      # JSON files with curriculum standards
-└── curriculum.db        # SQLite database (generated, not version controlled)
+├── docs/
+├── standards_data/
+└── curriculum.db
