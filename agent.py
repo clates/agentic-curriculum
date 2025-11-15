@@ -147,8 +147,20 @@ Respond with a JSON object in this exact format:
         
         weekly_scaffold = json.loads(scaffold_response.choices[0].message.content)
         daily_assignments = weekly_scaffold.get('daily_assignments', [])
+        weekly_overview = weekly_scaffold.get('weekly_overview', '')
+    except json.JSONDecodeError as e:
+        # JSON parsing error from LLM - log and use fallback
+        print(f"Warning: Failed to parse scaffold JSON: {e}")
+        weekly_overview = "Weekly plan using standard curriculum progression"
+        daily_assignments = [
+            {"day": day, "standard_ids": [standards[i].get('standard_id')], "focus": f"Day {i+1} focus"}
+            for i, day in enumerate(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
+            if i < len(standards)
+        ]
     except Exception as e:
-        # Fallback: simple 1:1 mapping for first 5 standards
+        # Other errors (API, network, etc.) - log and use fallback
+        print(f"Warning: Failed to generate scaffold: {e}")
+        weekly_overview = "Weekly plan using standard curriculum progression"
         daily_assignments = [
             {"day": day, "standard_ids": [standards[i].get('standard_id')], "focus": f"Day {i+1} focus"}
             for i, day in enumerate(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
@@ -216,8 +228,21 @@ Respond with a JSON object in this exact format:
             lesson_plan_json = response.choices[0].message.content
             lesson_plan = json.loads(lesson_plan_json)
             
+        except json.JSONDecodeError as e:
+            # JSON parsing error from LLM - log and use fallback
+            print(f"Warning: Failed to parse lesson plan JSON for {day}: {e}")
+            lesson_plan = {
+                "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
+                "materials_needed": rules.get('allowed_materials', [])[:2],
+                "procedure": [
+                    "Introduce the concept",
+                    "Practice with materials",
+                    "Review and assess understanding"
+                ]
+            }
         except Exception as e:
-            # If LLM call fails, provide a basic fallback
+            # Other errors (API, network, etc.) - log and use fallback
+            print(f"Warning: Failed to generate lesson plan for {day}: {e}")
             lesson_plan = {
                 "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
                 "materials_needed": rules.get('allowed_materials', [])[:2],
@@ -247,6 +272,7 @@ Respond with a JSON object in this exact format:
         "plan_id": f"plan_{student_id}_{week_of}",
         "student_id": student_id,
         "week_of": week_of,
+        "weekly_overview": weekly_overview,
         "daily_plan": daily_plan
     }
     
