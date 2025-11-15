@@ -5,8 +5,13 @@ LLM-based agent for generating lesson plans using OpenAI API.
 """
 
 import os
+import sys
 import json
 from openai import OpenAI
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(__file__))
+
 from db_utils import get_student_profile
 from logic import get_filtered_standards
 from datetime import datetime, timedelta

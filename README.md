@@ -16,7 +16,7 @@ This project provides tools to:
 Run the ingestion script to create the database and populate it with standards:
 
 ```bash
-python3 ingest_standards.py
+python3 src/ingest_standards.py
 ```
 
 This script will:
@@ -31,7 +31,7 @@ This script will:
 Run the validation script to verify everything is working correctly:
 
 ```bash
-python3 validate_chunk1.py
+python3 tests/validate_chunk1.py
 ```
 
 ## Database Schema
@@ -75,9 +75,24 @@ Place JSON files in the `standards_data/` directory with the following format:
 ]
 ```
 
-## Files
+## Project Structure
 
-- `ingest_standards.py` - Main script for database initialization and data ingestion
-- `validate_chunk1.py` - Validation script to verify the setup
-- `standards_data/` - Directory containing JSON files with curriculum standards
-- `curriculum.db` - SQLite database (generated, not version controlled)
+```
+.
+├── src/                  # Python source code
+│   ├── agent.py         # LLM-based lesson plan generation
+│   ├── db_utils.py      # Database utility functions
+│   ├── ingest_standards.py  # Database initialization and data ingestion
+│   ├── logic.py         # Rules engine for standard selection
+│   └── main.py          # FastAPI application
+├── tests/               # Validation scripts
+│   ├── validate_chunk1.py
+│   ├── validate_chunk2.py
+│   ├── validate_chunk3.py
+│   └── validate_chunk4.py
+├── docs/                # Agent documentation
+│   ├── ARCHITECTURE_IMPROVEMENTS.md
+│   ├── CHUNK4_COMPLETION.md
+│   └── ERROR_HANDLING_UPDATE.md
+├── standards_data/      # JSON files with curriculum standards
+└── curriculum.db        # SQLite database (generated, not version controlled)
