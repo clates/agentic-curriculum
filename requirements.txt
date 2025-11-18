@@ -1,0 +1,12 @@
+# Core web framework
+fastapi>=0.109.1,<1.0.0
+uvicorn[standard]>=0.24.0,<1.0.0
+
+# OpenAI API client
+openai>=1.0.0,<2.0.0
+
+# HTTP requests library (for testing)
+requests>=2.31.0,<3.0.0
+
+# Pydantic is a dependency of FastAPI but explicitly listed for clarity
+pydantic>=2.0.0,<3.0.0

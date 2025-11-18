@@ -11,6 +11,28 @@ This project provides tools to:
 
 ## Setup and Usage
 
+### 0. Install Dependencies
+
+Install the required Python packages using pip:
+
+```bash
+pip install -r requirements.txt
+```
+
+This will install:
+- FastAPI and Uvicorn for the web API
+- OpenAI Python client for LLM integration
+- Requests for API testing
+- Pydantic for data validation
+
+Alternatively, you can use a virtual environment (recommended):
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
 ### 1. Ingest Standards
 
 Run the ingestion script to create the database and populate it with standards:
