@@ -251,14 +251,6 @@ This script will:
 - Insert standards data into the database
 - Add a dummy student profile for testing
 
-### Validating the Setup
-
-Run the validation script to verify everything is working correctly:
-
-```bash
-python3 tests/validate_chunk1.py
-```
-
 ## Database Schema
 
 ### `standards` Table
@@ -326,30 +318,6 @@ Place JSON files in the `standards_data/` directory with the following format:
 - Verify your OpenAI API key is valid
 - Check your internet connection
 - If using a custom BASE_URL, ensure it's correct
-
----
-
-## Project Structure
-
-```
-.
-├── src/
-│   ├── agent.py              # LLM integration for lesson plan generation
-│   ├── db_utils.py           # Database utility functions
-│   ├── ingest_standards.py   # Database initialization script
-│   ├── logic.py              # Business logic for filtering standards
-│   └── main.py               # FastAPI application and endpoints
-├── tests/
-│   ├── validate_chunk1.py    # Database validation tests
-│   ├── validate_chunk2.py    # Student profile tests
-│   ├── validate_chunk3.py    # Logic engine tests
-│   └── validate_chunk4.py    # API endpoint tests
-├── docs/                      # Documentation
-├── standards_data/           # JSON files with educational standards
-│   └── va_standards.json     # Virginia state standards
-├── requirements.txt          # Python dependencies
-└── curriculum.db             # SQLite database (generated)
-```
 
 ---
 
