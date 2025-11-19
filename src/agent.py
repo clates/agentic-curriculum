@@ -105,6 +105,13 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
     if len(standards) == 0:
         raise ValueError(f"No standards found for student {student_id}.")
     
+    # Precompute a pretty JSON preview of the first few standards for the prompt
+    available_standards_preview = [
+        {"id": s.get("standard_id"), "description": s.get("description")}
+        for s in standards[:5]
+    ]
+    available_standards_text = json.dumps(available_standards_preview, indent=2)
+
     # First pass: Create a weekly overview/scaffold
     # This helps ensure complex standards get multiple days if needed
     scaffold_prompt = f"""You are an expert K-12 educator creating a weekly lesson plan scaffold.
@@ -113,7 +120,7 @@ Grade Level: {grade_level}
 Subject: {subject}
 
 Available Standards (may use 1 or more):
-{json.dumps([{'id': s.get('standard_id'), 'description': s.get('description')} for s in standards[:5]], indent=2)}
+{available_standards_text}
 
 Parent Constraints:
 - Allowed materials: {rules.get('allowed_materials', [])}
