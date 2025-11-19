@@ -15,8 +15,9 @@ import os
 import glob
 
 
-DB_FILE = "curriculum.db"
-STANDARDS_DIR = "./standards_data/"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
+STANDARDS_DIR = os.path.join(PROJECT_ROOT, "standards_data")
 
 
 def create_database():

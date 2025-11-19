@@ -4,10 +4,14 @@ db_utils.py
 Database utility functions for interacting with curriculum.db
 """
 
+import os
 import sqlite3
 
 
-DB_FILE = "curriculum.db"
+# Always resolve the DB path relative to the project root so uvicorn reloads
+# or different working directories don't create duplicate SQLite files.
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
 
 
 def get_student_profile(student_id: str) -> dict:
