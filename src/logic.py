@@ -15,7 +15,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 from db_utils import get_student_profile
 
 
-DB_FILE = "curriculum.db"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
 
 
 def _connect_db():

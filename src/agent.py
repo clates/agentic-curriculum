@@ -113,7 +113,7 @@ Grade Level: {grade_level}
 Subject: {subject}
 
 Available Standards (may use 1 or more):
-{json.dumps([{{'id': s.get('standard_id'), 'description': s.get('description')}} for s in standards[:5]], indent=2)}
+{json.dumps([{'id': s.get('standard_id'), 'description': s.get('description')} for s in standards[:5]], indent=2)}
 
 Parent Constraints:
 - Allowed materials: {rules.get('allowed_materials', [])}
