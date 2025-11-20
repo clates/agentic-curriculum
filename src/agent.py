@@ -18,6 +18,9 @@ from logic import get_filtered_standards
 from datetime import datetime, timedelta
 
 
+# Maximum number of concurrent threads for generating daily lesson plans.
+# Default is 5 (one per weekday). Raising this may reduce latency but
+# increases OpenAI rate-limit pressure and local CPU usage.
 MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
 
 
@@ -66,17 +69,58 @@ Respond ONLY with a valid JSON object in this exact format:
     return prompt
 
 
-def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, rules: dict, client: OpenAI, model: str) -> dict:
-    """Generate a single day's lesson plan with fallbacks."""
-    day = assignment.get('day')
+def _resolve_day_standards(assignment: dict, standards_by_id: dict, standards: list) -> list:
+    """Return the ordered list of standards referenced by an assignment."""
     standard_ids = assignment.get('standard_ids', [])
-    day_focus = assignment.get('focus', '')
-
     day_standards = [standards_by_id.get(sid) for sid in standard_ids if sid in standards_by_id]
     day_standards = [s for s in day_standards if s is not None]
-
     if not day_standards:
         day_standards = [standards[0]] if standards else []
+    return day_standards
+
+
+def _create_fallback_lesson_plan(day_standards: list, rules: dict) -> dict:
+    """Return a deterministic lesson plan used when LLM calls fail."""
+    description = day_standards[0].get('description', '') if day_standards else 'the assigned topic'
+    return {
+        "objective": f"Learn about: {description}",
+        "materials_needed": rules.get('allowed_materials', [])[:2],
+        "procedure": [
+            "Introduce the concept",
+            "Practice with materials",
+            "Review and assess understanding"
+        ]
+    }
+
+
+def _assemble_day_plan(day: str, day_standards: list, day_focus: str, lesson_plan: dict) -> dict:
+    """Compose the day plan payload from provided components."""
+    return {
+        "day": day,
+        "lesson_plan": lesson_plan,
+        "standard": day_standards[0] if day_standards else {},
+        "standards": day_standards,
+        "focus": day_focus
+    }
+
+
+def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, rules: dict, client: OpenAI, model: str) -> dict:
+    """Generate one day's plan inside the thread pool with deterministic fallbacks.
+
+    Args:
+        assignment: Dict containing `day`, `standard_ids`, and optional `focus` keys.
+        standards_by_id: Lookup of standard_id -> standard metadata.
+        standards: List of candidate standards (used for fallback selection).
+        rules: Parent preference metadata (materials, notes, etc.).
+        client: Thread-safe OpenAI client instance.
+        model: OpenAI model name.
+
+    Returns:
+        Dict with `day`, `lesson_plan`, `standard`, `standards`, and `focus` keys.
+    """
+    day = assignment.get('day') or ''
+    day_focus = assignment.get('focus', '') or ''
+    day_standards = _resolve_day_standards(assignment, standards_by_id, standards)
 
     if len(day_standards) == 1:
         prompt = create_lesson_plan_prompt(day_standards[0], rules)
@@ -88,6 +132,8 @@ def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, ru
             'grade_level': day_standards[0].get('grade_level') if day_standards else 0
         }
         prompt = create_lesson_plan_prompt(combined_standard, rules)
+
+    if day_focus:
         prompt += f"\n\nDay Focus: {day_focus}"
 
     try:
@@ -100,38 +146,16 @@ def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, ru
             temperature=0.7,
             response_format={"type": "json_object"}
         )
-        lesson_plan_json = response.choices[0].message.content
+        lesson_plan_json = response.choices[0].message.content or "{}"
         lesson_plan = json.loads(lesson_plan_json)
     except json.JSONDecodeError as e:
         print(f"Warning: Failed to parse lesson plan JSON for {day}: {e}")
-        lesson_plan = {
-            "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
-            "materials_needed": rules.get('allowed_materials', [])[:2],
-            "procedure": [
-                "Introduce the concept",
-                "Practice with materials",
-                "Review and assess understanding"
-            ]
-        }
+        lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
     except Exception as e:
         print(f"Warning: Failed to generate lesson plan for {day}: {e}")
-        lesson_plan = {
-            "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
-            "materials_needed": rules.get('allowed_materials', [])[:2],
-            "procedure": [
-                "Introduce the concept",
-                "Practice with materials",
-                "Review and assess understanding"
-            ]
-        }
+        lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
 
-    return {
-        "day": day,
-        "lesson_plan": lesson_plan,
-        "standard": day_standards[0] if day_standards else {},
-        "standards": day_standards,
-        "focus": day_focus
-    }
+    return _assemble_day_plan(day, day_standards, day_focus, lesson_plan)
 
 
 def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dict:
@@ -158,7 +182,8 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
     base_url = os.environ.get('OPENAI_BASE_URL', None)
     model = os.environ.get('OPENAI_MODEL', 'gpt-3.5-turbo')
     
-    # Initialize OpenAI client
+    # Initialize OpenAI client. The official SDK client is stateless and thread-safe,
+    # so we reuse a single instance across the executor workers below.
     client = OpenAI(api_key=api_key, base_url=base_url)
     
     # Get student profile and parse rules
@@ -229,7 +254,8 @@ Respond with a JSON object in this exact format:
             response_format={"type": "json_object"}
         )
         
-        weekly_scaffold = json.loads(scaffold_response.choices[0].message.content)
+        scaffold_json = scaffold_response.choices[0].message.content or "{}"
+        weekly_scaffold = json.loads(scaffold_json)
         daily_assignments = weekly_scaffold.get('daily_assignments', [])
         weekly_overview = weekly_scaffold.get('weekly_overview', '')
     except json.JSONDecodeError as e:
@@ -290,14 +316,10 @@ Respond with a JSON object in this exact format:
                 daily_plan[idx] = future.result()
             except Exception as e:
                 print(f"Warning: Daily plan generation failed for index {idx}: {e}")
-                daily_plan[idx] = _build_day_plan(
-                    daily_assignments[idx],
-                    standards_by_id,
-                    standards,
-                    rules,
-                    client,
-                    model
-                )
+                assignment = daily_assignments[idx]
+                day_standards = _resolve_day_standards(assignment, standards_by_id, standards)
+                fallback_plan = _create_fallback_lesson_plan(day_standards, rules)
+                daily_plan[idx] = _assemble_day_plan(assignment.get('day') or '', day_standards, assignment.get('focus', '') or '', fallback_plan)
     
     # Calculate week_of date (Monday of current week)
     today = datetime.now()
