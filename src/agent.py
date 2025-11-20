@@ -7,6 +7,7 @@ LLM-based agent for generating lesson plans using OpenAI API.
 import os
 import sys
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
 
 # Add parent directory to path for imports
@@ -15,6 +16,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 from db_utils import get_student_profile
 from logic import get_filtered_standards
 from datetime import datetime, timedelta
+
+
+MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
 
 
 def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
@@ -60,6 +64,74 @@ Respond ONLY with a valid JSON object in this exact format:
 }}"""
     
     return prompt
+
+
+def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, rules: dict, client: OpenAI, model: str) -> dict:
+    """Generate a single day's lesson plan with fallbacks."""
+    day = assignment.get('day')
+    standard_ids = assignment.get('standard_ids', [])
+    day_focus = assignment.get('focus', '')
+
+    day_standards = [standards_by_id.get(sid) for sid in standard_ids if sid in standards_by_id]
+    day_standards = [s for s in day_standards if s is not None]
+
+    if not day_standards:
+        day_standards = [standards[0]] if standards else []
+
+    if len(day_standards) == 1:
+        prompt = create_lesson_plan_prompt(day_standards[0], rules)
+    else:
+        combined_descriptions = " AND ".join([s.get('description', '') for s in day_standards])
+        combined_standard = {
+            'description': combined_descriptions,
+            'subject': day_standards[0].get('subject') if day_standards else '',
+            'grade_level': day_standards[0].get('grade_level') if day_standards else 0
+        }
+        prompt = create_lesson_plan_prompt(combined_standard, rules)
+        prompt += f"\n\nDay Focus: {day_focus}"
+
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
+        lesson_plan_json = response.choices[0].message.content
+        lesson_plan = json.loads(lesson_plan_json)
+    except json.JSONDecodeError as e:
+        print(f"Warning: Failed to parse lesson plan JSON for {day}: {e}")
+        lesson_plan = {
+            "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
+            "materials_needed": rules.get('allowed_materials', [])[:2],
+            "procedure": [
+                "Introduce the concept",
+                "Practice with materials",
+                "Review and assess understanding"
+            ]
+        }
+    except Exception as e:
+        print(f"Warning: Failed to generate lesson plan for {day}: {e}")
+        lesson_plan = {
+            "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
+            "materials_needed": rules.get('allowed_materials', [])[:2],
+            "procedure": [
+                "Introduce the concept",
+                "Practice with materials",
+                "Review and assess understanding"
+            ]
+        }
+
+    return {
+        "day": day,
+        "lesson_plan": lesson_plan,
+        "standard": day_standards[0] if day_standards else {},
+        "standards": day_standards,
+        "focus": day_focus
+    }
 
 
 def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dict:
@@ -193,86 +265,39 @@ Respond with a JSON object in this exact format:
     
     # Create a lookup for standards by ID
     standards_by_id = {s.get('standard_id'): s for s in standards}
-    
-    # Build daily plan based on scaffold
-    daily_plan = []
-    
-    for assignment in daily_assignments:
-        day = assignment.get('day')
-        standard_ids = assignment.get('standard_ids', [])
-        day_focus = assignment.get('focus', '')
-        
-        # Get the standards for this day
-        day_standards = [standards_by_id.get(sid) for sid in standard_ids if sid in standards_by_id]
-        day_standards = [s for s in day_standards if s is not None]  # Filter out None values
-        
-        if not day_standards:
-            # Fallback to first available standard if assignment references missing standards
-            day_standards = [standards[0]] if standards else []
-        
-        # Create a combined prompt for all standards assigned to this day
-        if len(day_standards) == 1:
-            prompt = create_lesson_plan_prompt(day_standards[0], rules)
-        else:
-            # Multiple standards for this day - create combined lesson
-            combined_descriptions = " AND ".join([s.get('description', '') for s in day_standards])
-            combined_standard = {
-                'description': combined_descriptions,
-                'subject': day_standards[0].get('subject'),
-                'grade_level': day_standards[0].get('grade_level')
-            }
-            prompt = create_lesson_plan_prompt(combined_standard, rules)
-            prompt += f"\n\nDay Focus: {day_focus}"
-        
-        # Call OpenAI API to generate lesson plan
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                response_format={"type": "json_object"}
-            )
-            
-            # Parse the LLM response
-            lesson_plan_json = response.choices[0].message.content
-            lesson_plan = json.loads(lesson_plan_json)
-            
-        except json.JSONDecodeError as e:
-            # JSON parsing error from LLM - log and use fallback
-            print(f"Warning: Failed to parse lesson plan JSON for {day}: {e}")
-            lesson_plan = {
-                "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
-                "materials_needed": rules.get('allowed_materials', [])[:2],
-                "procedure": [
-                    "Introduce the concept",
-                    "Practice with materials",
-                    "Review and assess understanding"
-                ]
-            }
-        except Exception as e:
-            # Other errors (API, network, etc.) - log and use fallback
-            print(f"Warning: Failed to generate lesson plan for {day}: {e}")
-            lesson_plan = {
-                "objective": f"Learn about: {day_standards[0].get('description', '') if day_standards else 'the assigned topic'}",
-                "materials_needed": rules.get('allowed_materials', [])[:2],
-                "procedure": [
-                    "Introduce the concept",
-                    "Practice with materials",
-                    "Review and assess understanding"
-                ]
-            }
-        
-        # Add to daily plan - include all standards for this day
-        daily_plan.append({
-            "day": day,
-            "lesson_plan": lesson_plan,
-            "standard": day_standards[0] if day_standards else {},  # Primary standard
-            "standards": day_standards,  # All standards for this day
-            "focus": day_focus
-        })
+
+    # Build daily plan concurrently based on scaffold
+    max_workers = max(1, min(len(daily_assignments), MAX_DAILY_PLAN_THREADS))
+    daily_plan = [None] * len(daily_assignments)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_map = {
+            executor.submit(
+                _build_day_plan,
+                assignment,
+                standards_by_id,
+                standards,
+                rules,
+                client,
+                model
+            ): idx
+            for idx, assignment in enumerate(daily_assignments)
+        }
+
+        for future in as_completed(future_map):
+            idx = future_map[future]
+            try:
+                daily_plan[idx] = future.result()
+            except Exception as e:
+                print(f"Warning: Daily plan generation failed for index {idx}: {e}")
+                daily_plan[idx] = _build_day_plan(
+                    daily_assignments[idx],
+                    standards_by_id,
+                    standards,
+                    rules,
+                    client,
+                    model
+                )
     
     # Calculate week_of date (Monday of current week)
     today = datetime.now()
