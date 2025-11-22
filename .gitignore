@@ -13,3 +13,6 @@ env/
 ENV/
 
 logs/
+
+# Generated previews
+artifacts/

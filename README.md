@@ -364,6 +364,34 @@ print(worksheet.to_markdown())
 
 The helper normalizes either dicts or `TwoOperandProblem` instances, validates operators, and automatically formats each problem vertically so ones/tens/hundreds columns line up. The resulting `Worksheet` object keeps just the metadata and problem definitions—no answer key is generated yet so a parent/teacher can work through the solutions with the learner—and the same structure can be reused for other worksheet styles (reading comprehension, vocabulary, etc.).
 
+Need a literacy activity instead? Use the companion generator to build reading comprehension sets that include a passage, open-response questions, and vocabulary prompts:
+
+```python
+from src.worksheets import generate_reading_comprehension_worksheet
+from src.worksheet_renderer import render_reading_worksheet_to_pdf
+
+worksheet = generate_reading_comprehension_worksheet(
+  passage_title="The Busy Garden",
+  passage="""
+Lina peeked outside and saw tiny sprouts covering the garden. Each day she watered them gently
+while her grandfather told stories about patience. By the weekend, the sprouts stretched their leaves
+toward the sun, and Lina noticed a small ladybug resting on one stem.
+""",
+  questions=[
+    {"prompt": "Why did Lina water the sprouts every day?", "response_lines": 3},
+    {"prompt": "What new detail shows the garden is changing?", "response_lines": 2},
+  ],
+  vocabulary=[
+    {"term": "sprout"},
+    {"term": "patience", "definition": "Waiting calmly for something important."},
+  ],
+)
+
+render_reading_worksheet_to_pdf(worksheet, "artifacts/reading_example.pdf")
+```
+
+The reading template wraps passages up to a full page, numbers each question with configurable response lines, and lists vocabulary terms with either supplied definitions or blank lines for learners to fill in.
+
 ### Adding Custom Standards
 
 To add your own educational standards:
