@@ -67,6 +67,27 @@ You'll receive a complete 5-day lesson plan with objectives, materials, and proc
 
 ---
 
+## 🐳 Run with Docker
+
+Prefer containers? The repo ships with a `Dockerfile` that bakes in dependencies, ingests standards, and starts Uvicorn automatically.
+
+```bash
+# Build the image (run from repo root)
+docker build -t agentic-curriculum .
+
+# Run the API (exposes port 8000 by default)
+docker run --rm -p 8000:8000 \
+  -e OPENAI_API_KEY="your-api-key" \
+  agentic-curriculum
+```
+
+Notes:
+- `OPENAI_API_KEY` must be provided at runtime (and any other optional env vars such as `OPENAI_BASE_URL` or `OPENAI_MODEL`).
+- The image executes `python src/ingest_standards.py` during build so `curriculum.db` is ready before the server boots.
+- Container logs include the structured request logs written to `/app/logs` inside the image.
+
+---
+
 ## Configuration
 
 ### Environment Variables
