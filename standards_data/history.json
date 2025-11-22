@@ -1,0 +1,760 @@
+[
+  {
+    "id": "history-k",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Kindergarten",
+    "subject": "History",
+    "grade": "K",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "civics",
+        "title": "Civics",
+        "standards": [
+          {
+            "id": "k.1",
+            "description": "The student will apply history and social science skills to practice citizenship in the classroom by taking responsibility for one’s actions; practicing honesty and showing kindness to oneself and others; recognizing the purpose of rules and practicing self-control; caring for one’s personal property and respecting other students’ property; and taking turns, sharing, and working well with others for the good of everyone."
+          },
+          {
+            "id": "k.2",
+            "description": "The student will apply history and social science skills to explain how communities honor state and national traditions and recognize designated Virginia holidays including, but not limited to Labor Day; Columbus Day and Yorktown Victory Day; Election Day; Veterans Day; Thanksgiving Day; Christmas Day; New Year’s Day; Martin Luther King, Jr. Day; George Washington Day (commonly known as Presidents’ Day); Memorial Day; Juneteenth; and Independence Day."
+          },
+          {
+            "id": "k.3",
+            "description": "The student will apply history and social science skills to define patriotism and explain how communities express patriotism by identifying the American and Virginia flags; identifying national and state symbols including, but not limited to the bald eagle, the dogwood, and the cardinal; recognizing the Pledge of Allegiance and the national anthem; and identifying the current president and explaining that the president is the leader of the United States and is elected by voters."
+          }
+        ]
+      },
+      {
+        "id": "history",
+        "title": "History",
+        "standards": [
+          {
+            "id": "k.4",
+            "description": "The student will apply history and social science skills to recognize Virginia’s earliest communities by identifying examples of historic events, stories, and legends; identifying early communities, changemakers, and contributions of leaders including, but not limited to Indigenous tribes, farmers, traders, early settlers, minorities, women, and children; recognizing that places change over time; and identifying people who helped establish and lead the local community over time."
+          },
+          {
+            "id": "k.5",
+            "description": "The student will apply history and social science skills to understand and explain what makes communities unique by explaining the roles of important local community members, such as, but not limited to medical personnel, first responders, teachers, and business leaders; identifying historic events; and telling the stories of the people that developed their local communities."
+          }
+        ]
+      },
+      {
+        "id": "geography",
+        "title": "Geography",
+        "standards": [
+          {
+            "id": "k.6",
+            "description": "The student will apply history and social science skills to describe the relative location of people, places, and objects by using positional words including, but not limited to near/far, over/under,  above/below, left/right, behind/in front, next to, and between."
+          },
+          {
+            "id": "k.7",
+            "description": "The student will apply history and social science skills to demonstrate an understanding of maps and globes by identifying the similarities and differences between a map and a globe; identifying basic map symbols; identifying land and bodies of water in the local community; and identifying the geographic location of the United States and Virginia on a map and globe."
+          }
+        ]
+      },
+      {
+        "id": "economics",
+        "title": "Economics",
+        "standards": [
+          {
+            "id": "k.8",
+            "description": "The student will apply history and social science skills to demonstrate an understanding of primary economic principles by describing ways people work to earn and save money to buy the things they need and want; and recognizing that Americans are free to make choices about what to buy and that they must make choices because they cannot have everything they want."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "history-1",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Grade 1",
+    "subject": "History",
+    "grade": "1",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "civics",
+        "title": "Civics",
+        "standards": [
+          {
+            "id": "1.1",
+            "description": "The student will apply history and social science skills to practice citizenship in the classroom by practicing honesty and showing kindness to oneself and others; recognizing the purpose of rules and practicing self-control; being respectful of others and celebrating differences in ethnic origins, customs, and traditions; working respectfully with one another to achieve a goal; contributing one’s time and talents to help others in their homes, schools, and communities through jobs; participating in classroom decision-making by voting; and understanding that local and state government representatives are elected by citizens who vote."
+          },
+          {
+            "id": "1.2",
+            "description": "The student will apply history and social science skills to explain how communities honor local and national traditions and recognize designated Virginia holidays including, but not limited to Labor Day; Columbus Day and Yorktown Victory Day; Election Day; Veterans Day; Thanksgiving Day; Christmas Day; New Year’s Day; Martin Luther King, Jr. Day; George Washington Day (commonly known as Presidents’ Day); Memorial Day; Juneteenth; and Independence Day."
+          },
+          {
+            "id": "1.3",
+            "description": "The student will apply history and social science skills to describe the symbols and traditions that honor and foster patriotism in the United States by learning the Pledge of Allegiance and the national anthem and the ways people express respect for the American flag; explaining the symbolism of the colors, stars, and stripes of the American flag; identifying the Virginia flag, state capitol building, the cardinal as the state bird, and the dogwood as the state flower; and explaining why people use symbols and have traditions."
+          }
+        ]
+      },
+      {
+        "id": "history",
+        "title": "History",
+        "standards": [
+          {
+            "id": "1.4",
+            "description": "The student will apply history and social science skills to understand Virginia’s history by identifying and describing important events and locations throughout the early history of the Commonwealth including, but not limited to Werowocomoco and the first English colony in North America at Jamestown; describing how life in various Virginia communities has changed over time; and identifying local cities or counties on a map of Virginia."
+          },
+          {
+            "id": "1.5",
+            "description": "The student will apply history and social science skills to describe contributions of Virginia’s diverse people and the stories of changemakers in the history of Virginia and their contributions to our Commonwealth including, but not limited to Indigenous people: Chief Powhatan and Pocahontas; Explorers: John Smith and Christopher Newport; Presidents: George Washington, Thomas Jefferson, James Madison, and James Monroe; and Barrier breakers: John Mercer Langston, Booker T. Washington, Maggie L. Walker, Barbara Johns, Arthur R. Ashe, Jr., and L. Douglas Wilder."
+          }
+        ]
+      },
+      {
+        "id": "geography",
+        "title": "Geography",
+        "standards": [
+          {
+            "id": "1.6",
+            "description": "The student will apply history and social science skills to develop geographic skills by using basic map symbols, including references to land, water, cities, and roads; using cardinal directions on maps; locating Virginia, the United States, continents, and oceans on maps and globes; and constructing simple maps and including a title, map legend or key, and a compass rose."
+          },
+          {
+            "id": "1.7",
+            "description": "The student will apply history and social science skills to connect geography to historic events of Virginia and the United States by identifying landforms and bodies of water of Virginia and describing how they affect the way people live; understanding that the location of Virginia determines its climate and its four distinct seasons; locating the site of the Jamestown colony; and locating Richmond and Washington, D.C. on Virginia and United States maps."
+          }
+        ]
+      },
+      {
+        "id": "economics",
+        "title": "Economics",
+        "standards": [
+          {
+            "id": "1.8",
+            "description": "The student will apply history and social science skills to explain how individuals make economic choices to meet their basic needs by identifying the difference between goods and services; describing how people can be both consumers and producers; describing ways people work to earn and save money to purchase goods and services; describing goods produced and services provided in Virginia; and describing why people must make choices, prioritizing needs over wants."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "history-2",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Grade 2",
+    "subject": "History",
+    "grade": "2",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "civics",
+        "title": "Civics",
+        "standards": [
+          {
+            "id": "2.1",
+            "description": "The student will apply history and social science skills to distinguish between the rights and responsibilities that individuals have in the United States including, but not limited to exercising freedom of expression; exercising freedom of religion; understanding equal protection; voting for local, state, and national representatives; respecting and following laws; practicing honesty and trustworthiness; and respecting the rights, beliefs, and opinions of others."
+          },
+          {
+            "id": "2.2",
+            "description": "The student will apply history and social science skills to understand citizenship by identifying the benefits of being a U.S. citizen; and identifying the responsibilities of being a U.S. citizen."
+          },
+          {
+            "id": "2.3",
+            "description": "The student will apply history and social science skills to explain how communities honor local and national traditions and recognize designated Virginia holidays including, but not limited to Labor Day; Columbus Day and Yorktown Victory Day; Election Day; Veterans Day; Thanksgiving Day; Christmas Day; New Year’s Day; Martin Luther King, Jr. Day; George Washington Day (commonly known as Presidents’ Day); Memorial Day; Juneteenth; and Independence Day."
+          },
+          {
+            "id": "2.4",
+            "description": "The student will apply history and social science skills to recognize state and national symbols including, but not limited to locating the Virginia and United States capitals and capitol buildings; explaining the meaning behind symbols including, but not limited to the American flag, bald eagle, Washington Monument, Liberty Bell, and Statue of Liberty; and learning about the meaning of the American flag and the words chosen in the Pledge of Allegiance and the national anthem."
+          }
+        ]
+      },
+      {
+        "id": "history",
+        "title": "History",
+        "standards": [
+          {
+            "id": "2.5",
+            "description": "The student will use history and social science skills to identify the geographic location, use of resources, and contributions of Indigenous people past and present, including Indigenous nations and tribes of the Eastern Woodlands; Indigenous nations and tribes of the Plains; Indigenous nations and tribes of the Southwest; and understanding tribal sovereignty, and the importance of land, history, and culture."
+          },
+          {
+            "id": "2.6",
+            "description": "The student will use history and social science skills to identify the geographic location, use of resources, and contributions of European explorers, and their influence on the development of North America including, but not limited to the English, French, and Spanish."
+          },
+          {
+            "id": "2.7",
+            "description": "The student will apply history and social science skills to describe the revolutionaries who fought for America’s freedom (1764–1781) including, but not limited to John Adams; Benjamin Franklin; Alexander Hamilton; Patrick Henry; Thomas Jefferson; James Madison (known as the “Father of the Constitution”); Paul Revere; and George Washington (known as the “Father of our Country”)."
+          },
+          {
+            "id": "2.8",
+            "description": "The student will apply history and social science skills to understand the principles of American democracy and relate them to the founding of the nation by identifying reasons for the settlement of the thirteen colonies; explaining the relationships between the colonies and Great Britain; and identifying key components of the Declaration of Independence."
+          },
+          {
+            "id": "2.9",
+            "description": "The student will apply history and social science skills to understand key events in United States history including, but not limited to recognizing the reasons for moving the nation’s capital from Philadelphia to Washington, D.C. and the importance of the nation’s capital; and describing the impact of the Louisiana Purchase on the westward expansion of the United States."
+          },
+          {
+            "id": "2.10",
+            "description": "The student will describe the contributions and roles of changemakers in United States history including, but not limited to Scholars and Inventors: Benjamin Franklin, Benjamin Banneker, Thomas Jefferson, George Washington Carver, Booker T. Washington, Orville and Wilbur Wright, Steve Jobs, Jonas Salk, Thomas Edison, Alexander Graham Bell, and Mary Jackson; Explorers and Adventurers: Meriwether Lewis, William Clark, Sacagawea, Neil Armstrong, and Amelia Earhart; Reformers and Champions: Abraham Lincoln, Theodore Roosevelt, Helen Keller, Thurgood Marshall, Rosa Parks, Jackie Robinson, Cesar Chavez, Dr. Martin Luther King, Jr., Sen. Daniel Inouye, John F. Kennedy, and Barack Obama."
+          }
+        ]
+      },
+      {
+        "id": "geography",
+        "title": "Geography",
+        "standards": [
+          {
+            "id": "2.11",
+            "description": "The student will apply history and social science skills to develop geographic mapping skills using world maps and globes by locating the countries of North America and the bordering oceans; identifying major rivers, mountain ranges, lakes, and other physical features in the United States."
+          },
+          {
+            "id": "2.12",
+            "description": "The student will apply history and social science skills to connect geography to landmarks and historic events including, but not limited to the Jefferson Memorial and the Lincoln Memorial; Valley Forge and George Washington’s crossing of the Delaware River; and Yellowstone National Park."
+          }
+        ]
+      },
+      {
+        "id": "economics",
+        "title": "Economics",
+        "standards": [
+          {
+            "id": "2.13",
+            "description": "The student will apply history and social science skills to understand basic economic principles by identifying natural resources (e.g., water, soil, wood, coal), human resources (i.e., people at work), and capital resources (e.g., machines, tools, computers, buildings); distinguishing between needs and wants; distinguishing between the use of barter and the use of money in the exchange for goods and services and describing how money makes trading easier than barter; and explaining that scarcity (having limited resources) requires people to make choices about producing and consuming goods and services."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "history-3",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Grade 3",
+    "subject": "History",
+    "grade": "3",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "civics",
+        "title": "Civics",
+        "standards": [
+          {
+            "id": "3.1",
+            "description": "The student will apply history and social science skills to define citizenship and explain the rights and responsibilities of United States citizenship by recognizing that Americans are people of diverse ethnic origins, customs, and traditions that are united by the basic principles of a republican form of government and respect for individual rights and freedoms; describing the rights guaranteed to citizens in the First Amendment; understanding the importance of supporting and defending the Constitution of the United States and the Bill of Rights; respecting and following local, state, and federal laws; taking part in the voting process when making classroom decisions; running for elected office; serving on a jury; paying local, state, and federal taxes; describing the purpose of rules; and understanding responsible digital citizenship."
+          }
+        ]
+      },
+      {
+        "id": "geography",
+        "title": "Geography",
+        "standards": [
+          {
+            "id": "3.2",
+            "description": "The student will apply history and social science skills to locate and describe major geographic features of Africa, Antarctica, Asia, Australia, Europe, North America, and South America by locating and describing the seven continents and the five oceans; and locating and describing the equator, the Prime Meridian, and the four hemispheres."
+          },
+          {
+            "id": "3.3",
+            "description": "The student will apply history and social science skills to describe major geographic features of ancient societies on a world map by identifying and locating major bodies of water; identifying and locating major mountain ranges; describing how geographic features have impacted the lives of individuals; and connecting geography to major historical events."
+          }
+        ]
+      },
+      {
+        "id": "history",
+        "title": "History",
+        "standards": [
+          {
+            "id": "3.4",
+            "description": "The student will apply history and social science skills to describe the geographic, political, economic, and social structures and innovations of ancient Egypt by locating ancient Egypt on a map of the world; connecting the geography of ancient Egypt and its economy; identifying and explaining the government; describing the arts and innovations; and identifying and explaining the architecture and its influence in the world today."
+          },
+          {
+            "id": "3.5",
+            "description": "The student will apply history and social science skills to describe the geographic, political, economic, and social structures and innovations of ancient China by locating ancient China on a map of the world; connecting the geography of ancient China and its economy; identifying and explaining the government; describing the arts and innovations; and identifying and explaining the architecture and its influence in the world today."
+          },
+          {
+            "id": "3.6",
+            "description": "The student will apply history and social science skills to describe the geographic, political, economic, and social structures and innovations of ancient Greece by locating ancient Greece on a map of the world; describing the unique geography of ancient Greece; identifying and explaining direct democracy; describing the arts and innovations; and identifying and explaining the architecture and its influence in the world today."
+          },
+          {
+            "id": "3.7",
+            "description": "The student will apply history and social science skills to describe the geographic, political, economic, and social structures and innovations of ancient Rome by locating ancient Rome on a map of the world; connecting the geography of ancient Rome and its economy; identifying and explaining representative democracy; describing the arts and innovations; and identifying and explaining the architecture and its influence in the world today."
+          },
+          {
+            "id": "3.8",
+            "description": "The student will apply history and social science skills to describe the geographic, political, economic, and social structures and innovations of the ancient empire of Mali by locating the ancient empire of Mali on a map of the world; connecting the geography of the ancient empire of Mali and its economy; identifying and explaining the government; describing the arts and innovations; and identifying and explaining the architecture and its influence in the world."
+          },
+          {
+            "id": "3.9",
+            "description": "The student will apply history and social science skills to explain the basic structure of the United States government by explaining the purpose of governments and understanding that other countries have governments similar to and different from that of the United States; explaining how the Constitution supports the structure of the United States government; identifying and describing the three branches of government; explaining what governments do at the national, state, and local levels; and explaining how local, state, and national governments are organized."
+          }
+        ]
+      },
+      {
+        "id": "economics",
+        "title": "Economics",
+        "standards": [
+          {
+            "id": "3.10",
+            "description": "The student will apply history and social science skills to explain basic economic principles by defining production, distribution, and consumption of goods and services; understanding different cultures and the natural, human, and capital resources they use in the production of goods and services; recognizing that because people and regions cannot produce everything they want, they specialize in what they do best and trade for the rest; and identifying examples of making an economic choice and explaining the idea of opportunity cost."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "history-4",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Grade 4",
+    "subject": "History",
+    "grade": "4",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "physical-geography",
+        "title": "Physical Geography",
+        "standards": [
+          {
+            "id": "vs.1",
+            "description": "The student will apply history and social science skills to explain the relationship between physical geography and the lives of Virginia’s peoples, past and present by locating Virginia and its bordering states on maps of the United States and North America; locating and describing the relative location and physical characteristics of Virginia's five geographic regions on a map; and locating, identifying, and describing the impact of Virginia’s bodies of water on its history, economy, and culture."
+          }
+        ]
+      },
+      {
+        "id": "virginia-indigenous-people",
+        "title": "Virginia’s Indigenous People",
+        "standards": [
+          {
+            "id": "vs.2",
+            "description": "The student will apply history and social science skills to describe the Indigenous nations of Virginia past and present by describing how archaeologists have recovered artifacts from important places in the history of Indigenous people including, but not limited to Werowocomoco; describing Virginia’s three most prominent Indigenous language groups (i.e., the Algonquian, the Siouan, and the Iroquoian); describing the diversity among the Indigenous nations; describing the relationships and interactions of Virginia’s Indigenous People and their environment, circa 1600; and describing the lives and cultures of Virginia’s Indigenous People leading to the present day."
+          }
+        ]
+      },
+      {
+        "id": "1607-american-revolution",
+        "title": "1607 through the American Revolution",
+        "standards": [
+          {
+            "id": "vs.3",
+            "description": "The student will apply history and social science skills to explain the causes and effects of events associated with the first permanent English settlement in North America by explaining the reasons for English colonization; describing the economic and geographic influences on the decision to settle at Jamestown; describing the importance of the Virginia Company of London Charter (April 10, 1606) in establishing the Jamestown colony; describing the interactions between the English colonists and the Indigenous people, including the role of the Powhatan in the survival of the colonists; describing the hardships faced by settlers at Jamestown and the changes that took place to ensure survival including, but not limited to trade with the Powhatan, the leadership of Captain John Smith, land ownership, and the successful commercial cultivation of tobacco; analyzing the impact of the arrival of Africans and women to the Jamestown settlement; and identifying the significance of establishing the General Assembly (1619), the first representative legislative body in English America."
+          },
+          {
+            "id": "vs.4",
+            "description": "The student will apply history and social science skills to understand life in the Virginia colony by explaining the importance and influence of agriculture; examining how colonial Virginia reflected the culture of Virginia’s Indigenous People, European (English, Scots-Irish, German) immigrants, and Africans; distinguishing between indentured servants and enslaved people, including how European countries traded for, transported, and sold Africans to be enslaved in British North America beginning in the 17th century; describing the laws that established race-based enslavement; explaining the reasons for the relocation of Virginia’s capital from Jamestown to Williamsburg; and describing ways people exchanged goods and services in colonial Virginia."
+          },
+          {
+            "id": "vs.5",
+            "description": "The student will apply history and social science skills to explain Virginia and Virginians’ role during the American Revolution by explaining the principles and events that convinced the colonists to declare independence and go to war with Great Britain, as expressed in the Declaration of Independence; examining the important contributions, leadership, and experiences of Virginians during the war including, but not limited to George Washington, Thomas Jefferson, George Mason, James Madison, James Armistead Lafayette, Indigenous people, women, and free and enslaved Blacks; identifying the reasons for the relocation of Virginia’s capital from Williamsburg to Richmond; and identifying the importance of the American victory at Yorktown."
+          }
+        ]
+      },
+      {
+        "id": "political-growth-western-expansion-1775-mid-1800s",
+        "title": "Political Growth and Western Expansion: 1775 to the Mid-1800s",
+        "standards": [
+          {
+            "id": "vs.6",
+            "description": "The student will apply history and social science skills to explain the establishment and growth of the new American nation with emphasis on the role of Virginians and events in Virginia during the 18th and 19th centuries by explaining the roles of George Washington (known as the “Father of Our Country”), James Madison (known as the “Father of the Constitution”), and Patrick Henry (known for his “Give Me Liberty or Give Me Death” speech); explaining the development of founding Virginia documents, including the Virginia Declaration of Rights (written by George Mason) and the Virginia Statute for Religious Freedom (written by Thomas Jefferson); describing how principles of these founding Virginia documents inspired the Declaration of Independence, the Constitution of Virginia, the Constitution of the United States, and the Bill of Rights; explaining how geographical features and technological advances impacted the western movement in the first half of the 1800s; and explaining the causes and events of Nat Turner’s Rebellion and how it impacted the institution of slavery."
+          }
+        ]
+      },
+      {
+        "id": "civil-war-postwar-eras",
+        "title": "Civil War and Postwar Eras",
+        "standards": [
+          {
+            "id": "vs.7",
+            "description": "The student will apply history and social science skills to understand the key people, events, and issues of the Civil War and Virginia’s role by explaining the role of John Brown and the impact of the raid at Harper’s Ferry; describing how the institution of slavery was the cause of the Civil War, and secondary factors that contributed to the secession of the southern states; explaining the significance of the Underground Railroad and the contributions of Harriet Tubman; explaining major events and issues that divided Virginians and led to secession, war, and the creation of West Virginia; identifying major battles that took place in Virginia; identifying and explaining the leadership roles of Virginians including, but not limited to Thomas “Stonewall” Jackson, Robert E. Lee, William Harvey Carney, Winfield Scott, and Powhatan Beaty; and evaluating the experiences and contributions of Indigenous people and enslaved and free Blacks and their allies during the war including, but not limited to Elizabeth Van Lew and Mary Bowser."
+          },
+          {
+            "id": "vs.8",
+            "description": "The student will apply history and social science skills to explain the reconstruction of Virginia following the Civil War by describing what the Thirteenth, Fourteenth, and Fifteenth Amendments to the Constitution accomplished; examining the effects of Reconstruction on life in Virginia; describing the role that the Freedmen’s Schools played in the lives of African Americans in Virginia after the Civil War; discussing the election of African American leader John Mercer Langston to Congress in 1890; describing the effect of the Supreme Court’s decision in Plessy v. Ferguson; and analyzing the effects of segregation and “Jim Crow” laws on life in Virginia."
+          },
+          {
+            "id": "vs.9",
+            "description": "The student will apply history and social science skills to understand the ways in which Virginia became interconnected and diverse by explaining the importance of railroads, waterways, new industries, and the growth of cities to Virginia’s economic development in the late 1800s; and explaining the economic and social transition from a rural society to a more urban society."
+          }
+        ]
+      },
+      {
+        "id": "virginia-1900-present",
+        "title": "Virginia: 1900 to Present",
+        "standards": [
+          {
+            "id": "vs.10",
+            "description": "The student will apply history and social science skills to understand the role Virginians played in American history during World War I and World War II by examining how key leaders and citizens prepared for wartime; and describing the contributions made by military veterans and Medal of Honor recipients."
+          },
+          {
+            "id": "vs.11",
+            "description": "The student will apply history and social science skills to understand the Civil Rights Movement in Virginia by explaining the social and political events connected to disenfranchisement of African American voters in Virginia in the early 20th century, desegregation, court decisions, and Massive Resistance, with emphasis on the role of Virginians in the Supreme Court cases including, but not limited to Brown v. Board of Education; and investigating the political, social, and economic effects of choices made during the Civil Rights Era by Virginians including, but not limited to Maggie Walker, Robert Russa Moton, Barbara Johns, Samuel Wilbert Tucker, Oliver W. Hill, Sr., Irene Morgan, Arthur R. Ashe, A. Linwood Holton, Jr., and L. Douglas Wilder."
+          },
+          {
+            "id": "vs.12",
+            "description": "The student will use history and social science skills to recognize why Virginia is known as the “Mother of Presidents.”"
+          },
+          {
+            "id": "vs.13",
+            "description": "The student will apply history and social science skills to explain Virginia’s role in the global economy in the 21st century by examining major products and industries important to Virginia; and examining the impact of the ideas, innovations, and advancements of Virginians on a global market."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "history-5",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Grade 5",
+    "subject": "History",
+    "grade": "5",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "geography-north-america",
+        "title": "Geography of North America",
+        "standards": [
+          {
+            "id": "usi.1",
+            "description": "The student will apply history and social science skills to understand the geography of North America by locating North America in relation to the other continents and the oceans; locating and describing major geographic regions and bodies of water of North America and their impact on the early history of the United States; and locating the 50 states."
+          }
+        ]
+      },
+      {
+        "id": "early-cultures-north-america",
+        "title": "Early Cultures of North America",
+        "standards": [
+          {
+            "id": "usi.2",
+            "description": "The student will apply history and social science skills to describe how early cultures developed throughout North America by describing how archaeologists have recovered artifacts from ancient settlements including, but not limited to Cactus Hill in Virginia; and locating and explaining where Indigenous people lived prior to the arrival of Europeans, with an emphasis on how the various geographic regions they inhabited influenced their daily lives."
+          },
+          {
+            "id": "usi.3",
+            "description": "The student will apply history and social science skills to explain European exploration and colonization in North America by describing the motivations for, obstacles to, and accomplishments of the Dutch, English, French, Portuguese, and Spanish explorations; and describing cultural and economic interactions between Indigenous people and Europeans that led to cooperation and conflict."
+          },
+          {
+            "id": "usi.4",
+            "description": "The student will apply history and social science skills to understand how the Western Hemisphere impacted West Africa by identifying the location and characteristics of West African societies of Ghana, Mali, and Songhai before European exploration; examining the arrival of the first Africans to colonial America at Old Point Comfort (Fort Monroe); explaining the Transatlantic Slave Trade and its impact on the African coast and the Western Hemisphere; and identifying the cultural connections, conflicts, and common values of enslaved people in the Western Hemisphere, as well as challenges and hardships endured by enslaved people brought to colonial America."
+          }
+        ]
+      },
+      {
+        "id": "colonial-america-american-revolution",
+        "title": "Colonial America and the American Revolution",
+        "standards": [
+          {
+            "id": "usi.5",
+            "description": "The student will apply history and social science skills to explain the social, political, religious, economic, and geographic factors that shaped colonial America by describing the characteristics and differences among the New England, the Mid-Atlantic, and the Southern colonies; explaining Virginia’s importance as one of the most populous and wealthiest colonies; comparing life from the perspectives of various groups including, but not limited to large landowners, farmers, artisans, clergy, merchants, women, indentured servants, and enslaved and free Blacks; explaining the specialization and interdependence of the regions; and explaining the changing political and economic relationships between the colonies and Great Britain including, but not limited to representative government and self-rule in the colonies."
+          },
+          {
+            "id": "usi.6",
+            "description": "The student will apply history and social science skills to explain the American Revolution by identifying the causes and effects of the French and Indian War; identifying the issues of dissatisfaction that led to the American Revolution including, but not limited to the “injuries and usurpations” outlined in the Declaration of Independence; comparing and contrasting the political ideas and principles that shaped the revolutionary movement; describing the leadership roles of individuals including, but not limited to George Washington, Benjamin Franklin, Thomas Jefferson, Patrick Henry, Thomas Paine, John Adams, and the Marquis de Lafayette; and examining the causes, course, and consequences of key events and battles of the era."
+          }
+        ]
+      },
+      {
+        "id": "new-nation-expansion",
+        "title": "A New Nation and its Expansion",
+        "standards": [
+          {
+            "id": "usi.7",
+            "description": "The student will apply history and social science skills to describe the challenges faced by the new nation by explaining the strengths, weaknesses, and outcomes of the government established by the Articles of Confederation; describing the Constitutional Convention and the development of the Constitution of the United States, with an emphasis on the role of James Madison; examining constitutional issues debated, including the role of the national government and the debate over ratifying the Constitution, the influence of the Federalist Papers, and the reasons for the addition of the Bill of Rights; explaining the Three-Fifths Compromise; and examining the three branches of government."
+          },
+          {
+            "id": "usi.8",
+            "description": "The student will apply history and social science skills to explain westward expansion and reform in America from 1801 to 1861 by describing how territorial expansion affected the political map of the United States including, but not limited to the Louisiana Purchase, the Lewis and Clark Expedition and the role of Sacagawea, the acquisitions of Florida, Texas, Oregon, and California, and the results of the Mexican-American War; describing the causes, course of events, and effects of the War of 1812, the role of Andrew Jackson, and the development of the Monroe Doctrine; identifying geographic, economic, and religious motivations that influenced the movement of settlers; analyzing the impact of westward expansion on Indigenous people including, but not limited to the Indian Removal Act (1830), the Trail of Tears, and the Seminole Wars; explaining technological advancements and innovations and their effects on life in America including, but not limited to the cotton gin, the reaper, the steam engine, and the steam locomotive; describing major developments in the abolitionist and women’s suffrage movements; and explaining how the expansion of U.S. territory led to increased momentum for the abolitionist and women’s suffrage movements."
+          }
+        ]
+      },
+      {
+        "id": "civil-war",
+        "title": "The Civil War",
+        "standards": [
+          {
+            "id": "usi.9",
+            "description": "The student will apply history and social science skills to understand the cause, major events, and effects of the Civil War by describing how slavery and its expansion was the primary cause of the cultural, economic, and constitutional issues that divided the nation and led to the secession of southern states; describing the differences in the economies of the North and the South, growth of agriculture and industry, and how those economies impacted the outcome of the war; evaluating the leadership and impact of Abraham Lincoln during the Civil War; describing how individuals influenced the course of the Civil War including, but not limited to Jefferson Davis, Ulysses S. Grant, Robert E. Lee, William Tecumseh Sherman, Thomas “Stonewall” Jackson, and Frederick Douglass; describing major political texts during the war including, but not limited to Lincoln’s Inaugural Address, the Emancipation Proclamation, the Gettysburg Address, and Lincoln’s Second Inaugural Address; and analyzing the effects of the war from various perspectives of Union and Confederate soldiers, Indigenous people, women, European Americans, and enslaved and free Blacks during the war including, but not limited to Clara Barton, John Brown, Robert Smalls, Harriet Tubman, Elizabeth Van Lew, and Mary Bowser."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "history-6",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Grade 6",
+    "subject": "History",
+    "grade": "6",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "westward-expansion-impact-indigenous-people",
+        "title": "Westward Expansion and Its Impact on Indigenous People",
+        "standards": [
+          {
+            "id": "usii.1",
+            "description": "The student will apply history and social science skills to examine westward expansion after the mid-19th century by explaining how technology allowed settlers to adapt to the physical features and climate of the West; identifying the motivations for westward expansion; examining the impact of policies, legislation, and treaties associated with the growth of the nation; and explaining the effect that the growth of the United States had on Indigenous people."
+          }
+        ]
+      },
+      {
+        "id": "effects-reconstruction",
+        "title": "Effects of Reconstruction",
+        "standards": [
+          {
+            "id": "usii.2",
+            "description": "The student will apply history and social science skills to understand the ongoing effects of Reconstruction on American life after the mid-19th century by describing the impact of the assassination of Abraham Lincoln and the political aftermath of the Civil War; analyzing the goals and effects of the Reconstruction Amendments, the Freedmen’s Bureau, and civil rights policies that changed the meaning of citizenship in the United States; describing the legacies of Abraham Lincoln and the Gettysburg Address, Ulysses S. Grant, Robert E. Lee, Hiram Revels, and Frederick Douglass; describing the role of Congress and the Supreme Court in specific plans and policies including, but not limited to Lincoln’s Ten Percent Plan; describing the role and motivations of individuals who sought to gain from Reconstruction including, but not limited to formerly enslaved people elected to office during the years right after the Civil War; and explaining how the 1876 presidential election led to the end of Reconstruction."
+          }
+        ]
+      },
+      {
+        "id": "industrialization-growth",
+        "title": "Industrialization and Growth",
+        "standards": [
+          {
+            "id": "usii.3",
+            "description": "The student will apply history and social science skills to understand how industrialization changed life in rural and urban America after the Civil War by explaining relationships among natural resources, transportation, and industrial development from 1865; explaining the impact of new inventions, the rise of big business, the growth of industry, and the changes to life on American farms in response to industrialization; evaluating and explaining the impact of the Progressive Movement on child labor, working conditions, the rise of organized labor, support for eugenics as a social policy, immigration policy, women’s suffrage, and the temperance movement; explaining the events, factors, and motivations that caused individuals and groups to migrate to the United States towards the end of the 19th century; examining the cause-and-effect relationship between rapid population growth and city government services and infrastructure; explaining how governmental actions including, but not limited to the Chinese Exclusion Act of 1882, caused harm to Chinese Americans and other immigrants; explaining how various groups worked to alleviate the issues facing new immigrants and how immigrants advocated for themselves; and describing the technological advances and the broader impact of the 1893 Chicago World's Fair on America’s rise as a world leader in innovation, business, and trade."
+          },
+          {
+            "id": "usii.4",
+            "description": "The student will apply history and social science skills to explain the changing role of the United States from the late 19th century through World War I by explaining the legacy of Theodore Roosevelt including, but not limited to conservation contributions, progressivism, the building of the Panama Canal, and his role in the Spanish-American War; explaining the reasons for and results of the Spanish-American War, including the Roosevelt Corollary to the Monroe Doctrine; analyzing the major causes and consequences of World War I and examining the roles of key leaders and groups; examining the evolution of warfare tactics and technology including, but not limited to cavalry, air, submarine, chemical, trench warfare, and other technological advancements; explaining how the war was a catalyst for the United States gaining international power and expanding its sphere of international influence; and examining how post-war sanctions and the failure of the League of Nations set the stage for World War II."
+          },
+          {
+            "id": "usii.5",
+            "description": "The student will apply history and social science skills to understand the social, political, economic, and technological changes of the early 20th century by explaining how capitalism and free markets helped foster developments in factory and labor productivity, transportation, and communication and how rural electrification changed American life and the standard of living; examining how the rise of communism affected America including, but not limited to the first Red Scare; describing the reasons for and impact of the Great Migration; describing the events and leaders that lead to prohibition, the Women’s Suffrage Movement, and the passage of the Nineteenth Amendment including, but not limited to Susan B. Anthony, Lucy Burns, Elizabeth Cady Stanton, Carrie Chapman Catt, Ida B. Wells-Barnett, and Sojourner Truth; examining the art, literature, and music of the 1920s and 1930s including, but not limited to the Roaring Twenties and the Harlem Renaissance; analyzing the causes of the Great Depression and the impact of the Dust Bowl on the lives of Americans; describing the features, effects, programs, and lasting institutions of Franklin D. Roosevelt’s New Deal; describing racial segregation, housing discrimination via redlining, the rise of “Jim Crow” laws, Black Codes, and threats of violence including, but not limited to intimidation, lynchings, armed conflicts, suppressed voting rights, and limits on political participation faced by African Americans and other people during post-Reconstruction; and analyzing events and impacts of African American leaders in response to “Jim Crow” including, but not limited to the formation of the National Association for the Advancement of Colored People (NAACP), strikes, protests, the role of historically black colleges and universities (HBCUs), and the work of leaders like Booker T. Washington, W.E.B. DuBois, Mary White Ovington, and Ida B. Wells-Barnett."
+          }
+        ]
+      },
+      {
+        "id": "second-world-war-america-transformation",
+        "title": "The Second World War and America’s Transformation",
+        "standards": [
+          {
+            "id": "usii.6",
+            "description": "The student will apply history and social science skills to understand the major causes and events of World War II and the effects of America’s role by explaining the rise and spread of fascism and totalitarianism internationally and the policy of appeasement towards Nazi Germany; explaining the causes and events that led to American involvement in the war, including the attack on Pearl Harbor; locating and describing the major events and turning points of the war in Europe including, but not limited to the allied invasion of Italy, the invasion of Normandy (D-Day), the Battle of the Bulge, and the Battle of Berlin; locating and describing the major events and turning points of the war in the Pacific including, but not limited to the Battle of Iwo Jima, the Battle of Midway, and the Battle of Okinawa; explaining and evaluating the role of key political and military leaders of the Allies and Axis powers including, but not limited to the United States, Germany, Japan, the Soviet Union, Italy, and Great Britain; identifying the roles and sacrifices of U.S. armed forces, including prisoners of war (POWs), women, and segregated units, as well as other notable heroics including, but not limited to the contributions of the Tuskegee Airmen, the 442nd Regimental Combat Team, the Women's Army Auxiliary Corps, the Women Airforce Service Pilots, the Navajo Code Talkers, and the Bedford Boys; evaluating the effects of the war on the home front including, but not limited to women in the workforce, the incarceration of Japanese Americans, rationing, conservation, and war bonds; examining the causes and consequences of the Holocaust including, but not limited to Jewish life before the Holocaust, antisemitism, the rise of the Nazi Party, Nuremberg Laws, persecution of Jews and other targeted groups, resistance efforts, the United States’ response, and the Nuremberg Trials; and describing the events that led to the surrender of the Axis powers and America’s role in the Allied victory including, but not limited to the Manhattan Project, as well as events that shaped post-war peace."
+          }
+        ]
+      },
+      {
+        "id": "cold-war",
+        "title": "The Cold War",
+        "standards": [
+          {
+            "id": "usii.7",
+            "description": "The student will apply history and social science skills to understand the transformation of U.S. foreign policy between the end of World War II and the new millennium by explaining how key decisions and agreements including, but not limited to the Atlantic Charter, formation of the United Nations, and the North Atlantic Treaty Organization (NATO) established international allies; describing the Marshall Plan’s objectives for rebuilding Europe, the occupation and reconstruction of Japan, and the emergence of the United States and the Soviet Union as superpowers; describing the differences between a communist nation and a democratic nation including, but not limited to self-governance and economic philosophy; examining the role of the United States in fighting communism and defending freedom during the Cold War including, but not limited to the Berlin Airlift, conflicts in Korea and Vietnam, the roles of John F. Kennedy and Nikita Khrushchev during the Cuban missile crisis, the fall of the Berlin Wall, and the collapse of communism in Eastern Europe; and explaining the collapse of communism in the Soviet Union and Eastern Europe and the end of the Cold War, including the actions of Ronald Reagan and Mikhail Gorbachev."
+          }
+        ]
+      },
+      {
+        "id": "late-20th-early-21st-century",
+        "title": "Late 20th to Early 21st Century",
+        "standards": [
+          {
+            "id": "usii.8",
+            "description": "The student will apply history and social science skills to analyze the key changing patterns of society during the second half of the 20th and early 21st centuries by examining the contributions of key leaders and events during the Civil Rights Era including, but not limited to Robert Kennedy, Dr. Martin Luther King, Jr., Malcolm X, Medgar Evers, John Lewis, Rosa Parks, Ruby Bridges, Jonathan Daniels, Dorothy Height, the Selma march, sit-ins, and boycotts; explaining the significance of urban renewal plans including, but not limited to Jackson Ward in Richmond and Vinegar Hill in Charlottesville; examining key events of the 1960s and 1970s including, but not limited to the Apollo missions, the moon landing, assassinations, the women’s movement, the creation of public sector labor unions, the Watergate scandal and Nixon’s resignation, and the passing of the Clean Air Act and the Clean Water Act; describing the impact of the baby boom, the changing demographics of the United States, and the ending of the military draft; and describing the protections and provisions of the Americans with Disabilities Act (ADA); describing the similarities and differences between the objectives of the women’s movement of the early and mid-20th century; describing expanded educational and economic opportunities for military veterans, women, and minorities; and describing how the terrorist attacks of September 11, 2001, including the heroic sacrifices of Flight 93 passengers, significantly impacted domestic policies, American society, and global perspectives on the war on terror."
+          },
+          {
+            "id": "usii.9",
+            "description": "The student will apply history and social science skills by studying the iterative and ongoing advancements in science and technology; and describing the changes in American culture related to music, art, media, and communication, as well as advancements in American economics related to banking, business, and industry."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "history-7",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Grade 7",
+    "subject": "History",
+    "grade": "7",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "american-constitutional-government",
+        "title": "American Constitutional Government",
+        "standards": [
+          {
+            "id": "ce.1",
+            "description": "The student will apply history and social science skills to explain the foundations of the American constitutional democracy by explaining the fundamental principles of limited government, republicanism, federalism, checks and balances, separation of powers, and popular sovereignty; describing the Magna Carta, English common law, the charters of the Virginia Company of London (April 10, 1606; May 23, 1609; and March 12, 1612), the Virginia Declaration of Rights, the Declaration of Independence, the Articles of Confederation, and the Virginia Statute for Religious Freedom and their influence on the Constitution of Virginia and the Constitution of the United States, including the Bill of Rights; comparing and contrasting debates, compromises, and plans surrounding the drafting and ratification of the Constitution of the United States and the Bill of Rights; describing the purpose of the Constitution of the United States as stated in its preamble; explaining the fundamental concepts of the U.S. government including, but not limited to due process, equal justice under the law, equal protection, elections and a representative government, limited government, right to private property, rule of law, Supremacy Clause, and separation of powers; and describing the procedures for amending the Constitution of Virginia and the Constitution of the United States."
+          },
+          {
+            "id": "ce.2",
+            "description": "The student will apply history and social science skills to analyze how American constitutional government functions at the national level by describing the structure and powers of the government (the three branches of government); explaining the legislative branch and the lawmaking process as explained in Article I of the Constitution of the United States; explaining the particular role and powers of the executive branch as explained in Article II of the Constitution of the United States; explaining the particular role and powers of the judicial branch as explained in Article III of the Constitution of the United States; and explaining the principle of separation of powers and the operation of checks and balances."
+          },
+          {
+            "id": "ce.3",
+            "description": "The student will apply history and social science skills to analyze how constitutional government functions at the state level by describing the structure and powers of the state government (the three branches of government); explaining the state lawmaking process; describing the roles and powers of the executive branch and regulatory boards as they affect states; explaining the relationship between state governments and the national government in the federal system, referencing Federalist No.10 and Federalist No. 51; and explaining the principle of separation of powers and the operation of checks and balances at the state level."
+          },
+          {
+            "id": "ce.4",
+            "description": "The student will apply history and social science skills to analyze American constitutional government at the local level by describing the structure and powers of the local government and explaining the local lawmaking process; describing how state, national, and international issues and events impact local decision making; and comparing and contrasting powers and responsibilities of local, state, federal, and tribal governments including, but not limited to citizen engagement, how each is financed, and how they work together and independently."
+          },
+          {
+            "id": "ce.5",
+            "description": "The student will apply history and social science skills to explain the judicial systems established by the Constitution of Virginia and the Constitution of the United States by describing the system of state and federal courts including, but not limited to jurisdiction and judicial review; describing how due-process protections seek to ensure justice; comparing and contrasting civil and criminal cases; and explaining the effects of Supreme Court cases affecting the judiciary including, but not limited to Marbury v. Madison."
+          }
+        ]
+      },
+      {
+        "id": "citizenship-civic-life",
+        "title": "Citizenship and Civic Life",
+        "standards": [
+          {
+            "id": "ce.6",
+            "description": "The student will apply history and social science skills to define citizenship by describing the processes by which an individual becomes a citizen of the United States; describing the rights and privileges guaranteed by the First Amendment, including freedoms of religion, speech, press, assembly, and petition, the rights guaranteed by due process and equal protection under the law (Fifth, Sixth, and Fourteenth Amendments), and protection from unreasonable government search and seizure (Fourth Amendment); examining ways to peacefully work for change in communities or the nation by participating in political campaigns and methods of peacefully petitioning the government for change; examining how civic participation can address community needs and serve the public good, including the importance of volunteering, staying informed about current issues, and respecting differing beliefs in a diverse society; examining the process and importance of immigration policies at different points in U.S. history; and reviewing the criteria and exam for naturalizing U.S. citizens."
+          },
+          {
+            "id": "ce.7",
+            "description": "The student will apply history and social science skills that exhibit effective and respectful participation in civic life including, but not limited to civility, trustworthiness and honesty, courtesy, respect for the rights of others, personal responsibility, military service, self-reliance, hard work, respect for the law, patriotism, and service in one’s community."
+          }
+        ]
+      },
+      {
+        "id": "political-process",
+        "title": "The Political Process",
+        "standards": [
+          {
+            "id": "ce.8",
+            "description": "The student will apply history and social science skills to examine the political process at the local, state, and national levels of government by describing the origins, history, and functions of political parties; analyzing campaigns for elective office, with emphasis on the roles of candidates, volunteers, the media, voters, and poll watchers; explaining the role of campaign contributions and the cost of campaigns; examining the history of and requirements for voter registration; and describing the role of the Electoral College in the election of the president and vice president."
+          },
+          {
+            "id": "ce.9",
+            "description": "The student will apply history and social science skills to explain the role of the media and social media as well as its influence on local, state, and national levels of government by explaining the role and rights of the press in reporting events; describing the effect biased reporting can have on public opinion; explaining the role that individuals play in the political policy-making process by expressing their opinions formally or informally via print media, electronic media, or in-person; evaluating the effect of social media on political campaigns, politics, and civic discourse; identifying the source of information and considering possible motivations or biases of its creator; and evaluating multiple sources describing the same event or idea and reflecting on the reasons for any discrepancies."
+          },
+          {
+            "id": "ce.10",
+            "description": "The student will apply history and social science skills to analyze the role of public participation in American civic life by describing duties of citizens, including paying taxes, serving on a jury, following the law, and registering for selective service; evaluating voting responsibilities, voting dates, voting and processes in Virginia; and explaining voter eligibility and requirements for registration."
+          }
+        ]
+      },
+      {
+        "id": "economic-decisions",
+        "title": "Economic Decisions",
+        "standards": [
+          {
+            "id": "ce.11",
+            "description": "The student will apply history and social science skills to analyze how economic decisions are made in the marketplace and in daily life by explaining that because of scarcity, consumers, producers, and governments must make economic choices, and understanding that all choices have an opportunity cost; explaining the importance of innovation and productivity, including the freedom to choose occupations, the role of technology, and the development of human capital; and comparing and contrasting free-market, command, and mixed economies to determine how each affects the allocation of limited resources and the subsequent effects on individuals’ lives."
+          },
+          {
+            "id": "ce.12",
+            "description": "The student will apply history and social science skills to describe the United States economy by evaluating the shared fundamental principles and connection of free enterprise and democracy; describing the critical components of the United States economy, such as limited government, private property, markets, consumer sovereignty, and competition; explaining the concept of inflation and the effect of supply and demand on consumer prices in a market economy; describing the types of business organizations and the role of entrepreneurship; explaining the role of consumers, producers, and government interactions on the economy; explaining how financial institutions are critical to creating capital to fuel economic growth for individuals and the larger economy by channeling funds from savers to borrowers through lending; and analyzing the role of Virginia in the United States and global economies, with an emphasis on the effect of technological innovations."
+          },
+          {
+            "id": "ce.13",
+            "description": "The student will apply history and social science skills to analyze the role of government in the United States economy by examining the effect of competition in the marketplace; explaining how and why government provides certain public goods and services; describing how local, state, and federal governments allocate their budgets and collect taxes to pay for goods and services; explaining the structure and main function of the Federal Reserve System and how it acts as the nation’s central bank; explaining the role of government currency and analyzing the purpose of a money economy; describing how governments regulate commerce to protect consumers, the environment, competition in the marketplace, and property rights; and evaluating how and why governments regulate industry, labor, competition, and monopolies in the marketplace."
+          },
+          {
+            "id": "ce.14",
+            "description": "The student will apply history and social science skills to explain career opportunities and understand the fundamentals of personal finance by identifying the talents, interests, and aspirations that can influence career choice; identifying the attitudes and behaviors that strengthen individual work ethic and promote career success; identifying human capital, abilities, intellectual and physical skills, work habits, and education, and the changing supply and demand in the economy; examining the effect of technological change and globalization on career opportunities; describing the importance of education to one’s intellectual life, lifelong learning, and personal goals; analyzing the role of financial responsibility in good citizenship including, but not limited to evaluating common forms of credit, savings, and investments; describing the importance of equal opportunities for access to education and training; and researching jobs and careers in the public and private sector and understanding the pathways to various careers."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "history-8",
+    "title": "History and Social Science Standards of Learning for Virginia Public Schools - Grade 8",
+    "subject": "History",
+    "grade": "8",
+    "last_updated": "April 2023",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/history-social-science/stds_of_learn_history.docx",
+    "categories": [
+      {
+        "id": "introduction-geography",
+        "title": "Introduction to Geography",
+        "standards": [
+          {
+            "id": "wg.1",
+            "description": "The student will apply history and social science skills to explain how geographic information and geospatial tools are used to make decisions by explaining how characteristics of regions have led to regional labels; describing how regional landscapes reflect the physical environment and the cultural characteristics of their inhabitants; analyzing how cultural characteristics, including the world’s major languages, ethnicities, and religions, link or divide regions; and explaining how cartography is used to reflect regional perspectives, points of view, and perceptions of an area and the creation of mental maps."
+          }
+        ]
+      },
+      {
+        "id": "resources-environment",
+        "title": "Resources and the Environment",
+        "standards": [
+          {
+            "id": "wg.2",
+            "description": "The student will apply history and social science skills to evaluate the significance of natural, human, and capital resources by comparing the distribution of major natural resources throughout world regions; showing the influence of resources on patterns of economic activity and land use; and evaluating perspectives regarding the use of resources."
+          }
+        ]
+      },
+      {
+        "id": "classifying-identifying-regions",
+        "title": "Classifying and Identifying Regions",
+        "standards": [
+          {
+            "id": "wg.3",
+            "description": "The student will analyze the characteristics of the regions of the United States and Canada by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          },
+          {
+            "id": "wg.4",
+            "description": "The student will analyze the characteristics of the regions of Latin America and the Caribbean by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          },
+          {
+            "id": "wg.5",
+            "description": "The student will analyze the characteristics of the regions of Europe by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          },
+          {
+            "id": "wg.6",
+            "description": "The student will analyze the characteristics of the regions of Russia and Central Asia by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          },
+          {
+            "id": "wg.7",
+            "description": "The student will analyze the characteristics of the regions of sub-Saharan Africa by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          },
+          {
+            "id": "wg.8",
+            "description": "The student will analyze the characteristics of the regions of North Africa and Southwest Asia by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          },
+          {
+            "id": "wg.9",
+            "description": "The student will analyze the characteristics of the regions of South Asia and Southeast Asia by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          },
+          {
+            "id": "wg.10",
+            "description": "The student will analyze the characteristics of the East Asian region by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          },
+          {
+            "id": "wg.11",
+            "description": "The student will analyze the characteristics of the Australian and Pacific Islands regions by identifying and analyzing the location of major geographic regions and major cities on maps and globes; describing major physical and environmental features and how geography may change over time; analyzing cultural influences and landscapes; and explaining important economic characteristics, including the distribution of economic activities and global trade."
+          }
+        ]
+      },
+      {
+        "id": "population-migration",
+        "title": "Population and Migration",
+        "standards": [
+          {
+            "id": "wg.12",
+            "description": "The student will apply social science skills to understand the distribution, growth rates, and characteristics of human population by examining the relationship between demographic data to determine the level of economic development; distinguishing between developed and developing countries; and comparing and contrasting the level of economic development to the standard of living, quality of life, form of government, personal freedom, and economic opportunity."
+          },
+          {
+            "id": "wg.13",
+            "description": "The student will apply history and social science skills to understand population and migration by explaining how data is used to describe and compare populations; and analyzing the causes, impacts, and responses related to migration."
+          }
+        ]
+      },
+      {
+        "id": "culture",
+        "title": "Culture",
+        "standards": [
+          {
+            "id": "wg.14",
+            "description": "The student will apply history and social science skills to determine cultural patterns and interactions across time and place by identifying and describing characteristics that contribute to cultural identity, cultural groups, and cultural landscapes; and explaining the intellectual exchanges among cultures including, but not limited to the areas of science, geography, mathematics, philosophy, medicine, art, and literature."
+          },
+          {
+            "id": "wg.15",
+            "description": "The student will apply history and social science skills to analyze the patterns of rural and urban migration and development by applying the concepts of site and situation to major cities in each region; and explaining how the functions of towns and cities have changed over time."
+          }
+        ]
+      },
+      {
+        "id": "globalization",
+        "title": "Globalization",
+        "standards": [
+          {
+            "id": "wg.16",
+            "description": "The student will apply history and social science skills to understand the impact of the growing interdependence of the world by examining factors that influence the distribution of economic activities and trade; and analyzing global trade and communication networks."
+          }
+        ]
+      },
+      {
+        "id": "political-geography",
+        "title": "Political Geography",
+        "standards": [
+          {
+            "id": "wg.17",
+            "description": "The student will apply history and social science skills to analyze strategic geographic features and resources by identifying and describing examples of disputed borders and explaining the reasons for the disputes; describing and explaining examples of the different types of conflicts that may erupt between and among nations; and analyzing the types of conflicts and cooperation that can occur over the use of rivers and bodies of water."
+          }
+        ]
+      }
+    ]
+  }
+]

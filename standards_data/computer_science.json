@@ -1,0 +1,1132 @@
+[
+  {
+    "id": "CS-VA-2017-1",
+    "title": "Grade 1 Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "1",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/home/showpublisheddocument/9938/638026395811770000",
+    "categories": [
+      {
+        "id": "CS-VA-2017-1.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-1.1a",
+            "description": "The student will construct sets of step-by-step instructions (algorithms) either independently or collaboratively, including sequencing (including ordinal numbers)."
+          },
+          {
+            "id": "CS-VA-2017-1.1b",
+            "description": "The student will construct sets of step-by-step instructions (algorithms) either independently or collaboratively, including simple loops (patterns and repetition)."
+          },
+          {
+            "id": "CS-VA-2017-1.2a",
+            "description": "The student will construct programs to accomplish tasks as a means of creative expression using a block-based programming language or unplugged activities, either independently or collaboratively, including sequencing and ordinal numbers."
+          },
+          {
+            "id": "CS-VA-2017-1.2b",
+            "description": "The student will construct programs to accomplish tasks as a means of creative expression using a block-based programming language or unplugged activities, either independently or collaboratively, including simple loops (patterns and repetition)."
+          },
+          {
+            "id": "CS-VA-2017-1.3",
+            "description": "The student will analyze, correct, and improve (debug) an algorithm that includes sequencing."
+          },
+          {
+            "id": "CS-VA-2017-1.4",
+            "description": "The student will plan and create a design document to illustrate thoughts, ideas, and stories in a sequential (step-by-step) manner (e.g., story map, storyboard, sequential graphic organizer)."
+          },
+          {
+            "id": "CS-VA-2017-1.5",
+            "description": "The student will categorize a group of items based on one or two attributes or the actions of each item, with or without a computing device."
+          },
+          {
+            "id": "CS-VA-2017-1.6",
+            "description": "The student will acknowledge that materials are created by others (e.g., author, illustrator)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-1.7",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-1.7",
+            "description": "The student will identify components of computing systems that are common among different types of computing devices including desktop and laptop computers, tablets, and mobile phones."
+          },
+          {
+            "id": "CS-VA-2017-1.8",
+            "description": "The student will identify, using accurate terminology, simple hardware and software problems that may occur during use (e.g., app or program is not working as expected, no sound is coming from the device, the device won't turn on)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-1.9",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-1.9",
+            "description": "The student will describe what is allowed and what is not allowed at school associated with the use of technology."
+          },
+          {
+            "id": "CS-VA-2017-1.10",
+            "description": "The student will identify and use strong passwords, explain why strong passwords should be used (e.g., protect name, address, and telephone number)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-1.11",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-1.11",
+            "description": "The student will identify and interpret data and organize it in a chart or graph in order to make a prediction, with or without a computing device."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-1.12",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-1.12",
+            "description": "The student will identify and explain responsible behaviors associated with using information and technology."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-1.13",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-1.13",
+            "description": "The student will, in a whole class environment, discuss how information can be communicated electronically (e.g., email, social media)."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CS-VA-2017-K",
+    "title": "Kindergarten Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "K",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/home/showpublisheddocument/9938/638026395811770000",
+    "categories": [
+      {
+        "id": "CS-VA-2017-K.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-K.1",
+            "description": "The student will construct sets of step-by-step instructions (algorithms) either independently or collaboratively including sequencing that emphasize the beginning, middle, and end."
+          },
+          {
+            "id": "CS-VA-2017-K.2",
+            "description": "The student will construct programs to accomplish tasks as a means of creative expression using a block-based programming language or unplugged activities, either independently or collaboratively, including sequencing, emphasizing the beginning, middle, and end."
+          },
+          {
+            "id": "CS-VA-2017-K.3",
+            "description": "The student will create a design document to illustrate thoughts, ideas, and stories in a sequential (step-by-step) manner (e.g., story map, storyboard, and sequential graphic organizer)."
+          },
+          {
+            "id": "CS-VA-2017-K.4",
+            "description": "The student will categorize a group of items based on one attribute or the action of each item, with or without a computing device."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-K.5",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-K.5",
+            "description": "The student will identify components of computing systems (e.g., keyboard, mouse, desktop computer, laptop computer, tablet, and printer)."
+          },
+          {
+            "id": "CS-VA-2017-K.6",
+            "description": "The student will identify, using accurate terminology, simple hardware and software problems that may occur during use (e.g., app or program is not working as expected, no sound is coming from a device, device will not turn on)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-K.7",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-K.7",
+            "description": "The student will identify what is allowed and what is not allowed at school when using technology."
+          },
+          {
+            "id": "CS-VA-2017-K.8",
+            "description": "The student will identify personal information (e.g., address, telephone number, and name) and the importance of protecting personal information online."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-K.9",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-K.9",
+            "description": "The student will gather and display data and organize it in a chart or graph in order to answer questions about the data, with or without a computing device."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-K.10",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-K.10",
+            "description": "The student will identify responsible behaviors associated with using information and technology."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-K.11",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-K.11",
+            "description": "The student will discuss, in a whole class setting, how information can be communicated electronically (e.g., email, social media)."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CS-VA-2017-2",
+    "title": "Grade Two Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "2",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/home/showpublisheddocument/9938/638026395811770000",
+    "categories": [
+      {
+        "id": "CS-VA-2017-2.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-2.1",
+            "description": "The student will construct sets of step-by-step instructions (algorithms) both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-2.1a",
+                "description": "using sequencing;"
+              },
+              {
+                "id": "CS-VA-2017-2.1b",
+                "description": "using loops (a wide variety of patterns such as repeating patterns or growing patterns);"
+              },
+              {
+                "id": "CS-VA-2017-2.1c",
+                "description": "identifying events."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-2.2",
+            "description": "The student will construct programs to accomplish tasks as a means of creative expression using a block-based programming language or unplugged activities, both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-2.2a",
+                "description": "using sequencing;"
+              },
+              {
+                "id": "CS-VA-2017-2.2b",
+                "description": "using loops (a wide variety of patterns, such as repeating patterns or growing patterns);"
+              },
+              {
+                "id": "CS-VA-2017-2.2c",
+                "description": "identifying events."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-2.3",
+            "description": "The student will analyze, correct, and improve (debug) an algorithm that includes sequencing and simple loops, with or without a computing device."
+          },
+          {
+            "id": "CS-VA-2017-2.4",
+            "description": "The student will plan and create a design document to illustrate thoughts, ideas, and stories in a sequential (step-by-step) manner (e.g., story map, storyboard, sequential graphic organizer)."
+          },
+          {
+            "id": "CS-VA-2017-2.5",
+            "description": "The student will compare and contrast a group of items based on the attributes or actions of each item, with or without a computing device."
+          },
+          {
+            "id": "CS-VA-2017-2.6",
+            "description": "The student will acknowledge that materials are created by others (e.g., author, illustrator, and website)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-2.7",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-2.7",
+            "description": "The student will describe the characteristics of computing systems to include hardware, software, input, and output."
+          },
+          {
+            "id": "CS-VA-2017-2.8",
+            "description": "The student will identify, using accurate terminology, simple hardware and software problems that may occur during use (e.g., app or program not working as expected, no sound, device won't turn on)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-2.9",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-2.9",
+            "description": "The student will explain what is allowed and what is not allowed at school associated with the use of technology (e.g., class rules)."
+          },
+          {
+            "id": "CS-VA-2017-2.10",
+            "description": "The student will identify and create strong passwords, explain why strong passwords should be used (e.g., protect name, address, and telephone number)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-2.11",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-2.11",
+            "description": "The student will construct and analyze data and organize it in a chart or graph in order to make a prediction, with or without a computing device."
+          },
+          {
+            "id": "CS-VA-2017-2.12",
+            "description": "The student will create a model of a physical object or process in order to show relationships with or without a computing device (e.g., water cycle, butterfly life cycle, seasonal weather patterns)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-2.13",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-2.13",
+            "description": "The student will compare and contrast examples of how computing technology has changed and improved the way people live, work, and interact."
+          },
+          {
+            "id": "CS-VA-2017-2.14",
+            "description": "The student will identify and model responsible behaviors when using information and technology."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-2.15",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-2.15",
+            "description": "The student will discuss, between partners and as a class, how information can be communicated electronically (e.g., email, social media, video conferencing, blogging)."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CS-VA-2017-3",
+    "title": "Grade Three Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "3",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/home/showpublisheddocument/9938/638026395811770000",
+    "categories": [
+      {
+        "id": "CS-VA-2017-3.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-3.1",
+            "description": "The student will construct sets of step-by-step instructions (algorithms), both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-3.1a",
+                "description": "using sequencing;"
+              },
+              {
+                "id": "CS-VA-2017-3.1b",
+                "description": "using loops (a wide variety of patterns such as repeating patterns or growing patterns);"
+              },
+              {
+                "id": "CS-VA-2017-3.1c",
+                "description": "using events."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-3.2",
+            "description": "The student will construct programs to accomplish tasks as a means of creative expression using a block or text-based programming language, both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-3.2a",
+                "description": "using sequencing;"
+              },
+              {
+                "id": "CS-VA-2017-3.2b",
+                "description": "using loops (a wide variety of patterns such as repeating patterns or growing patterns);"
+              },
+              {
+                "id": "CS-VA-2017-3.2c",
+                "description": "identifying events."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-3.3",
+            "description": "The student will analyze, correct, and improve (debug) an algorithm that includes sequencing, events, and loops."
+          },
+          {
+            "id": "CS-VA-2017-3.4",
+            "description": "The student will create a plan as part of the iterative design process, independently and/or collaboratively, using a variety of strategies (e.g., pair programming, storyboard, flowchart, pseudocode, story map)."
+          },
+          {
+            "id": "CS-VA-2017-3.5",
+            "description": "The student will compare and contrast a group of items based on attributes or actions classified into at least two sets and two subsets."
+          },
+          {
+            "id": "CS-VA-2017-3.6",
+            "description": "The student will break down (decompose) a larger problem into smaller sub-problems, independently or collaboratively."
+          },
+          {
+            "id": "CS-VA-2017-3.7",
+            "description": "The student will give credit to sources when borrowing or changing ideas (e.g., using information and pictures created by others, using music created by others, remixing programming projects)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-3.8",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-3.8",
+            "description": "The student will model how a computing system works including input and output."
+          },
+          {
+            "id": "CS-VA-2017-3.9",
+            "description": "The student will identify, using accurate terminology, simple hardware and software problems that may occur during use, and apply strategies for solving problems (e.g., rebooting the device, checking for power, checking network availability, closing and reopening an app)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-3.10",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-3.10",
+            "description": "The student will identify problems that relate to inappropriate use of computing devices and networks."
+          },
+          {
+            "id": "CS-VA-2017-3.11",
+            "description": "The student will create examples of strong passwords, explain why strong passwords should be used, and demonstrate proper use and protection of personal passwords."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-3.12",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-3.12",
+            "description": "The student will use a computer to observe and analyze data in order to draw conclusions and make predictions."
+          },
+          {
+            "id": "CS-VA-2017-3.13",
+            "description": "The student will create an artifact using computing systems to model the attributes and behaviors associated with a concept (e.g., day and night, animal life cycles, plant life cycles)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-3.14",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-3.14",
+            "description": "The student will identify computing technologies that have changed the world and express how those technologies influence, and are influenced by, cultural practices."
+          },
+          {
+            "id": "CS-VA-2017-3.15",
+            "description": "The student will identify the positive and negative impacts of the pervasiveness of computers and computing in daily life (e.g., downloading videos and audio files, electronic appliances, wireless Internet, mobile computing devices, GPS systems, wearable computing)."
+          },
+          {
+            "id": "CS-VA-2017-3.16",
+            "description": "The student will identify social and ethical issues that relate to computing devices and networks."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-3.17",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-3.17",
+            "description": "The student will discuss in partners and as a class that information can be transmitted using computing devices via a network (e.g., email, blogging, video messaging)."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CS-VA-2017-4",
+    "title": "Grade Four Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "4",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/home/showpublisheddocument/9938/638026395811770000",
+    "categories": [
+      {
+        "id": "CS-VA-2017-4.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-4.1",
+            "description": "The student will construct sets of step-by-step instructions (algorithms) both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-4.1a",
+                "description": "using sequencing;"
+              },
+              {
+                "id": "CS-VA-2017-4.1b",
+                "description": "using loops;"
+              },
+              {
+                "id": "CS-VA-2017-4.1c",
+                "description": "using variables to store and process data;"
+              },
+              {
+                "id": "CS-VA-2017-4.1d",
+                "description": "performing number calculations on variables (e.g., addition, subtraction, multiplication, and division)."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-4.2",
+            "description": "The student will construct programs to accomplish a task as a means of creative expression using a block or text-based programming language, both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-4.2a",
+                "description": "using sequencing;"
+              },
+              {
+                "id": "CS-VA-2017-4.2b",
+                "description": "using loops;"
+              },
+              {
+                "id": "CS-VA-2017-4.2c",
+                "description": "using variables;"
+              },
+              {
+                "id": "CS-VA-2017-4.2d",
+                "description": "performing number calculations (e.g., addition, subtraction, multiplication, and division) on variables."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-4.3",
+            "description": "The student will analyze, correct, and improve (debug) an algorithm that includes sequencing, events, loops, and variables."
+          },
+          {
+            "id": "CS-VA-2017-4.4",
+            "description": "The student will create a plan as part of the iterative design process, both independently and collaboratively, using strategies such as pair programming (e.g., storyboard, flowchart, pseudocode, story map)."
+          },
+          {
+            "id": "CS-VA-2017-4.5",
+            "description": "The student will classify and arrange a group of items based on attributes or actions."
+          },
+          {
+            "id": "CS-VA-2017-4.6",
+            "description": "The student will break down (decompose) a larger problem into smaller sub-problems, both independently and collaboratively."
+          },
+          {
+            "id": "CS-VA-2017-4.7",
+            "description": "The student will give credit to sources when borrowing or changing ideas (e.g., using information, pictures created by others, using music created by others, remixing programming projects)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-4.8",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-4.8",
+            "description": "The student will model how a computing system works, including input and output, processors, and sensors."
+          },
+          {
+            "id": "CS-VA-2017-4.9",
+            "description": "The student will identify, using accurate terminology, simple hardware and software problems that may occur during use, and apply strategies for solving problems (e.g., rebooting the device, checking for power, checking for network availability, closing and reopening an app)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-4.10",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-4.10",
+            "description": "The student will identify and explain problems that relate to inappropriate use of computing devices and networks."
+          },
+          {
+            "id": "CS-VA-2017-4.11",
+            "description": "The student will create examples of strong passwords, explain why strong passwords should be used, and demonstrate proper use and protection of personal passwords."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-4.12",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-4.12",
+            "description": "The student will use a computer to observe, analyze, and manipulate data in order to draw conclusions and make predictions."
+          },
+          {
+            "id": "CS-VA-2017-4.13",
+            "description": "The student will create an artifact using computing systems to model the attributes and behaviors associated with a concept (e.g., solar system)."
+          },
+          {
+            "id": "CS-VA-2017-4.14",
+            "description": "The student will use numeric values to represent non-numeric ideas in the computer (binary, ASCII, pixel attributes such as RGB)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-4.15",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-4.15",
+            "description": "The student will give examples of computing technologies that have changed the world and express how those technologies influence, and are influenced by, cultural practices."
+          },
+          {
+            "id": "CS-VA-2017-4.16",
+            "description": "The student will describe the positive and negative impacts of the pervasiveness of computers and computing in daily life (e.g., downloading videos and audio files, electronic appliances, wireless Internet, mobile computing devices, GPS systems, wearable computing)."
+          },
+          {
+            "id": "CS-VA-2017-4.17",
+            "description": "The student will describe social and ethical issues that relate to computing devices and networks."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-4.18",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-4.18",
+            "description": "The student will identify and explain different ways information can be transmitted using computing devices via a network (e.g., email, images, and videos)."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CS-VA-2017-5",
+    "title": "Grade Five Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "5",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/home/showpublisheddocument/9938/638026395811770000",
+    "categories": [
+      {
+        "id": "CS-VA-2017-5.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-5.1",
+            "description": "The student will construct sets of step-by-step instructions (algorithms) both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-5.1a",
+                "description": "using sequencing;"
+              },
+              {
+                "id": "CS-VA-2017-5.1b",
+                "description": "using loops;"
+              },
+              {
+                "id": "CS-VA-2017-5.1c",
+                "description": "using variables to store and process data;"
+              },
+              {
+                "id": "CS-VA-2017-5.1d",
+                "description": "performing number calculations on variables (addition, subtraction, multiplication, and division);"
+              },
+              {
+                "id": "CS-VA-2017-5.1e",
+                "description": "using conditionals (if-statements)."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-5.2",
+            "description": "The student will construct programs to accomplish a task as a means of creative expression using a block or text-based programming language, both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-5.2a",
+                "description": "using sequencing;"
+              },
+              {
+                "id": "CS-VA-2017-5.2b",
+                "description": "using loops;"
+              },
+              {
+                "id": "CS-VA-2017-5.2c",
+                "description": "using variables;"
+              },
+              {
+                "id": "CS-VA-2017-5.2d",
+                "description": "using mathematical operations (addition, subtraction, multiplication, and division) to manipulate a variable;"
+              },
+              {
+                "id": "CS-VA-2017-5.2e",
+                "description": "using conditionals (if-statements)."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-5.3",
+            "description": "The student will analyze, correct, and improve (debug) an algorithm that includes sequencing, events, loops, conditionals, and variables."
+          },
+          {
+            "id": "CS-VA-2017-5.4",
+            "description": "The student will create a plan as part of the iterative design process, both independently and collaboratively, using different strategies (e.g., pair programming, storyboard, flowchart, pseudocode, story map)."
+          },
+          {
+            "id": "CS-VA-2017-5.5",
+            "description": "The student will break down (decompose) a larger problem into smaller sub-problems, both independently and collaboratively."
+          },
+          {
+            "id": "CS-VA-2017-5.6",
+            "description": "The student will give credit to sources when borrowing or changing ideas (e.g., using information, pictures created by others, using music created by others, remixing programming projects)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-5.7",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-5.7",
+            "description": "The student will model how a computing system works, including input and output, processors, sensors, and storage."
+          },
+          {
+            "id": "CS-VA-2017-5.8",
+            "description": "The student will identify, using accurate terminology, simple hardware and software problems that may occur during use, and apply strategies for solving problems (e.g., rebooting the device, checking for power, checking network availability, closing and reopening an app)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-5.9",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-5.9",
+            "description": "The student will evaluate and solve problems that relate to inappropriate use of computing devices and networks."
+          },
+          {
+            "id": "CS-VA-2017-5.10",
+            "description": "The student will determine whether passwords are strong, explain why strong passwords should be used, and demonstrate proper use and protection of personal passwords."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-5.11",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-5.11",
+            "description": "The student will use a computer to observe, analyze, and manipulate data in order to draw conclusions and make predictions."
+          },
+          {
+            "id": "CS-VA-2017-5.12",
+            "description": "The student will create an artifact using computing systems to model the attributes and behaviors associated with a concept (e.g., plate tectonics)."
+          },
+          {
+            "id": "CS-VA-2017-5.13",
+            "description": "The student will use numeric values to represent non-numeric ideas in the computer (e.g., binary, ASCII, pixel attributes such as RGB)."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-5.14",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-5.14",
+            "description": "The student will give examples and explain how computer science has changed the world and express how computing technologies influence, and are influenced by, cultural practices."
+          },
+          {
+            "id": "CS-VA-2017-5.15",
+            "description": "The student will evaluate and describe the positive and negative impacts of the pervasiveness of computers and computing in daily life (e.g., downloading videos and audio files, electronic appliances, wireless Internet, mobile computing devices, GPS systems, wearable computing)."
+          },
+          {
+            "id": "CS-VA-2017-5.16",
+            "description": "The student will explain social and ethical issues that relate to computing devices and networks."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-5.17",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-5.17",
+            "description": "The student will compare and contrast the difference between a local network and a worldwide network."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CS-VA-2017-6",
+    "title": "Grade Six Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "6",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/",
+    "categories": [
+      {
+        "id": "CS-VA-2017-6.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-6.1",
+            "description": "The student will construct programs to accomplish a task as a means of creative expression or scientific exploration using a block-based or text-based programming language, both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-6.1a",
+                "description": "combining control structures such as if-statements and loops;"
+              },
+              {
+                "id": "CS-VA-2017-6.1b",
+                "description": "creating clearly named variables that represent different data types, including numeric and non-numeric data, and perform operations on their values."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-6.2",
+            "description": "The student will trace programs to predict outcomes and debug (correct and improve) for correctness."
+          },
+          {
+            "id": "CS-VA-2017-6.3",
+            "description": "The student will seek and incorporate feedback from team members and users to refine a program that meets user needs."
+          },
+          {
+            "id": "CS-VA-2017-6.4",
+            "description": "The student will incorporate existing code, media, and libraries into original programs, and give attribution."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-6.5",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-6.5",
+            "description": "The student will design projects that combine hardware and software components to collect and exchange data."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-6.6",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-6.6",
+            "description": "The student will identify physical and digital security measures used to protect electronic information."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-6.7",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-6.7",
+            "description": "The student will explain how binary sequences are used to represent digital data. Exclusion: Conversions between binary and base-ten numbers are beyond the scope of these standards."
+          },
+          {
+            "id": "CS-VA-2017-6.8",
+            "description": "The student will collect data using computational tools then clean and organize to make it more useful and reliable."
+          },
+          {
+            "id": "CS-VA-2017-6.9",
+            "description": "The student will explain the insight and knowledge gained from digitally processed data by using appropriate visualizations."
+          },
+          {
+            "id": "CS-VA-2017-6.10",
+            "description": "The student will use models and simulations to formulate, refine, and test hypotheses."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-6.11",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-6.11",
+            "description": "The student will explain how computing has impacted innovations in other fields."
+          },
+          {
+            "id": "CS-VA-2017-6.12",
+            "description": "The student will explore careers related to data."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-6.13",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-6.13",
+            "description": "The student will explain why the speed of data transmission across the Internet can vary depending on the type of data being transmitted."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CS-VA-2017-7",
+    "title": "Grade Seven Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "7",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/",
+    "categories": [
+      {
+        "id": "CS-VA-2017-7.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-7.1",
+            "description": "The student will construct programs to accomplish a task as a means of creative expression or scientific exploration using a block-based or text-based programming language, both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-7.1a",
+                "description": "combining control structures such as if-statements and loops including compound conditionals;"
+              },
+              {
+                "id": "CS-VA-2017-7.1b",
+                "description": "creating clearly named variables that represent different data types, including numeric and non-numeric data, and perform operations on their values."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-7.2",
+            "description": "The student will document programs to make them easier to follow, test, and debug."
+          },
+          {
+            "id": "CS-VA-2017-7.3",
+            "description": "The student will distribute tasks and maintain a project timeline when collaboratively developing computational artifacts."
+          },
+          {
+            "id": "CS-VA-2017-7.4",
+            "description": "The student will decompose problems and subproblems into parts to facilitate the design, implementation, and review of programs."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-7.5",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-7.5",
+            "description": "The student will describe how the Internet connects devices and networks all over the world. Exclusion: Specific devices used to implement the Internet are beyond the scope of these standards."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-7.6",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-7.6",
+            "description": "The student will describe how physical and digital security measures protect electronic information."
+          },
+          {
+            "id": "CS-VA-2017-7.7",
+            "description": "The student will identify existing cybersecurity concerns associated with Internet use and Internet-based systems and potential options to address these issues."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-7.8",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-7.8",
+            "description": "The student will discuss the correctness of a model representing a system by comparing the model’s generated results with data that were observed in the system being modeled."
+          },
+          {
+            "id": "CS-VA-2017-7.9",
+            "description": "The student will refine computational models based on the data they have generated."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-7.10",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-7.10",
+            "description": "The student will explain how advances in technology have contributed to Virginia’s prosperity and role in the global economy."
+          },
+          {
+            "id": "CS-VA-2017-7.11",
+            "description": "The student will describe the development of new technologies in communication, entertainment, and business and their impact on American life."
+          },
+          {
+            "id": "CS-VA-2017-7.12",
+            "description": "The student will explore careers related to the Internet."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-7.13",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-7.13",
+            "description": "The student will outline the advantages and disadvantages of transmitting information over the Internet, including speed, reliability, cost, and security."
+          },
+          {
+            "id": "CS-VA-2017-7.14",
+            "description": "The student will explain why protocols are necessary in data transmission. Model the role of protocols in transmitting data across networks and the Internet."
+          },
+          {
+            "id": "CS-VA-2017-7.15",
+            "description": "The student will model how information is broken down into smaller pieces, transmitted as packets through multiple devices over networks and the Internet, and reassembled at the destination."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "CS-VA-2017-8",
+    "title": "Grade Eight Computer Science Standards of Learning",
+    "subject": "Computer Science",
+    "grade": "8",
+    "last_updated": "2017",
+    "source_url": "https://www.doe.virginia.gov/",
+    "categories": [
+      {
+        "id": "CS-VA-2017-8.1",
+        "title": "Algorithms and Programming",
+        "standards": [
+          {
+            "id": "CS-VA-2017-8.1",
+            "description": "The student will construct programs to accomplish a task as a means of creative expression or scientific exploration using a block-based or text-based programming language, both independently and collaboratively.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-8.1a",
+                "description": "combining control structures such as if-statements and loops including nested conditionals and loops;"
+              },
+              {
+                "id": "CS-VA-2017-8.1b",
+                "description": "using clearly named variables that represent different data types, including numeric and non-numeric data, and perform operations on their values;"
+              },
+              {
+                "id": "CS-VA-2017-8.1c",
+                "description": "create procedures with parameters."
+              }
+            ]
+          },
+          {
+            "id": "CS-VA-2017-8.2",
+            "description": "The student will systematically test and refine programs using a range of test cases."
+          },
+          {
+            "id": "CS-VA-2017-8.3",
+            "description": "The student will explain how effective communication between participants is required for successful collaboration when developing programs."
+          },
+          {
+            "id": "CS-VA-2017-8.4",
+            "description": "The student will use flowcharts and/or pseudocode to address complex problems as algorithms."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-8.5",
+        "title": "Computing Systems",
+        "standards": [
+          {
+            "id": "CS-VA-2017-8.5",
+            "description": "The student will, using the elements of computing devices such as primary memory, secondary storage, processor, input and output devices, and network connectivity, analyze the advantages and limitations of a given computing system."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-8.6",
+        "title": "Cybersecurity",
+        "standards": [
+          {
+            "id": "CS-VA-2017-8.6",
+            "description": "The student will evaluate physical and digital security measures used to protect electronic information."
+          },
+          {
+            "id": "CS-VA-2017-8.7",
+            "description": "The student will identify impacts of hacking, ransomware, scams, fake vulnerability scans, and the ethical and legal concerns involved. Exclusion: Students do not need to implement solutions."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-8.8",
+        "title": "Data and Analysis",
+        "standards": [
+          {
+            "id": "CS-VA-2017-8.8",
+            "description": "The student will explain the difference between a model and a simulation and create computational models to conduct simulations.",
+            "substandards": [
+              {
+                "id": "CS-VA-2017-8.8a",
+                "description": "explain the difference between a model and a simulation;"
+              },
+              {
+                "id": "CS-VA-2017-8.8b",
+                "description": "create computational models to conduct simulations."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-8.9",
+        "title": "Impacts of Computing",
+        "standards": [
+          {
+            "id": "CS-VA-2017-8.9",
+            "description": "The student will describe tradeoffs between allowing information to be public and keeping information private."
+          },
+          {
+            "id": "CS-VA-2017-8.10",
+            "description": "The student will evaluate online and print sources for appropriateness and credibility."
+          },
+          {
+            "id": "CS-VA-2017-8.11",
+            "description": "The student will discuss the social impacts and ethical considerations associated with the field of cybersecurity."
+          },
+          {
+            "id": "CS-VA-2017-8.12",
+            "description": "The student will explore careers related to the field of cybersecurity."
+          }
+        ]
+      },
+      {
+        "id": "CS-VA-2017-8.13",
+        "title": "Networking and the Internet",
+        "standards": [
+          {
+            "id": "CS-VA-2017-8.13",
+            "description": "The student will identify existing cybersecurity concerns associated with Internet use and Internet-based systems and potential options to address these issues."
+          }
+        ]
+      }
+    ]
+  }
+]

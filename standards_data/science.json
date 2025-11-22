@@ -1,0 +1,1868 @@
+[
+  {
+    "id": "science-k",
+    "title": "Science Standards of Learning for Virginia Public Schools - Kindergarten",
+    "subject": "Science",
+    "grade": "K",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/stds_of_learn_science.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "k.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems ask questions based on observations identify a problem based on need make predictions based on observations planning and carrying out investigations make observations to collect data identify characteristics and properties of objects through observations measure the relative length and weight of common objects record information from investigations interpreting, analyzing, and evaluating data describe patterns classify and/or sequence objects based on a single physical characteristic or property organize and represent data read and interpret data in object graphs, picture graphs, and tables constructing and critiquing conclusions and explanations make simple conclusions based on data or observations developing and using models distinguish between a model and an actual object obtaining, evaluating, and communicating information communicate comparative measures (e.g., heavier, lighter, longer, shorter, more, less, hotter, colder) communicate observations using pictures, drawings, and/or speech"
+          }
+        ]
+      },
+      {
+        "id": "force-motion-energy",
+        "title": "Force, Motion, and Energy",
+        "standards": [
+          {
+            "id": "k.2",
+            "description": "The student will investigate and understand that pushes and pulls affect the motion of objects.",
+            "substandards": [
+              {
+                "id": "k.2.a",
+                "description": "pushes and pulls can cause an object to move"
+              },
+              {
+                "id": "k.2.b",
+                "description": "pushes and pulls can change the direction of an object"
+              },
+              {
+                "id": "k.2.c",
+                "description": "changes in motion are related to the strength of the push or pull"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "matter",
+        "title": "Matter",
+        "standards": [
+          {
+            "id": "k.3",
+            "description": "The student will investigate and understand that physical properties of an object can be described.",
+            "substandards": [
+              {
+                "id": "k.3.a",
+                "description": "colors"
+              },
+              {
+                "id": "k.3.b",
+                "description": "shapes and forms"
+              },
+              {
+                "id": "k.3.c",
+                "description": "textures and feel"
+              },
+              {
+                "id": "k.3.d",
+                "description": "relative sizes and weights of objects"
+              }
+            ]
+          },
+          {
+            "id": "k.4",
+            "description": "The student will investigate and understand that water is important in our daily lives and has properties.",
+            "substandards": [
+              {
+                "id": "k.4.a",
+                "description": "water has many uses"
+              },
+              {
+                "id": "k.4.b",
+                "description": "water can be found in many places"
+              },
+              {
+                "id": "k.4.c",
+                "description": "water occurs in different phases"
+              },
+              {
+                "id": "k.4.d",
+                "description": "water flows downhill"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "living-systems-processes",
+        "title": "Living Systems and Processes",
+        "standards": [
+          {
+            "id": "k.5",
+            "description": "The students will investigate and understand that senses allow humans to seek, find, take in, and react or respond to different information.",
+            "substandards": [
+              {
+                "id": "k.5.a",
+                "description": "the five basic senses correspond to specific human body structures"
+              },
+              {
+                "id": "k.5.b",
+                "description": "senses are used in our daily lives"
+              }
+            ]
+          },
+          {
+            "id": "k.6",
+            "description": "The student will investigate and understand that there are differences between living organisms and nonliving objects.",
+            "substandards": [
+              {
+                "id": "k.6.a",
+                "description": "all things can be classified as living or nonliving"
+              },
+              {
+                "id": "k.6.b",
+                "description": "living organisms have certain characteristics that distinguish them from nonliving objects"
+              }
+            ]
+          },
+          {
+            "id": "k.7",
+            "description": "The student will investigate and understand that plants and animals have basic needs and life processes.",
+            "substandards": [
+              {
+                "id": "k.7.a",
+                "description": "living things need adequate food, water, shelter, air, and space to survive"
+              },
+              {
+                "id": "k.7.b",
+                "description": "plants and animals have life cycles"
+              },
+              {
+                "id": "k.7.c",
+                "description": "offspring of plants and animals are similar but not identical to their parents or to one another"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-space-systems",
+        "title": "Earth and Space Systems",
+        "standards": [
+          {
+            "id": "k.8",
+            "description": "The student will investigate and understand that light influences temperature on Earth’s surfaces and can cause shadows.",
+            "substandards": [
+              {
+                "id": "k.8.a",
+                "description": "the sun provides light and warms Earth’s surface"
+              },
+              {
+                "id": "k.8.b",
+                "description": "shadows can be produced when sunlight or artificial light is blocked by an object"
+              },
+              {
+                "id": "k.8.c",
+                "description": "objects in shadows and objects in sunlight have different temperatures"
+              }
+            ]
+          },
+          {
+            "id": "k.9",
+            "description": "The student will investigate and understand that there are patterns in nature.",
+            "substandards": [
+              {
+                "id": "k.9.a",
+                "description": "daily weather"
+              },
+              {
+                "id": "k.9.b",
+                "description": "seasonal changes"
+              },
+              {
+                "id": "k.9.c",
+                "description": "day and night"
+              }
+            ]
+          },
+          {
+            "id": "k.10",
+            "description": "The student will investigate and understand that change occurs over time.",
+            "substandards": [
+              {
+                "id": "k.10.a",
+                "description": "natural and human-made things change over time"
+              },
+              {
+                "id": "k.10.b",
+                "description": "living and nonliving things change over time"
+              },
+              {
+                "id": "k.10.c",
+                "description": "changes can be observed and measured"
+              },
+              {
+                "id": "k.10.d",
+                "description": "changes may be fast or slow"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-resources",
+        "title": "Earth Resources",
+        "standards": [
+          {
+            "id": "k.11",
+            "description": "The student will investigate and understand that humans use resources.",
+            "substandards": [
+              {
+                "id": "k.11.a",
+                "description": "some materials and objects can be used over and over again"
+              },
+              {
+                "id": "k.11.b",
+                "description": "materials can be recycled"
+              },
+              {
+                "id": "k.11.c",
+                "description": "choices we make impact the air, water, land and living things"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "science-1",
+    "title": "Science Standards of Learning for Virginia Public Schools - Grade 1",
+    "subject": "Science",
+    "grade": "1",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/stds_of_learn_science.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "1.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems ask questions and make predictions based on observations identify a simple problem that can be solved through the development of a new tool or improved object planning and carrying out investigations with guidance, conduct investigations to produce data identify characteristics and properties of objects by observations use tools to measure relative length, weight, volume, and temperature of common objects interpreting, analyzing, and evaluating data use and share pictures, drawings, and/or writings of observations describe patterns and relationships classify and arrange objects based on a single physical characteristic or property organize and represent various forms of data using tables, picture graphs, and object graphs read and interpret data displayed in tables, picture graphs, and object graphs, using the vocabulary more, less, fewer, greater than, less than, and equal to constructing and critiquing conclusions and explanations make simple conclusions based on data or observations recognize unusual or unexpected results developing and using models use physical models to demonstrate simple phenomena and natural processes obtaining, evaluating, and communicating information communicate observations and data using simple graphs, pictures, drawings, numbers, speech and/or writing"
+          }
+        ]
+      },
+      {
+        "id": "force-motion-energy",
+        "title": "Force, Motion, and Energy",
+        "standards": [
+          {
+            "id": "1.2",
+            "description": "The student will investigate and understand that objects can move in different ways.",
+            "substandards": [
+              {
+                "id": "1.2.a",
+                "description": "objects may have straight, circular, spinning, and back-and-forth motions"
+              },
+              {
+                "id": "1.2.b",
+                "description": "objects may vibrate and produce sound"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "matter",
+        "title": "Matter",
+        "standards": [
+          {
+            "id": "1.3",
+            "description": "The student will investigate and understand that objects are made from materials that can be described by their physical properties.",
+            "substandards": [
+              {
+                "id": "1.3.a",
+                "description": "objects are made of one or more materials with different physical properties and can be used for a variety of purposes"
+              },
+              {
+                "id": "1.3.b",
+                "description": "when a material is changed in size most physical properties remain the same"
+              },
+              {
+                "id": "1.3.c",
+                "description": "the type and amount of material determine how much light can pass through an object"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "living-systems-processes",
+        "title": "Living Systems and Processes",
+        "standards": [
+          {
+            "id": "1.4",
+            "description": "The student will investigate and understand that plants have basic life needs and functional parts that allow them to survive.",
+            "substandards": [
+              {
+                "id": "1.4.a",
+                "description": "plants need nutrients, air, water, light, and a place to grow"
+              },
+              {
+                "id": "1.4.b",
+                "description": "structures of plants perform specific functions"
+              },
+              {
+                "id": "1.4.c",
+                "description": "plants can be classified based on a variety of characteristics"
+              }
+            ]
+          },
+          {
+            "id": "1.5",
+            "description": "The student will investigate and understand that animals, including humans, have basic life needs that allow them to survive.",
+            "substandards": [
+              {
+                "id": "1.5.a",
+                "description": "animals need air, food, water, shelter, and space (habitat)"
+              },
+              {
+                "id": "1.5.b",
+                "description": "animals have different physical characteristics that perform specific functions"
+              },
+              {
+                "id": "1.5.c",
+                "description": "animals can be classified based on a variety of characteristics"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-space-systems",
+        "title": "Earth and Space Systems",
+        "standards": [
+          {
+            "id": "1.6",
+            "description": "The student will investigate and understand that there is a relationship between the sun and Earth.",
+            "substandards": [
+              {
+                "id": "1.6.a",
+                "description": "the sun is the source of energy and light that warms the Earth’s land, air, and water"
+              },
+              {
+                "id": "1.6.b",
+                "description": "the sun’s relative position changes in the Earth’s sky throughout the day"
+              }
+            ]
+          },
+          {
+            "id": "1.7",
+            "description": "The student will investigate and understand that there are weather and seasonal changes.",
+            "substandards": [
+              {
+                "id": "1.7.a",
+                "description": "changes in temperature, light, and precipitation occur over time"
+              },
+              {
+                "id": "1.7.b",
+                "description": "there are relationships between daily weather and the season"
+              },
+              {
+                "id": "1.7.c",
+                "description": "changes in temperature, light, and precipitation affect plants and animals, including humans"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-resources",
+        "title": "Earth Resources",
+        "standards": [
+          {
+            "id": "1.8",
+            "description": "The student will investigate and understand that natural resources can be used responsibly.",
+            "substandards": [
+              {
+                "id": "1.8.a",
+                "description": "most natural resources are limited"
+              },
+              {
+                "id": "1.8.b",
+                "description": "human actions can affect the availability of natural resources"
+              },
+              {
+                "id": "1.8.c",
+                "description": "reducing, reusing, and recycling are ways to conserve natural resources"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "science-2",
+    "title": "Science Standards of Learning for Virginia Public Schools - Grade 2",
+    "subject": "Science",
+    "grade": "2",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/stds_of_learn_science.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "2.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems ask questions that can be investigated make predictions based on observations and prior experiences identify a simple problem that can be solved through the development of a new tool or improved object planning and carrying out investigations with guidance, plan and conduct simple investigations to produce data use appropriate tools to measure length, weight, and temperature of common objects using U.S. Customary units measure time intervals using proper tools interpreting, analyzing, and evaluating data organize and represent data in pictographs and bar graphs read and interpret data represented in pictographs and bar graphs constructing and critiquing conclusions and explanations make simple conclusions based on data or observations distinguish between opinion and evidence recognize unusual or unexpected results developing and using models use models to demonstrate simple phenomena and natural processes obtaining, evaluating, and communicating information communicate observations and data using simple graphs, drawings, numbers, speech, and/or writing"
+          }
+        ]
+      },
+      {
+        "id": "force-motion-energy",
+        "title": "Force, Motion, and Energy",
+        "standards": [
+          {
+            "id": "2.2",
+            "description": "The student will investigate and understand that different types of forces may cause an object’s motion to change.",
+            "substandards": [
+              {
+                "id": "2.2.a",
+                "description": "forces from direct contact can cause an object to move"
+              },
+              {
+                "id": "2.2.b",
+                "description": "some forces, including gravity and magnetism, can cause objects to move from a distance"
+              },
+              {
+                "id": "2.2.c",
+                "description": "forces have applications in our lives"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "matter",
+        "title": "Matter",
+        "standards": [
+          {
+            "id": "2.3",
+            "description": "The student will investigate and understand that matter can exist in different phases.",
+            "substandards": [
+              {
+                "id": "2.3.a",
+                "description": "matter has mass and takes up space"
+              },
+              {
+                "id": "2.3.b",
+                "description": "solids, liquids, and gases have different characteristics"
+              },
+              {
+                "id": "2.3.c",
+                "description": "heating and cooling can change the phases of matter"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "living-systems-processes",
+        "title": "Living Systems and Processes",
+        "standards": [
+          {
+            "id": "2.4",
+            "description": "The student will investigate and understand that plants and animals undergo a series of orderly changes as they grow and develop.",
+            "substandards": [
+              {
+                "id": "2.4.a",
+                "description": "animals have life cycles"
+              },
+              {
+                "id": "2.4.b",
+                "description": "plants have life cycles"
+              }
+            ]
+          },
+          {
+            "id": "2.5",
+            "description": "The student will investigate and understand that living things are part of a system.",
+            "substandards": [
+              {
+                "id": "2.5.a",
+                "description": "plants and animals are interdependent with their living and nonliving surroundings"
+              },
+              {
+                "id": "2.5.b",
+                "description": "an animal’s habitat provides all of its basic needs"
+              },
+              {
+                "id": "2.5.c",
+                "description": "habitats change over time due to many influences"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-space-systems",
+        "title": "Earth and Space Systems",
+        "standards": [
+          {
+            "id": "2.6",
+            "description": "The student will investigate and understand that there are different types of weather on Earth.",
+            "substandards": [
+              {
+                "id": "2.6.a",
+                "description": "different types of weather have specific characteristics"
+              },
+              {
+                "id": "2.6.b",
+                "description": "measuring, recording, and interpreting weather data allows for identification of weather patterns"
+              },
+              {
+                "id": "2.6.c",
+                "description": "tracking weather allows us to prepare for the weather and storms"
+              }
+            ]
+          },
+          {
+            "id": "2.7",
+            "description": "The student will investigate and understand that weather patterns and seasonal changes affect plants, animals, and their surroundings.",
+            "substandards": [
+              {
+                "id": "2.7.a",
+                "description": "weather and seasonal changes affect the growth and behavior of living things"
+              },
+              {
+                "id": "2.7.b",
+                "description": "wind and weather can change the land"
+              },
+              {
+                "id": "2.7.c",
+                "description": "changes can happen quickly or slowly over time"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-resources",
+        "title": "Earth Resources",
+        "standards": [
+          {
+            "id": "2.8",
+            "description": "The student will investigate and understand that plants are important natural resources.",
+            "substandards": [
+              {
+                "id": "2.8.a",
+                "description": "the availability of plant products affects the development of a geographic area"
+              },
+              {
+                "id": "2.8.b",
+                "description": "plants provide oxygen, homes, and food for many animals"
+              },
+              {
+                "id": "2.8.c",
+                "description": "plants can help reduce the impact of wind and water"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "science-3",
+    "title": "Science Standards of Learning for Virginia Public Schools - Grade 3",
+    "subject": "Science",
+    "grade": "3",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/stds_of_learn_science.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "3.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems ask questions that can be investigated and predict reasonable outcomes ask questions about what would happen if a variable is changed define a simple design problem that can be solved through the development of an object, tool, process, or system planning and carrying out investigations with guidance, plan and conduct investigations use appropriate methods and/or tools for collecting data estimate length, mass, volume, and temperature measure length, mass, volume, and temperature in metric and U.S. Customary units using proper tools measure elapsed time use tools and/or materials to design and/or build a device that solves a specific problem interpreting, analyzing, and evaluating data organize and represent data in pictographs or bar graphs read, interpret, and analyze data represented in pictographs and bar graphs analyze data from tests of an object or tool to determine if it works as intended constructing and critiquing conclusions and explanations use evidence (measurements, observations, patterns) to construct or support an explanation generate and/or compare multiple solutions to a problem describe how scientific ideas apply to design solutions developing and using models use models to demonstrate simple phenomena and natural processes develop a model (e.g., diagram or simple physical prototype) to illustrate a proposed object, tool, or process obtaining, evaluating, and communicating information read and comprehend reading-level appropriate texts and/or other reliable media communicate scientific information, design ideas, and/or solutions with others"
+          }
+        ]
+      },
+      {
+        "id": "force-motion-energy",
+        "title": "Force, Motion, and Energy",
+        "standards": [
+          {
+            "id": "3.2",
+            "description": "The student will investigate and understand that the direction and size of force affects the motion of an object.",
+            "substandards": [
+              {
+                "id": "3.2.a",
+                "description": "multiple forces may act on an object"
+              },
+              {
+                "id": "3.2.b",
+                "description": "the net force on an object determines how an object moves"
+              },
+              {
+                "id": "3.2.c",
+                "description": "simple machines increase or change the direction of a force"
+              },
+              {
+                "id": "3.2.d",
+                "description": "simple and compound machines have many applications"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "matter",
+        "title": "Matter",
+        "standards": [
+          {
+            "id": "3.3",
+            "description": "The student will investigate and understand how materials interact with water.",
+            "substandards": [
+              {
+                "id": "3.3.a",
+                "description": "solids and liquids mix with water in different ways"
+              },
+              {
+                "id": "3.3.b",
+                "description": "many solids dissolve more easily in hot water than in cold water"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "living-systems-processes",
+        "title": "Living Systems and Processes",
+        "standards": [
+          {
+            "id": "3.4",
+            "description": "The student will investigate and understand that adaptations allow organisms to satisfy life needs and respond to the environment.",
+            "substandards": [
+              {
+                "id": "3.4.a",
+                "description": "populations may adapt over time"
+              },
+              {
+                "id": "3.4.b",
+                "description": "adaptations may be behavioral or physical"
+              },
+              {
+                "id": "3.4.c",
+                "description": "fossils provide evidence about the types of organisms that lived long ago as well as the nature of their environments"
+              }
+            ]
+          },
+          {
+            "id": "3.5",
+            "description": "The student will investigate and understand that aquatic and terrestrial ecosystems support a diversity of organisms.",
+            "substandards": [
+              {
+                "id": "3.5.a",
+                "description": "ecosystems are made of living and nonliving components of the environment"
+              },
+              {
+                "id": "3.5.b",
+                "description": "relationships exist among organisms in an ecosystem"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-space-systems",
+        "title": "Earth and Space Systems",
+        "standards": [
+          {
+            "id": "3.6",
+            "description": "The student will investigate and understand that soil is important in ecosystems.",
+            "substandards": [
+              {
+                "id": "3.6.a",
+                "description": "soil, with its different components, is important to organisms"
+              },
+              {
+                "id": "3.6.b",
+                "description": "soil provides support and nutrients necessary for plant growth"
+              }
+            ]
+          },
+          {
+            "id": "3.7",
+            "description": "The student will investigate and understand that there is a water cycle and water is important to life on Earth.",
+            "substandards": [
+              {
+                "id": "3.7.a",
+                "description": "there are many reservoirs of water on Earth"
+              },
+              {
+                "id": "3.7.b",
+                "description": "the energy from the sun drives the water cycle"
+              },
+              {
+                "id": "3.7.c",
+                "description": "the water cycle involves specific processes"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-resources",
+        "title": "Earth Resources",
+        "standards": [
+          {
+            "id": "3.8",
+            "description": "The student will investigate and understand that natural events and humans influence ecosystems.",
+            "substandards": [
+              {
+                "id": "3.8.a",
+                "description": "human activity affects the quality of air, water, and habitats"
+              },
+              {
+                "id": "3.8.b",
+                "description": "water is limited and needs to be conserved"
+              },
+              {
+                "id": "3.8.c",
+                "description": "fire, flood, disease, and erosion affect ecosystems"
+              },
+              {
+                "id": "3.8.d",
+                "description": "soil is a natural resource and should be conserved"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "science-4",
+    "title": "Science Standards of Learning for Virginia Public Schools - Grade 4",
+    "subject": "Science",
+    "grade": "4",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/stds_of_learn_science.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "4.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems identify scientific and non-scientific questions develop hypotheses as cause-and-effect relations define a simple design problem that can be solved through the development of an object, tool, process, or system planning and carrying out investigations identify variables when planning an investigation collaboratively plan and conduct investigations use tools and/or materials to design and/or build a device that solves a specific problem take metric measurements using appropriate tools measure elapsed time interpreting, analyzing, and evaluating data organize and represent data in bar graphs and line graphs interpret and analyze data represented in bar graphs and line graphs compare two different representations of the same data (e.g., a set of data displayed on a chart and a graph) analyze data from tests of an object or tool to determine whether it works as intended constructing and critiquing conclusions and explanations use evidence (i.e., measurements, observations, patterns) to construct or support explanations and to make inferences developing and using models develop and/or use models to explain natural phenomena identify limitations of models obtaining, evaluating, and communicating information read and comprehend reading-level-appropriate texts and/or other reliable media communicate scientific information, design ideas, and/or solutions with others"
+          }
+        ]
+      },
+      {
+        "id": "living-systems-processes",
+        "title": "Living Systems and Processes",
+        "standards": [
+          {
+            "id": "4.2",
+            "description": "The student will investigate and understand that plants and animals have structures that distinguish them from one another and play vital roles in their ability to survive.",
+            "substandards": [
+              {
+                "id": "4.2.a",
+                "description": "the survival of plants and animals depends on photosynthesis"
+              },
+              {
+                "id": "4.2.b",
+                "description": "plants and animals have different structures and processes for obtaining energy"
+              },
+              {
+                "id": "4.2.c",
+                "description": "plants and animals have different structures and processes for creating offspring"
+              }
+            ]
+          },
+          {
+            "id": "4.3",
+            "description": "The student will investigate and understand that organisms, including humans, interact with one another and with the nonliving components in the ecosystem.",
+            "substandards": [
+              {
+                "id": "4.3.a",
+                "description": "interrelationships exist in populations, communities, and ecosystems"
+              },
+              {
+                "id": "4.3.b",
+                "description": "food webs show the flow of energy within an ecosystem"
+              },
+              {
+                "id": "4.3.c",
+                "description": "changes in an organism’s niche and habitat may occur at various stages in its life cycle"
+              },
+              {
+                "id": "4.3.d",
+                "description": "classification can be used to identify organisms"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-space-systems",
+        "title": "Earth and Space Systems",
+        "standards": [
+          {
+            "id": "4.4",
+            "description": "The student will investigate and understand that weather conditions and phenomena affect ecosystems and can be predicted.",
+            "substandards": [
+              {
+                "id": "4.4.a",
+                "description": "weather measurements create a record that can be used to make weather predictions"
+              },
+              {
+                "id": "4.4.b",
+                "description": "common and extreme weather events affect ecosystems"
+              },
+              {
+                "id": "4.4.c",
+                "description": "long term seasonal weather trends determine the climate of a region"
+              }
+            ]
+          },
+          {
+            "id": "4.5",
+            "description": "The student will investigate and understand that the planets have characteristics and a specific place in the solar system.",
+            "substandards": [
+              {
+                "id": "4.5.a",
+                "description": "planets rotate on their axes and revolve around the sun"
+              },
+              {
+                "id": "4.5.b",
+                "description": "planets have characteristics and a specific order in the solar system"
+              },
+              {
+                "id": "4.5.c",
+                "description": "the sizes of the sun and planets can be compared to one another"
+              }
+            ]
+          },
+          {
+            "id": "4.6",
+            "description": "The student will investigate and understand that there are relationships among Earth, the moon, and the sun.",
+            "substandards": [
+              {
+                "id": "4.6.a",
+                "description": "the motions of Earth, the moon, and the sun"
+              },
+              {
+                "id": "4.6.b",
+                "description": "the causes for Earth’s seasons"
+              },
+              {
+                "id": "4.6.c",
+                "description": "the causes for the four major phases of the moon and the relationship to the tide cycles"
+              },
+              {
+                "id": "4.6.d",
+                "description": "the relative size, position, age and makeup of Earth, the moon, and the sun"
+              }
+            ]
+          },
+          {
+            "id": "4.7",
+            "description": "The student will investigate and understand that the ocean environment has characteristics.",
+            "substandards": [
+              {
+                "id": "4.7.a",
+                "description": "geology of the ocean floor"
+              },
+              {
+                "id": "4.7.b",
+                "description": "physical properties and movement of ocean water"
+              },
+              {
+                "id": "4.7.c",
+                "description": "interaction of organisms in the ocean"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-resources",
+        "title": "Earth Resources",
+        "standards": [
+          {
+            "id": "4.8",
+            "description": "The student will investigate and understand that Virginia has important natural resources.",
+            "substandards": [
+              {
+                "id": "4.8.a",
+                "description": "watersheds and water"
+              },
+              {
+                "id": "4.8.b",
+                "description": "plants and animals"
+              },
+              {
+                "id": "4.8.c",
+                "description": "minerals, rocks, and ores"
+              },
+              {
+                "id": "4.8.d",
+                "description": "forests, soil, and land"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "science-5",
+    "title": "Science Standards of Learning for Virginia Public Schools - Grade 5",
+    "subject": "Science",
+    "grade": "5",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/stds_of_learn_science.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "5.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems ask testable questions based on observations and predict reasonable outcomes based on patterns develop hypotheses as cause-and-effect relationship define design problems that can be solved through the development of an object, tool, process, or system planning and carrying out investigations collaboratively plan and conduct investigations to produce data identify independent variable, dependent variables, and constants determine data that should be collected to answer a testable question take metric measurements using appropriate tools use tools and/or materials to design and/or build a device that solves a specific problem interpreting, analyzing, and evaluating data represent and analyze data using tables and graphs organize simple data sets to reveal patterns that suggest relationships compare and contrast data collected by different groups and discuss similarities and differences in their findings use data to evaluate and refine design solutions constructing and critiquing conclusions and explanations construct and/or support arguments with evidence, data, and/or a model describe how scientific ideas apply to design solutions generate and compare multiple solutions to problems based on how well they meet the criteria and constraints developing and using models develop models using an analogy, example, or abstract representation to describe a scientific principle or design solution identify limitations of models obtaining, evaluating, and communicating information read and comprehend reading-level-appropriate texts and/or other reliable media communicate scientific information, design ideas, and/or solutions with others"
+          }
+        ]
+      },
+      {
+        "id": "force-motion-energy",
+        "title": "Force, Motion, and Energy",
+        "standards": [
+          {
+            "id": "5.2",
+            "description": "The student will investigate and understand that energy can take many forms.",
+            "substandards": [
+              {
+                "id": "5.2.a",
+                "description": "energy is the ability to do work or to cause change"
+              },
+              {
+                "id": "5.2.b",
+                "description": "there are many different forms of energy"
+              },
+              {
+                "id": "5.2.c",
+                "description": "energy can be transformed"
+              },
+              {
+                "id": "5.2.d",
+                "description": "energy is conserved"
+              }
+            ]
+          },
+          {
+            "id": "5.3",
+            "description": "The student will investigate and understand that there is a relationship between force and energy of moving objects.",
+            "substandards": [
+              {
+                "id": "5.3.a",
+                "description": "moving objects have kinetic energy"
+              },
+              {
+                "id": "5.3.b",
+                "description": "motion is described by an object’s direction and speed"
+              },
+              {
+                "id": "5.3.c",
+                "description": "changes in motion are related to net force and mass"
+              },
+              {
+                "id": "5.3.d",
+                "description": "when objects collide, the contact forces transfer energy and can change objects’ motion"
+              },
+              {
+                "id": "5.3.e",
+                "description": "friction is a force that opposes motion"
+              }
+            ]
+          },
+          {
+            "id": "5.4",
+            "description": "The student will investigate and understand that electricity is transmitted and used in daily life.",
+            "substandards": [
+              {
+                "id": "5.4.a",
+                "description": "electricity flows easily through conductors but not insulators"
+              },
+              {
+                "id": "5.4.b",
+                "description": "electricity flows through closed circuits"
+              },
+              {
+                "id": "5.4.c",
+                "description": "static electricity can be generated by rubbing certain materials together"
+              },
+              {
+                "id": "5.4.d",
+                "description": "electrical energy can be transformed into radiant, mechanical, and thermal energy"
+              },
+              {
+                "id": "5.4.e",
+                "description": "a current flowing through a wire creates a magnetic field"
+              }
+            ]
+          },
+          {
+            "id": "5.5",
+            "description": "The student will investigate and understand that sound can be produced and transmitted.",
+            "substandards": [
+              {
+                "id": "5.5.a",
+                "description": "sound is produced when an object or substance vibrates"
+              },
+              {
+                "id": "5.5.b",
+                "description": "sound is the transfer of energy"
+              },
+              {
+                "id": "5.5.c",
+                "description": "different media transmit sound differently"
+              },
+              {
+                "id": "5.5.d",
+                "description": "sound waves have many uses and applications"
+              }
+            ]
+          },
+          {
+            "id": "5.6",
+            "description": "The student will investigate and understand that visible light has certain characteristics and behaves in predictable ways.",
+            "substandards": [
+              {
+                "id": "5.6.a",
+                "description": "visible light is radiant energy that moves in transverse waves"
+              },
+              {
+                "id": "5.6.b",
+                "description": "the visible spectrum includes light with different wavelengths"
+              },
+              {
+                "id": "5.6.c",
+                "description": "matter influences the path of light"
+              },
+              {
+                "id": "5.6.d",
+                "description": "radiant energy can be transformed into thermal, mechanical, and electrical energy"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "matter",
+        "title": "Matter",
+        "standards": [
+          {
+            "id": "5.7",
+            "description": "The student will investigate and understand that matter has properties and interactions.",
+            "substandards": [
+              {
+                "id": "5.7.a",
+                "description": "matter is composed of atoms"
+              },
+              {
+                "id": "5.7.b",
+                "description": "substances can be mixed together without changes in their physical properties"
+              },
+              {
+                "id": "5.7.c",
+                "description": "energy has an effect on the phases of matter"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-space-systems",
+        "title": "Earth and Space Systems",
+        "standards": [
+          {
+            "id": "5.8",
+            "description": "The student will investigate and understand that Earth constantly changes.",
+            "substandards": [
+              {
+                "id": "5.8.a",
+                "description": "Earth’s internal energy causes movement of material within the Earth"
+              },
+              {
+                "id": "5.8.b",
+                "description": "plate tectonics describe movement of the crust"
+              },
+              {
+                "id": "5.8.c",
+                "description": "the rock cycle models the transformation of rocks"
+              },
+              {
+                "id": "5.8.d",
+                "description": "processes such as weathering, erosion, and deposition change the surface of the Earth"
+              },
+              {
+                "id": "5.8.e",
+                "description": "fossils and geologic patterns provide evidence of Earth’s change"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-resources",
+        "title": "Earth Resources",
+        "standards": [
+          {
+            "id": "5.9",
+            "description": "The student will investigate and understand that the conservation of energy resources is important.",
+            "substandards": [
+              {
+                "id": "5.9.a",
+                "description": "some sources of energy are considered renewable and others are not"
+              },
+              {
+                "id": "5.9.b",
+                "description": "individuals and communities have means of conserving both energy and matter"
+              },
+              {
+                "id": "5.9.c",
+                "description": "advances in technology improve the ability to transfer and transform energy"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "science-6",
+    "title": "Science Standards of Learning for Virginia Public Schools - Grade 6",
+    "subject": "Science",
+    "grade": "6",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/stds_of_learn_science.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "6.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems ask questions to determine relationships between independent and dependent variables develop hypotheses and identify independent and dependent variables offer simple solutions to design problems planning and carrying out investigations independently and collaboratively plan and conduct observational and experimental investigations; identify variables, constants, and controls where appropriate, and include the safe use of chemicals and equipment evaluate the accuracy of various methods for collecting data take metric measurements using appropriate tools use tools and materials to design and/or build a device to solve a specific problem interpreting, analyzing, and evaluating data organize data sets to reveal patterns that suggest relationships construct, analyze, and interpret graphical displays of data compare and contrast data collected by different groups and discuss similarities and differences in findings use data to evaluate and refine design solutions constructing and critiquing conclusions and explanations construct explanations that includes qualitative or quantitative relationships between variables construct scientific explanations based on valid and reliable evidence obtained from sources (including the students’ own investigations) generate and compare multiple solutions to problems based on how well they meet the criteria and constraints developing and using models use scale models to represent and estimate distance use, develop, and revise models to predict and explain phenomena evaluate limitations of models obtaining, evaluating, and communicating information read scientific texts, including those adapted for classroom use, to obtain scientific and/or technical information gather, read, and synthesize information from multiple appropriate sources and assess the credibility, accuracy, and possible bias of each publication construct, use, and/or present an argument supported by empirical evidence and scientific reasoning"
+          }
+        ]
+      },
+      {
+        "id": "universe",
+        "title": "Universe",
+        "standards": [
+          {
+            "id": "6.2",
+            "description": "The student will investigate and understand that the solar system is organized and the various bodies in the solar system interact.",
+            "substandards": [
+              {
+                "id": "6.2.a",
+                "description": "matter is distributed throughout the solar system"
+              },
+              {
+                "id": "6.2.b",
+                "description": "planets have different sizes and orbit at different distances from the sun"
+              },
+              {
+                "id": "6.2.c",
+                "description": "gravity contributes to orbital motion"
+              },
+              {
+                "id": "6.2.d",
+                "description": "the understanding of the solar system has developed over time"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "earth-space-systems",
+        "title": "Earth and Space Systems",
+        "standards": [
+          {
+            "id": "6.3",
+            "description": "The student will investigate and understand that there is a relationship between the sun, Earth, and the moon.",
+            "substandards": [
+              {
+                "id": "6.3.a",
+                "description": "Earth has unique properties"
+              },
+              {
+                "id": "6.3.b",
+                "description": "the rotation of Earth in relationship to the sun causes day and night"
+              },
+              {
+                "id": "6.3.c",
+                "description": "the movement of Earth and the moon in relationship to the sun causes phases of the moon"
+              },
+              {
+                "id": "6.3.d",
+                "description": "Earth’s tilt as it revolves around the sun causes the seasons"
+              },
+              {
+                "id": "6.3.e",
+                "description": "the relationship between Earth and the moon is the primary cause of tides"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "energy",
+        "title": "Energy",
+        "standards": [
+          {
+            "id": "6.4",
+            "description": "The student will investigate and understand that there are basic sources of energy and that energy can be transformed.",
+            "substandards": [
+              {
+                "id": "6.4.a",
+                "description": "the sun is important in the formation of most energy sources on Earth"
+              },
+              {
+                "id": "6.4.b",
+                "description": "Earth’s energy budget relates to living systems and Earth’s processes"
+              },
+              {
+                "id": "6.4.c",
+                "description": "radiation, conduction, and convection distribute energy"
+              },
+              {
+                "id": "6.4.d",
+                "description": "energy transformations are important in energy usage"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "atoms",
+        "title": "Atoms",
+        "standards": [
+          {
+            "id": "6.5",
+            "description": "The student will investigate and understand that all matter is composed of atoms.",
+            "substandards": [
+              {
+                "id": "6.5.a",
+                "description": "atoms consist of particles, including electrons, protons, and neutrons"
+              },
+              {
+                "id": "6.5.b",
+                "description": "atoms of a particular element are similar but differ from atoms of other elements"
+              },
+              {
+                "id": "6.5.c",
+                "description": "elements may be represented by chemical symbols"
+              },
+              {
+                "id": "6.5.d",
+                "description": "two or more atoms interact to form new substances, which are held together by electrical forces (bonds)"
+              },
+              {
+                "id": "6.5.e",
+                "description": "compounds may be represented by chemical formulas"
+              },
+              {
+                "id": "6.5.f",
+                "description": "chemical equations can be used to model chemical changes"
+              },
+              {
+                "id": "6.5.g",
+                "description": "a few elements comprise the largest portion of the solid Earth, living matter, the oceans, and the atmosphere"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "water",
+        "title": "Water",
+        "standards": [
+          {
+            "id": "6.6",
+            "description": "The student will investigate and understand that water has unique physical properties and has a role in the natural and human-made environment.",
+            "substandards": [
+              {
+                "id": "6.6.a",
+                "description": "water is referred to as the universal solvent"
+              },
+              {
+                "id": "6.6.b",
+                "description": "water has specific properties"
+              },
+              {
+                "id": "6.6.c",
+                "description": "thermal energy has a role in phase changes"
+              },
+              {
+                "id": "6.6.d",
+                "description": "water has a role in weathering"
+              },
+              {
+                "id": "6.6.e",
+                "description": "large bodies of water moderate climate"
+              },
+              {
+                "id": "6.6.f",
+                "description": "water is important for agriculture, power generation, and public health"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "air",
+        "title": "Air",
+        "standards": [
+          {
+            "id": "6.7",
+            "description": "The student will investigate and understand that air has properties and that Earth’s atmosphere has structure and is dynamic.",
+            "substandards": [
+              {
+                "id": "6.7.a",
+                "description": "air is a mixture of gaseous elements and compounds"
+              },
+              {
+                "id": "6.7.b",
+                "description": "the atmosphere has physical characteristics"
+              },
+              {
+                "id": "6.7.c",
+                "description": "properties of the atmosphere change with altitude"
+              },
+              {
+                "id": "6.7.d",
+                "description": "there is a relationship between air movement, thermal energy, and weather conditions"
+              },
+              {
+                "id": "6.7.e",
+                "description": "atmospheric measures are used to predict weather conditions"
+              },
+              {
+                "id": "6.7.f",
+                "description": "weather maps give basic information about fronts, systems, and weather measurements"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "watershed-systems",
+        "title": "Watershed Systems",
+        "standards": [
+          {
+            "id": "6.8",
+            "description": "The student will investigate and understand that land and water have roles in watershed systems.",
+            "substandards": [
+              {
+                "id": "6.8.a",
+                "description": "a watershed is composed of the land that drains into a body of water"
+              },
+              {
+                "id": "6.8.b",
+                "description": "Virginia is composed of multiple watershed systems which have specific features"
+              },
+              {
+                "id": "6.8.c",
+                "description": "the Chesapeake Bay is an estuary that has many important functions"
+              },
+              {
+                "id": "6.8.d",
+                "description": "natural processes, human activities, and biotic and abiotic factors influence the health of a watershed system"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "human-impact-environment",
+        "title": "Human Impact on the Environment",
+        "standards": [
+          {
+            "id": "6.9",
+            "description": "The student will investigate and understand that humans impact the environment and individuals can influence public policy decisions related to energy and the environment.",
+            "substandards": [
+              {
+                "id": "6.9.a",
+                "description": "natural resources are important to protect and maintain"
+              },
+              {
+                "id": "6.9.b",
+                "description": "renewable and nonrenewable resources can be managed"
+              },
+              {
+                "id": "6.9.c",
+                "description": "major health and safety issues are associated with air and water quality"
+              },
+              {
+                "id": "6.9.d",
+                "description": "major health and safety issues are related to different forms of energy"
+              },
+              {
+                "id": "6.9.e",
+                "description": "preventive measures can protect land-use and reduce environmental hazards"
+              },
+              {
+                "id": "6.9.f",
+                "description": "there are cost/benefit tradeoffs in conservation policies"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "science-7",
+    "title": "Science Standards of Learning for Virginia Public Schools - Life Science",
+    "subject": "Science",
+    "grade": "7",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/science-standards-of-learning-approved-october-2018.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "ls.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems ask questions that arise from careful observation of phenomena and/or organisms, from examining models and theories, and/or to seek additional information determine which questions can be investigated within the scope of the school laboratory or field to determine relationships between independent and dependent variables generate hypotheses based on research and scientific principles make hypotheses that specify what happens to a dependent variable when an independent variable is manipulated planning and carrying out investigations individually and collaboratively plan and conduct observational and experimental investigations plan and conduct investigations or test design solutions in a safe and ethical manner including considerations of environmental, social, and personal effects determine appropriate sample size and techniques select and use appropriate tools and technology to collect, record, analyze, and evaluate data interpreting, analyzing, and evaluating data construct and interpret data tables showing independent and dependent variables, repeated trials, and means construct, analyze, and interpret graphical displays of data and consider limitations of data analysis apply mathematical concepts and processes to scientific questions use data in building and revising models, supporting an explanation for phenomena, or testing solutions to problems analyze data using tools, technologies, and/or models to make valid and reliable scientific claims or determine an optimal design solution constructing and critiquing conclusions and explanations make quantitative and/or qualitative claims regarding the relationship between dependent and independent variables construct and revise explanations based on valid and reliable evidence obtained from a variety of sources including students’ own investigations, models, theories, simulations, and peer review apply scientific ideas, principles, and/or evidence to provide an explanation of phenomena and design solutions compare and evaluate competing arguments or design solutions in light of currently accepted explanations and new scientific evidence construct arguments or counterarguments based on data and evidence differentiate between a scientific hypothesis and theory developing and using models evaluate the merits and limitations of models develop, revise, and/or use models based on evidence to illustrate or predict relationships develop and/or use models to generate data to support explanations, predict phenomena, analyze systems, and/or solve problems obtaining, evaluating, and communicating information compare, integrate, and evaluate sources of information presented in different media or formats to address a scientific question or solve a problem gather, read, and evaluate scientific and/or technical information from multiple authoritative sources, assessing the evidence and credibility of each source communicate scientific and/or technical information about phenomena in multiple formats"
+          }
+        ]
+      },
+      {
+        "id": "cells",
+        "title": "Cells",
+        "standards": [
+          {
+            "id": "ls.2",
+            "description": "The student will investigate and understand that all living things are composed of one or more cells that support life processes, as described by the cell theory.",
+            "substandards": [
+              {
+                "id": "ls.2.a",
+                "description": "the development of the cell theory demonstrates the nature of science"
+              },
+              {
+                "id": "ls.2.b",
+                "description": "cell structure and organelles support life processes"
+              },
+              {
+                "id": "ls.2.c",
+                "description": "similarities and differences between plant and animal cells determine how they support life processes"
+              },
+              {
+                "id": "ls.2.d",
+                "description": "cell division is the mechanism for growth and reproduction"
+              },
+              {
+                "id": "ls.2.e",
+                "description": "cellular transport (osmosis and diffusion) is important for life processes"
+              }
+            ]
+          },
+          {
+            "id": "ls.3",
+            "description": "The student will investigate and understand that there are levels of structural organization in living things.",
+            "substandards": [
+              {
+                "id": "ls.3.a",
+                "description": "patterns of cellular organization support life processes"
+              },
+              {
+                "id": "ls.3.b",
+                "description": "unicellular and multicellular organisms have comparative structures"
+              },
+              {
+                "id": "ls.3.c",
+                "description": "similar characteristics determine the classification of organisms"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chemical-processes",
+        "title": "Chemical Processes of Life",
+        "standards": [
+          {
+            "id": "ls.4",
+            "description": "The student will investigate and understand that there are chemical processes of energy transfer which are important for life.",
+            "substandards": [
+              {
+                "id": "ls.4.a",
+                "description": "photosynthesis is the foundation of virtually all food webs"
+              },
+              {
+                "id": "ls.4.b",
+                "description": "photosynthesis and cellular respiration support life processes"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ecosystems",
+        "title": "Ecosystems",
+        "standards": [
+          {
+            "id": "ls.5",
+            "description": "The student will investigate and understand that biotic and abiotic factors affect an ecosystem.",
+            "substandards": [
+              {
+                "id": "ls.5.a",
+                "description": "matter moves through ecosystems via the carbon, water, and nitrogen cycles"
+              },
+              {
+                "id": "ls.5.b",
+                "description": "energy flow is represented by food webs and energy pyramids"
+              },
+              {
+                "id": "ls.5.c",
+                "description": "relationships exist among producers, consumers, and decomposers"
+              }
+            ]
+          },
+          {
+            "id": "ls.6",
+            "description": "The student will investigate and understand that populations in a biological community interact and are interdependent.",
+            "substandards": [
+              {
+                "id": "ls.6.a",
+                "description": "relationships exist between predators and prey and these relationships are modeled in food webs"
+              },
+              {
+                "id": "ls.6.b",
+                "description": "the availability and use of resources may lead to competition and cooperation"
+              },
+              {
+                "id": "ls.6.c",
+                "description": "symbiotic relationships support the survival of different species"
+              },
+              {
+                "id": "ls.6.d",
+                "description": "the niche of each organism supports survival"
+              }
+            ]
+          },
+          {
+            "id": "ls.7",
+            "description": "The student will investigate and understand that adaptations support an organism’s survival in an ecosystem.",
+            "substandards": [
+              {
+                "id": "ls.7.a",
+                "description": "biotic and abiotic factors define land, marine, and freshwater ecosystems"
+              },
+              {
+                "id": "ls.7.b",
+                "description": "physical and behavioral characteristics enable organisms to survive within a specific ecosystem"
+              }
+            ]
+          },
+          {
+            "id": "ls.8",
+            "description": "The student will investigate and understand that ecosystems, communities, populations, and organisms are dynamic and change over time.",
+            "substandards": [
+              {
+                "id": "ls.8.a",
+                "description": "organisms respond to daily, seasonal, and long-term changes"
+              },
+              {
+                "id": "ls.8.b",
+                "description": "changes in the environment may increase or decrease population size"
+              },
+              {
+                "id": "ls.8.c",
+                "description": "large-scale changes such as eutrophication, climate changes, and catastrophic disturbances affect ecosystems"
+              }
+            ]
+          },
+          {
+            "id": "ls.9",
+            "description": "The student will investigate and understand that relationships exist between ecosystem dynamics and human activity.",
+            "substandards": [
+              {
+                "id": "ls.9.a",
+                "description": "changes in habitat can disturb populations"
+              },
+              {
+                "id": "ls.9.b",
+                "description": "disruptions in ecosystems can change species competition"
+              },
+              {
+                "id": "ls.9.c",
+                "description": "variations in biotic and abiotic factors can change ecosystems"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "genetics",
+        "title": "Genetics",
+        "standards": [
+          {
+            "id": "ls.10",
+            "description": "The student will investigate and understand that organisms reproduce and transmit genetic information to new generations.",
+            "substandards": [
+              {
+                "id": "ls.10.a",
+                "description": "DNA has a role in making proteins that determine organism traits"
+              },
+              {
+                "id": "ls.10.b",
+                "description": "the role of meiosis is to transfer traits to the next generation"
+              },
+              {
+                "id": "ls.10.c",
+                "description": "Punnett squares are mathematical models used to predict the probability of traits in offspring"
+              }
+            ]
+          },
+          {
+            "id": "ls.11",
+            "description": "The student will investigate and understand that populations of organisms can change over time.",
+            "substandards": [
+              {
+                "id": "ls.11.a",
+                "description": "mutation, adaptation, natural selection, and extinction change populations"
+              },
+              {
+                "id": "ls.11.b",
+                "description": "the fossil record, genetic information, and anatomical comparisons provide evidence for evolution"
+              },
+              {
+                "id": "ls.11.c",
+                "description": "environmental factors and genetic variation, influence survivability and diversity of organisms"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "science-8",
+    "title": "Science Standards of Learning for Virginia Public Schools - Physical Science",
+    "subject": "Science",
+    "grade": "8",
+    "last_updated": "October 2018",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/science/2018/science-standards-of-learning-approved-october-2018.docx",
+    "categories": [
+      {
+        "id": "scientific-engineering-practices",
+        "title": "Scientific and Engineering Practices",
+        "standards": [
+          {
+            "id": "ps.1",
+            "description": "The student will demonstrate an understanding of scientific and engineering practices by asking questions and defining problems ask questions that require empirical evidence to answer develop hypotheses indicating relationships between independent and dependent variables offer simple solutions to design problems planning and carrying out investigations independently and collaboratively plan and conduct observational and experimental investigations; identify variables, constants, and controls where appropriate and include the safe use of chemicals and equipment evaluate the accuracy of various methods for collecting data take metric measurements using appropriate tools and technologies apply scientific ideas or principles to design, construct, and/or test a design of an object, tool, process or system interpreting, analyzing, and evaluating data construct and interpret data tables showing independent and dependent variables, repeated trials, and means construct, analyze, and interpret graphical displays of data and consider limitations of data analysis apply mathematical concepts and processes to scientific questions use data to evaluate and refine design solutions to best meet criteria constructing and critiquing conclusions and explanations construct scientific explanations based on valid and reliable evidence obtained from sources (including the students’ own investigations) construct arguments supported by empirical evidence and scientific reasoning generate and compare multiple solutions to problems based on how well they meet the criteria and constraints differentiate between a scientific hypothesis, theory, and law developing and using models construct, develop, and use models and simulations to illustrate and/or explain observable and unobservable phenomena evaluate limitations of models obtaining, evaluating, and communicating information read scientific texts, including those adapted for classroom use, to determine the central idea and/or obtain scientific and/or technical information gather, read, and synthesize information from multiple appropriate sources and assess the credibility, accuracy, and possible bias of each publication construct, use, and/or present an oral and written argument supported by empirical evidence and scientific reasoning"
+          }
+        ]
+      },
+      {
+        "id": "matter",
+        "title": "Matter",
+        "standards": [
+          {
+            "id": "ps.2",
+            "description": "The student will investigate and understand that matter is composed of atoms.",
+            "substandards": [
+              {
+                "id": "ps.2.a",
+                "description": "our understanding of atoms has developed over time"
+              },
+              {
+                "id": "ps.2.b",
+                "description": "the periodic table can be used to predict the chemical and physical properties of matter"
+              },
+              {
+                "id": "ps.2.c",
+                "description": "the kinetic molecular theory is used to predict and explain matter interactions"
+              }
+            ]
+          },
+          {
+            "id": "ps.3",
+            "description": "The student will investigate and understand that matter has properties and is conserved in chemical and physical processes.",
+            "substandards": [
+              {
+                "id": "ps.3.a",
+                "description": "pure substances can be identified based on their chemical and physical properties"
+              },
+              {
+                "id": "ps.3.b",
+                "description": "pure substances can undergo physical and chemical changes that may result in a change of properties"
+              },
+              {
+                "id": "ps.3.c",
+                "description": "compounds form through ionic and covalent bonding"
+              },
+              {
+                "id": "ps.3.d",
+                "description": "balanced chemical equations model the conservation of matter"
+              }
+            ]
+          },
+          {
+            "id": "ps.4",
+            "description": "The student will investigate and understand that the periodic table is a model used to organize elements based on their atomic structure.",
+            "substandards": [
+              {
+                "id": "ps.4.a",
+                "description": "symbols, atomic numbers, atomic mass, chemical groups (families), and periods are identified on the periodic table"
+              },
+              {
+                "id": "ps.4.b",
+                "description": "elements are classified as metals, metalloids, and nonmetals"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "energy",
+        "title": "Energy",
+        "standards": [
+          {
+            "id": "ps.5",
+            "description": "The student will investigate and understand that energy is conserved.",
+            "substandards": [
+              {
+                "id": "ps.5.a",
+                "description": "energy can be stored in different ways"
+              },
+              {
+                "id": "ps.5.b",
+                "description": "energy is transferred and transformed"
+              },
+              {
+                "id": "ps.5.c",
+                "description": "energy can be transformed to meet societal needs"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "waves",
+        "title": "Waves",
+        "standards": [
+          {
+            "id": "ps.6",
+            "description": "The student will investigate and understand that waves are important in the movement of energy.",
+            "substandards": [
+              {
+                "id": "ps.6.a",
+                "description": "energy may be transferred in the form of longitudinal and transverse waves"
+              },
+              {
+                "id": "ps.6.b",
+                "description": "mechanical waves need a medium to transfer energy"
+              },
+              {
+                "id": "ps.6.c",
+                "description": "waves can interact"
+              },
+              {
+                "id": "ps.6.d",
+                "description": "energy associated with waves has many applications"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "electromagnetic-radiation",
+        "title": "Electromagnetic Radiation",
+        "standards": [
+          {
+            "id": "ps.7",
+            "description": "The student will investigate and understand that electromagnetic radiation has characteristics.",
+            "substandards": [
+              {
+                "id": "ps.7.a",
+                "description": "electromagnetic radiation, including visible light, has wave characteristics and behavior"
+              },
+              {
+                "id": "ps.7.b",
+                "description": "regions of the electromagnetic spectrum have specific characteristics and uses"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "motion",
+        "title": "Motion",
+        "standards": [
+          {
+            "id": "ps.8",
+            "description": "The student will investigate and understand that work, force, and motion are related.",
+            "substandards": [
+              {
+                "id": "ps.8.a",
+                "description": "motion can be described using position and time"
+              },
+              {
+                "id": "ps.8.b",
+                "description": "motion is described by Newton’s laws"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "electricity-magnetism",
+        "title": "Electricity and Magnetism",
+        "standards": [
+          {
+            "id": "ps.9",
+            "description": "The student will investigate and understand that there are basic principles of electricity and magnetism.",
+            "substandards": [
+              {
+                "id": "ps.9.a",
+                "description": "an imbalance of charge generates static electricity"
+              },
+              {
+                "id": "ps.9.b",
+                "description": "materials have different conductive properties"
+              },
+              {
+                "id": "ps.9.c",
+                "description": "electric circuits transfer energy"
+              },
+              {
+                "id": "ps.9.d",
+                "description": "magnetic fields cause the magnetic effects of certain materials"
+              },
+              {
+                "id": "ps.9.e",
+                "description": "electric current and magnetic fields are related"
+              },
+              {
+                "id": "ps.9.f",
+                "description": "many technologies use electricity and magnetism"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

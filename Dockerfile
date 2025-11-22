@@ -22,8 +22,16 @@ COPY src ./src
 COPY docs ./docs
 COPY README.md ./README.md
 
+# Create a non-root user (ownership updated after DB ingestion)
+RUN useradd -m -u 1000 appuser
+
 RUN python src/ingest_standards.py
 
+# Ensure application files are owned by the non-root user
+RUN chown -R appuser:appuser /app
+
 EXPOSE 8000
+
+USER appuser
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
