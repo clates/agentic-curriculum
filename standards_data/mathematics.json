@@ -1,0 +1,930 @@
+[
+  {
+    "id": "math-k",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Kindergarten",
+    "subject": "Math",
+    "grade": "K",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "k.1",
+            "description": "The student will a) tell how many are in a given set of 20 or fewer objects by counting orally; and b) read, write, and represent numbers from 0 through 20."
+          },
+          {
+            "id": "k.2",
+            "description": "The student, given no more than three sets, each set containing 10 or fewer concrete objects, will a) compare and describe one set as having more, fewer, or the same number of objects as the other set(s); and b) compare and order sets from least to greatest and greatest to least."
+          },
+          {
+            "id": "k.3",
+            "description": "The student will a) count forward orally by ones from 0 to 100; b) count backward orally by ones when given any number between 1 and 10; c) identify the number after, without counting, when given any number between 0 and 100 and identify the number before, without counting, when given any number between 1 and 10; and d) count forward by tens to determine the total number of objects to 100."
+          },
+          {
+            "id": "k.4",
+            "description": "The student will a) recognize and describe with fluency part-whole relationships for numbers up to 5; and b) investigate and describe part-whole relationships for numbers up to 10."
+          },
+          {
+            "id": "k.5",
+            "description": "The student will investigate fractions by representing and solving practical problems involving equal sharing with two sharers."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "k.6",
+            "description": "The student will model and solve single-step story and picture problems with sums to 10 and differences within 10, using concrete objects."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "k.7",
+            "description": "The student will recognize the attributes of a penny, nickel, dime, and quarter and identify the number of pennies equivalent to a nickel, a dime, and a quarter."
+          },
+          {
+            "id": "k.8",
+            "description": "The student will investigate the passage of time by reading and interpreting a calendar."
+          },
+          {
+            "id": "k.9",
+            "description": "The student will compare two objects or events, using direct comparisons, according to one or more of the following attributes: length (longer, shorter), height (taller, shorter), weight (heavier, lighter), temperature (hotter, colder), volume (more, less), and time (longer, shorter)."
+          },
+          {
+            "id": "k.10",
+            "description": "The student will a) identify and describe plane figures (circle, triangle, square, and rectangle); b) compare the size (smaller, larger) and shape of plane figures (circle, triangle, square, and rectangle); and c) describe the location of one object relative to another (above, below, next to) and identify representations of plane figures (circle, triangle, square, and rectangle) regardless of their positions and orientations in space."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "k.11",
+            "description": "The student will a) collect, organize, and represent data; and b) read and interpret data in object graphs, picture graphs, and tables."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "k.12",
+            "description": "The student will sort and classify objects according to one attribute."
+          },
+          {
+            "id": "k.13",
+            "description": "The student will identify, describe, extend, create, and transfer repeating patterns."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "math-1",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Grade 1",
+    "subject": "Math",
+    "grade": "1",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "1.1",
+            "description": "The student will a) count forward orally by ones to 110, starting at any number between 0 and 110; b) write the numerals 0 to 110 in sequence and out-of-sequence; c) count backward orally by ones when given any number between 1 and 30; and d) count forward orally by ones, twos, fives, and tens to determine the total number of objects to 110."
+          },
+          {
+            "id": "1.2",
+            "description": "The student, given up to 110 objects, will a) group a collection into tens and ones and write the corresponding numeral; b) compare two numbers between 0 and 110 represented pictorially or with concrete objects, using the words greater than, less than or equal to; and c) order three or fewer sets from least to greatest and greatest to least."
+          },
+          {
+            "id": "1.3",
+            "description": "The student, given an ordered set of ten objects and/or pictures, will indicate the ordinal position of each object, first through tenth."
+          },
+          {
+            "id": "1.4",
+            "description": "The student will a) represent and solve practical problems involving equal sharing with two or four sharers; and b) represent and name fractions for halves and fourths, using models."
+          },
+          {
+            "id": "1.5",
+            "description": "The student, given a familiar problem situation involving magnitude, will a) select a reasonable order of magnitude from three given quantities: a one-digit numeral, a two-digit numeral, and a three-digit numeral (e.g., 5, 50, 500); and b) explain the reasonableness of the choice."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "1.6",
+            "description": "The student will create and solve single-step story and picture problems using addition and subtraction within 20."
+          },
+          {
+            "id": "1.7",
+            "description": "The student will a) recognize and describe with fluency part-whole relationships for numbers up to 10; and b) demonstrate fluency with addition and subtraction within 10."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "1.8",
+            "description": "The student will determine the value of a collection of like coins (pennies, nickels, or dimes) whose total value is 100 cents or less."
+          },
+          {
+            "id": "1.9",
+            "description": "The student will investigate the passage of time and a) tell time to the hour and half-hour, using analog and digital clocks; and b) read and interpret a calendar."
+          },
+          {
+            "id": "1.10",
+            "description": "The student will use nonstandard units to measure and compare length, weight, and volume."
+          },
+          {
+            "id": "1.11",
+            "description": "The student will a) identify, trace, describe, and sort plane figures (triangles, squares, rectangles, and circles) according to number of sides, vertices, and angles; and b) identify and describe representations of circles, squares, rectangles, and triangles in different environments, regardless of orientation, and explain reasoning."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "1.12",
+            "description": "The student will a) collect, organize, and represent various forms of data using tables, picture graphs, and object graphs; and b) read and interpret data displayed in tables, picture graphs, and object graphs, using the vocabulary more, less, fewer, greater than, less than, and equal to."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "1.13",
+            "description": "The student will sort and classify concrete objects according to one or two attributes."
+          },
+          {
+            "id": "1.14",
+            "description": "The student will identify, describe, extend, create, and transfer growing and repeating patterns."
+          },
+          {
+            "id": "1.15",
+            "description": "The student will demonstrate an understanding of equality through the use of the equal symbol."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "math-2",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Grade 2",
+    "subject": "Math",
+    "grade": "2",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "2.1",
+            "description": "The student will a) read, write, and identify the place and value of each digit in a three-digit numeral, with and without models; b) identify the number that is 10 more, 10 less, 100 more, and 100 less than a given number up to 999; c) compare and order whole numbers between 0 and 999; and d) round two-digit numbers to the nearest ten."
+          },
+          {
+            "id": "2.2",
+            "description": "The student will a) count forward by twos, fives, and tens to 120, starting at various multiples of 2, 5, or 10; b) count backward by tens from 120; and c) use objects to determine whether a number is even or odd."
+          },
+          {
+            "id": "2.3",
+            "description": "The student will a) count and identify the ordinal positions first through twentieth, using an ordered set of objects; and b) write the ordinal numbers 1st through 20th."
+          },
+          {
+            "id": "2.4",
+            "description": "The student will a) name and write fractions represented by a set, region, or length model for halves, fourths, eighths, thirds, and sixths; b) represent fractional parts with models and with symbols; and c) compare the unit fractions for halves, fourths, eighths, thirds, and sixths, with models."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "2.5",
+            "description": "The student will a) recognize and use the relationships between addition and subtraction to solve single-step practical problems, with whole numbers to 20; and b) demonstrate fluency with addition and subtraction within 20."
+          },
+          {
+            "id": "2.6",
+            "description": "The student will a) estimate sums and differences; b) determine sums and differences, using various methods; and c) create and solve single-step and two-step practical problems involving addition and subtraction."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "2.7",
+            "description": "The student will a) count and compare a collection of pennies, nickels, dimes, and quarters whose total value is $2.00 or less; and b) use the cent symbol, dollar symbol, and decimal point to write a value of money."
+          },
+          {
+            "id": "2.8",
+            "description": "The student will estimate and measure a) length to the nearest inch; and b) weight to the nearest pound."
+          },
+          {
+            "id": "2.9",
+            "description": "The student will tell time and write time to the nearest five minutes, using analog and digital clocks."
+          },
+          {
+            "id": "2.10",
+            "description": "The student will a) determine past and future days of the week; and b) identify specific days and dates on a given calendar."
+          },
+          {
+            "id": "2.11",
+            "description": "The student will read temperature to the nearest 10 degrees."
+          },
+          {
+            "id": "2.12",
+            "description": "The student will a) draw a line of symmetry in a figure; and b) identify and create figures with at least one line of symmetry."
+          },
+          {
+            "id": "2.13",
+            "description": "The student will identify, describe, compare, and contrast plane and solid figures (circles/spheres, squares/cubes, and rectangles/rectangular prisms)."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "2.14",
+            "description": "The student will use data from probability experiments to predict outcomes when the experiment is repeated."
+          },
+          {
+            "id": "2.15",
+            "description": "The student will a) collect, organize, and represent data in pictographs and bar graphs; and b) read and interpret data represented in pictographs and bar graphs."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "2.16",
+            "description": "The student will identify, describe, create, extend, and transfer patterns found in objects, pictures, and numbers."
+          },
+          {
+            "id": "2.17",
+            "description": "The student will demonstrate an understanding of equality through the use of the equal symbol and the use of the not equal symbol."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "math-3",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Grade 3",
+    "subject": "Math",
+    "grade": "3",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "3.1",
+            "description": "The student will a) read, write, and identify the place and value of each digit in a six-digit whole number, with and without models; b) round whole numbers, 9,999 or less, to the nearest ten, hundred, and thousand; and c) compare and order whole numbers, each 9,999 or less."
+          },
+          {
+            "id": "3.2",
+            "description": "The student will a) name and write fractions and mixed numbers represented by a model; b) represent fractions and mixed numbers with models and symbols; and c) compare fractions having like and unlike denominators, using words and symbols (>, <, =, or ≠), with models."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "3.3",
+            "description": "The student will a) estimate and determine the sum or difference of two whole numbers; and b) create and solve single-step and multistep practical problems involving sums or differences of two whole numbers, each 9,999 or less."
+          },
+          {
+            "id": "3.4",
+            "description": "The student will a) represent multiplication and division through 10 × 10, using a variety of approaches and models; b) create and solve single-step practical problems that involve multiplication and division through 10 x 10; and c) demonstrate fluency with multiplication facts of 0, 1, 2, 5, and 10; and d) solve single-step practical problems involving multiplication of whole numbers, where one factor is 99 or less and the second factor is 5 or less."
+          },
+          {
+            "id": "3.5",
+            "description": "The student will solve practical problems that involve addition and subtraction with proper fractions having like denominators of 12 or less."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "3.6",
+            "description": "The student will a) determine the value of a collection of bills and coins whose total value is $5.00 or less; b) compare the value of two sets of coins or two sets of coins and bills; and c) make change from $5.00 or less."
+          },
+          {
+            "id": "3.7",
+            "description": "The student will estimate and use U.S. Customary and metric units to measure a) length to the nearest 1 2 inch, inch, foot, yard, centimeter, and meter; and b) liquid volume in cups, pints, quarts, gallons, and liters."
+          },
+          {
+            "id": "3.8",
+            "description": "The student will estimate and a) measure the distance around a polygon in order to determine its perimeter using U.S. Customary and metric units; and b) count the number of square units needed to cover a given surface in order to determine its area."
+          },
+          {
+            "id": "3.9",
+            "description": "The student will a) tell time to the nearest minute, using analog and digital clocks; b) solve practical problems related to elapsed time in one-hour increments within a 12-hour period; and c) identify equivalent periods of time and solve practical problems related to equivalent periods of time."
+          },
+          {
+            "id": "3.10",
+            "description": "The student will read temperature to the nearest degree."
+          },
+          {
+            "id": "3.11",
+            "description": "The student will identify and draw representations of points, lines, line segments, rays, and angles."
+          },
+          {
+            "id": "3.12",
+            "description": "The student will a) define polygon; b) identify and name polygons with 10 or fewer sides; and c) combine and subdivide polygons with three or four sides and name the resulting polygon(s)."
+          },
+          {
+            "id": "3.13",
+            "description": "The student will identify and describe congruent and noncongruent figures."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "3.14",
+            "description": "The student will investigate and describe the concept of probability as a measurement of chance and list possible outcomes for a single event."
+          },
+          {
+            "id": "3.15",
+            "description": "The student will a) collect, organize, and represent data in pictographs or bar graphs; and b) read and interpret data represented in pictographs and bar graphs."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "3.16",
+            "description": "The student will identify, describe, create, and extend patterns found in objects, pictures, numbers and tables."
+          },
+          {
+            "id": "3.17",
+            "description": "The student will create equations to represent equivalent mathematical relationships."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "math-4",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Grade 4",
+    "subject": "Math",
+    "grade": "4",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "4.1",
+            "description": "The student will a) read, write, and identify the place and value of each digit in a nine-digit whole number; b) compare and order whole numbers expressed through millions; and c) round whole numbers expressed through millions to the nearest thousand, ten thousand, and hundred thousand."
+          },
+          {
+            "id": "4.2",
+            "description": "The student will a) compare and order fractions and mixed numbers, with and without models; b) represent equivalent fractions; and c) identify the division statement that represents a fraction, with models and in context."
+          },
+          {
+            "id": "4.3",
+            "description": "The student will a) read, write, represent, and identify decimals expressed through thousandths; b) round decimals to the nearest whole number; c) compare and order decimals; and d) given a model, write the decimal and fraction equivalents."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "4.4",
+            "description": "The student will a) demonstrate fluency with multiplication facts through 12 x 12, and the corresponding division facts; b) estimate and determine sums, differences, and products of whole numbers; c) estimate and determine quotients of whole numbers, with and without remainders; and d) create and solve single-step and multistep practical problems involving addition, subtraction, and multiplication, and single-step practical problems involving division with whole numbers."
+          },
+          {
+            "id": "4.5",
+            "description": "The student will a) determine common multiples and factors, including least common multiple and greatest common factor; b) add and subtract fractions and mixed numbers having like and unlike denominators; and c) solve single-step practical problems involving addition and subtraction with fractions and mixed numbers."
+          },
+          {
+            "id": "4.6",
+            "description": "The student will a) add and subtract with decimals; and b) solve single-step and multistep practical problems involving addition and subtraction with decimals."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "4.7",
+            "description": "The student will solve practical problems that involve determining perimeter and area in U.S. Customary and metric units."
+          },
+          {
+            "id": "4.8",
+            "description": "The student will a) estimate and measure length and describe the result in U.S. Customary and metric units; b) estimate and measure weight/mass and describe the result in U.S. Customary and metric units; c) given the equivalent measure of one unit, identify equivalent measures of length, weight/mass, and liquid volume between units within the U.S. Customary system; and d) solve practical problems that involve length, weight/mass, and liquid volume in U.S. Customary units."
+          },
+          {
+            "id": "4.9",
+            "description": "The student will solve practical problems related to elapsed time in hours and minutes within a 12-hour period."
+          },
+          {
+            "id": "4.10",
+            "description": "The student will a) identify and describe points, lines, line segments, rays, and angles, including endpoints and vertices; and b) identify and describe intersecting, parallel, and perpendicular lines."
+          },
+          {
+            "id": "4.11",
+            "description": "The student will identify, describe, compare, and contrast plane and solid figures according to their characteristics (number of angles, vertices, edges, and the number and shape of faces) using concrete models and pictorial representations."
+          },
+          {
+            "id": "4.12",
+            "description": "The student will classify quadrilaterals as parallelograms, rectangles, squares, rhombi, and/or trapezoids."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "4.13",
+            "description": "The student will a) determine the likelihood of an outcome of a simple event; b) represent probability as a number between 0 and 1, inclusive; and c) create a model or practical problem to represent a given probability."
+          },
+          {
+            "id": "4.14",
+            "description": "The student will a) collect, organize, and represent data in bar graphs and line graphs; b) interpret data represented in bar graphs and line graphs; and c) compare two different representations of the same data (e.g., a set of data displayed on a chart and a bar graph, a chart and a line graph, or a pictograph and a bar graph)."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "4.15",
+            "description": "The student will identify, describe, create, and extend patterns found in objects, pictures, numbers, and tables."
+          },
+          {
+            "id": "4.16",
+            "description": "The student will recognize and demonstrate the meaning of equality in an equation."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "math-5",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Grade 5",
+    "subject": "Math",
+    "grade": "5",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "5.1",
+            "description": "The student, given a decimal through thousandths, will round to the nearest whole number, tenth, or hundredth."
+          },
+          {
+            "id": "5.2",
+            "description": "The student will a) represent and identify equivalencies among fractions and decimals, with and without models; and b) compare and order fractions, mixed numbers, and/or decimals in a given set, from least to greatest and greatest to least."
+          },
+          {
+            "id": "5.3",
+            "description": "The student will a) identify and describe the characteristics of prime and composite numbers; and b) identify and describe the characteristics of even and odd numbers."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "5.4",
+            "description": "The student will create and solve single-step and multistep practical problems involving addition, subtraction, multiplication, and division of whole numbers."
+          },
+          {
+            "id": "5.5",
+            "description": "The student will a) estimate and determine the product and quotient of two numbers involving decimals; and b) create and solve single-step and multistep practical problems involving addition, subtraction, and multiplication of decimals, and create and solve single-step practical problems involving division of decimals."
+          },
+          {
+            "id": "5.6",
+            "description": "The student will a) solve single-step and multistep practical problems involving addition and subtraction with fractions and mixed numbers; and b) solve single-step practical problems involving multiplication of a whole number, limited to 12 or less, and a proper fraction, with models."
+          },
+          {
+            "id": "5.7",
+            "description": "The student will simplify whole number numerical expressions using the order of operations."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "5.8",
+            "description": "The student will a) solve practical problems that involve perimeter, area, and volume in standard units of measure; and b) differentiate among perimeter, area, and volume and identify whether the application of the concept of perimeter, area, or volume is appropriate for a given situation."
+          },
+          {
+            "id": "5.9",
+            "description": "The student will a) given the equivalent measure of one unit, identify equivalent measurements within the metric system; and b) solve practical problems involving length, mass, and liquid volume using metric units."
+          },
+          {
+            "id": "5.10",
+            "description": "The student will identify and describe the diameter, radius, chord, and circumference of a circle."
+          },
+          {
+            "id": "5.11",
+            "description": "The student will solve practical problems related to elapsed time in hours and minutes within a 24-hour period."
+          },
+          {
+            "id": "5.12",
+            "description": "The student will classify and measure right, acute, obtuse, and straight angles."
+          },
+          {
+            "id": "5.13",
+            "description": "The student will a) classify triangles as right, acute, or obtuse and equilateral, scalene, or isosceles; and b) investigate the sum of the interior angles in a triangle and determine an unknown angle measure."
+          },
+          {
+            "id": "5.14",
+            "description": "The student will a) recognize and apply transformations, such as translation, reflection, and rotation; and b) investigate and describe the results of combining and subdividing polygons."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "5.15",
+            "description": "The student will determine the probability of an outcome by constructing a sample space or using the Fundamental (Basic) Counting Principle."
+          },
+          {
+            "id": "5.16",
+            "description": "The student, given a practical problem, will a) represent data in line plots and stem-and-leaf plots; b) interpret data represented in line plots and stem-and-leaf plots; and c) compare data represented in a line plot with the same data represented in a stem-and-leaf plot."
+          },
+          {
+            "id": "5.17",
+            "description": "The student, given a practical context, will a) describe mean, median, and mode as measures of center; b) describe mean as fair share; c) describe the range of a set of data as a measure of spread; and d) determine the mean, median, mode, and range of a set of data."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "5.18",
+            "description": "The student will identify, describe, create, express, and extend number patterns found in objects, pictures, numbers and tables."
+          },
+          {
+            "id": "5.19",
+            "description": "The student will a) investigate and describe the concept of variable; b) write an equation to represent a given mathematical relationship, using a variable; c) use an expression with a variable to represent a given verbal expression involving one operation; and d) create a problem situation based on a given equation, using a single variable and one operation."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "math-6",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Grade 6",
+    "subject": "Math",
+    "grade": "6",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "6.1",
+            "description": "The student will represent relationships between quantities using ratios, and will use appropriate notations, such as a b, a to b, and a:b."
+          },
+          {
+            "id": "6.2",
+            "description": "The student will a) represent and determine equivalencies among fractions, mixed numbers, decimals, and percents; and b) compare and order positive rational numbers."
+          },
+          {
+            "id": "6.3",
+            "description": "The student will a) identify and represent integers; b) compare and order integers; and c) identify and describe absolute value of integers."
+          },
+          {
+            "id": "6.4",
+            "description": "The student will recognize and represent patterns with whole number exponents and perfect squares."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "6.5",
+            "description": "The student will a) multiply and divide fractions and mixed numbers; b) solve single-step and multistep practical problems involving addition, subtraction, multiplication, and division of fractions and mixed numbers; and c) solve multistep practical problems involving addition, subtraction, multiplication, and division of decimals."
+          },
+          {
+            "id": "6.6",
+            "description": "The student will a) add, subtract, multiply, and divide integers; b) solve practical problems involving operations with integers; and c) simplify numerical expressions involving integers."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "6.7",
+            "description": "The student will a) derive π (pi); b) solve problems, including practical problems, involving circumference and area of a circle; and c) solve problems, including practical problems, involving area and perimeter of triangles and rectangles."
+          },
+          {
+            "id": "6.8",
+            "description": "The student will a) identify the components of the coordinate plane; and b) identify the coordinates of a point and graph ordered pairs in a coordinate plane."
+          },
+          {
+            "id": "6.9",
+            "description": "The student will determine congruence of segments, angles, and polygons."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "6.10",
+            "description": "The student, given a practical situation, will a) represent data in a circle graph; b) make observations and inferences about data represented in a circle graph; and c) compare circle graphs with the same data represented in bar graphs, pictographs, and line plots."
+          },
+          {
+            "id": "6.11",
+            "description": "The student will a) represent the mean of a data set graphically as the balance point; and b) determine the effect on measures of center when a single value of a data set is added, removed, or changed."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "6.12",
+            "description": "The student will a) represent a proportional relationship between two quantities, including those arising from practical situations; b) determine the unit rate of a proportional relationship and use it to find a missing value in a ratio table; c) determine whether a proportional relationship exists between two quantities; and d) make connections between and among representations of a proportional relationship between two quantities using verbal descriptions, ratio tables, and graphs."
+          },
+          {
+            "id": "6.13",
+            "description": "The student will solve one-step linear equations in one variable, including practical problems that require the solution of a one-step linear equation in one variable."
+          },
+          {
+            "id": "6.14",
+            "description": "The student will a) represent a practical situation with a linear inequality in one variable; and b) solve one-step linear inequalities in one variable, involving addition or subtraction, and graph the solution on a number line."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "math-7",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Grade 7",
+    "subject": "Math",
+    "grade": "7",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "7.1",
+            "description": "The student will a) investigate and describe the concept of negative exponents for powers of ten; b) compare and order numbers greater than zero written in scientific notation; c) compare and order rational numbers; d) determine square roots of perfect squares; and e) identify and describe absolute value of rational numbers."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "7.2",
+            "description": "The student will solve practical problems involving operations with rational numbers."
+          },
+          {
+            "id": "7.3",
+            "description": "The student will solve single-step and multistep practical problems, using proportional reasoning."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "7.4",
+            "description": "The student will a) describe and determine the volume and surface area of rectangular prisms and cylinders; and b) solve problems, including practical problems, involving the volume and surface area of rectangular prisms and cylinders."
+          },
+          {
+            "id": "7.5",
+            "description": "The student will solve problems, including practical problems, involving the relationship between corresponding sides and corresponding angles of similar quadrilaterals and triangles."
+          },
+          {
+            "id": "7.6",
+            "description": "The student will a) compare and contrast quadrilaterals based on their properties; and b) determine unknown side lengths or angle measures of quadrilaterals."
+          },
+          {
+            "id": "7.7",
+            "description": "The student will apply translations and reflections of right triangles or rectangles in the coordinate plane."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "7.8",
+            "description": "The student will a) determine the theoretical and experimental probabilities of an event; and b) investigate and describe the difference between the experimental probability and theoretical probability of an event."
+          },
+          {
+            "id": "7.9",
+            "description": "The student, given data in a practical situation, will a) represent data in a histogram; b) make observations and inferences about data represented in a histogram; and c) compare histograms with the same data represented in stem-and-leaf plots, line plots, and circle graphs."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "7.10",
+            "description": "The student will a) determine the slope, m, as rate of change in a proportional relationship between two quantities and write an equation in the form y = mx to represent the relationship; b) graph a line representing a proportional relationship between two quantities given the slope and an ordered pair, or given the equation in y = mx form where m represents the slope as rate of change; c) determine the y-intercept, b, in an additive relationship between two quantities and write an equation in the form y = x + b to represent the relationship; d) graph a line representing an additive relationship between two quantities given the y-intercept and an ordered pair, or given the equation in the form y = x + b, where b represents the y-intercept; and e) make connections between and among representations of a proportional or additive relationship between two quantities using verbal descriptions, tables, equations, and graphs."
+          },
+          {
+            "id": "7.11",
+            "description": "The student will evaluate algebraic expressions for given replacement values of the variables."
+          },
+          {
+            "id": "7.12",
+            "description": "The student will solve two-step linear equations in one variable, including practical problems that require the solution of a two-step linear equation in one variable."
+          },
+          {
+            "id": "7.13",
+            "description": "The student will solve one- and two-step linear inequalities in one variable, including practical problems, involving addition, subtraction, multiplication, and division, and graph the solution on a number line."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "math-8",
+    "title": "Mathematics Standards of Learning for Virginia Public Schools - Grade 8",
+    "subject": "Math",
+    "grade": "8",
+    "last_updated": "September 2016",
+    "source_url": "http://www.doe.virginia.gov/testing/standards_of_learning/mathematics/math-k-12-standards.pdf",
+    "categories": [
+      {
+        "id": "number-number-sense",
+        "title": "Number and Number Sense",
+        "standards": [
+          {
+            "id": "8.1",
+            "description": "The student will compare and order real numbers."
+          },
+          {
+            "id": "8.2",
+            "description": "The student will describe the relationships between the subsets of the real number system."
+          },
+          {
+            "id": "8.3",
+            "description": "The student will a) estimate and determine the two consecutive integers between which a square root lies; and b) determine both the positive and negative square roots of a given perfect square."
+          }
+        ]
+      },
+      {
+        "id": "computation-estimation",
+        "title": "Computation and Estimation",
+        "standards": [
+          {
+            "id": "8.4",
+            "description": "The student will solve practical problems involving consumer applications."
+          }
+        ]
+      },
+      {
+        "id": "measurement-geometry",
+        "title": "Measurement and Geometry",
+        "standards": [
+          {
+            "id": "8.5",
+            "description": "The student will use the relationships among pairs of angles that are vertical angles, adjacent angles, supplementary angles, and complementary angles to determine the measure of unknown angles."
+          },
+          {
+            "id": "8.6",
+            "description": "The student will a) solve problems, including practical problems, involving volume and surface area of cones and square-based pyramids; and b) describe how changing one measured attribute of a rectangular prism affects the volume and surface area."
+          },
+          {
+            "id": "8.7",
+            "description": "The student will a) given a polygon, apply transformations, to include translations, reflections, and dilations, in the coordinate plane; and b) identify practical applications of transformations."
+          },
+          {
+            "id": "8.8",
+            "description": "The student will construct a three-dimensional model, given the top or bottom, side, and front views."
+          },
+          {
+            "id": "8.9",
+            "description": "The student will a) verify the Pythagorean Theorem; and b) apply the Pythagorean Theorem."
+          },
+          {
+            "id": "8.10",
+            "description": "The student will solve area and perimeter problems, including practical problems, involving composite plane figures."
+          }
+        ]
+      },
+      {
+        "id": "probability-statistics",
+        "title": "Probability and Statistics",
+        "standards": [
+          {
+            "id": "8.11",
+            "description": "The student will a) compare and contrast the probability of independent and dependent events; and b) determine probabilities for independent and dependent events."
+          },
+          {
+            "id": "8.12",
+            "description": "The student will a) represent numerical data in boxplots; b) make observations and inferences about data represented in boxplots; and c) compare and analyze two data sets using boxplots."
+          },
+          {
+            "id": "8.13",
+            "description": "The student will a) represent data in scatterplots; b) make observations about data represented in scatterplots; and c) use a drawing to estimate the line of best fit for data represented in a scatterplot."
+          }
+        ]
+      },
+      {
+        "id": "patterns-functions-algebra",
+        "title": "Patterns, Functions, and Algebra",
+        "standards": [
+          {
+            "id": "8.14",
+            "description": "The student will a) evaluate an algebraic expression for given replacement values of the variables; and b) simplify algebraic expressions in one variable."
+          },
+          {
+            "id": "8.15",
+            "description": "The student will a) determine whether a given relation is a function; and b) determine the domain and range of a function."
+          },
+          {
+            "id": "8.16",
+            "description": "The student will a) recognize and describe the graph of a linear function with a slope that is positive, negative, or zero; b) identify the slope and y-intercept of a linear function, given a table of values, a graph, or an equation in y = mx + b form; c) determine the independent and dependent variable, given a practical situation modeled by a linear function; d) graph a linear function given the equation in y = mx + b form; and e) make connections between and among representations of a linear function using verbal descriptions, tables, equations, and graphs."
+          },
+          {
+            "id": "8.17",
+            "description": "The student will solve multistep linear equations in one variable with the variable on one or both sides of the equation, including practical problems that require the solution of a multistep linear equation in one variable."
+          },
+          {
+            "id": "8.18",
+            "description": "The student will solve multistep linear inequalities in one variable with the variable on one or both sides of the inequality symbol, including practical problems, and graph the solution on a number line."
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,3822 @@
+[
+  {
+    "id": "english-k",
+    "title": "English Standards of Learning for Virginia Public Schools - 2024 Kindergarten",
+    "subject": "English",
+    "grade": "K",
+    "last_updated": "March 2024",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/english/2024/english-standards-of-learning-approved-march-2024.pdf",
+    "categories": [
+      {
+        "id": "foundations-reading",
+        "title": "Foundations for Reading",
+        "standards": [
+          {
+            "id": "k.ffr.1",
+            "description": "Print Concepts: The student will apply knowledge of how print is organized and read.",
+            "substandards": [
+              {
+                "id": "k.ffr.1.a",
+                "description": "Follow words from left to right and from top to bottom on a printed page, including the return sweep from line to line."
+              },
+              {
+                "id": "k.ffr.1.b",
+                "description": "Demonstrate knowledge of a sentence, word, and letter."
+              },
+              {
+                "id": "k.ffr.1.c",
+                "description": "Demonstrate knowledge that spoken words are represented in print and separated by spaces."
+              },
+              {
+                "id": "k.ffr.1.d",
+                "description": "Identify the author and illustrator of a text and define the role of each."
+              },
+              {
+                "id": "k.ffr.1.e",
+                "description": "Identify the front cover, back cover and title of a text."
+              },
+              {
+                "id": "k.ffr.1.f",
+                "description": "Recognize the distinguishing features of a sentence (e.g., first word, capitalization, ending punctuation)."
+              }
+            ]
+          },
+          {
+            "id": "k.ffr.2",
+            "description": "Phonological and Phonemic Awareness: The student will orally identify and produce various phonemes (individual sounds) within words to develop phonemic awareness in support of decoding (reading) and encoding (spelling).",
+            "substandards": [
+              {
+                "id": "k.ffr.2.a",
+                "description": "Demonstrate ability to segment spoken words in sentences and syllables in words."
+              },
+              {
+                "id": "k.ffr.2.b",
+                "description": "Blend and segment one syllable words by onset and rime."
+              },
+              {
+                "id": "k.ffr.2.c",
+                "description": "Isolate the initial, medial, and final sounds in three phoneme (individual sound) words (excluding words ending with /l/, /r/, or /x/)."
+              },
+              {
+                "id": "k.ffr.2.d",
+                "description": "Demonstrate ability to segment and blend one syllable words with two, three, and four phonemes (including words with consonant digraphs th, sh, ch, wh)."
+              }
+            ]
+          },
+          {
+            "id": "k.ffr.3",
+            "description": "Phonics and Word Analysis: The student will apply phonetic principles to read and spell words.",
+            "substandards": [
+              {
+                "id": "k.ffr.3.a",
+                "description": "Identify capital and lowercase letters of the alphabet."
+              },
+              {
+                "id": "k.ffr.3.b",
+                "description": "Identify common letter-sound correspondences."
+              },
+              {
+                "id": "k.ffr.3.c",
+                "description": "Discriminate between long and short sounds with common spellings for the five major vowels with open and closed syllables (e.g., short /e/ as in “pet”, long /e/ as in “he”)."
+              },
+              {
+                "id": "k.ffr.3.d",
+                "description": "Demonstrate knowledge that every word has a vowel sound."
+              },
+              {
+                "id": "k.ffr.3.e",
+                "description": "Identify the letter-sound correspondences for consonant digraphs (e.g., ch, sh, th, wh)."
+              },
+              {
+                "id": "k.ffr.3.f",
+                "description": "Demonstrate knowledge of letter-sound correspondences to blend CV, CVC, VC words."
+              },
+              {
+                "id": "k.ffr.3.g",
+                "description": "Decode (read) and encode (spell) words with short vowels, including words beginning or ending in a digraph (e.g., ch, sh, th, wh)."
+              },
+              {
+                "id": "k.ffr.3.h",
+                "description": "Use letter-sound correspondences to read grade-level high frequency words, including decodable and irregular words, with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "developing-skilled-readers-building-reading-stamina",
+        "title": "Developing Skilled Readers and Building Reading Stamina",
+        "standards": [
+          {
+            "id": "k.dsr.1",
+            "description": "The student will build knowledge and comprehension skills from reading and listening to a range of texts. This includes fluently reading decodable sentences and gathering evidence from content-rich texts (through read alouds) on topics to gain purposeful knowledge and vocabulary.",
+            "substandards": [
+              {
+                "id": "k.dsr.1.a",
+                "description": "Use knowledge of letter-sound correspondences to read and reread controlled decodable sentences and texts that include phonic elements and irregular words (Reading Fluency, K-12)."
+              },
+              {
+                "id": "k.dsr.1.c",
+                "description": "With prompting and support, when responding to text through discussions and/or writing, draw several pieces of evidence from read-alouds to support claims, conclusions, inferences, including quoting or paraphrasing from texts accurately and tracing where relevant evidence is located (Textual Evidence, K-12)."
+              },
+              {
+                "id": "k.dsr.1.d",
+                "description": "Regularly engage in listening to a series of conceptually related texts organized around topics of study to build knowledge and vocabulary. Use this background knowledge as context for new learning (Deep Reading on Topics to Build Knowledge and Vocabulary, K-12)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-vocabulary",
+        "title": "Reading and Vocabulary",
+        "standards": [
+          {
+            "id": "k.rv",
+            "description": "The student will systematically build vocabulary and word knowledge based on kindergarten content and texts heard."
+          },
+          {
+            "id": "k.rv.1",
+            "description": "Vocabulary Development and Word Analysis",
+            "substandards": [
+              {
+                "id": "k.rv.1.a",
+                "description": "Discuss meanings of words from a variety of texts and experiences."
+              },
+              {
+                "id": "k.rv.1.b",
+                "description": "Ask questions about words not understood."
+              },
+              {
+                "id": "k.rv.1.c",
+                "description": "Use vocabulary from across content areas."
+              },
+              {
+                "id": "k.rv.1.d",
+                "description": "Identify the purpose of simple reference materials (e.g., pictures, dictionary, digital dictionary)."
+              },
+              {
+                "id": "k.rv.1.e",
+                "description": "Increase and develop breadth of vocabulary knowledge by listening to high quality, complex text."
+              },
+              {
+                "id": "k.rv.1.f",
+                "description": "Use newly learned words and phrases in discussions and speaking activities."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-literary-text",
+        "title": "Reading Literary Text",
+        "standards": [
+          {
+            "id": "k.rl",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of literary texts heard, to include fantasy, humor, fable/fairy tale, realistic fiction, historical fiction, and folklore/tall tale."
+          },
+          {
+            "id": "k.rl.1",
+            "description": "Key Ideas and Plot Details",
+            "substandards": [
+              {
+                "id": "k.rl.1.a",
+                "description": "With prompting and support, activate prior (experience) and background (content) knowledge and make connections to what is read."
+              },
+              {
+                "id": "k.rl.1.b",
+                "description": "With prompting and support, demonstrate knowledge of story structure by orally identifying characters, setting, important events, and details."
+              },
+              {
+                "id": "k.rl.1.c",
+                "description": "With prompting and support, orally re-tell a familiar story in sequential order (beginning, middle, end)."
+              },
+              {
+                "id": "k.rl.1.d",
+                "description": "With prompting and support, generate predictions about story characters and events using the text."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-informational-text",
+        "title": "Reading Informational Text",
+        "standards": [
+          {
+            "id": "k.ri",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of informational texts heard."
+          },
+          {
+            "id": "k.ri.1",
+            "description": "Key Ideas and Confirming Details",
+            "substandards": [
+              {
+                "id": "k.ri.1.a",
+                "description": "With prompting and support, ask and answer literal (who, what, when, where) or inferential (why, how) questions about what is read."
+              },
+              {
+                "id": "k.ri.1.b",
+                "description": "With prompting and support, identify the main topic and key details of a text."
+              }
+            ]
+          },
+          {
+            "id": "k.ri.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "k.ri.2.a",
+                "description": "With prompting and support, identify the purpose of common text features: table of contents, headings, bolded words, and pictures."
+              }
+            ]
+          },
+          {
+            "id": "k.ri.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "k.ri.3.a",
+                "description": "With prompting and support, identify basic similarities in and differences between two texts on the same topic."
+              },
+              {
+                "id": "k.ri.3.b",
+                "description": "With prompting and support, describe the connection between two individuals, events, ideas, or pieces of information in a text."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "foundations-writing",
+        "title": "Foundations for Writing",
+        "standards": [
+          {
+            "id": "k.ffw",
+            "description": "The student will print legibly in manuscript."
+          },
+          {
+            "id": "k.ffw.1",
+            "description": "Handwriting",
+            "substandards": [
+              {
+                "id": "k.ffw.1.a",
+                "description": "Use functional pencil grasp for letter formation."
+              },
+              {
+                "id": "k.ffw.1.b",
+                "description": "Accurately and automatically print capital and lowercase letters of the alphabet independently."
+              },
+              {
+                "id": "k.ffw.1.c",
+                "description": "Write left to right and top to bottom."
+              },
+              {
+                "id": "k.ffw.1.d",
+                "description": "Accurately print first and last names, beginning each with a capital letter."
+              },
+              {
+                "id": "k.ffw.1.e",
+                "description": "Apply spaces between written words in phrase or sentence level writing."
+              }
+            ]
+          },
+          {
+            "id": "k.ffw.2",
+            "description": "Spelling",
+            "substandards": [
+              {
+                "id": "k.ffw.2.a",
+                "description": "Encode (spell) one syllable words with short vowels and one syllable words beginning or ending in a digraph (e.g., ch, sh, th, wh)."
+              },
+              {
+                "id": "k.ffw.2.b",
+                "description": "Encode (spell) unknown words using logical invented spelling."
+              },
+              {
+                "id": "k.ffw.2.c",
+                "description": "With prompting and support, use phoneme/grapheme (sound/symbol) correspondences to spell grade-level high-frequency words with accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "writing",
+        "title": "Writing",
+        "standards": [
+          {
+            "id": "k.w",
+            "description": "The student will write in a variety of forms, linked to kindergarten content and texts."
+          },
+          {
+            "id": "k.w.1",
+            "description": "Modes and Purposes for Writing",
+            "substandards": [
+              {
+                "id": "k.w.1.a",
+                "description": "Use a combination of drawing, dictating, and writing to compose narrative stories in sequential order (beginning, middle, end)."
+              },
+              {
+                "id": "k.w.1.b",
+                "description": "Use a combination of drawing, dictating, and writing to compose descriptive writing that identifies a topic and provides one or more relevant details."
+              },
+              {
+                "id": "k.w.1.c",
+                "description": "Use a combination of drawing, dictating, and writing to write in response to texts heard."
+              }
+            ]
+          },
+          {
+            "id": "k.w.2",
+            "description": "Organization and Composition",
+            "substandards": [
+              {
+                "id": "k.w.2.a",
+                "description": "With guidance and support, use prewriting activities, including drawing and suggestions from peers to generate ideas and plan writing or dictation. This includes: i. Identifying the audience and purpose of the writing (e.g., letters, stories, “all about” book, etc). ii. Composing or dictating simple sentences that include a subject (noun) and predicate (verb) focused on the topic."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "k.lu",
+            "description": "The student will use the conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "k.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "k.lu.1.a",
+                "description": "Produce and expand complete sentences in shared language activities."
+              },
+              {
+                "id": "k.lu.1.b",
+                "description": "Use nouns to identify and name people, places, and things."
+              },
+              {
+                "id": "k.lu.1.c",
+                "description": "Use pronouns to identify individuals and groups (he, she, they, his, hers, their(s))."
+              },
+              {
+                "id": "k.lu.1.d",
+                "description": "Use adjectives to describe specific objects (quantity, size, age, shape, color, or location)."
+              },
+              {
+                "id": "k.lu.1.e",
+                "description": "Use verbs to locate specific actions."
+              }
+            ]
+          },
+          {
+            "id": "k.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "k.lu.2.a",
+                "description": "With guidance and support, begin each sentence with a capital letter and capitalize the pronoun I."
+              },
+              {
+                "id": "k.lu.2.b",
+                "description": "With guidance and support, identify statements and questions and use ending punctuation (e.g., period and question mark)."
+              },
+              {
+                "id": "k.lu.2.c",
+                "description": "Phonetically spell words containing unknown letter-sound correspondences."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communication-multimodal-literacies",
+        "title": "Communication and Multimodal Literacies",
+        "standards": [
+          {
+            "id": "k.c.1",
+            "description": "Communication, Listening, and Collaboration",
+            "substandards": [
+              {
+                "id": "k.c.1.a",
+                "description": "Participate in a range of collaborative discussions (one-on-one, in groups, and teacher-led) on kindergarten topics and texts. This includes: i. Listening actively and following agreed-upon rules for participating in discussions (e.g., waiting for a turn to speak without unnecessary interruptions and staying on topic). ii. Respectfully building on others’ ideas and expressing their own clearly. iii. Asking questions to seek help, get information, or clarify information for further understanding. iv. Expressing ideas and needs in complete sentences."
+              }
+            ]
+          },
+          {
+            "id": "k.c.2",
+            "description": "Speaking and Presentation of Ideas",
+            "substandards": [
+              {
+                "id": "k.c.2.a",
+                "description": "Describe personal experiences using complete sentences."
+              },
+              {
+                "id": "k.c.2.b",
+                "description": "Speak audibly with appropriate pacing, prosody, and voice level."
+              },
+              {
+                "id": "k.c.2.c",
+                "description": "Participate in a variety of oral language activities, including choral speaking and recitation of short poems, rhymes, songs, and stories with repeated patterns and refrains."
+              },
+              {
+                "id": "k.c.2.d",
+                "description": "Retell, create, and dictate stories, rhymes, poems, and events in sequential order using drama, props, and/or pictures indicating first, next and last events in a story."
+              }
+            ]
+          },
+          {
+            "id": "research",
+            "title": "Research",
+            "standards": [
+              {
+                "id": "k.r.1",
+                "description": "Evaluation and Synthesis of Information",
+                "substandards": [
+                  {
+                    "id": "k.r.1.a",
+                    "description": "With prompting and support, generate a topic of interest and question to explore a given topic."
+                  },
+                  {
+                    "id": "k.r.1.b",
+                    "description": "With prompting and support, find information on the topic from pictures, texts, people or provided sources."
+                  },
+                  {
+                    "id": "k.r.1.c",
+                    "description": "With prompting and support, use drawing, writing, or dictation to record facts and information collected from the research."
+                  },
+                  {
+                    "id": "k.r.1.d",
+                    "description": "With prompting and support, in small or large group settings, informally share recorded information collected from research."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "english-1",
+    "title": "English Standards of Learning for Virginia Public Schools - 2024 Grade 1",
+    "subject": "English",
+    "grade": "1",
+    "last_updated": "March 2024",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/english/2024/english-standards-of-learning-approved-march-2024.pdf",
+    "categories": [
+      {
+        "id": "foundations-reading",
+        "title": "Foundations for Reading",
+        "standards": [
+          {
+            "id": "1.ffr.2",
+            "description": "Phonological and Phonemic Awareness: The student will orally identify and produce various phonemes (individual sounds) within words to develop phonemic awareness in support of decoding (reading) and encoding (spelling).",
+            "substandards": [
+              {
+                "id": "1.ffr.2.a",
+                "description": "Isolate sounds in four and five phoneme words."
+              },
+              {
+                "id": "1.ffr.2.b",
+                "description": "Demonstrate ability to blend words with four and five phonemes, including words with consonant digraphs (e.g., th, sh, ch, wh) and consonant blends (e.g., fr, st, bl)."
+              },
+              {
+                "id": "1.ffr.2.c",
+                "description": "Demonstrate the ability to segment words with four and five phonemes, including words with consonant digraphs (e.g., th, sh, ch) and consonant blends e.g., fr, st, bl)."
+              }
+            ]
+          },
+          {
+            "id": "1.ffr.3",
+            "description": "Phonics and Word Analysis: The student will apply phonetic principles to read and spell words.",
+            "substandards": [
+              {
+                "id": "1.ffr.3.a",
+                "description": "Decode and encode words with short vowels to include blends with digraphs, closed syllables (CVC, CCVC, CVCC, CCVCC)."
+              },
+              {
+                "id": "1.ffr.3.b",
+                "description": "Decode and encode words with long vowels, open syllables, (CV, CCV) and vowel-consonant-e (CVCE, CCVCE)."
+              },
+              {
+                "id": "1.ffr.3.c",
+                "description": "Use letter-sound correspondences to decode words containing common vowel teams and r-controlled vowels."
+              },
+              {
+                "id": "1.ffr.3.d",
+                "description": "Decode multisyllabic words following basic patterns by breaking the words into syllables."
+              },
+              {
+                "id": "1.ffr.3.e",
+                "description": "Read grade-level high-frequency words, including decodable and irregular words with automaticity and accuracy."
+              },
+              {
+                "id": "1.ffr.3.f",
+                "description": "Write grade-level high-frequency words with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "developing-skilled-readers-building-reading-stamina",
+        "title": "Developing Skilled Readers and Building Reading Stamina",
+        "standards": [
+          {
+            "id": "1.dsr",
+            "description": "The student will build knowledge and comprehension skills from reading and listening to a range of challenging, content-rich texts. This includes fluently reading decodable texts and gathering evidence from reading widely (through content-rich read alouds) on topics to gain purposeful knowledge and vocabulary.",
+            "substandards": [
+              {
+                "id": "1.dsr.a",
+                "description": "Use knowledge of letter-sound correspondences to read a variety of decodable and grade-level texts with accuracy, automaticity, appropriate rate, and meaningful expression in successive readings to support comprehension. Monitor while reading to confirm or self-correct word recognition and understanding, as necessary (Reading Fluency, K-12)."
+              },
+              {
+                "id": "1.dsr.c",
+                "description": "With prompting and support, when responding to text through discussions and/or writing, draw several pieces of evidence from read-alouds to support claims, conclusions, and inferences, including quoting or paraphrasing from texts accurately and tracing where relevant evidence is located (Textual Evidence, K-12)."
+              },
+              {
+                "id": "1.dsr.d",
+                "description": "Regularly engage in listening to a series of conceptually related texts organized around topics of study to build knowledge and vocabulary. Use this background knowledge as context for new learning (Deep Reading on Topics to Build Knowledge and Vocabulary, K-12)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-vocabulary",
+        "title": "Reading and Vocabulary",
+        "standards": [
+          {
+            "id": "1.rv",
+            "description": "The student will systematically build vocabulary and word knowledge based on grade-one content and texts heard or read."
+          },
+          {
+            "id": "1.rv.1",
+            "description": "Vocabulary Development and Word Analysis",
+            "substandards": [
+              {
+                "id": "1.rv.1.a",
+                "description": "Discuss meanings of words in context from a variety of texts."
+              },
+              {
+                "id": "1.rv.1.b",
+                "description": "Identify antonyms and synonyms of familiar words to deepen understanding of word meaning and relationships."
+              },
+              {
+                "id": "1.rv.1.c",
+                "description": "Ask for the meaning of unknown words and make connections to familiar words."
+              },
+              {
+                "id": "1.rv.1.d",
+                "description": "Use vocabulary across content areas."
+              },
+              {
+                "id": "1.rv.1.e",
+                "description": "Determine the meaning of an unknown word using frequently occurring root words and inflectional affixes (e.g. -s, -ing, -ed)."
+              },
+              {
+                "id": "1.rv.1.f",
+                "description": "Distinguish shades of meaning among verbs and adjectives."
+              },
+              {
+                "id": "1.rv.1.g",
+                "description": "Identify the purpose of simple reference materials (e.g. picture dictionary, digital dictionary)."
+              },
+              {
+                "id": "1.rv.1.h",
+                "description": "Increase and develop breadth of vocabulary knowledge by listening to high quality, complex text."
+              },
+              {
+                "id": "1.rv.1.i",
+                "description": "Use newly learned words and phrases in discussions and speaking activities."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-literary-text",
+        "title": "Reading Literary Text",
+        "standards": [
+          {
+            "id": "1.rl",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of literary texts heard or read including fantasy, humor, fable/fairy tale, realistic fiction, historical fiction, and folklore/tall tale."
+          },
+          {
+            "id": "1.rl.1",
+            "description": "Key Ideas and Plot Details",
+            "substandards": [
+              {
+                "id": "1.rl.1.a",
+                "description": "Retell familiar stories sequentially and demonstrate an understanding of the story structure, the central message or lesson, and the details."
+              },
+              {
+                "id": "1.rl.1.b",
+                "description": "Identify the elements of a familiar story, including the characters, setting, and important events (e.g., conflict and resolution)."
+              },
+              {
+                "id": "1.rl.1.c",
+                "description": "Ask and answer literal (who, what, when, where) or inferential (how, why) questions about what is read."
+              },
+              {
+                "id": "1.rl.1.d",
+                "description": "Generate predictions about story characters and events using the text."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-informational-text",
+        "title": "Reading Informational Text",
+        "standards": [
+          {
+            "id": "1.ri",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of informational texts heard or read."
+          },
+          {
+            "id": "1.ri.1",
+            "description": "Key Ideas and Confirming Details",
+            "substandards": [
+              {
+                "id": "1.ri.1.a",
+                "description": "Ask and answer literal (who, what, when, where) and inferential (why, how) questions about what is read, including demonstrating an understanding of the main topics."
+              },
+              {
+                "id": "1.ri.1.b",
+                "description": "Identify the main idea and supporting details of a text."
+              },
+              {
+                "id": "1.ri.1.c",
+                "description": "Explain the difference between facts and opinions in a text."
+              }
+            ]
+          },
+          {
+            "id": "1.ri.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "1.ri.2.a",
+                "description": "Identify and use common text features to gain information: table of contents, headings, bolded words, and pictures, captions, and diagrams."
+              },
+              {
+                "id": "1.ri.2.b",
+                "description": "Distinguish between information provided by pictures or other illustrations and information provided by the words in a text."
+              }
+            ]
+          },
+          {
+            "id": "1.ri.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "1.ri.3.a",
+                "description": "Identify basic similarities in and differences between two texts on the same topic."
+              },
+              {
+                "id": "1.ri.3.b",
+                "description": "Describe the connection between two individuals, events, ideas, or pieces of information in a text."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "foundations-writing",
+        "title": "Foundations for Writing",
+        "standards": [
+          {
+            "id": "1.ffw",
+            "description": "The student will print legibly in manuscript."
+          },
+          {
+            "id": "1.ffw.1",
+            "description": "Handwriting",
+            "substandards": [
+              {
+                "id": "1.ffw.1.a",
+                "description": "Use functional pencil grasp for letter formation."
+              },
+              {
+                "id": "1.ffw.1.b",
+                "description": "Accurately and automatically form all capital and lowercase letters and numbers using manuscript letter formation."
+              },
+              {
+                "id": "1.ffw.1.c",
+                "description": "Accurately and automatically apply spaces between written words in phrases or sentence-level writing."
+              }
+            ]
+          },
+          {
+            "id": "1.ffw.2",
+            "description": "Spelling",
+            "substandards": [
+              {
+                "id": "1.ffw.2.a",
+                "description": "Use phoneme-grapheme (sound/symbol) correspondence to encode (spell) single-syllable words containing closed syllables (cvc, ccvc, cvcc, and ccvcc), open syllables (cv, ccv), vowel-consonant-e (cvce, ccvce)."
+              },
+              {
+                "id": "1.ffw.2.b",
+                "description": "Encode (spell) 2-syllable words (e.g., pancake) following basic patterns by breaking the words into syllables."
+              },
+              {
+                "id": "1.ffw.2.c",
+                "description": "Encode (spell) unfamiliar words by recognizing and applying taught word patterns."
+              },
+              {
+                "id": "1.ffw.2.d",
+                "description": "Use phoneme/grapheme (sound/symbol) correspondences to encode (spell) grade-level high-frequency words with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "writing",
+        "title": "Writing",
+        "standards": [
+          {
+            "id": "1.w",
+            "description": "The student will write in a variety of forms for diverse audiences and purposes linked to grade one content and texts."
+          },
+          {
+            "id": "1.w.1",
+            "description": "Modes and Purposes for Writing",
+            "substandards": [
+              {
+                "id": "1.w.1.a",
+                "description": "Use a combination of drawing, dictating, and writing to recount two or more sequenced events or experiences and include details about the events and characters."
+              },
+              {
+                "id": "1.w.1.b",
+                "description": "Use a combination of drawing, dictating, and writing to compose informative/expository texts that name a topic and supply some facts about the topic."
+              },
+              {
+                "id": "1.w.1.c",
+                "description": "Use a combination of drawing, dictating, and writing to compose opinion pieces that state an opinion and supply a reason for the opinion."
+              },
+              {
+                "id": "1.w.1.d",
+                "description": "Use a combination of drawing, dictating, and writing about text(s) read or heard in which students share their thinking with a couple of supporting details from the text."
+              }
+            ]
+          },
+          {
+            "id": "1.w.2",
+            "description": "Organization and Composition",
+            "substandards": [
+              {
+                "id": "1.w.2.a",
+                "description": "With guidance and support, use a variety of prewriting activities, such as brainstorming, drawing and graphic organizers, to generate ideas and draft writing or dictation. This includes: i. Identifying the audience and purpose of the writing (e.g., letters, stories, journals, etc.). ii. Composing a series of simple sentences focused on the topic, including sentences with a subject and predicate, subject/verb agreement, and one or more descriptive adjectives."
+              }
+            ]
+          },
+          {
+            "id": "1.w.3",
+            "description": "Usage and Mechanics",
+            "substandards": [
+              {
+                "id": "1.w.3.a",
+                "description": "With guidance and support from adults, edit writing for conventions e.g., spelling, capitalization, usage, punctuation). (See Language Usage for grade level expectations)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "1.lu",
+            "description": "The student will use conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "1.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "1.lu.1.a",
+                "description": "Produce and expand simple sentences, including a noun, verb, and adjective."
+              },
+              {
+                "id": "1.lu.1.b",
+                "description": "Form regular plural nouns orally by adding ‘s’ or ‘es’ sound."
+              },
+              {
+                "id": "1.lu.1.c",
+                "description": "Use personal and possessive pronouns to represent nouns."
+              },
+              {
+                "id": "1.lu.1.d",
+                "description": "Use frequently occurring adjectives to describe specific objects (quantity, size, age, shape, color, or location)."
+              },
+              {
+                "id": "1.lu.1.e",
+                "description": "Form and use simple verb tenses (past, present, and future) for regular verbs."
+              },
+              {
+                "id": "1.lu.1.f",
+                "description": "Use proper verb tense and correct subject-verb agreement."
+              },
+              {
+                "id": "1.lu.1.g",
+                "description": "Use articles correctly (e.g., a, an, the)."
+              },
+              {
+                "id": "1.lu.1.h",
+                "description": "Use interrogatives to ask questions in complete sentences (e.g., who, what, where, when, why, how)."
+              }
+            ]
+          },
+          {
+            "id": "1.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "1.lu.2.a",
+                "description": "Capitalize the first word in a sentence, proper nouns, and the pronoun I."
+              },
+              {
+                "id": "1.lu.2.b",
+                "description": "Identify statements and questions and, use correct ending punctuation (e.g., period, questions mark, and exclamation points)."
+              },
+              {
+                "id": "1.lu.2.c",
+                "description": "Use conventional spelling of words with commonly taught spelling patterns and for frequently occurring irregular words."
+              }
+            ]
+          },
+          {
+            "id": "1.r",
+            "description": "The student will conduct research and listen to a series of conceptually related texts on selected topics to build knowledge on grade-level topics or solve problems using available resources."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "english-2",
+    "title": "English Standards of Learning for Virginia Public Schools - 2024 Grade 2",
+    "subject": "English",
+    "grade": "2",
+    "last_updated": "March 2024",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/english/2024/english-standards-of-learning-approved-march-2024.pdf",
+    "categories": [
+      {
+        "id": "foundations-reading",
+        "title": "Foundations for Reading",
+        "standards": [
+          {
+            "id": "2.ffr.2",
+            "description": "Phonological and Phonemic Awareness: The student will orally identify and produce various phonemes (individual sounds) within words to develop phonemic awareness in support of decoding (reading) and encoding (spelling).",
+            "substandards": [
+              {
+                "id": "2.ffr.2.a",
+                "description": "Isolate sounds in four and five phoneme words."
+              },
+              {
+                "id": "2.ffr.2.b",
+                "description": "Demonstrate the ability to blend words with four and five phonemes, including words with consonant digraphs (e.g., th, sh, ch) and consonant blends (e.g., fr, st, bl)."
+              },
+              {
+                "id": "2.ffr.2.c",
+                "description": "Demonstrate the ability to segment words with four and five phonemes, including words with consonant digraphs (e.g., th, sh, ch) and consonant blends (e.g., fr, st, bl)."
+              }
+            ]
+          },
+          {
+            "id": "2.ffr.3",
+            "description": "Phonics and Word Analysis: The student will apply phonetic principles to read and spell words.",
+            "substandards": [
+              {
+                "id": "2.ffr.3.a",
+                "description": "Decode and encode words with short vowels to include blends, digraphs, and trigraphs in closed syllables (CVCC, CCVC, CVCC, CCVCC, and CCVCCC) and open syllables (CV, CCV)."
+              },
+              {
+                "id": "2.ffr.3.b",
+                "description": "Decode and encode words with vowel teams and r-controlled vowels."
+              },
+              {
+                "id": "2.ffr.3.c",
+                "description": "Use knowledge of syllabication and syllable types to decode words."
+              },
+              {
+                "id": "2.ffr.3.d",
+                "description": "Use knowledge of affixes (e.g., suffixes, prefixes) to decode words."
+              },
+              {
+                "id": "2.ffr.3.e",
+                "description": "Read grade-level high frequency words, including decodable and irregular words, with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "developing-skilled-readers-building-reading-stamina",
+        "title": "Developing Skilled Readers and Building Reading Stamina",
+        "standards": [
+          {
+            "id": "2.dsr",
+            "description": "The student will build knowledge and comprehension skills from reading and listening to a range of challenging, content-rich texts. This includes fluently reading and gathering evidence from grade-level complex texts and reading widely (through read alouds) on topics to gain purposeful knowledge and vocabulary.",
+            "substandards": [
+              {
+                "id": "2.dsr.a",
+                "description": "Read a variety of grade-level text with accuracy, automaticity, appropriate rate, and meaningful expression in successive readings to support comprehension. Monitor while reading to confirm or self-correct word recognition and understanding as necessary (Reading Fluency, K-12)."
+              },
+              {
+                "id": "2.dsr.b",
+                "description": "Proficiently read and comprehend texts from a variety of literary forms that exhibit complexity at the lower range of the grades 2-3 band (See the Quantitative and Qualitative Analysis charts for determining complexity in the Appendix.) (Text Complexity, 2-12)."
+              },
+              {
+                "id": "2.dsr.c",
+                "description": "When responding to text through discussion and/or writing, draw several pieces of evidence from read-alouds and grade-level texts to support claims, conclusions, and inferences, including quoting or paraphrasing from texts accurately and tracing where relevant evidence is located (Textual Evidence, K-12)."
+              },
+              {
+                "id": "2.dsr.d",
+                "description": "Regularly engage in listening to a series of conceptually related texts organized around topics of study to build knowledge and vocabulary. Use this background knowledge as context for new learning (Deep Reading on Topics to Build Knowledge and Vocabulary, K-12)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-vocabulary",
+        "title": "Reading and Vocabulary",
+        "standards": [
+          {
+            "id": "2.rv",
+            "description": "The student will systematically build vocabulary and word knowledge based on grade-two content and texts heard or read."
+          },
+          {
+            "id": "2.rv.1",
+            "description": "Vocabulary Development and Word Analysis",
+            "substandards": [
+              {
+                "id": "2.rv.1.a",
+                "description": "Discuss meanings of new words or phrases acquired through conversations and literature."
+              },
+              {
+                "id": "2.rv.1.b",
+                "description": "Use vocabulary across content areas."
+              },
+              {
+                "id": "2.rv.1.c",
+                "description": "Determine the meaning of an unknown word using frequently occurring root words and inflectional affixes (e.g. -s, -ing, - ed)."
+              },
+              {
+                "id": "2.rv.1.d",
+                "description": "Use the context of a sentence to apply knowledge of homophones."
+              },
+              {
+                "id": "2.rv.1.e",
+                "description": "Apply knowledge of morphology (e.g., common grade appropriate suffixes, prefixes), synonyms, and antonyms to determine the meaning of new words."
+              },
+              {
+                "id": "2.rv.1.f",
+                "description": "Distinguish shades of meaning among verbs and adjectives."
+              },
+              {
+                "id": "2.rv.1.g",
+                "description": "Develop breadth of vocabulary knowledge by listening to and reading high quality, complex text."
+              },
+              {
+                "id": "2.rv.1.h",
+                "description": "Use newly learned words and phrases in discussions and speaking activities."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-literary-text",
+        "title": "Reading Literary Text",
+        "standards": [
+          {
+            "id": "2.rl",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of grade-level complex literary texts heard or read to include fantasy, humor, fable/fairy tale, realistic fiction, historical fiction, and folklore/tall tale, with a focus on fables/fairytales from a variety of cultures."
+          },
+          {
+            "id": "2.rl.1",
+            "description": "Key Ideas and Plot Details",
+            "substandards": [
+              {
+                "id": "2.rl.1.a",
+                "description": "Retell stories sequentially, including their overall structure, essential story events, and the central message, lesson, or moral."
+              },
+              {
+                "id": "2.rl.1.b",
+                "description": "Identify a story’s central conflict using events from the plot as evidence."
+              },
+              {
+                "id": "2.rl.1.c",
+                "description": "Describe character’s attributes (e.g., traits, motivations, or feelings) and how they respond to major events and challenges."
+              },
+              {
+                "id": "2.rl.1.d",
+                "description": "Generate predictions about story characters and events using the text."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-informational-text",
+        "title": "Reading Informational Text",
+        "standards": [
+          {
+            "id": "2.ri",
+            "description": "The student will use textual evidence to demonstrate and build knowledge from a variety of grade level complex informational texts heard or read."
+          },
+          {
+            "id": "2.ri.1",
+            "description": "Key Ideas and Confirming Details",
+            "substandards": [
+              {
+                "id": "2.ri.1.a",
+                "description": "Ask and answer literal and inferential questions (who, what, where, when, how, and why) about key details in a text."
+              },
+              {
+                "id": "2.ri.1.b",
+                "description": "Retell key details of texts that demonstrate an understanding of the main topics of texts."
+              },
+              {
+                "id": "2.ri.1.c",
+                "description": "Differentiate facts from opinions within a text."
+              }
+            ]
+          },
+          {
+            "id": "2.ri.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "2.ri.2.a",
+                "description": "Use text features (table of contents, headings, pictures, captions, maps, and charts) to preview, set a purpose for reading and gain information."
+              },
+              {
+                "id": "2.ri.2.b",
+                "description": "Identify the main purpose of a text, including what the author wants to answer, explain, or describe."
+              }
+            ]
+          },
+          {
+            "id": "2.ri.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "2.ri.3.a",
+                "description": "Use prior (experience) and background (content) knowledge as context for new learning."
+              },
+              {
+                "id": "2.ri.3.b",
+                "description": "Compare and contrast the most important points presented by two texts on the same topic."
+              },
+              {
+                "id": "2.ri.3.c",
+                "description": "Describe the interactions between two individuals, events, ideas, or pieces of information in texts."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "foundations-writing",
+        "title": "Foundations for Writing",
+        "standards": [
+          {
+            "id": "2.ffw",
+            "description": "The student will print legibly in manuscript and cursive while applying grade level word knowledge to spell words correctly."
+          },
+          {
+            "id": "2.ffw.1",
+            "description": "Handwriting",
+            "substandards": [
+              {
+                "id": "2.ffw.1.a",
+                "description": "Maintain legible printing and begin to make the transition to cursive."
+              },
+              {
+                "id": "2.ffw.1.b",
+                "description": "Begin to write capital and lowercase letters of the alphabet in cursive."
+              },
+              {
+                "id": "2.ffw.1.c",
+                "description": "Begin to sign his/her first and last names."
+              }
+            ]
+          },
+          {
+            "id": "2.ffw.2",
+            "description": "Spelling",
+            "substandards": [
+              {
+                "id": "2.ffw.2.a",
+                "description": "Use phoneme-grapheme (sound/symbol correspondence to encode (spell) single-syllable words containing closed syllables (cvc, ccvc, cvcc, and ccvcc), open syllables (cv, ccv), vowel-consonant-e (cvce, ccvce), vowel teams, and r-controlled vowels."
+              },
+              {
+                "id": "2.ffw.2.b",
+                "description": "Use phoneme-grapheme (sound/symbol) correspondence to encode (spell) multisyllabic words."
+              },
+              {
+                "id": "2.ffw.2.c",
+                "description": "Use phoneme/grapheme (sound/symbol) correspondences to encode (spell) grade-level high-frequency words with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "writing",
+        "title": "Writing",
+        "standards": [
+          {
+            "id": "2.w",
+            "description": "The student will write in a variety of forms for diverse audiences and purposes, linked to grade two content and texts."
+          },
+          {
+            "id": "2.w.1",
+            "description": "Modes and Purposes for Writing",
+            "substandards": [
+              {
+                "id": "2.w.1.a",
+                "description": "Write narratives that recount a well-elaborated event or short sequence of events and include details about the events and characters and use of time-related words to signal the event sequence."
+              },
+              {
+                "id": "2.w.1.b",
+                "description": "Write informative/explanatory texts that introduce a topic and develop the ideas with facts and examples."
+              },
+              {
+                "id": "2.w.1.c",
+                "description": "Write opinion pieces on topics or texts that support a point of view with reasons."
+              },
+              {
+                "id": "2.w.1.d",
+                "description": "Write in response to text(s) read or heard to share thinking with a couple supporting details from the text."
+              }
+            ]
+          },
+          {
+            "id": "2.w.2",
+            "description": "Organization and Composition",
+            "substandards": [
+              {
+                "id": "2.w.2.a",
+                "description": "Engage in writing as a process to plan writing based on purpose and genre. This includes: i. Writing a clear topic sentence focusing on the main idea. ii. Identifying the audience and purpose of the writing. iii. Developing, selecting, and organizing ideas and details relevant to the topic, purpose, and genre. iv. Providing a concluding statement or section."
+              }
+            ]
+          },
+          {
+            "id": "2.w.3",
+            "description": "Usage and Mechanics",
+            "substandards": [
+              {
+                "id": "2.w.3.a",
+                "description": "With guidance and support from adults, develop and strengthen writing as needed by revising for quality of ideas, organization, sentence fluency, and word choice."
+              },
+              {
+                "id": "2.w.3.b",
+                "description": "With guidance and support from adults, edit writing for conventions (e.g., spelling, capitalization, usage, punctuation). (See Language Usage for grade level expectations)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "2.lu",
+            "description": "The student will use conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "2.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "2.lu.1.a",
+                "description": "Produce and expand complete sentences, both simple and compound."
+              },
+              {
+                "id": "2.lu.1.b",
+                "description": "Use indefinite (e.g., anybody, anything) reflexive (e.g., yourself, herself) pronouns."
+              },
+              {
+                "id": "2.lu.1.c",
+                "description": "Form and use regular and frequently occurring irregular plural nouns (e.g., men, teeth)."
+              },
+              {
+                "id": "2.lu.1.d",
+                "description": "Use frequently occurring conjunctions to signal simple relationships (e.g., and, but, or, so, because)."
+              },
+              {
+                "id": "2.lu.1.e",
+                "description": "Use proper verb tense, including for frequently occurring irregular verbs (e.g., ran, told, went)."
+              },
+              {
+                "id": "2.lu.1.f",
+                "description": "Use subject-verb agreement in simple sentences."
+              },
+              {
+                "id": "2.lu.1.g",
+                "description": "Use common abbreviations."
+              },
+              {
+                "id": "2.lu.1.h",
+                "description": "Use contractions and singular possessives."
+              },
+              {
+                "id": "2.lu.1.i",
+                "description": "Eliminate double negatives when speaking."
+              }
+            ]
+          },
+          {
+            "id": "2.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "2.lu.2.a",
+                "description": "Identify statements, questions, and commands and use correct ending punctuation (e.g., period, question mark, and exclamation points)."
+              },
+              {
+                "id": "2.lu.2.b",
+                "description": "Use commas in salutation and closing of a letter."
+              },
+              {
+                "id": "2.lu.2.c",
+                "description": "Generalize learned spelling patterns when writing words."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communications-multimodal-literacies",
+        "title": "Communications and Multimodal Literacies",
+        "standards": [
+          {
+            "id": "2.c",
+            "description": "The student will develop effective oral communication and collaboration skills to build a community of learners that process, understand, and interpret content together."
+          },
+          {
+            "id": "2.c.1",
+            "description": "Communication, Listening, and Collaboration",
+            "substandards": [
+              {
+                "id": "2.c.1.a",
+                "description": "Participate in a range of collaborative discussions (one-on-one, in groups, and teacher-led) on grade two topics and texts. This includes: i. Listening actively and following agreed upon rules for participating in discussions. ii. Respectfully building on others’ ideas and expressing their own clearly. iii. Asking and responding to questions that acquire or confirm information on a topic. iv. Demonstrating active engagement when listening to a speaker and asking for clarification to ensure understanding."
+              }
+            ]
+          },
+          {
+            "id": "2.c.2",
+            "description": "Speaking and Presentation of Ideas",
+            "substandards": [
+              {
+                "id": "2.c.2.a",
+                "description": "Use topic specific language and vocabulary to communicate ideas. i. Speak audibly with appropriate pacing, prosody, and voice level. ii. Engage the audience by asking and/or responding to questions."
+              },
+              {
+                "id": "2.c.2.b",
+                "description": "Create and participate in oral language activities that include oral storytelling and dramatics."
+              },
+              {
+                "id": "2.c.2.c",
+                "description": "Retell information in an organized manner, focused on a key topic or experience."
+              }
+            ]
+          },
+          {
+            "id": "2.c.3",
+            "description": "Integrating Multimodal Literacies",
+            "substandards": [
+              {
+                "id": "2.c.3.a",
+                "description": "Create a simple presentation using multimodal tools that enhance the topic or presentation."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "research",
+        "title": "Research",
+        "standards": [
+          {
+            "id": "2.r",
+            "description": "The student will conduct research and read or listen to a series of conceptually related texts on selected topics to build knowledge on grade-level topics or solve problems using available resources."
+          },
+          {
+            "id": "2.r.1",
+            "description": "Evaluation and Synthesis of Information",
+            "substandards": [
+              {
+                "id": "2.r.1.a",
+                "description": "Identify a topic and generate questions to explore the topic."
+              },
+              {
+                "id": "2.r.1.b",
+                "description": "Locate information in reference texts, electronic resources, interviews, or provided sources."
+              },
+              {
+                "id": "2.r.1.c",
+                "description": "Use templates to organize the information collected (e.g., charts, graphs)."
+              },
+              {
+                "id": "2.r.1.d",
+                "description": "Record information on sources using own words, organizing evidence into provided categories."
+              },
+              {
+                "id": "2.r.1.e",
+                "description": "Share information orally in writing, or through visual display, avoiding plagiarism and using own words."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "english-3",
+    "title": "English Standards of Learning for Virginia Public Schools - 2024 Grade 3",
+    "subject": "English",
+    "grade": "3",
+    "last_updated": "March 2024",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/english/2024/english-standards-of-learning-approved-march-2024.pdf",
+    "categories": [
+      {
+        "id": "foundations-reading",
+        "title": "Foundations for Reading",
+        "standards": [
+          {
+            "id": "3.ffr.3",
+            "description": "Phonics and Word Recognition: The student will apply grade level phonics and word analysis skills to decode (read) unfamiliar words in grade level text.",
+            "substandards": [
+              {
+                "id": "3.ffr.3.a",
+                "description": "Decode and encode words with vowel teams and r-controlled vowels."
+              },
+              {
+                "id": "3.ffr.3.b",
+                "description": "Use knowledge of syllabication and syllable types to decode and encode words."
+              },
+              {
+                "id": "3.ffr.3.c",
+                "description": "Use knowledge of affixes (e.g., suffixes, prefixes) to decode and encode words."
+              },
+              {
+                "id": "3.ffr.3.d",
+                "description": "Read grade-level high-frequency words, including decodable and irregular words, with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "developing-skilled-readers-building-reading-stamina",
+        "title": "Developing Skilled Readers and Building Reading Stamina",
+        "standards": [
+          {
+            "id": "3.dsr",
+            "description": "The student will build knowledge and comprehension skills from reading and listening to a range of challenging, content-rich texts. This includes fluently reading and gathering evidence from grade-level complex texts and reading widely on topics to gain purposeful knowledge and vocabulary, and using reading strategies when comprehension breaks down.",
+            "substandards": [
+              {
+                "id": "3.dsr.a",
+                "description": "Read a variety of grade-level complex texts with accuracy, automaticity, appropriate rate, and meaningful expression in successive readings to support comprehension. Monitor while reading to confirm or self-correct word recognition and understanding, as necessary (Reading Fluency, K-12)."
+              },
+              {
+                "id": "3.dsr.b",
+                "description": "Proficiently read and comprehend a variety of literary and informational texts that exhibit complexity at the higher range of the grades 2-3 bands (See Quantitative and Qualitative Analysis charts for determining complexity in the Appendix) (Text Complexity, 2-12)."
+              },
+              {
+                "id": "3.dsr.c",
+                "description": "When responding to texts through discussions and/or writing, draw several pieces of evidence from read alouds and grade-level complex texts to support claims, conclusions, and inferences, including quoting or paraphrasing from texts accurately and tracing where relevant evidence is located (Textual Evidence, K-12)."
+              },
+              {
+                "id": "3.dsr.d",
+                "description": "Regularly engage in listening to a series of conceptually related texts organized around topics of study to build knowledge and vocabulary. Use background knowledge as context for new learning (Deep Reading on Topics to Build Knowledge and Vocabulary K-12)."
+              },
+              {
+                "id": "3.dsr.e",
+                "description": "Use reading strategies as needed to monitor comprehension when encountering challenging sections of text. These sense-making strategies attended to common text organizational structures, summarizing, asking questions of the text, and others (Reading Strategies, 3-12)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-vocabulary",
+        "title": "Reading and Vocabulary",
+        "standards": [
+          {
+            "id": "3.rv",
+            "description": "The student will systematically build vocabulary and word knowledge based on grade-three content and texts read or heard."
+          },
+          {
+            "id": "3.rv.1",
+            "description": "Vocabulary Development and Word Analysis",
+            "substandards": [
+              {
+                "id": "3.rv.1.a",
+                "description": "Develop general academic language and content specific vocabulary by listening to, reading, and discussing a variety of texts relevant to a grade three topic or subject area."
+              },
+              {
+                "id": "3.rv.1.b",
+                "description": "Discuss meanings of complex words and phrases acquired through conversations and literature."
+              },
+              {
+                "id": "3.rv.1.c",
+                "description": "Determine the meaning of complex words using frequently occurring root words and inflectional affixes (e.g. -s, -ing, -ed)."
+              },
+              {
+                "id": "3.rv.1.d",
+                "description": "Use the context of a sentence to apply knowledge of homophones."
+              },
+              {
+                "id": "3.rv.1.e",
+                "description": "Apply knowledge of morphology, synonyms, and antonyms to determine the meaning of complex words."
+              },
+              {
+                "id": "3.rv.1.f",
+                "description": "Develop breadth of vocabulary knowledge by listening to and reading high quality, complex text."
+              },
+              {
+                "id": "3.rv.1.g",
+                "description": "Distinguish shades of meaning among verbs and adjectives."
+              },
+              {
+                "id": "3.rv.1.h",
+                "description": "Use strategies to infer word meanings."
+              },
+              {
+                "id": "3.rv.1.i",
+                "description": "Use glossaries, beginning dictionaries and thesauruses, both print and digital, to determine or clarify the meaning of words and phrases."
+              },
+              {
+                "id": "3.rv.1.j",
+                "description": "Use newly learned words and phrases in discussions and speaking activities."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-literary-text",
+        "title": "Reading Literary Text",
+        "standards": [
+          {
+            "id": "3.rl",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of grade-level complex literary texts read to include fantasy, humor, fable/fairy tale, realistic fiction, historical fiction, biography, autobiography, and folklore/tall tale, with a focus on folklore and tall tales."
+          },
+          {
+            "id": "3.rl.1",
+            "description": "Key Ideas and Plot Details",
+            "substandards": [
+              {
+                "id": "3.rl.1.a",
+                "description": "Identify thematic topics of stories (e.g. friendship, survival, determination) and the lessons learned."
+              },
+              {
+                "id": "3.rl.1.b",
+                "description": "Identify the central conflict and resolution using events from the plot to summarize the text."
+              },
+              {
+                "id": "3.rl.1.c",
+                "description": "Describe a character’s attributes, including their traits, motivations, or feelings and how they develop throughout the text."
+              }
+            ]
+          },
+          {
+            "id": "3.rl.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "3.rl.2.a",
+                "description": "Discuss how an author uses characters and settings to advance the plot."
+              },
+              {
+                "id": "3.rl.2.b",
+                "description": "Identify and explain how an author uses sensory language (e.g., sights, sounds, smells, and tastes) to impact a reader’s understanding of characters, settings, and plot events."
+              },
+              {
+                "id": "3.rl.2.c",
+                "description": "Identify the narrator of a story and the speaker of a poem."
+              },
+              {
+                "id": "3.rl.2.d",
+                "description": "Identify the characteristics of different genres."
+              }
+            ]
+          },
+          {
+            "id": "3.rl.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "3.rl.3.a",
+                "description": "Set a purpose for reading by looking at the illustrations and activating prior (experience) and background (content) knowledge."
+              },
+              {
+                "id": "3.rl.3.b",
+                "description": "Compare and contrast details in paired literary and informational nonfiction texts including their treatment of similar themes, topics, and patterns of events."
+              },
+              {
+                "id": "3.rl.3.c",
+                "description": "Compare and contrast the themes, settings, and plots of stories written by the same author about the same or similar characters."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-informational-text",
+        "title": "Reading Informational Text",
+        "standards": [
+          {
+            "id": "3.ri",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from grade-level complex informational texts read."
+          },
+          {
+            "id": "3.ri.1",
+            "description": "Key Ideas and Confirming Details",
+            "substandards": [
+              {
+                "id": "3.ri.1.a",
+                "description": "Determine the main idea of multi-paragraph texts as well as specific paragraphs within them."
+              },
+              {
+                "id": "3.ri.1.b",
+                "description": "Summarize texts using language that pertains to time, sequence, and cause and effect, referring to historical events, scientific ideas, or steps in technical procedures."
+              },
+              {
+                "id": "3.ri.1.c",
+                "description": "Identify and explain how an author uses reasons and evidence to support specific points in texts."
+              }
+            ]
+          },
+          {
+            "id": "3.ri.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "3.ri.2.a",
+                "description": "Describe major structural differences between the organizational patterns of different informational texts (e.g., cause/effect, comparison/contrast, problem/solution, description, sequence, and chronological order) and how they support a reader’s understanding of the text."
+              },
+              {
+                "id": "3.ri.2.b",
+                "description": "Use text features and search tools (e.g., sidebars, hyperlink) to locate and gain information efficiently."
+              },
+              {
+                "id": "3.ri.2.c",
+                "description": "Identify the author’s purpose for writing, including what the author wants to answer, explain, or describe."
+              }
+            ]
+          },
+          {
+            "id": "3.ri.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "3.ri.3.a",
+                "description": "Use prior (experience) and background (content) knowledge as context for new learning."
+              },
+              {
+                "id": "3.ri.3.b",
+                "description": "Compare and contrast the most important points and key details presented in two texts on the same topic."
+              },
+              {
+                "id": "3.ri.3.c",
+                "description": "Describe the connection between a series of historical events, scientific ideas or concepts, or steps in technical procedures in a text."
+              },
+              {
+                "id": "3.ri.3.d",
+                "description": "Demonstrate comprehension by writing about what is read using the text for support."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "foundations-writing",
+        "title": "Foundations for Writing",
+        "standards": [
+          {
+            "id": "3.ffw",
+            "description": "The student will print legibly in manuscript and cursive while applying grade level word knowledge to spell words correctly."
+          },
+          {
+            "id": "3.ffw.1",
+            "description": "Handwriting",
+            "substandards": [
+              {
+                "id": "3.ffw.1.a",
+                "description": "Maintain legible printing."
+              },
+              {
+                "id": "3.ffw.1.b",
+                "description": "Write capital and lowercase letters of the alphabet using correct letter formation in cursive."
+              },
+              {
+                "id": "3.ffw.1.c",
+                "description": "Sign his/her first and last name."
+              },
+              {
+                "id": "3.ffw.1.d",
+                "description": "Form cursive letters with flow from one letter to the next within names and words."
+              }
+            ]
+          },
+          {
+            "id": "3.ffw.2",
+            "description": "Spelling",
+            "substandards": [
+              {
+                "id": "3.ffw.2.a",
+                "description": "Use phoneme-grapheme correspondence to encode (spell) multisyllabic words."
+              },
+              {
+                "id": "3.ffw.2.b",
+                "description": "Use common affixes to encode (spell) words."
+              },
+              {
+                "id": "3.ffw.2.c",
+                "description": "Use phoneme/grapheme (sound/symbol) correspondences to encode (spell) grade-level high-frequency words with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "writing",
+        "title": "Writing",
+        "standards": [
+          {
+            "id": "3.w",
+            "description": "The student will compose various works for diverse audiences and purposes, linked to grade three content and texts."
+          },
+          {
+            "id": "3.w.1",
+            "description": "Modes and Purposes for Writing",
+            "substandards": [
+              {
+                "id": "3.w.1.a",
+                "description": "Recognize different forms of writing (narrative, expository, and opinion) have distinctive patterns of organization to support their purpose."
+              },
+              {
+                "id": "3.w.1.b",
+                "description": "Write personal or fictional narratives that organize event sequences that unfold naturally."
+              },
+              {
+                "id": "3.w.1.c",
+                "description": "Write informative/explanatory texts to examine a topic that develops the topic with facts and details."
+              },
+              {
+                "id": "3.w.1.d",
+                "description": "Write opinion pieces on topics or texts, supporting a point of view with facts and reasons."
+              },
+              {
+                "id": "3.w.1.e",
+                "description": "Write in response to text(s) read or heard to share thinking using supporting details from the text."
+              }
+            ]
+          },
+          {
+            "id": "3.w.2",
+            "description": "Organization and Composition",
+            "substandards": [
+              {
+                "id": "3.w.2.a",
+                "description": "Engage in writing as a process to compose a well-developed paragraph. This includes: i. Writing a clear topic sentence focusing on a main idea. ii. Developing, selecting, and organizing ideas relevant to topic, audience, purpose, and genre. iii. Elaborating writing by including supporting details. iv. Using transition words to vary sentence structure. v. Providing a concluding statement."
+              }
+            ]
+          },
+          {
+            "id": "3.w.3",
+            "description": "Usage and Mechanics",
+            "substandards": [
+              {
+                "id": "3.w.3.a",
+                "description": "With guidance and support from peers and adults, develop and strengthen writing as needed by revising for quality of ideas, organization, sentence fluency, and word choice."
+              },
+              {
+                "id": "3.w.3.b",
+                "description": "With guidance and support from peers and adults, edit writing for format and conventions such as capitalization, usage, punctuation, and spelling. (See Language Usage for grade-level expectations)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "3.lu",
+            "description": "The student will use the conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "3.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "3.lu.1.a",
+                "description": "Produce, expand, and rearrange simple and compound sentences when speaking and writing."
+              },
+              {
+                "id": "3.lu.1.b",
+                "description": "Distinguish between complete and incomplete sentences."
+              },
+              {
+                "id": "3.lu.1.c",
+                "description": "Form and use comparative and superlative adjectives when speaking and writing."
+              },
+              {
+                "id": "3.lu.1.d",
+                "description": "Form and use regular and irregular verbs when speaking and writing."
+              },
+              {
+                "id": "3.lu.1.e",
+                "description": "Use subject-verb agreement in simple sentences."
+              },
+              {
+                "id": "3.lu.1.f",
+                "description": "Eliminate double negatives when speaking and writing."
+              }
+            ]
+          },
+          {
+            "id": "3.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "3.lu.2.a",
+                "description": "Use commas in series, dates, addresses, and in greetings and closings of letters."
+              },
+              {
+                "id": "3.lu.2.b",
+                "description": "Use apostrophes to form contractions and frequently occurring possessions in writing."
+              },
+              {
+                "id": "3.lu.2.c",
+                "description": "Capitalize holidays, names, and places."
+              },
+              {
+                "id": "3.lu.2.d",
+                "description": "Use learned spelling patterns when writing words, including high frequency words and grade level word analysis knowledge."
+              },
+              {
+                "id": "3.lu.2.e",
+                "description": "Consult reference materials, including beginning dictionaries to check and correct spelling."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communication-multimodal-literacies",
+        "title": "Communication and Multimodal Literacies",
+        "standards": [
+          {
+            "id": "3.c.1",
+            "description": "Communication, Listening, and Collaboration",
+            "substandards": [
+              {
+                "id": "3.c.1.a",
+                "description": "Participate in a range of collaborative discussions (one-on-one, in groups, and teacher-led) on grade three topics and texts. This includes: i. Listening actively and speaking using agreed-upon discussion rules. ii. Respectfully building on others’ ideas and expressing their own clearly. iii. Asking and responding to questions that acquire or confirm information on a topic and link their comments to the remarks of others. iv. Actively engaging throughout the collaboration."
+              }
+            ]
+          },
+          {
+            "id": "3.c.2",
+            "description": "Speaking and Presentation of Ideas",
+            "substandards": [
+              {
+                "id": "3.c.2.a",
+                "description": "Report orally on a topic or text, tell a story, or recount an experience in an organized manner. This includes: i. Using descriptive details and appropriate facts to support themes or central ideas. ii. Speaking audibly with appropriate pacing, prosody, and voice level. iii. Using language (formal or informal) and style as appropriate to audience, topic, and purpose."
+              }
+            ]
+          },
+          {
+            "id": "3.c.3",
+            "description": "Integrating Multimodal Literacies",
+            "substandards": [
+              {
+                "id": "3.c.3.a",
+                "description": "Create a simple presentation using multimodal tools that enhance the topic and/or presentation."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "research",
+        "title": "Research",
+        "standards": [
+          {
+            "id": "3.r",
+            "description": "The student will conduct research and read or listen to a series of conceptually related texts on selected topics to build knowledge on grade-three content and texts, solve problems and support cross-curricular learning."
+          },
+          {
+            "id": "3.r.1",
+            "description": "Evaluation and Synthesis of Information",
+            "substandards": [
+              {
+                "id": "3.r.1.a",
+                "description": "Identify a topic and generate questions that explore the topic."
+              },
+              {
+                "id": "3.r.1.b",
+                "description": "Locate information in reference texts, electronic resources, provided sources, or through interviews and take brief notes on sources."
+              },
+              {
+                "id": "3.r.1.c",
+                "description": "Organize evidence into relevant categories, recognizing that some sources may be more reliable than others."
+              },
+              {
+                "id": "3.r.1.d",
+                "description": "Organize and share information orally, in writing, or through visual display."
+              },
+              {
+                "id": "3.r.1.e",
+                "description": "Avoid plagiarism, giving credit to sources of information (title and author when available)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "3.lu",
+            "description": "The student will use the conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "3.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "3.lu.1.a",
+                "description": "Produce, expand, and rearrange simple and compound sentences when speaking and writing."
+              },
+              {
+                "id": "3.lu.1.b",
+                "description": "Distinguish between complete and incomplete sentences."
+              },
+              {
+                "id": "3.lu.1.c",
+                "description": "Form and use comparative and superlative adjectives when speaking and writing."
+              },
+              {
+                "id": "3.lu.1.d",
+                "description": "Form and use regular and irregular verbs when speaking and writing."
+              },
+              {
+                "id": "3.lu.1.e",
+                "description": "Use subject-verb agreement in simple sentences."
+              },
+              {
+                "id": "3.lu.1.f",
+                "description": "Eliminate double negatives when speaking and writing."
+              }
+            ]
+          },
+          {
+            "id": "3.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "3.lu.2.a",
+                "description": "Use commas in series, dates, addresses, and in greetings and closings of letters."
+              },
+              {
+                "id": "3.lu.2.b",
+                "description": "Use apostrophes to form contractions and frequently occurring possessions in writing."
+              },
+              {
+                "id": "3.lu.2.c",
+                "description": "Capitalize holidays, names, and places."
+              },
+              {
+                "id": "3.lu.2.d",
+                "description": "Use learned spelling patterns when writing words, including high frequency words and grade level word analysis knowledge."
+              },
+              {
+                "id": "3.lu.2.e",
+                "description": "Consult reference materials, including beginning dictionaries to check and correct spelling."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communication-multimodal-literacies",
+        "title": "Communication and Multimodal Literacies",
+        "standards": [
+          {
+            "id": "3.c.1",
+            "description": "Communication, Listening, and Collaboration",
+            "substandards": [
+              {
+                "id": "3.c.1.a",
+                "description": "Participate in a range of collaborative discussions (one-on-one, in groups, and teacher-led) on grade three topics and texts. This includes: i. Listening actively and speaking using agreed-upon discussion rules. ii. Respectfully building on others’ ideas and expressing their own clearly. iii. Asking and responding to questions that acquire or confirm information on a topic and link their comments to the remarks of others. iv. Actively engaging throughout the collaboration."
+              }
+            ]
+          },
+          {
+            "id": "3.c.2",
+            "description": "Speaking and Presentation of Ideas",
+            "substandards": [
+              {
+                "id": "3.c.2.a",
+                "description": "Report orally on a topic or text, tell a story, or recount an experience in an organized manner. This includes: i. Using descriptive details and appropriate facts to support themes or central ideas. ii. Speaking audibly with appropriate pacing, prosody, and voice level. iii. Using language (formal or informal) and style as appropriate to audience, topic, and purpose."
+              }
+            ]
+          },
+          {
+            "id": "3.c.3",
+            "description": "Integrating Multimodal Literacies",
+            "substandards": [
+              {
+                "id": "3.c.3.a",
+                "description": "Create a simple presentation using multimodal tools that enhance the topic and/or presentation."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "research",
+        "title": "Research",
+        "standards": [
+          {
+            "id": "3.r",
+            "description": "The student will conduct research and read or listen to a series of conceptually related texts on selected topics to build knowledge on grade-three content and texts, solve problems and support cross-curricular learning."
+          },
+          {
+            "id": "3.r.1",
+            "description": "Evaluation and Synthesis of Information",
+            "substandards": [
+              {
+                "id": "3.r.1.a",
+                "description": "Identify a topic and generate questions that explore the topic."
+              },
+              {
+                "id": "3.r.1.b",
+                "description": "Locate information in reference texts, electronic resources, provided sources, or through interviews and take brief notes on sources."
+              },
+              {
+                "id": "3.r.1.c",
+                "description": "Organize evidence into relevant categories, recognizing that some sources may be more reliable than others."
+              },
+              {
+                "id": "3.r.1.d",
+                "description": "Organize and share information orally, in writing, or through visual display."
+              },
+              {
+                "id": "3.r.1.e",
+                "description": "Avoid plagiarism, giving credit to sources of information (title and author when available)."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "english-5",
+    "title": "English Standards of Learning for Virginia Public Schools - 2024 Grade 5",
+    "subject": "English",
+    "grade": "5",
+    "last_updated": "March 2024",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/english/2024/english-standards-of-learning-approved-march-2024.pdf",
+    "categories": [
+      {
+        "id": "foundations-reading",
+        "title": "Foundations for Reading",
+        "standards": [
+          {
+            "id": "5.ffr.3",
+            "description": "Phonics and Word Analysis: The student will apply grade level phonics and word analysis skills to decode (read) unfamiliar words in grade level text.",
+            "substandards": [
+              {
+                "id": "5.ffr.3.a",
+                "description": "Use knowledge of syllabication and syllable types to decode and encode words."
+              },
+              {
+                "id": "5.ffr.3.b",
+                "description": "Use knowledge of morphology (suffixes, prefixes, root/base) to decode words."
+              },
+              {
+                "id": "5.ffr.3.c",
+                "description": "Read grade-level high-frequency words, including decodable and irregular words, with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "developing-skilled-readers-building-reading-stamina",
+        "title": "Developing Skilled Readers and Building Reading Stamina",
+        "standards": [
+          {
+            "id": "5.dsr",
+            "description": "The student will build knowledge and comprehension skills from reading a range of challenging, content-rich texts. This includes fluently reading and gathering evidence from grade-level complex texts, reading widely on topics to gain purposeful knowledge and vocabulary, and using reading strategies when comprehension breaks down.",
+            "substandards": [
+              {
+                "id": "5.dsr.a",
+                "description": "Read a variety of grade-level complex texts with accuracy, automaticity, appropriate rate, and meaningful expression in successive readings to support comprehension. Monitor while reading to confirm or self-correct word recognition and understanding, as necessary (Reading Fluency, K-12)."
+              },
+              {
+                "id": "5.dsr.b",
+                "description": "Proficiently read and comprehend a variety of literary and informational texts that exhibit complexity at the higher range of the grades 4-5 band (See the Quantitative and Qualitative Analysis charts for determining complexity in the Appendix.) (Text Complexity, 2-12)."
+              },
+              {
+                "id": "5.dsr.c",
+                "description": "When responding to text through discussions and/or writing, draw several pieces of evidence from grade-level complex texts to support claims, conclusions, and inferences from texts, including quoting or paraphrasing accurately and tracing where relevant evidence is located (Textual Evidence, K-12)."
+              },
+              {
+                "id": "5.dsr.d",
+                "description": "Regularly engage in reading a series of conceptually related texts organized around topics of study to build knowledge and vocabulary (These texts should be at a range of complexity levels so students can read the texts independently, with peers, or with modest support.). Use this background knowledge as context for new learning (Deep Reading on Topics to Build Knowledge and Vocabulary K-12)."
+              },
+              {
+                "id": "5.dsr.e",
+                "description": "Use reading strategies as needed to aid and monitor comprehension when encountering challenging sections of text. These sense-making strategies attend to common organizational text structures, summarizing, asking questions of the text, and others (Reading Strategies 3-12)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-vocabulary",
+        "title": "Reading and Vocabulary",
+        "standards": [
+          {
+            "id": "5.rv",
+            "description": "The student will systematically build vocabulary and word knowledge based on grade-five content and texts."
+          },
+          {
+            "id": "5.rv.1",
+            "description": "Vocabulary Development and Word Analysis",
+            "substandards": [
+              {
+                "id": "5.rv.1.a",
+                "description": "Develop general academic language and content specific vocabulary by listening to, reading, and discussing a variety of grade-five texts and topics."
+              },
+              {
+                "id": "5.rv.1.b",
+                "description": "Discuss meanings of complex words and phrases acquired through conversations and literature."
+              },
+              {
+                "id": "5.rv.1.c",
+                "description": "Determine the meaning of complex words using frequently occurring root words and inflectional affixes (e.g., -s, -ing,-ed)."
+              },
+              {
+                "id": "5.rv.1.d",
+                "description": "Use the context of a sentence to apply knowledge of homophones."
+              },
+              {
+                "id": "5.rv.1.e",
+                "description": "Apply knowledge of grade-level appropriate synonyms and antonyms to better understand each word."
+              },
+              {
+                "id": "5.rv.1.f",
+                "description": "Analyze the morphological relationships between words, including how Greek and Latin affixes and roots impact the meaning."
+              },
+              {
+                "id": "5.rv.1.g",
+                "description": "Develop breadth of vocabulary knowledge by listening to and reading high quality, complex text."
+              },
+              {
+                "id": "5.rv.1.h",
+                "description": "Distinguish shades of meaning among verbs and adjectives."
+              },
+              {
+                "id": "5.rv.1.i",
+                "description": "Use strategies to infer word meanings."
+              },
+              {
+                "id": "5.rv.1.j",
+                "description": "Use glossaries, beginning dictionaries, and thesauruses, both print and digital, to determine or clarify the meaning of words and phrases."
+              },
+              {
+                "id": "5.rv.1.k",
+                "description": "Use newly learned words and phrases in discussions and speaking activities."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-literary-text",
+        "title": "Reading Literary Text",
+        "standards": [
+          {
+            "id": "5.rl",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of grade-level complex literary texts read to include poetry, fantasy, humor, mystery, adventure, realistic fiction, historical fiction, and folklore/tall tales, with a focus on fantasy."
+          },
+          {
+            "id": "5.rl.1",
+            "description": "Key Ideas and Plot Details",
+            "substandards": [
+              {
+                "id": "5.rl.1.a",
+                "description": "Summarize the story or play, including the overarching theme and lessons learned, and explain how they are developed or conveyed through specific details."
+              },
+              {
+                "id": "5.rl.1.b",
+                "description": "Describe plots in stories as a sequence of events that develops the central conflict and resolution, including initiating events, climax, and resolution."
+              },
+              {
+                "id": "5.rl.1.c",
+                "description": "Explain how events from the plot cause the character(s) to change or evolve and how the development of character(s) or settings impact the plot."
+              }
+            ]
+          },
+          {
+            "id": "5.rl.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "5.rl.2.a",
+                "description": "Describe how an author develops a character through what characters say, think, do, and how other characters respond."
+              },
+              {
+                "id": "5.rl.2.b",
+                "description": "Analyze the author’s use of language (e.g., synonyms, figurative language, sensory words, dialogue, dialect) and their impact on understanding characters, setting, and plot events."
+              },
+              {
+                "id": "5.rl.2.c",
+                "description": "Analyze how the characteristics of a poem and the author’s use of patterns of sound (e.g., rhyme, rhythm, alliteration, consonance) impact meaning."
+              }
+            ]
+          },
+          {
+            "id": "5.rl.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "5.rl.3.a",
+                "description": "Set a purpose for reading by activating prior (experience) and background (content) knowledge."
+              },
+              {
+                "id": "5.rl.3.b",
+                "description": "Compare and contrast the point of view from which different stories are narrated, including the difference between first-and third-person narratives."
+              },
+              {
+                "id": "5.rl.3.c",
+                "description": "Compare and contrast details in paired literary and informational nonfiction texts including their treatment of similar themes, topics, and patterns of events."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-informational-text",
+        "title": "Reading Informational Text",
+        "standards": [
+          {
+            "id": "5.ri",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from grade-level complex informational texts read."
+          },
+          {
+            "id": "5.ri.1",
+            "description": "Key Ideas and Confirming Details",
+            "substandards": [
+              {
+                "id": "5.ri.1.a",
+                "description": "Summarize the main ideas of texts and specific paragraphs within them, including how they are developed through the details."
+              },
+              {
+                "id": "5.ri.1.b",
+                "description": "Summarize events, procedures, ideas, or concepts in historical, scientific, or technical texts, including what happened, how, and why."
+              },
+              {
+                "id": "5.ri.1.c",
+                "description": "Describe how an author uses reasons, evidence, and opinions to support points in a text, by identifying (and accurately quoting) which reasons and evidence support which point(s)."
+              }
+            ]
+          },
+          {
+            "id": "5.ri.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "5.ri.2.a",
+                "description": "Describe the overall organization patterns of texts (e.g., cause/effect, comparison/contrast, problem/solution, description, sequence, and chronological) and how each successive part builds on earlier sections, using available transitional words and phrases."
+              },
+              {
+                "id": "5.ri.2.b",
+                "description": "Examine text features and search tools in multiple print and digital sources to evaluate and gain meaning from the information found."
+              },
+              {
+                "id": "5.ri.2.c",
+                "description": "Determine the author’s purpose(s) and describe how the author’s perspective (e.g., beliefs, assumptions, biases) influences the meaning of the text."
+              }
+            ]
+          },
+          {
+            "id": "5.ri.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "5.ri.3.a",
+                "description": "Use prior (experience) and background (content) knowledge as context for new learning."
+              },
+              {
+                "id": "5.ri.3.b",
+                "description": "Analyze multiple accounts of the same event or topic, noting important similarities and differences in the point of view they represent."
+              },
+              {
+                "id": "5.ri.3.c",
+                "description": "Explain the relationships or interactions between two or more individuals, events, procedures, ideas, or concepts in a historical, scientific, or technical texts, including what happened and why based on specific information in the text."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "foundations-writing",
+        "title": "Foundations for Writing",
+        "standards": [
+          {
+            "id": "5.ffw",
+            "description": "The student will print legibly in manuscript and cursive while applying grade level word knowledge to spell words correctly."
+          },
+          {
+            "id": "5.ffw.1",
+            "description": "Handwriting",
+            "substandards": [
+              {
+                "id": "5.ffw.1.a",
+                "description": "Maintain legible printing."
+              },
+              {
+                "id": "5.ffw.1.b",
+                "description": "Maintain legible cursive."
+              },
+              {
+                "id": "5.ffw.1.c",
+                "description": "Sign first and last name."
+              }
+            ]
+          },
+          {
+            "id": "5.ffw.2",
+            "description": "Spelling",
+            "substandards": [
+              {
+                "id": "5.ffw.2.a",
+                "description": "Use combined knowledge of all letter-sound correspondences, syllabication patterns, and morphology (e.g., roots and affixes) to spell accurately."
+              },
+              {
+                "id": "5.ffw.2.b",
+                "description": "Use phoneme-grapheme (sound/symbol) correspondences to decode (read) and encode (spell) grade-level high-frequency words with automaticity and accuracy."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "writing",
+        "title": "Writing",
+        "standards": [
+          {
+            "id": "5.w",
+            "description": "The student will compose various works for diverse audiences and purposes, linked to grade five content and texts."
+          },
+          {
+            "id": "5.w.1",
+            "description": "Modes and Purposes for Writing",
+            "substandards": [
+              {
+                "id": "5.w.1.a",
+                "description": "Write personal or fictional narratives in prose or poetic form that organize the writing around a central problem, conflict, or experience using descriptions or dialogue to develop the experience(s)."
+              },
+              {
+                "id": "5.w.1.b",
+                "description": "Write expository texts to examine a topic and convey ideas that develop the focus with relevant facts, concrete details, and examples from multiple sources and are grouped logically."
+              },
+              {
+                "id": "5.w.1.c",
+                "description": "Write persuasive pieces on topics or texts, including media messages, supporting a clear perspective with adequate facts, reasons, and logically grouped information."
+              },
+              {
+                "id": "5.w.1.d",
+                "description": "Write in response to texts read (including summaries, reflections, and descriptions) in which students demonstrate their thinking with details, examples, and other evidence from the text that are logically grouped."
+              }
+            ]
+          },
+          {
+            "id": "5.w.2",
+            "description": "Organization and Composition",
+            "substandards": [
+              {
+                "id": "5.w.2.a",
+                "description": "Engage in writing as a process to compose well-developed paragraphs. This includes: i. Introducing a clear topic sentence and logically organizing ideas and factual evidence to support the position in persuasive writing. ii. Developing, selecting, and organizing ideas relevant to topic, purpose, and genre, using precise and descriptive language and tone-specific vocabulary to enhance the central idea, tone, and voice. iii. Using transition words and prepositional phrases for sentence variety and link one sentence and paragraph to another. iv. Providing a concluding statement or section."
+              }
+            ]
+          },
+          {
+            "id": "5.w.3",
+            "description": "Usage and Mechanics",
+            "substandards": [
+              {
+                "id": "5.w.3.a",
+                "description": "With guidance and support from peers and adults, develop and strengthen writing as needed by revising for quality of ideas, organization, sentence fluency, and precise word choice."
+              },
+              {
+                "id": "5.w.3.b",
+                "description": "Self-and peer-edit the writing for capitalization, spelling, punctuation, sentence structures, paragraphing, and Standard English (See Language Usage for grade level expectations)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "5.lu",
+            "description": "The student will use the conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "5.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "5.lu.1.a",
+                "description": "Expand, combine, and reduce sentences for meaning, reader/listener interest, and style."
+              },
+              {
+                "id": "5.lu.1.b",
+                "description": "Use adverbs to express time, frequency, degree, and level of certainty when speaking and writing."
+              },
+              {
+                "id": "5.lu.1.c",
+                "description": "Use interjections, prepositional phrases, and coordinating and subordinating conjunctions in writing to join words and phrases in a sentence."
+              },
+              {
+                "id": "5.lu.1.d",
+                "description": "Recognize and correct inappropriate shifts in verb tense and number in writing."
+              },
+              {
+                "id": "5.lu.1.e",
+                "description": "Use standard subject-verb agreement when speaking and writing."
+              }
+            ]
+          },
+          {
+            "id": "5.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "5.lu.2.a",
+                "description": "Use commas correctly in compound sentences."
+              },
+              {
+                "id": "5.lu.2.b",
+                "description": "Use colons to separate hours and minutes and to introduce a list."
+              },
+              {
+                "id": "5.lu.2.c",
+                "description": "Use a hyphen to divide words at the end of a line in writing."
+              },
+              {
+                "id": "5.lu.2.d",
+                "description": "Use spelling patterns and generalizations (e.g., word families, syllable patterns, ending rules) when pronouncing and writing words."
+              },
+              {
+                "id": "5.lu.2.e",
+                "description": "Consult reference materials to check and correct spelling."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communication-multimodal-literacies",
+        "title": "Communication and Multimodal Literacies",
+        "standards": [
+          {
+            "id": "5.c.1",
+            "description": "Communication, Listening, and Collaboration",
+            "substandards": [
+              {
+                "id": "5.c.1.a",
+                "description": "Prepare for and participate in a range of sustained collaborative discussions with diverse partners on grade five topics and texts. This includes: i. Listening actively and speaking using agreed-upon discussion rules. ii. Respectfully demonstrating agreement or disagreement with others’ ideas. iii. Asking and answering relevant questions to build on others’ ideas, clarify ideas, and acquire or confirm information. iv. Summarizing the main ideas being discussed, using evidence, examples, and details to support opinions and conclusions."
+              },
+              {
+                "id": "5.c.1.b",
+                "description": "Share responsibility for the learning based on assigned roles and/or task expectations."
+              }
+            ]
+          },
+          {
+            "id": "5.c.2",
+            "description": "Speaking and Presentation of Ideas",
+            "substandards": [
+              {
+                "id": "5.c.2.a",
+                "description": "Report orally on a topic or text or present an opinion in an organized manner. This includes: i. Using content specific vocabulary, appropriate facts, and relevant descriptive details to support themes or central ideas. ii. Demonstrating appropriate speaking techniques (e.g., adequate volume and clear pronunciation) suitable to the audience, purpose, and situations. iii. Using facial expressions and gestures to support, accentuate, or dramatize the message during oral presentations. iv. Demonstrating awareness of and sensitivity to the appropriate use of words (e.g., avoiding stereotypes, multiple meanings of words). v. Encouraging audience participation through planned interactions (e.g., questioning, discussion, gathering responses, and movement)."
+              }
+            ]
+          },
+          {
+            "id": "5.c.3",
+            "description": "Integrating Multimodal Literacies",
+            "substandards": [
+              {
+                "id": "5.c.3.a",
+                "description": "Select, organize, and create engaging presentations that include multimedia components and visual displays."
+              },
+              {
+                "id": "5.c.3.b",
+                "description": "Strategically use two or more interdependent modes of communication to convey the intended message and enhance the development of main ideas or themes."
+              }
+            ]
+          },
+          {
+            "id": "5.c.4",
+            "description": "Examining Media Messages",
+            "substandards": [
+              {
+                "id": "5.c.4.a",
+                "description": "Deconstruct various types of media to identify the characteristics and determine the effectiveness of the intended messages."
+              },
+              {
+                "id": "5.c.4.b",
+                "description": "Identify the purpose, intended audience, and credibility of information (e.g., auditory, visual, and written media messages) being presented."
+              },
+              {
+                "id": "5.c.4.c",
+                "description": "Compare and contrast techniques used in a variety of media messages (e.g., animation, famous images and words, music and sound, photo-editing)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "research",
+        "title": "Research",
+        "standards": [
+          {
+            "id": "5.r",
+            "description": "The student will conduct research and read a series of conceptually related texts on selected topics to build knowledge on grade-five content and texts, solve problems, and support cross-curricular learning."
+          },
+          {
+            "id": "5.r.1",
+            "description": "Evaluation and Synthesis of Information",
+            "substandards": [
+              {
+                "id": "5.r.1.a",
+                "description": "Formulate questions that help narrow the topic and revise questions as needed based on research."
+              },
+              {
+                "id": "5.r.1.b",
+                "description": "Identify search terms to locate information and gather relevant information from various print and digital sources to address the research."
+              },
+              {
+                "id": "5.r.1.c",
+                "description": "Organize and synthesize information from the print and digital resources, evaluating their relevance, reliability, and credibility."
+              },
+              {
+                "id": "5.r.1.d",
+                "description": "Develop notes that include important concepts, summaries, and identification of information sources."
+              },
+              {
+                "id": "5.r.1.e",
+                "description": "Organize and share information orally, in writing, or through visual display."
+              },
+              {
+                "id": "5.r.1.f",
+                "description": "Avoid plagiarism and give proper credit by providing citations whenever using another person’s media, facts, ideas, graphics, music, and direct quotations."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "english-6",
+    "title": "English Standards of Learning for Virginia Public Schools - 2024 Grade 6",
+    "subject": "English",
+    "grade": "6",
+    "last_updated": "March 2024",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/english/2024/english-standards-of-learning-approved-march-2024.pdf",
+    "categories": [
+      {
+        "id": "developing-skilled-readers-building-reading-stamina",
+        "title": "Developing Skilled Readers and Building Reading Stamina",
+        "standards": [
+          {
+            "id": "6.dsr",
+            "description": "The student will build knowledge and comprehension skills from reading a range of challenging, content-rich texts. This includes fluently reading and gathering evidence from grade-level complex texts, reading widely on topics to gain purposeful knowledge and vocabulary, and using reading strategies when comprehension breaks down.",
+            "substandards": [
+              {
+                "id": "6.dsr.a",
+                "description": "Read a variety of grade-level complex text with accuracy, automaticity, appropriate rate, and meaningful expression in successive readings to support comprehension. Monitor while reading to confirm or self-correct word recognition and understanding when necessary (Reading Fluency, K-12)."
+              },
+              {
+                "id": "6.dsr.b",
+                "description": "Proficiently read and comprehend a variety of literary and informational texts that exhibit complexity at the lower range of the grade 6-8 band (See the Quantitative and Qualitative Analysis chart for determining complexity in the Appendix.) (Text Complexity, 2-12)."
+              },
+              {
+                "id": "6.dsr.c",
+                "description": "When responding to text through discussion and/or writing, draw several pieces of evidence from grade-level complex texts to support claims, conclusions, and inferences, including quoting or paraphrasing from texts accurately and tracing where relevant evidence is located (Textual Evidence, K-12)."
+              },
+              {
+                "id": "6.dsr.d",
+                "description": "Regularly engage in reading a series of conceptually related texts organized around topics of study to build knowledge and vocabulary (These texts should be at a range of complexity level so students can read the texts independently, with peers, or with modest support.). Use this background knowledge as context for new learning (Deep Reading on Topics to Build Knowledge and Vocabulary, K-12)."
+              },
+              {
+                "id": "6.dsr.e",
+                "description": "Use reading strategies as needed to aid and monitor comprehension when encountering challenging sections of text. These sense-making strategies attend to text structure, common organizational structures, summarizing, asking questions of the text, and others (Reading Strategies 3-12)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-vocabulary",
+        "title": "Reading and Vocabulary",
+        "standards": [
+          {
+            "id": "6.rv",
+            "description": "The student will systematically build vocabulary and word knowledge based on grade six content and texts."
+          },
+          {
+            "id": "6.rv.1",
+            "description": "Vocabulary Development and Word Analysis",
+            "substandards": [
+              {
+                "id": "6.rv.1.a",
+                "description": "Develop and accurately use general academic language and content-specific vocabulary by listening to, reading, and discussing a variety of grade-six texts and topics."
+              },
+              {
+                "id": "6.rv.1.b",
+                "description": "Use context and sentence structure to determine multiple meanings of words and clarify the meanings of unfamiliar words and phrases."
+              },
+              {
+                "id": "6.rv.1.c",
+                "description": "Apply knowledge of Greek and Latin roots and affixes to predict the meaning of unfamiliar words."
+              },
+              {
+                "id": "6.rv.1.d",
+                "description": "Use the relationship between particular words, including synonyms and antonyms to better understand each word."
+              },
+              {
+                "id": "6.rv.1.e",
+                "description": "Explain the construction and meaning of figurative language, including simile, hyperbole, metaphor, and personification."
+              },
+              {
+                "id": "6.rv.1.f",
+                "description": "Clarify the meaning of an unknown word or select the applicable definition of a word from a text by using word reference materials."
+              },
+              {
+                "id": "6.rv.1.g",
+                "description": "Use general and specialized word-reference materials, print and digital, to identify word origins, derivations, and pronunciations."
+              },
+              {
+                "id": "6.rv.1.h",
+                "description": "Use newly learned words and phrases in multiple contexts, including in students’ discussions and speaking and writing activities."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-literary-text",
+        "title": "Reading Literary Text",
+        "standards": [
+          {
+            "id": "6.rl",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of grade-level complex literary texts read to include short stories, literary nonfiction, novels, poetry, and drama."
+          },
+          {
+            "id": "6.rl.1",
+            "description": "Key Ideas and Plot Details",
+            "substandards": [
+              {
+                "id": "6.rl.1.a",
+                "description": "Summarize texts, including determining the central theme of stories, plays, or poems, and how they are conveyed through specific details."
+              },
+              {
+                "id": "6.rl.1.b",
+                "description": "Describe plot developments in stories and dramas by examining the exposition, initiating event, central conflict, rising action, climax, falling action, and resolution."
+              },
+              {
+                "id": "6.rl.1.c",
+                "description": "Differentiate between internal and external conflicts (e.g., individual vs. individual, individual vs. nature, individual vs. society, individual vs. technology, and individual vs. self) and explain how they impact character development and plot."
+              },
+              {
+                "id": "6.rl.1.d",
+                "description": "Explain how static and dynamic characters impact the plot."
+              },
+              {
+                "id": "6.rl.1.e",
+                "description": "Explain the role of the protagonist and antagonist on plot events."
+              }
+            ]
+          },
+          {
+            "id": "6.rl.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "6.rl.2.a",
+                "description": "Describe the poetic elements in prose and poetry (e.g., rhyme, rhythm, repetition, alliteration, and onomatopoeia) and their intended impact on the reader."
+              },
+              {
+                "id": "6.rl.2.b",
+                "description": "Explain elements of author’s style as purposeful choices (e.g., imagery, figurative language, and word choice) to develop tone."
+              },
+              {
+                "id": "6.rl.2.c",
+                "description": "Explain how an author develops the point of view (e.g., first-person, third person limited, third-person omniscient) of the narrator or speaker in a text and influences how events are described in stories, plays, or poems."
+              }
+            ]
+          },
+          {
+            "id": "6.rl.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "6.rl.3.a",
+                "description": "Describe how the interactions between individuals, settings, events, and ideas within a text influence one another."
+              },
+              {
+                "id": "6.rl.3.b",
+                "description": "Compare and contrast details in two or more paired literary fiction and nonfiction texts on the same topic or with similar themes, including how chapters, scenes, or stanzas work together to provide the overall structure of each text."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-informational-text",
+        "title": "Reading Informational Text",
+        "standards": [
+          {
+            "id": "6.ri",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from grade-level complex informational texts read."
+          },
+          {
+            "id": "6.ri.1",
+            "description": "Key Ideas and Confirming Details",
+            "substandards": [
+              {
+                "id": "6.ri.1.a",
+                "description": "Summarize texts, including their main idea(s) and how they are developed with specific details."
+              },
+              {
+                "id": "6.ri.1.b",
+                "description": "Describe how a key individual, event or idea is introduced, illustrated, and elaborated in historical, scientific, or technical texts (e.g., through examples or anecdotes)."
+              },
+              {
+                "id": "6.ri.1.c",
+                "description": "Trace the argument and specific claims in texts, distinguishing claims that are supported by evidence and reasons, from claims that are not."
+              }
+            ]
+          },
+          {
+            "id": "6.ri.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "6.ri.2.a",
+                "description": "Determine the purpose of text features (e.g., boldface and italics type; type set in color; underlining; graphics and photographs; and headings and subheadings)."
+              },
+              {
+                "id": "6.ri.2.b",
+                "description": "Explain how an author’s word choice, organizational pattern, and language structure convey the author’s purpose."
+              },
+              {
+                "id": "6.ri.2.c",
+                "description": "Explain how an author establishes and conveys a perspective or purpose in an informational text."
+              }
+            ]
+          },
+          {
+            "id": "6.ri.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "6.ri.3.a",
+                "description": "Describe ideas within and between selections including how specific sentences, paragraphs, or sections contribute to the development of ideas."
+              },
+              {
+                "id": "6.ri.3.b",
+                "description": "Compare and contrast one author’s presentation of ideas or events with another’s, identifying where the texts agree or disagree."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "writing",
+        "title": "Writing",
+        "standards": [
+          {
+            "id": "6.w",
+            "description": "The student will compose various works for diverse audiences and purposes, linked to grade six content and texts."
+          },
+          {
+            "id": "6.w.1",
+            "description": "Modes and Purposes for Writing",
+            "substandards": [
+              {
+                "id": "6.w.1.a",
+                "description": "Write narratives to entertain, to share a personal experience, or to alter an existing story that uses narrative techniques to develop the characters, event(s), and experience(s)."
+              },
+              {
+                "id": "6.w.1.b",
+                "description": "Write expository texts to examine a topic or concept, logically conveying ideas and information using text structures such as description, comparison, or cause-effect to create cohesion."
+              },
+              {
+                "id": "6.w.1.c",
+                "description": "Write persuasively about topics or texts, including media messages, supporting well-defined claims with clear reasons and evidence that are logically grouped."
+              },
+              {
+                "id": "6.w.1.d",
+                "description": "Write reflectively in response to text(s) read to demonstrate thinking with details, examples, and other evidence from the text(s)."
+              }
+            ]
+          },
+          {
+            "id": "6.w.2",
+            "description": "Organization and Composition",
+            "substandards": [
+              {
+                "id": "6.w.2.a",
+                "description": "Generate and organize ideas using the writing process (planning, drafting, revising, editing) to develop multi-paragraph texts. This includes: i. Composing a thesis statement that focuses the topic and introduces the piece clearly. ii. Establishing a central idea incorporating evidence and maintaining an organized structure to fit the form and topic. iii. Elaborating and supporting ideas, using relevant facts, definitions, details, quotations, and/or examples. iv. Using transitions to show relationships between ideas, signal a shift or change in the writer’s thoughts, and make sentences clearer. v. Selecting vocabulary and information to enhance the central idea, tone, and voice. vi. Expanding and embedding ideas to create sentence variety. vii. Providing a concluding statement or section."
+              }
+            ]
+          },
+          {
+            "id": "6.w.3",
+            "description": "Usage and Mechanics",
+            "substandards": [
+              {
+                "id": "6.w.3.a",
+                "description": "Revise writing for clarity of content, word choice, sentence variety, and transition among paragraphs."
+              },
+              {
+                "id": "6.w.3.b",
+                "description": "Self-and peer-edit for capitalization, spelling, punctuation, sentence structure, paragraphing, and Standard English (See Language Usage for grade level expectations)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "6.lu",
+            "description": "The student will use the conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "6.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "6.lu.1.a",
+                "description": "Construct simple, compound, and complex sentences to communicate ideas clearly and add variety to writing."
+              },
+              {
+                "id": "6.lu.1.b",
+                "description": "Use pronoun-antecedent agreement, including indefinite and reflexive pronouns when speaking and writing."
+              },
+              {
+                "id": "6.lu.1.c",
+                "description": "Use adverbs to modify verbs, adjectives, and other adverbs to express manner, place, time, frequency, degree, and level of certainty precisely when speaking and writing."
+              },
+              {
+                "id": "6.lu.1.d",
+                "description": "Use phrases and clauses within a sentence and apply appropriate subject-verb agreement when speaking and writing."
+              },
+              {
+                "id": "6.lu.1.e",
+                "description": "Form and use often confusing verbs (e.g., lie/lay, sit/set, rise/raise) correctly in sentences."
+              }
+            ]
+          },
+          {
+            "id": "6.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "6.lu.2.a",
+                "description": "Construct complete sentences with appropriate punctuation, avoiding comma splices and run-ons in writing."
+              },
+              {
+                "id": "6.lu.2.b",
+                "description": "Use and punctuate dialogue and direct quotations appropriately in writing."
+              },
+              {
+                "id": "6.lu.2.c",
+                "description": "Recognize and consistently spell frequently used words accurately."
+              },
+              {
+                "id": "6.lu.2.d",
+                "description": "Consult reference materials to check and correct spelling."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communication-multimodal-literacies",
+        "title": "Communication and Multimodal Literacies",
+        "standards": [
+          {
+            "id": "6.c",
+            "description": "The student will develop effective oral communication and collaboration skills to build a community of learners that process, understand, and interpret content together."
+          },
+          {
+            "id": "6.c.1",
+            "description": "Communication, Listening, and Collaboration",
+            "substandards": [
+              {
+                "id": "6.c.1.a",
+                "description": "Facilitate and contribute to a range of sustained collaborative discussions with diverse partners on grade six topics and texts. This includes: i. Listening actively through verbal and nonverbal communication and using agreed-upon discussion rules. ii. Working respectfully by building on others’ ideas and showing value for others’ ideas and contributions. iii. Asking relevant questions to clarify others’ perspectives. iv. Communicating agreement or tactful disagreement with others’ ideas, using carefully constructed responses. v. Paraphrasing and summarizing key ideas being discussed by using ample evidence, examples, or details to support opinions and conclusions. vi. Evaluating the effectiveness of participant interactions and one’s own contributions to the collaborative work."
+              }
+            ]
+          },
+          {
+            "id": "6.c.2",
+            "description": "Speaking and Presentation of Ideas",
+            "substandards": [
+              {
+                "id": "6.c.2.a",
+                "description": "Report orally on a topic or present an opinion. This includes: i. Clearly communicating information in an organized or succinct manner. ii. Providing evidence to support the main idea. iii. Using language, vocabulary, and style appropriate to the audience, topic, and purpose. iv. Using verbal communication skills, such as volume, tone, and enunciation to enhance the overall message. v. Using nonverbal skills, such as proper posture and stance, gestures, and eye movement to enhance the overall message. vi. Encouraging audience participation through planned interactions (e.g., questioning, discussion, gathering responses, and movement). vii. Referencing source material as appropriate during the presentation."
+              }
+            ]
+          },
+          {
+            "id": "6.c.3",
+            "description": "Integrating Multimodal Literacies",
+            "substandards": [
+              {
+                "id": "6.c.3.a",
+                "description": "Use media and visual literacy skills to select, organize, and create multimodal content that articulates the purpose of the presentation, using two or more communication modes to make meaning (e.g., still or moving images, gestures, spoken language, and written language)."
+              },
+              {
+                "id": "6.c.3.b",
+                "description": "Craft and publish audience-specific media messages that present claims and findings in a logical sequence."
+              }
+            ]
+          },
+          {
+            "id": "6.c.4",
+            "description": "Examining Media Messages",
+            "substandards": [
+              {
+                "id": "6.c.4.a",
+                "description": "Interpret information presented in diverse media formats and explain how it contributes to the topic."
+              },
+              {
+                "id": "6.c.4.b",
+                "description": "Explain how media messages are intentionally constructed to impact a specific audience."
+              },
+              {
+                "id": "6.c.4.c",
+                "description": "Explain the characteristics and analyze the effectiveness of a variety of media messages by considering the results and/or impact on the intended audience."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "research",
+        "title": "Research",
+        "standards": [
+          {
+            "id": "6.r",
+            "description": "The student will conduct research and read a series of conceptually related texts on selected topics to build knowledge on grade-six content and texts, solve problems, and support cross-curricular learning."
+          },
+          {
+            "id": "6.r.1",
+            "description": "Evaluation and Synthesis of Information",
+            "substandards": [
+              {
+                "id": "6.r.1.a",
+                "description": "Formulate appropriately narrow questions about a research topic and refocus the inquiry when appropriate."
+              },
+              {
+                "id": "6.r.1.b",
+                "description": "Collect information from multiple sources, using search terms effectively."
+              },
+              {
+                "id": "6.r.1.c",
+                "description": "Organize and synthesize information from multiple sources (primary, secondary, digital, and print) evaluating the relevance, usefulness, validity, and credibility of each source."
+              },
+              {
+                "id": "6.r.1.d",
+                "description": "Develop notes that include important concepts and summaries, including quoting, summarizing, and paraphrasing research findings, avoiding plagiarism by using own words and following ethical and legal guidelines for gathering and using information."
+              },
+              {
+                "id": "6.r.1.e",
+                "description": "Organize and share findings in formal and informal oral or written formats."
+              },
+              {
+                "id": "6.r.1.f",
+                "description": "Give credit for information quoted or paraphrased using standard citations (e.g., author, article title, webpage, and publication date)."
+              },
+              {
+                "id": "6.r.1.g",
+                "description": "Demonstrate ethical and responsible use of all sources, including the Internet, Artificial Intelligence (AI), and new technologies as they develop."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "english-7",
+    "title": "English Standards of Learning for Virginia Public Schools - 2024 Grade 7",
+    "subject": "English",
+    "grade": "7",
+    "last_updated": "March 2024",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/english/2024/english-standards-of-learning-approved-march-2024.pdf",
+    "categories": [
+      {
+        "id": "developing-skilled-readers-building-reading-stamina",
+        "title": "Developing Skilled Readers and Building Reading Stamina",
+        "standards": [
+          {
+            "id": "7.dsr",
+            "description": "The student will build knowledge and comprehension skills from reading a range of challenging, content-rich texts. This includes fluently reading and gathering evidence from grade-level complex texts, reading widely on topics to gain purposeful knowledge and vocabulary, and using reading strategies when comprehension breaks down.",
+            "substandards": [
+              {
+                "id": "7.dsr.a",
+                "description": "Read a variety of grade-level complex text with accuracy, automaticity, appropriate rate, and meaningful expression in successive readings to support comprehension. Monitor while reading to confirm or self-correct word recognition and understanding, as necessary (Reading Fluency, K-12)."
+              },
+              {
+                "id": "7.dsr.b",
+                "description": "Proficiently read and comprehend a variety of literary and informational texts that exhibit complexity at the mid-range of the grades 6-8 band. (See the Quantitative and Qualitative Analysis charts for determining complexity in the Appendix.) (Text Complexity, 2-12)."
+              },
+              {
+                "id": "7.dsr.c",
+                "description": "When responding to text through discussion and/or writing, draw several pieces of evidence from grade-level complex texts to support claims, conclusions, and inferences, including quoting or paraphrasing from texts accurately and tracing where relevant evidence is located (Textual Evidence, K-12)."
+              },
+              {
+                "id": "7.dsr.d",
+                "description": "Regularly engage in reading a series of conceptually related texts organized around topics of study to build knowledge and vocabulary (These texts should be at a range of complexity levels so students can read the texts independently, with peers, or with modest support.). Use this background knowledge as context for new learning (Deep Reading on Topics to Build Knowledge and Vocabulary, K-12)."
+              },
+              {
+                "id": "7.dsr.e",
+                "description": "Use reading strategies as needed to aid and monitor comprehension when encountering challenging sections of text. These sense-making strategies attend to text structure, common organizational structures, summarizing, asking questions of the text, and others (Reading Strategies, 3-12)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-vocabulary",
+        "title": "Reading and Vocabulary",
+        "standards": [
+          {
+            "id": "7.rv",
+            "description": "The student will systematically build vocabulary and word knowledge based on grade seven content and texts."
+          },
+          {
+            "id": "7.rv.1",
+            "description": "Vocabulary Development and Word Analysis",
+            "substandards": [
+              {
+                "id": "7.rv.1.a",
+                "description": "Develop and accurately use general academic language and content-specific vocabulary by listening to, reading, and discussing a variety of grade-seven texts and topics."
+              },
+              {
+                "id": "7.rv.1.b",
+                "description": "Use context (e.g., the overall meaning of a sentence or paragraph; a word’s position or function in a sentence) to determine the meaning of words or phrases."
+              },
+              {
+                "id": "7.rv.1.c",
+                "description": "Apply knowledge of Greek and Latin roots and affixes to predict the meaning of unfamiliar words."
+              },
+              {
+                "id": "7.rv.1.d",
+                "description": "Use the relationship between particular words, including synonyms, antonyms, and analogies to better understand each word."
+              },
+              {
+                "id": "7.rv.1.e",
+                "description": "Analyze the construction and meaning of figurative language, including simile, hyperbole, metaphor, and personification."
+              },
+              {
+                "id": "7.rv.1.f",
+                "description": "Distinguish among the nuances in the meaning of connotations of words with similar denotations."
+              },
+              {
+                "id": "7.rv.1.g",
+                "description": "Use general and specialized word-reference materials, print and digital, to identify word origins and derivations, pronunciations, precise meanings, and their parts of speech."
+              },
+              {
+                "id": "7.rv.1.h",
+                "description": "Use newly learned words and phrases in multiple contexts, including in students’ discussions and speaking and writing activities."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-literary-text",
+        "title": "Reading Literary Text",
+        "standards": [
+          {
+            "id": "7.rl",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of grade-level complex literary texts read to include short stories, literary nonfiction, novels, poetry, and drama."
+          },
+          {
+            "id": "7.rl.1",
+            "description": "Key Ideas and Plot Details",
+            "substandards": [
+              {
+                "id": "7.rl.1.a",
+                "description": "Describe stated or implied themes of texts and analyze their development throughout the texts using specific details."
+              },
+              {
+                "id": "7.rl.1.b",
+                "description": "Analyze how the central conflict and key elements (e.g., exposition, initiating event, rising action, climax, falling action, and resolution) impact plot development."
+              },
+              {
+                "id": "7.rl.1.c",
+                "description": "Explain how static and dynamic characters and the roles of protagonist and antagonist influence plot events."
+              }
+            ]
+          },
+          {
+            "id": "7.rl.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "7.rl.2.a",
+                "description": "Analyze how elements of authors’ styles (e.g., word choice, dialogue, form, voice, rhyme, rhythm, and/or sound devices) contribute to meaning in various forms of prose and poetry."
+              },
+              {
+                "id": "7.rl.2.b",
+                "description": "Analyze how the elements of an author’s style (e.g., word choice, sentence structure, dialogue, figurative language, imagery) are used to influence and develop tone."
+              },
+              {
+                "id": "7.rl.2.c",
+                "description": "Explain how an author develops the points of view of different characters in a text (e.g., first-person, third person limited, third-person omniscient) and how they affect the reader’s interpretation of a text."
+              }
+            ]
+          },
+          {
+            "id": "7.rl.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "7.rl.3.a",
+                "description": "Explain how particular elements of stories or dramas interact including how settings shape and influence characters and plot."
+              },
+              {
+                "id": "7.rl.3.b",
+                "description": "Compare and contrast texts in different forms or genres (e.g., stories and poems; historical novels and fantasy stories) in terms of their approaches to similar themes and topics."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-informational-text",
+        "title": "Reading Informational Text",
+        "standards": [
+          {
+            "id": "7.ri",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from grade-level complex informational texts read."
+          },
+          {
+            "id": "7.ri.1",
+            "description": "Key Ideas and Confirming Details",
+            "substandards": [
+              {
+                "id": "7.ri.1.a",
+                "description": "Create a main idea statement and provide an accurate summary of how key events or ideas develop through the text."
+              },
+              {
+                "id": "7.ri.1.b",
+                "description": "Analyze how the author unfolds a perspective or series of ideas or events in historical, scientific, or technical texts, including the order in which the points are made and how they are introduced and developed."
+              },
+              {
+                "id": "7.ri.1.c",
+                "description": "Trace the argument and specific claims in texts and assess whether all the evidence presented is relevant and whether irrelevant evidence was introduced."
+              }
+            ]
+          },
+          {
+            "id": "7.ri.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "7.ri.2.a",
+                "description": "Analyze how an author uses text features (e.g., boldface and italics; type set in color; underlining; indentation; sidebars; illustrations, graphics and photographs; headings and subheadings; footnotes and annotations) to enhance and support the reader’s comprehension."
+              },
+              {
+                "id": "7.ri.2.b",
+                "description": "Analyze how an author’s word choice, organizational pattern, and language structure impact the author’s purpose and support the reader’s comprehension."
+              },
+              {
+                "id": "7.ri.2.c",
+                "description": "Analyze how an author’s purpose(s) reflects the author’s perspective (e.g., beliefs, assumptions, biases) and influences the meaning of an informational text."
+              }
+            ]
+          },
+          {
+            "id": "7.ri.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "7.ri.3.a",
+                "description": "Analyze ideas within and between selections including how specific sentences, paragraphs, or sections contribute to the development and meaning of ideas."
+              },
+              {
+                "id": "7.ri.3.b",
+                "description": "Compare and contrast how two or more authors writing about the same topic shape their presentations or viewpoints of key information by emphasizing different facts, opinions, and reasoning."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "writing",
+        "title": "Writing",
+        "standards": [
+          {
+            "id": "7.w",
+            "description": "The student will compose various works for diverse audiences and purposes, linked to grade seven content and texts."
+          },
+          {
+            "id": "7.w.1",
+            "description": "Modes and Purposes for Writing",
+            "substandards": [
+              {
+                "id": "7.w.1.a",
+                "description": "Write narratives to develop real or imagined experiences or to alter an existing text, using a variety of precise words and phrases and transitional words to develop the characters, convey sequence, and signal shifts from one timeframe or setting to another."
+              },
+              {
+                "id": "7.w.1.b",
+                "description": "Write expository texts to examine a topic or concept that develops the focus with relevant facts, definitions, concrete details, or other information from multiple credible sources, using structures and patterns (e.g., description, enumeration, classification, comparison, problem-solution, or cause-effect) to clarify relationships among ideas."
+              },
+              {
+                "id": "7.w.1.c",
+                "description": "Write persuasively supporting a well-defined point of view with appropriate claims, relevant evidence, and clear reasoning that are logically grouped."
+              },
+              {
+                "id": "7.w.1.d",
+                "description": "Write reflectively in response to reading to demonstrate thinking with details, examples, and other evidence from the text(s)."
+              }
+            ]
+          },
+          {
+            "id": "7.w.2",
+            "description": "Organization and Composition",
+            "substandards": [
+              {
+                "id": "7.w.2.a",
+                "description": "Generate and organize ideas using the writing process (planning, drafting, revising, editing) to develop multi-paragraph texts. This includes: i. Composing a thesis statement that states a position or explains the purpose. ii. Establishing a central idea that aligns with the thesis and maintains an organized structure to fit form and topic. iii. Defending conclusions or positions with reasons and precise, relevant evidence (e.g., facts, definitions, details, quotations, and examples). iv. Using transitions within and between paragraphs to signal shifts in writing and clarify the relationships among ideas and concepts. v. Developing voice and tone by using language that provides vivid and precise vocabulary to enhance the meaning of the writing. vi. Expanding and embedding ideas to create sentence variety. vii. Providing a concluding statement or section."
+              }
+            ]
+          },
+          {
+            "id": "7.w.3",
+            "description": "Usage and Mechanics",
+            "substandards": [
+              {
+                "id": "7.w.3.a",
+                "description": "Revise writing for clarity of content, word choice, sentence variety, and transition among paragraphs."
+              },
+              {
+                "id": "7.w.3.b",
+                "description": "Self-and peer-edit writing for capitalization, spelling, punctuation, sentence structure, paragraphing, and Standard English (See Language Usage for grade level expectations)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "7.lu",
+            "description": "The student will use the conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "7.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "7.lu.1.a",
+                "description": "Construct simple, compound, complex, and compound-complex sentences to communicate ideas clearly and add variety to writing."
+              },
+              {
+                "id": "7.lu.1.b",
+                "description": "Recognize and use pronoun-antecedent agreement, including indefinite, reflexive, and relative pronouns, when speaking and writing."
+              },
+              {
+                "id": "7.lu.1.c",
+                "description": "Use specific adjectives and adverbs to enhance speech and writing."
+              },
+              {
+                "id": "7.lu.1.d",
+                "description": "Arrange phrases and clauses within a sentence and apply appropriate subject-verb agreement to improve meaning, reader/listener interest, and style in writing."
+              },
+              {
+                "id": "7.lu.1.e",
+                "description": "Maintain consistent verb tense across paragraphs in writing."
+              }
+            ]
+          },
+          {
+            "id": "7.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "7.lu.2.a",
+                "description": "Construct complete sentence with appropriate punctuation, avoiding comma splices and run-ons in writing."
+              },
+              {
+                "id": "7.lu.2.b",
+                "description": "Use and punctuate dialogue and direct quotations appropriately in writing."
+              },
+              {
+                "id": "7.lu.2.c",
+                "description": "Recognize and consistently spell frequently used words accurately."
+              },
+              {
+                "id": "7.lu.2.d",
+                "description": "Consult reference materials to check and correct spelling."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communication-multimodal-literacies",
+        "title": "Communication and Multimodal Literacies",
+        "standards": [
+          {
+            "id": "7.c",
+            "description": "The student will develop effective oral communication and collaboration skills to build a community of learners that process, understand, and interpret content together."
+          },
+          {
+            "id": "7.c.1",
+            "description": "Communication, Listening, and Collaboration",
+            "substandards": [
+              {
+                "id": "7.c.1.a",
+                "description": "Facilitate and contribute to a range of sustained collaborative discussions with diverse partners on grade seven topics and texts. This includes: i. Listening actively through verbal and nonverbal communication and using agreed-upon discussion rules. ii. Working effectively and respectfully by building on others’ ideas, actively contributing relevant and well-supported ideas and opinions, and sharing responsibility for the collaborative work. iii. Asking and responding to probing questions and providing appropriate feedback within structured discussions. iv. Communicating agreement or tactful disagreement with others’ ideas using carefully constructed statements. v. Paraphrasing, summarizing, and writing reflectively in response to the ideas being discussed. vi. Evaluating the effectiveness of participant interactions and one’s own contributions to small group activities."
+              }
+            ]
+          },
+          {
+            "id": "7.c.2",
+            "description": "Speaking and Presentation of Ideas",
+            "substandards": [
+              {
+                "id": "7.c.2.a",
+                "description": "Report orally on a topic or text or present an opinion. This includes: i. Clearly communicating information in an organized and succinct manner. ii. Providing evidence to support the main ideas, including pertinent descriptions, facts, details, and examples. iii. Adjusting verbal and nonverbal communication skills appropriate to audience, topic, and purpose to enhance the overall message. iv. Responding to audience questions and comments with relevant evidence, observations, and ideas. v. Referencing source material as appropriate during the presentation."
+              },
+              {
+                "id": "7.c.2.b",
+                "description": "Memorize and recite a poem demonstrating inflection and meaningful expression that is appropriate to the tone and voice of the selection."
+              }
+            ]
+          },
+          {
+            "id": "7.c.3",
+            "description": "Integrating Multimodal Literacies",
+            "substandards": [
+              {
+                "id": "7.c.3.a",
+                "description": "Use medial and visual literacy skills to select, organize, and create multimodal content that articulates and enhances the purpose of the presentation using two or more communication modes to make meaning (e.g., still or moving images, gestures, spoken language, and written language)."
+              },
+              {
+                "id": "7.c.3.b",
+                "description": "Craft and publish audience-specific media messages that present claims and findings with relevant evidence in a logical sequence."
+              }
+            ]
+          },
+          {
+            "id": "7.c.4",
+            "description": "Examining Media Messages",
+            "substandards": [
+              {
+                "id": "7.c.4.a",
+                "description": "Explain persuasive/informative techniques used in media to sway the audience (e.g., innuendo, card stacking, bandwagon, and appeal to emotions)."
+              },
+              {
+                "id": "7.c.4.b",
+                "description": "Analyze media messages for facts, opinions, persuasive messages, word choice, and viewpoint."
+              },
+              {
+                "id": "7.c.4.c",
+                "description": "Compare and contrast the effectiveness of techniques in auditory, visual, and written media messages (e.g., authorship, format, content, purpose) on the intended audience."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "research",
+        "title": "Research",
+        "standards": [
+          {
+            "id": "7.r",
+            "description": "The student will conduct research and read a series of conceptually related texts on selected topics to build knowledge on grade seven content and texts, solve problems, and support cross-curricular learning."
+          },
+          {
+            "id": "7.r.1",
+            "description": "Evaluation and Synthesis of Information",
+            "substandards": [
+              {
+                "id": "7.r.1.a",
+                "description": "Formulate questions about a research topic, broadening or narrowing the inquiry as necessary."
+              },
+              {
+                "id": "7.r.1.b",
+                "description": "Collect, organize, and synthesize information from multiple sources using various notetaking formats."
+              },
+              {
+                "id": "7.r.1.c",
+                "description": "Evaluate and analyze the relevance, validity, and credibility of each source (primary, secondary, digital, and print), determining what information to include and exclude."
+              },
+              {
+                "id": "7.r.1.d",
+                "description": "Quote, summarize, and paraphrase research findings from primary and secondary sources, avoiding plagiarism by using own words and following ethical and legal guidelines."
+              },
+              {
+                "id": "7.r.1.e",
+                "description": "Organize and share findings in formal and informal oral written formats."
+              },
+              {
+                "id": "7.r.1.f",
+                "description": "Give credit for information quoted or paraphrased, using standard citations (e.g., author, article title and webpage, and publication date)."
+              },
+              {
+                "id": "7.r.1.g",
+                "description": "Demonstrate ethical and responsible use of all sources, including the Internet, Artificial Intelligence (AI), and new technologies, as they develop."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "english-8",
+    "title": "English Standards of Learning for Virginia Public Schools - 2024 Grade 8",
+    "subject": "English",
+    "grade": "8",
+    "last_updated": "March 2024",
+    "source_url": "https://www.doe.virginia.gov/testing/standards_of_learning/english/2024/english-standards-of-learning-approved-march-2024.pdf",
+    "categories": [
+      {
+        "id": "developing-skilled-readers-building-reading-stamina",
+        "title": "Developing Skilled Readers and Building Reading Stamina",
+        "standards": [
+          {
+            "id": "8.dsr",
+            "description": "The student will build knowledge and comprehension skills from reading a range of challenging, content-rich texts. This includes fluently reading and gathering evidence from grade-level complex texts, reading widely on topics to gain purposeful knowledge and vocabulary, and using reading strategies when comprehension breaks down.",
+            "substandards": [
+              {
+                "id": "8.dsr.a",
+                "description": "Read a variety of grade-level complex text with accuracy, automaticity, appropriate rate, and meaningful expression in successive readings to support comprehension. Monitor while reading to confirm or self-correct word recognition and understanding, as necessary (Reading Fluency, K-12)."
+              },
+              {
+                "id": "8.dsr.b",
+                "description": "Proficiently read and comprehend a variety of literary and informational texts that exhibit complexity at the higher range of the grades 6-8 band (See the Quantitative and Qualitative Analysis charts for determining complexity in the Appendix.) (Text Complexity, 2-12)."
+              },
+              {
+                "id": "8.dsr.c",
+                "description": "When responding to text through discussion and/or writing, draw several pieces of evidence from grade-level complex texts to support claims, conclusions, and inferences, including quoting or paraphrasing from texts accurately and tracing where relevant evidence is located (Textual Evidence, K-12)."
+              },
+              {
+                "id": "8.dsr.d",
+                "description": "Regularly engage in reading a series of conceptually related texts organized around topics of study to build knowledge and vocabulary. (These texts should be at a range of complexity levels so students can read the texts independently, with peers, or with modest support.) Use this background knowledge as context for new learning (Deep Reading on Topics to Build Knowledge and Vocabulary, K-12)."
+              },
+              {
+                "id": "8.dsr.e",
+                "description": "Use reading strategies as needed to aid and monitor comprehension when encountering challenging sections of text. These sense-making strategies attend to text structure, common organizational structures, summarizing, asking questions of the text, and others (Reading Strategies, 3-12)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-vocabulary",
+        "title": "Reading and Vocabulary",
+        "standards": [
+          {
+            "id": "8.rv",
+            "description": "The student will systematically build vocabulary and word knowledge based on grade eight content and texts."
+          },
+          {
+            "id": "8.rv.1",
+            "description": "Vocabulary Development and Word Analysis",
+            "substandards": [
+              {
+                "id": "8.rv.1.a",
+                "description": "Develop and accurately use general and academic language and content-specific vocabulary by listening to, reading, and discussing a variety of grade-eight texts and topics."
+              },
+              {
+                "id": "8.rv.1.b",
+                "description": "Use context (e.g., the overall meaning of a sentence or paragraph; a word’s position or function in a sentence) to determine the meaning of words or phrases."
+              },
+              {
+                "id": "8.rv.1.c",
+                "description": "Apply knowledge of Greek and Latin roots and affixes to determine the meaning of unfamiliar words."
+              },
+              {
+                "id": "8.rv.1.d",
+                "description": "Use the relationship between particular words, including synonyms, antonyms, and analogies to better understand each word."
+              },
+              {
+                "id": "8.rv.1.e",
+                "description": "Analyze the construction and meaning of an author’s use of symbols, analogy, and figurative language such as simile, metaphor, personification, hyperbole, and idiom."
+              },
+              {
+                "id": "8.rv.1.f",
+                "description": "Discriminate between the meanings of connotative words and their denotative meanings."
+              },
+              {
+                "id": "8.rv.1.g",
+                "description": "Use general and specialized word-reference materials, print and digital, to determine pronunciation, etymology, derivations, and parts of speech."
+              },
+              {
+                "id": "8.rv.1.h",
+                "description": "Use newly learned words and phrases in multiple contexts, including in students’ discussions and speaking and writing activities."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-literary-text",
+        "title": "Reading Literary Text",
+        "standards": [
+          {
+            "id": "8.rl",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from a variety of grade-level complex literary texts read to include short stories, literary nonfiction, novels, poetry, and drama."
+          },
+          {
+            "id": "8.rl.1",
+            "description": "Key Ideas and Plot Details",
+            "substandards": [
+              {
+                "id": "8.rl.1.a",
+                "description": "Analyze and explain the development of theme(s) over the course of texts and their relationship to the characters, settings, plots, and overall messages."
+              },
+              {
+                "id": "8.rl.1.b",
+                "description": "Explain how different plot patterns (e.g., comedy, drama, tragedy) and subplots create meaning and examine their influence on characters, theme, pacing, and point of view."
+              },
+              {
+                "id": "8.rl.1.c",
+                "description": "Justify the decisions and actions of dynamic versus static characters using dialogue or specific events from the text."
+              }
+            ]
+          },
+          {
+            "id": "8.rl.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "8.rl.2.a",
+                "description": "Interpret the meaning and analyze the impact of poetic elements in prose and poetry (e.g., rhyme, rhythm, repetition, alliteration, and onomatopoeia) on the reader."
+              },
+              {
+                "id": "8.rl.2.b",
+                "description": "Analyze how the elements of an author’s style (e.g., dialogue, sentence structure and word choices) are used to influence and develop tone and voice."
+              },
+              {
+                "id": "8.rl.2.c",
+                "description": "Analyze how an author develops and contrasts the points of view of different characters or narrators in a text."
+              },
+              {
+                "id": "8.rl.2.d",
+                "description": "Analyze how an author’s use of literary devices including foreshadowing, flashback, symbolism, and irony are used to build mystery, suspense, or surprise."
+              }
+            ]
+          },
+          {
+            "id": "8.rl.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "8.rl.3.a",
+                "description": "Compare and contrast the structure of two or more stories, poems, and plays and analyze how the differing structure of each literary text contributes to its meaning and style."
+              },
+              {
+                "id": "8.rl.3.b",
+                "description": "Compare and contrast fictional portrayals of a time, place, or character with historical accounts of the same period as a means of understanding how authors of fiction use or alter history."
+              },
+              {
+                "id": "8.rl.3.c",
+                "description": "Compare and contrast texts in different forms or genres (e.g., stories and poems; historical novels and fantasy stories; literary nonfiction and informational) in terms of their approaches to similar themes and topics."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "reading-informational-text",
+        "title": "Reading Informational Text",
+        "standards": [
+          {
+            "id": "8.ri",
+            "description": "The student will use textual evidence to demonstrate comprehension and build knowledge from grade-level complex informational texts read."
+          },
+          {
+            "id": "8.ri.1",
+            "description": "Key Ideas and Confirming Details",
+            "substandards": [
+              {
+                "id": "8.ri.1.a",
+                "description": "Create a main idea statement and provide an accurate summary, clarifying the relationships among the key details and ideas or events."
+              },
+              {
+                "id": "8.ri.1.b",
+                "description": "Analyze how the author unfolds a perspective or series of ideas or events in historical, scientific, or technical texts, including the order in which the points are made, how they are introduced and developed, and the connections drawn between them."
+              },
+              {
+                "id": "8.ri.1.c",
+                "description": "Trace and evaluate the argument and specific claims in a text, assessing whether the reasoning and evidence are relevant and sufficient to support the claims."
+              }
+            ]
+          },
+          {
+            "id": "8.ri.2",
+            "description": "Craft and Style",
+            "substandards": [
+              {
+                "id": "8.ri.2.a",
+                "description": "Evaluate an author’s use of text features (e.g., boldface and italics; type set in color; underlining; indentation; sidebars; illustrations, graphics, and photographs; headings and subheadings; footnotes and annotations) to enhance and support the reader’s comprehension."
+              },
+              {
+                "id": "8.ri.2.b",
+                "description": "Analyze how an author’s word choice, organizational pattern, language structure, viewpoints, and qualifications impact meaning and credibility of a text."
+              },
+              {
+                "id": "8.ri.2.c",
+                "description": "Analyze how an author establishes and conveys a perspective or purpose in a text and acknowledges and responds to conflicting evidence or viewpoints."
+              }
+            ]
+          },
+          {
+            "id": "8.ri.3",
+            "description": "Integration of Concepts",
+            "substandards": [
+              {
+                "id": "8.ri.3.a",
+                "description": "Analyze ideas within and between selections including how specific sentences, paragraphs, sections, and text features contribute to the development and refinement of the ideas presented."
+              },
+              {
+                "id": "8.ri.3.b",
+                "description": "Compare and contrast how two or more authors present conflicting information on the same topic by assessing where the texts disagree in reasoning and evidence."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "writing",
+        "title": "Writing",
+        "standards": [
+          {
+            "id": "8.w",
+            "description": "The student will compose various works for diverse audiences and purposes, linked to grade eight content and texts."
+          },
+          {
+            "id": "8.w.1",
+            "description": "Modes and Purposes for Writing",
+            "substandards": [
+              {
+                "id": "8.w.1.a",
+                "description": "Write narratives to develop real or imagined experiences or to alter an existing text, using well-structured event sequences, precise words and phrases, and transitional words to develop the characters, convey sequence, and capture the action."
+              },
+              {
+                "id": "8.w.1.b",
+                "description": "Write expository texts to examine a topic or concept that conveys ideas and information by maintaining a clear focus with relevant, well-chosen facts, definitions, concrete details, quotations, and examples from multiple credible sources, using structures and patterns (e.g., description, enumeration, classification, comparison, problem-solution, or cause-effect) to clarify relationships among ideas and concepts."
+              },
+              {
+                "id": "8.w.1.c",
+                "description": "Write persuasively, supporting well-defined points of view effectively with relevant evidence and clear reasoning in ways that logically advance the claim(s) made."
+              },
+              {
+                "id": "8.w.1.d",
+                "description": "Write reflectively in response to reading to demonstrate thinking with details, examples, and other evidence from the text(s)."
+              }
+            ]
+          },
+          {
+            "id": "8.w.2",
+            "description": "Organization and Composition",
+            "substandards": [
+              {
+                "id": "8.w.2.a",
+                "description": "Generate and organize ideas using the writing process (planning, drafting, revising, editing) to develop multi-paragraph texts. This includes: i. Composing a thesis statement that states a position or explains the purpose. ii. Establishing a central idea that aligns with the thesis and maintaining an organized structure and formal style to fit form and topic, providing elaboration and unity throughout the writing and maintaining a consistent point of view. iii. Stating and defending conclusions or positions with reasons and precise, relevant evidence and complete explanation of how evidence and details support a position addressing counterclaims when appropriate. iv. Using appropriate and varied transitions to signal shifts in writing to clarify the relationships among ideas and concepts. v. Developing voice and tone by using language that provides vivid and precise vocabulary to enhance the meaning of the writing. vi. Expanding and embedding ideas to create sentence variety. vii. Providing a concluding statement or section."
+              }
+            ]
+          },
+          {
+            "id": "8.w.3",
+            "description": "Usage and Mechanics",
+            "substandards": [
+              {
+                "id": "8.w.3.a",
+                "description": "Revise writing for clarity of content, word choice, sentence variety, and transition among paragraphs."
+              },
+              {
+                "id": "8.w.3.b",
+                "description": "Self-and peer-edit writing for capitalization, spelling, punctuation, sentence structure, paragraphing, and Standard English (See Language Usage for grade level expectations)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "language-usage",
+        "title": "Language Usage",
+        "standards": [
+          {
+            "id": "8.lu",
+            "description": "The student will use the conventions of Standard English when speaking and writing, differentiating between contexts that call for formal English and situations where informal discourse is more appropriate."
+          },
+          {
+            "id": "8.lu.1",
+            "description": "Grammar",
+            "substandards": [
+              {
+                "id": "8.lu.1.a",
+                "description": "Construct simple, compound, complex, and compound-complex sentences to communicate ideas clearly and add variety to writing."
+              },
+              {
+                "id": "8.lu.1.b",
+                "description": "Recognize and use pronoun-antecedent agreement, including indefinite, reflexive, and relative pronouns, when speaking and writing."
+              },
+              {
+                "id": "8.lu.1.c",
+                "description": "Use specific adjectives and adverbs to enhance speech and writing."
+              },
+              {
+                "id": "8.lu.1.d",
+                "description": "Arrange phrases and clauses within a sentence to improve meaning reader/listener interest, and style in writing."
+              },
+              {
+                "id": "8.lu.1.e",
+                "description": "Maintain consistent verb tense across paragraphs in writing."
+              }
+            ]
+          },
+          {
+            "id": "8.lu.2",
+            "description": "Mechanics",
+            "substandards": [
+              {
+                "id": "8.lu.2.a",
+                "description": "Construct complete sentences with appropriate punctuation, avoiding comma splices and run-ons in writing."
+              },
+              {
+                "id": "8.lu.2.b",
+                "description": "Use and punctuate dialogue and direct quotations appropriately in writing."
+              },
+              {
+                "id": "8.lu.2.c",
+                "description": "Recognize and consistently spell frequently used words accurately."
+              },
+              {
+                "id": "8.lu.2.d",
+                "description": "Consult reference materials to check and correct spelling."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "communication-multimodal-literacies",
+        "title": "Communication and Multimodal Literacies",
+        "standards": [
+          {
+            "id": "8.c",
+            "description": "The student will develop effective oral communication and collaboration skills to build a community of learners that process, understand, and interpret content together."
+          },
+          {
+            "id": "8.c.1",
+            "description": "Communication, Listening, and Collaboration",
+            "substandards": [
+              {
+                "id": "8.c.1.a",
+                "description": "Facilitate and contribute to a range of sustained collaborative discussions with diverse partners on grade eight topics and texts. This includes: i. Listening actively, offering and seeking ideas, and setting guidelines for presentations and discussions. ii. Working effectively and respectfully by actively contributing relevant and well-supported ideas and opinions and sharing responsibility for the collaborative work. iii. Asking clarifying questions and responding appropriately to others’ questions to encourage discussion, foster understanding, and maintain focus on the topic. iv. Communicating agreement or tactful disagreement with others’ ideas, using carefully constructed responses. v. Thoughtfully paraphrasing and summarizing ideas made during discussions. vi. Acknowledging new insights expressed by others, and, when justified, modifying their own views. vii. Valuing contributions made by each group member while exhibiting a willingness to make necessary concessions to accomplish a common goal. viii. Using self-reflection to evaluate one’s own role in preparation and participation in small-group activities."
+              }
+            ]
+          },
+          {
+            "id": "8.c.2",
+            "description": "Speaking and Presentation of Ideas",
+            "substandards": [
+              {
+                "id": "8.c.2.a",
+                "description": "Deliver collaborative and individual formal and informal interactive presentations This includes: i. Clearly communicating information in an organized and succinct manner. ii. Incorporating pertinent descriptions, facts, details, and examples to support the main ideas. iii. Using language and vocabulary appropriate to the audience, topic, and purpose, including speaking clearly at an understandable pace with appropriate tone and volume. iv. Responding to audience questions and comments with relevant evidence, observations, and ideas. v. Referencing source material as appropriate during the presentation."
+              }
+            ]
+          },
+          {
+            "id": "8.c.3",
+            "description": "Integrating Multimodal Literacies",
+            "substandards": [
+              {
+                "id": "8.c.3.a",
+                "description": "Plan and present a multimodal presentation that i. Sequences ideas logically. ii. Uses pertinent descriptions, facts, and details. iii. Uses two or more communication modes to make meaning (e.g., still or moving images, gestures, spoken language, and written language). iv. Emphasizes different points of view."
+              },
+              {
+                "id": "8.c.3.b",
+                "description": "Craft and publish audience-specific media messages that present claims and findings with relevant evidence and reasoning."
+              }
+            ]
+          },
+          {
+            "id": "8.c.4",
+            "description": "Examining Media Messages",
+            "substandards": [
+              {
+                "id": "8.c.4.a",
+                "description": "Examine how the media can influence beliefs, behaviors, and interpretations by using persuasive techniques (e.g., name calling, innuendo, glittering generalities, card stacking, bandwagon, testimonials, appeal to prestige, snobbery or plain folks, appeal to emotions)."
+              },
+              {
+                "id": "8.c.4.b",
+                "description": "Analyze how similar information is presented in diverse media formats by examining electronic, print, propaganda, and mass media."
+              },
+              {
+                "id": "8.c.4.c",
+                "description": "Evaluate sources for their relationships, motives, intent, and content (e.g., social, emotional, commercial)."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "research",
+        "title": "Research",
+        "standards": [
+          {
+            "id": "8.r",
+            "description": "The student will conduct research and read a series of conceptually related texts on selected topics to build knowledge on grade-eight content and texts, solve problems, and support cross-curricular learning."
+          },
+          {
+            "id": "8.r.1",
+            "description": "Evaluation and Synthesis of Information",
+            "substandards": [
+              {
+                "id": "8.r.1.a",
+                "description": "Formulate and revise questions about a research topic, broadening or narrowing the inquiry as necessary."
+              },
+              {
+                "id": "8.r.1.b",
+                "description": "Collect, organize, and synthesize information from multiple sources using various notetaking formats."
+              },
+              {
+                "id": "8.r.1.c",
+                "description": "Evaluate and analyze the relevance, validity, and credibility of sources (primary, secondary, digital, and print) identifying main and supporting ideas, conflicting information, points of view, and any biases."
+              },
+              {
+                "id": "8.r.1.d",
+                "description": "Quote, summarize, and paraphrase research findings from primary and secondary sources, avoiding plagiarism by using own words and following ethical and legal guidelines."
+              },
+              {
+                "id": "8.r.1.e",
+                "description": "Organize and share findings in formal and informal oral or written formats."
+              },
+              {
+                "id": "8.r.1.f",
+                "description": "Cite primary and secondary sources using the Modern Language Association (MLA) or American Psychological Association (APA) style."
+              },
+              {
+                "id": "8.r.1.g",
+                "description": "Demonstrate ethical and responsible use of all sources, including the Internet, Artificial Intelligence (AI), and new technologies, as they develop."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -12,5 +12,4 @@ venv/
 env/
 ENV/
 
-standards_data/
 logs/
