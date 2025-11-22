@@ -344,6 +344,26 @@ Place JSON files in the `standards_data/` directory with the following format:
 
 ## Advanced Usage
 
+### Worksheet Utilities (Experimental)
+
+Early worksheets can be generated entirely in Python for K–1 math practice before involving the LLM. Use `src/worksheets.py` to build a worksheet definition and render it to Markdown (or adapt it to PDF/HTML later):
+
+```python
+from src.worksheets import Operator, generate_two_operand_math_worksheet
+
+worksheet = generate_two_operand_math_worksheet(
+  [
+    {"operand_one": 5, "operand_two": 3, "operator": Operator.PLUS},
+    {"operand_one": 9, "operand_two": 4, "operator": Operator.MINUS},
+  ],
+  title="Two-Operand Practice",
+)
+
+print(worksheet.to_markdown())
+```
+
+The helper normalizes either dicts or `TwoOperandProblem` instances, validates operators, and automatically formats each problem vertically so ones/tens/hundreds columns line up. The resulting `Worksheet` object keeps just the metadata and problem definitions—no answer key is generated yet so a parent/teacher can work through the solutions with the learner—and the same structure can be reused for other worksheet styles (reading comprehension, vocabulary, etc.).
+
 ### Adding Custom Standards
 
 To add your own educational standards:
