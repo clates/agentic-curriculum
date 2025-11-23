@@ -16,10 +16,18 @@ from pydantic import ValidationError
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
-from db_utils import get_student_profile
-from logic import get_filtered_standards
-from resource_models import ResourceRequests
-from worksheet_requests import build_worksheets_from_requests
+try:  # Prefer package-relative imports when available
+    from .db_utils import get_student_profile
+    from .logic import get_filtered_standards
+    from .resource_models import ResourceRequests
+    from .worksheet_requests import build_worksheets_from_requests
+except ImportError:  # Fallback for direct script execution
+    sys.path.insert(0, os.path.dirname(__file__))
+    from db_utils import get_student_profile  # type: ignore
+    from logic import get_filtered_standards  # type: ignore
+    from resource_models import ResourceRequests  # type: ignore
+    from worksheet_requests import build_worksheets_from_requests  # type: ignore
+
 from datetime import datetime, timedelta
 
 
@@ -149,8 +157,10 @@ Respond ONLY with valid JSON:
     "resources": {{
         "mathWorksheet": {{ ... }},
         "readingWorksheet": {{ ... }}
-    }} // omit this entire key when no worksheet is needed
-}}"""
+    }}
+}}
+If no worksheet is needed, omit the entire `resources` key.
+"""
     
     return prompt
 

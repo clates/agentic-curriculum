@@ -1,22 +1,6 @@
-from pathlib import Path
-import sys
-
-import pytest
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.resource_models import (
-    MathWorksheetRequest,
-    ReadingWorksheetRequest,
-    ResourceRequests,
-)
-from src.worksheet_requests import (
-    WorksheetArtifactPlan,
-    WorksheetRequestError,
-    build_worksheets_from_requests,
-)
+from src.resource_models import ResourceRequests
+from src.worksheet_requests import build_worksheets_from_requests
+from src.worksheets import ReadingWorksheet
 
 
 def test_build_math_only():
@@ -51,6 +35,7 @@ def test_build_reading_only():
     assert not errors
     assert len(plans) == 1
     assert plans[0].kind == "readingWorksheet"
+    assert isinstance(plans[0].worksheet, ReadingWorksheet)
     assert plans[0].worksheet.passage_title == "Morning Garden"
 
 

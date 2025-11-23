@@ -2,17 +2,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, List, Sequence
+from typing import List
 
 from pydantic import ValidationError
 
-from worksheets import (
+from .worksheets import (
     generate_reading_comprehension_worksheet,
     generate_two_operand_math_worksheet,
     ReadingWorksheet,
     Worksheet,
 )
-from resource_models import (
+from .resource_models import (
     MathWorksheetRequest,
     ReadingWorksheetRequest,
     ResourceRequests,

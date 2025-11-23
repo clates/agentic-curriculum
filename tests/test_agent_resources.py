@@ -1,13 +1,8 @@
-from pathlib import Path
-import sys
-
 import pytest
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+import src.agent as agent
 
-from src.agent import RESOURCE_GUIDANCE, create_lesson_plan_prompt, _extract_lesson_and_resources  # noqa: E402
+_extract_lesson_and_resources = getattr(agent, "_extract_lesson_and_resources")
 
 
 @pytest.fixture(scope="module")
@@ -21,9 +16,9 @@ def sample_standard():
 
 
 def test_prompt_mentions_resources(sample_standard, sample_rules):
-    prompt = create_lesson_plan_prompt(sample_standard, sample_rules)
+    prompt = agent.create_lesson_plan_prompt(sample_standard, sample_rules)
     assert "resources" in prompt
-    assert RESOURCE_GUIDANCE.strip() in prompt
+    assert agent.RESOURCE_GUIDANCE.strip() in prompt
 
 
 def test_extract_without_resources():
