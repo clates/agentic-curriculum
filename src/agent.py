@@ -10,6 +10,7 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any
 from openai import OpenAI
 from pydantic import ValidationError
 
@@ -36,7 +37,7 @@ from datetime import datetime, timedelta
 # increases OpenAI rate-limit pressure and local CPU usage.
 MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
 LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
-LLM_LOG_DIR = LOG_DIR / "llm_exchanges"
+GENERATE_WEEKLY_DIR = LOG_DIR / "generate-weekly"
 
 RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
 - `mathWorksheet`: requires `problems` (array of {operand_one, operand_two, operator:+|-}) and optional `title`, `instructions`, `metadata`.
@@ -73,35 +74,122 @@ def _slugify(value: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_-]", "_", value)
 
 
-def _log_llm_exchange(
-    phase: str,
-    metadata: dict,
-    request_payload: dict,
-    response_payload: dict | None = None,
-    error: str | None = None,
-) -> None:
-    """Persist the LLM request/response payloads under logs/llm_exchanges."""
+class GenerationLogger:
+    """Structured logger that tracks one weekly generation run."""
 
-    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S_%f")
-    label = metadata.get("day") or metadata.get("label") or phase
-    filename = f"{timestamp}_{_slugify(label)}.json"
-    phase_dir = LLM_LOG_DIR / phase
-    phase_dir.mkdir(parents=True, exist_ok=True)
-    logfile = phase_dir / filename
+    def __init__(self, student_id: str, grade_level: int, subject: str) -> None:
+        self.run_id = datetime.now().strftime("%Y%m%dT%H%M%S_%f")
+        self.base_dir = GENERATE_WEEKLY_DIR / self.run_id
+        self.daily_dir = self.base_dir / "daily_plans"
+        self.base_dir.mkdir(parents=True, exist_ok=True)
+        self.daily_dir.mkdir(parents=True, exist_ok=True)
+        self._day_slug_cache: dict[str, str] = {}
+        self._day_slug_counts: dict[str, int] = {}
+        self._write_json(
+            self.base_dir / "run_metadata.json",
+            {
+                "run_id": self.run_id,
+                "student_id": student_id,
+                "grade_level": grade_level,
+                "subject": subject,
+                "created_at": self.run_id,
+            },
+        )
 
-    log_payload = {
-        "timestamp": timestamp,
-        "phase": phase,
-        "metadata": metadata,
-        "request": request_payload,
-    }
-    if response_payload is not None:
-        log_payload["response"] = response_payload
-    if error is not None:
-        log_payload["error"] = error
+    def _write_json(self, path: Path, payload: Any) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2)
 
-    with logfile.open("w", encoding="utf-8") as handle:
-        json.dump(log_payload, handle, indent=2)
+    def _day_slug(self, day_label: str) -> str:
+        key = (day_label or "").strip().lower() or "day"
+        if key in self._day_slug_cache:
+            return self._day_slug_cache[key]
+        base = _slugify(key) or "day"
+        count = self._day_slug_counts.get(base, 0)
+        slug = base if count == 0 else f"{base}_{count}"
+        self._day_slug_counts[base] = count + 1
+        self._day_slug_cache[key] = slug
+        return slug
+
+    def _daily_path(self, day_label: str, suffix: str = "") -> Path:
+        slug = self._day_slug(day_label)
+        filename = f"{slug}{suffix}.json"
+        return self.daily_dir / filename
+
+    def log_weekly_scaffold_exchange(
+        self,
+        request_payload: dict,
+        response_payload: dict | None = None,
+        error: str | None = None,
+    ) -> None:
+        payload: dict[str, Any] = {"request": request_payload}
+        if response_payload is not None:
+            payload["response"] = response_payload
+        if error:
+            payload["error"] = error
+        self._write_json(self.base_dir / "weekly_scaffold_llm_exchange.json", payload)
+
+    def log_weekly_scaffold_content(
+        self,
+        parsed_content: dict | None,
+        raw_content: str,
+        error: str | None = None,
+    ) -> None:
+        if parsed_content is not None:
+            self._write_json(self.base_dir / "weekly_scaffold.json", parsed_content)
+        else:
+            self._write_json(
+                self.base_dir / "weekly_scaffold.json",
+                {"error": error or "parse_error", "raw_content": raw_content},
+            )
+
+    def log_weekly_plan(self, weekly_plan: dict) -> None:
+        self._write_json(self.base_dir / "weekly_plan.json", weekly_plan)
+
+    def log_daily_llm_exchange(
+        self,
+        day_label: str,
+        request_payload: dict,
+        response_payload: dict | None = None,
+        error: str | None = None,
+    ) -> None:
+        payload: dict[str, Any] = {"request": request_payload}
+        if response_payload is not None:
+            payload["response"] = response_payload
+        if error:
+            payload["error"] = error
+        self._write_json(self._daily_path(day_label, "_llm_exchange"), payload)
+
+    def log_daily_response(
+        self,
+        day_label: str,
+        parsed_content: dict | None,
+        raw_content: str,
+        error: str | None = None,
+    ) -> None:
+        if parsed_content is not None:
+            self._write_json(self._daily_path(day_label, "_response"), parsed_content)
+        else:
+            self._write_json(
+                self._daily_path(day_label, "_response"),
+                {"error": error or "parse_error", "raw_content": raw_content},
+            )
+
+    def log_daily_plan(self, day_label: str, plan_payload: dict) -> None:
+        self._write_json(self._daily_path(day_label), plan_payload)
+
+    def log_daily_error(
+        self,
+        day_label: str,
+        stage: str,
+        message: str,
+        request_payload: dict | None = None,
+    ) -> None:
+        payload: dict[str, Any] = {"stage": stage, "error": message}
+        if request_payload is not None:
+            payload["request"] = request_payload
+        self._write_json(self._daily_path(day_label, "_error"), payload)
 
 
 def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
@@ -236,7 +324,15 @@ def _extract_lesson_and_resources(payload: dict, day_label: str) -> tuple[dict, 
     return lesson_plan, resource_model
 
 
-def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, rules: dict, client: OpenAI, model: str) -> dict:
+def _build_day_plan(
+    assignment: dict,
+    standards_by_id: dict,
+    standards: list,
+    rules: dict,
+    client: OpenAI,
+    model: str,
+    generation_logger: GenerationLogger | None = None,
+) -> dict:
     """Generate one day's plan inside the thread pool with deterministic fallbacks.
 
     Args:
@@ -283,32 +379,32 @@ def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, ru
 
     try:
         response = client.chat.completions.create(**llm_request_payload)
-        _log_llm_exchange(
-            phase="daily_plan",
-            metadata={"day": day},
-            request_payload=llm_request_payload,
-            response_payload=response.model_dump(),
-        )
-        lesson_plan_json = response.choices[0].message.content or "{}"
-        payload = json.loads(lesson_plan_json)
-        lesson_plan, resources_model = _extract_lesson_and_resources(payload, day)
-    except json.JSONDecodeError as e:
-        print(f"Warning: Failed to parse lesson plan JSON for {day}: {e}")
-        lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
-        resources_model = None
     except Exception as e:
-        _log_llm_exchange(
-            phase="daily_plan",
-            metadata={"day": day},
-            request_payload=llm_request_payload,
-            error=str(e),
-        )
+        if generation_logger:
+            generation_logger.log_daily_llm_exchange(day, llm_request_payload, error=str(e))
+            generation_logger.log_daily_error(day, "request_failed", str(e), llm_request_payload)
         print(f"Warning: Failed to generate lesson plan for {day}: {e}")
         lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
         resources_model = None
+    else:
+        if generation_logger:
+            generation_logger.log_daily_llm_exchange(day, llm_request_payload, response.model_dump())
+        response_content = response.choices[0].message.content or "{}"
+        try:
+            payload = json.loads(response_content)
+        except json.JSONDecodeError as e:
+            print(f"Warning: Failed to parse lesson plan JSON for {day}: {e}")
+            if generation_logger:
+                generation_logger.log_daily_response(day, None, response_content, str(e))
+            lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
+            resources_model = None
+        else:
+            lesson_plan, resources_model = _extract_lesson_and_resources(payload, day)
+            if generation_logger:
+                generation_logger.log_daily_response(day, payload, response_content)
 
-    worksheet_plans = []
-    worksheet_errors = []
+    worksheet_plans: list[dict] = []
+    worksheet_errors: list[dict] = []
     resources_payload: dict | None = None
 
     if resources_model:
@@ -327,7 +423,7 @@ def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, ru
         ]
         resources_payload = resources_model.model_dump(exclude_none=True)
 
-    return _assemble_day_plan(
+    day_payload = _assemble_day_plan(
         day,
         day_standards,
         day_focus,
@@ -336,6 +432,9 @@ def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, ru
         worksheet_plans or None,
         worksheet_errors or None,
     )
+    if generation_logger:
+        generation_logger.log_daily_plan(day, day_payload)
+    return day_payload
 
 
 def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dict:
@@ -382,6 +481,8 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
     if len(standards) == 0:
         raise ValueError(f"No standards found for student {student_id}.")
     
+    generation_logger = GenerationLogger(student_id, grade_level, subject)
+
     # Precompute a pretty JSON preview of the first few standards for the prompt
     available_standards_preview = [
         {"id": s.get("standard_id"), "description": s.get("description")}
@@ -433,29 +534,16 @@ Respond with a JSON object in this exact format:
         "response_format": {"type": "json_object"},
     }
 
-    # Get the weekly scaffold from LLM
+    scaffold_raw_content = ""
     try:
         scaffold_response = client.chat.completions.create(**scaffold_request_payload)
-        _log_llm_exchange(
-            phase="weekly_scaffold",
-            metadata={"label": "weekly_scaffold"},
-            request_payload=scaffold_request_payload,
-            response_payload=scaffold_response.model_dump(),
-        )
-        
-        scaffold_json = scaffold_response.choices[0].message.content or "{}"
-        weekly_scaffold = json.loads(scaffold_json)
-        daily_assignments = weekly_scaffold.get('daily_assignments', [])
-        weekly_overview = weekly_scaffold.get('weekly_overview', '')
+        scaffold_dump = scaffold_response.model_dump()
+        scaffold_raw_content = scaffold_response.choices[0].message.content or "{}"
+        generation_logger.log_weekly_scaffold_exchange(scaffold_request_payload, scaffold_dump)
+        weekly_scaffold = json.loads(scaffold_raw_content)
     except json.JSONDecodeError as e:
-        # JSON parsing error from LLM - log and use fallback
         print(f"Warning: Failed to parse scaffold JSON: {e}")
-        _log_llm_exchange(
-            phase="weekly_scaffold",
-            metadata={"label": "weekly_scaffold"},
-            request_payload=scaffold_request_payload,
-            error=str(e),
-        )
+        generation_logger.log_weekly_scaffold_content(None, scaffold_raw_content, str(e))
         weekly_overview = "Weekly plan using standard curriculum progression"
         daily_assignments = [
             {"day": day, "standard_ids": [standards[i].get('standard_id')], "focus": f"Day {i+1} focus"}
@@ -463,14 +551,19 @@ Respond with a JSON object in this exact format:
             if i < len(standards)
         ]
     except Exception as e:
-        # Other errors (API, network, etc.) - log and use fallback
         print(f"Warning: Failed to generate scaffold: {e}")
+        generation_logger.log_weekly_scaffold_exchange(scaffold_request_payload, error=str(e))
+        generation_logger.log_weekly_scaffold_content(None, scaffold_raw_content or "", str(e))
         weekly_overview = "Weekly plan using standard curriculum progression"
         daily_assignments = [
             {"day": day, "standard_ids": [standards[i].get('standard_id')], "focus": f"Day {i+1} focus"}
             for i, day in enumerate(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
             if i < len(standards)
         ]
+    else:
+        generation_logger.log_weekly_scaffold_content(weekly_scaffold, scaffold_raw_content)
+        daily_assignments = weekly_scaffold.get('daily_assignments', [])
+        weekly_overview = weekly_scaffold.get('weekly_overview', '')
     
     # Ensure we have exactly 5 days
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
@@ -489,7 +582,7 @@ Respond with a JSON object in this exact format:
 
     # Build daily plan concurrently based on scaffold
     max_workers = max(1, min(len(daily_assignments), MAX_DAILY_PLAN_THREADS))
-    daily_plan = [None] * len(daily_assignments)
+    daily_plan: list[dict] = [{} for _ in daily_assignments]
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_map = {
@@ -500,7 +593,8 @@ Respond with a JSON object in this exact format:
                 standards,
                 rules,
                 client,
-                model
+                model,
+                generation_logger,
             ): idx
             for idx, assignment in enumerate(daily_assignments)
         }
@@ -514,7 +608,8 @@ Respond with a JSON object in this exact format:
                 assignment = daily_assignments[idx]
                 day_standards = _resolve_day_standards(assignment, standards_by_id, standards)
                 fallback_plan = _create_fallback_lesson_plan(day_standards, rules)
-                daily_plan[idx] = _assemble_day_plan(
+                day_label = assignment.get('day') or f"day_{idx+1}"
+                fallback_payload = _assemble_day_plan(
                     assignment.get('day') or '',
                     day_standards,
                     assignment.get('focus', '') or '',
@@ -523,6 +618,10 @@ Respond with a JSON object in this exact format:
                     None,
                     None,
                 )
+                daily_plan[idx] = fallback_payload
+                if generation_logger:
+                    generation_logger.log_daily_error(day_label, "worker_exception", str(e))
+                    generation_logger.log_daily_plan(day_label, fallback_payload)
     
     # Calculate week_of date (Monday of current week)
     today = datetime.now()
@@ -537,5 +636,7 @@ Respond with a JSON object in this exact format:
         "weekly_overview": weekly_overview,
         "daily_plan": daily_plan
     }
+
+    generation_logger.log_weekly_plan(weekly_plan)
     
     return weekly_plan
