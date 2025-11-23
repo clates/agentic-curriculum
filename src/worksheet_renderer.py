@@ -14,14 +14,37 @@ _FONT_CANDIDATES = (
     "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
 )
 
+_FONT_BOLD_CANDIDATES = (
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+)
+
+_FONT_ITALIC_CANDIDATES = (
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf",
+)
+
 _MONO_FONT_CANDIDATES = (
     "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
 )
 
 
-def _load_font(size: int, *, monospace: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    candidates = _MONO_FONT_CANDIDATES if monospace else _FONT_CANDIDATES
+def _load_font(
+    size: int,
+    *,
+    monospace: bool = False,
+    bold: bool = False,
+    italic: bool = False,
+) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    if monospace:
+        candidates = _MONO_FONT_CANDIDATES
+    elif bold:
+        candidates = _FONT_BOLD_CANDIDATES
+    elif italic:
+        candidates = _FONT_ITALIC_CANDIDATES
+    else:
+        candidates = _FONT_CANDIDATES
     for path in candidates:
         font_path = Path(path)
         if font_path.exists():
@@ -222,20 +245,25 @@ def _render_reading_image(
     if not worksheet.questions:
         raise ValueError("Reading worksheet requires at least one question")
 
-    title_font = _load_font(42)
+    passage_title_font = _load_font(44, bold=True)
     meta_font = _load_font(24)
     section_font = _load_font(28)
     body_font = _load_font(24)
+    bold_body_font = _load_font(24, bold=True)
+    instruction_font = _load_font(24, italic=True)
 
-    title_height = _line_height(title_font, extra=6)
-    meta_height = _line_height(meta_font, extra=6)
+    passage_title_height = _line_height(passage_title_font, extra=4)
+    meta_line_height = _line_height(meta_font, extra=2)
+    name_block_height = meta_line_height * 2
+    header_height = max(passage_title_height, name_block_height)
+    instruction_line_height = _line_height(instruction_font, extra=4)
     section_height = _line_height(section_font, extra=6)
     body_line_height = _line_height(body_font, extra=6)
     answer_line_height = max(24, int(body_line_height * 0.9))
     section_gap = body_line_height
 
     content_width = width - 2 * margin
-    instruction_lines = _wrap_text(worksheet.instructions, body_font, content_width)
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
     passage_lines = _wrap_paragraphs(worksheet.passage, body_font, content_width)
 
     question_blocks: list[tuple[list[str], int]] = []
@@ -248,62 +276,66 @@ def _render_reading_image(
             prompt_lines[line_idx] = f"{indent}{prompt_lines[line_idx]}"
         question_blocks.append((prompt_lines, max(1, question.response_lines)))
 
-    vocab_blocks: list[tuple[list[str], bool, int]] = []
+    vocab_blocks: list[dict] = []
     for entry in worksheet.vocabulary:
-        base_text = f"{entry.term}: {entry.definition}" if entry.definition else entry.term
-        vocab_lines = _wrap_text(base_text, body_font, content_width) or [entry.term]
-        needs_response = entry.definition is None
-        vocab_blocks.append((vocab_lines, needs_response, max(1, entry.response_lines)))
+        term_text = f"{entry.term}:"
+        term_width = _text_width(bold_body_font, f"{term_text} ")
+        remaining_width = max(50, content_width - term_width)
+        definition_lines = _wrap_text(entry.definition or "", body_font, remaining_width) if entry.definition else []
+        vocab_blocks.append(
+            {
+                "term_text": term_text,
+                "term_width": term_width,
+                "definition_lines": definition_lines,
+                "needs_response": entry.definition is None,
+                "response_lines": max(1, entry.response_lines),
+            }
+        )
 
-    total_height = margin + title_height + meta_height + section_gap
+    total_height = margin + header_height + body_line_height // 2
     if instruction_lines:
-        total_height += len(instruction_lines) * body_line_height + section_gap
-    total_height += section_height + max(1, len(passage_lines)) * body_line_height + section_gap
+        total_height += len(instruction_lines) * instruction_line_height + section_gap // 2
+    total_height += max(1, len(passage_lines)) * body_line_height + section_gap
 
     questions_height = sum(len(lines) * body_line_height + resp * answer_line_height for lines, resp in question_blocks)
     questions_height += max(0, len(question_blocks) - 1) * (body_line_height // 2)
     total_height += section_height + questions_height + section_gap
 
     if vocab_blocks:
-        vocab_height = sum(
-            len(lines) * body_line_height + (resp * answer_line_height if needs_response else 0)
-            for lines, needs_response, resp in vocab_blocks
-        )
-        vocab_height += max(0, len(vocab_blocks) - 1) * (body_line_height // 3)
-        total_height += section_height + vocab_height + section_gap
+        vocab_height = 0
+        for block in vocab_blocks:
+            lines = block["definition_lines"]
+            vocab_height += body_line_height  # term line
+            if lines:
+                vocab_height += max(0, len(lines) - 1) * body_line_height
+            if block["needs_response"]:
+                vocab_height += block["response_lines"] * answer_line_height
+            vocab_height += body_line_height // 3
+        total_height += section_height + vocab_height + section_gap + body_line_height
 
     total_height += margin
-
+    total_height = int(total_height)
     image = Image.new("RGB", (width, total_height), color="white")
     draw = ImageDraw.Draw(image)
 
     y = margin
-    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
-    y += title_height
-
+    draw.text((margin, y), worksheet.passage_title, font=passage_title_font, fill="black")
+    x_right = width - margin
     name_text = "Name: ____________"
     date_text = "Date: ____________"
-    score_text = "Score: ____ / ____"
-    available = width - 2 * margin
-    segment = (available - draw.textlength(name_text, font=meta_font) - draw.textlength(date_text, font=meta_font) - draw.textlength(score_text, font=meta_font))
-    gap = max(20, segment // 2)
-    x = margin
-    draw.text((x, y), name_text, font=meta_font, fill="black")
-    x += draw.textlength(name_text, font=meta_font) + gap
-    draw.text((x, y), date_text, font=meta_font, fill="black")
-    x += draw.textlength(date_text, font=meta_font) + gap
-    draw.text((x, y), score_text, font=meta_font, fill="black")
-    y += meta_height
+    name_width = draw.textlength(name_text, font=meta_font)
+    date_width = draw.textlength(date_text, font=meta_font)
+    draw.text((x_right - name_width, y), name_text, font=meta_font, fill="black")
+    draw.text((x_right - date_width, y + meta_line_height), date_text, font=meta_font, fill="black")
+    y += header_height
+    y += body_line_height // 2
 
     if instruction_lines:
-        y += section_gap / 2
         for line in instruction_lines:
-            draw.text((margin, y), line, font=body_font, fill="black")
-            y += body_line_height
-        y += section_gap / 2
+            draw.text((margin, y), line, font=instruction_font, fill="black")
+            y += instruction_line_height
+        y += section_gap // 2
 
-    draw.text((margin, y), f"Passage: {worksheet.passage_title}", font=section_font, fill="black")
-    y += section_height
     for line in passage_lines or [worksheet.passage.strip()]:
         if not line:
             y += body_line_height // 2
@@ -323,21 +355,39 @@ def _render_reading_image(
             draw.line((margin, baseline, margin + content_width, baseline), fill="black", width=2)
             y += answer_line_height
         y += body_line_height // 2
-    y += section_gap / 2
+    y += section_gap // 2
 
     if vocab_blocks:
         draw.text((margin, y), "Vocabulary", font=section_font, fill="black")
         y += section_height
-        for lines, needs_response, response_lines in vocab_blocks:
-            for line in lines:
-                draw.text((margin, y), line, font=body_font, fill="black")
-                y += body_line_height
+        for block in vocab_blocks:
+            term_text = block["term_text"]
+            term_width = block["term_width"]
+            definition_lines = block["definition_lines"]
+            needs_response = block["needs_response"]
+            response_lines = block["response_lines"]
+
+            draw.text((margin, y), term_text, font=bold_body_font, fill="black")
+            line_start = margin + term_width
+            if definition_lines:
+                draw.text((line_start, y), definition_lines[0], font=body_font, fill="black")
+                for extra_line in definition_lines[1:]:
+                    y += body_line_height
+                    draw.text((line_start, y), extra_line, font=body_font, fill="black")
             if needs_response:
-                for _ in range(response_lines):
-                    baseline = y + answer_line_height // 2
+                baseline = y + body_line_height - int(body_line_height * 0.3)
+                draw.line((line_start, baseline, margin + content_width, baseline), fill="black", width=2)
+                y += answer_line_height
+                for _ in range(response_lines - 1):
+                    baseline = y + answer_line_height - int(answer_line_height * 0.4)
                     draw.line((margin, baseline, margin + content_width, baseline), fill="black", width=2)
                     y += answer_line_height
+            else:
+                y += body_line_height
+
             y += body_line_height // 3
+
+        y += body_line_height
 
     return image
 
