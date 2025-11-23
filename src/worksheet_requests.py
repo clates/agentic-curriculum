@@ -1,22 +1,40 @@
 """Glue between worksheet request models and worksheet generators."""
 from __future__ import annotations
 
+import os
+import sys
 from dataclasses import dataclass
 from typing import List
 
 from pydantic import ValidationError
 
-from .worksheets import (
-    generate_reading_comprehension_worksheet,
-    generate_two_operand_math_worksheet,
-    ReadingWorksheet,
-    Worksheet,
-)
-from .resource_models import (
-    MathWorksheetRequest,
-    ReadingWorksheetRequest,
-    ResourceRequests,
-)
+try:  # Package-relative imports when available
+    from .worksheets import (
+        generate_reading_comprehension_worksheet,
+        generate_two_operand_math_worksheet,
+        ReadingWorksheet,
+        Worksheet,
+    )
+    from .resource_models import (
+        MathWorksheetRequest,
+        ReadingWorksheetRequest,
+        ResourceRequests,
+    )
+except ImportError:  # Fallback for execution without package context
+    CURRENT_DIR = os.path.dirname(__file__)
+    if CURRENT_DIR not in sys.path:
+        sys.path.insert(0, CURRENT_DIR)
+    from worksheets import (  # type: ignore
+        generate_reading_comprehension_worksheet,
+        generate_two_operand_math_worksheet,
+        ReadingWorksheet,
+        Worksheet,
+    )
+    from resource_models import (  # type: ignore
+        MathWorksheetRequest,
+        ReadingWorksheetRequest,
+        ResourceRequests,
+    )
 
 
 @dataclass
