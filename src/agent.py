@@ -225,11 +225,12 @@ Requirements:
 1. Create a lesson_plan object with the following structure:
    - objective: A clear learning objective based on the standard
    - materials_needed: A list of materials (MUST only use items from: {allowed_materials})
-   - procedure: Step-by-step instructions for teaching the lesson
+    - procedure: Step-by-step instructions for teaching the lesson (include approximate minutes for each step so the full lesson fits in about 60 minutes)
 
 2. Important constraints:
    - Materials MUST ONLY come from this list: {allowed_materials}
    - Follow this parent guidance: {parent_notes}
+    - Plan approximately one hour of focused work (45-60 minutes total) and keep procedure steps tightly scoped
    - Keep the lesson age-appropriate for the grade level
    - The objective should directly address the standard
 
@@ -509,6 +510,7 @@ Create a weekly plan that:
 2. Complex standards should span multiple days with scaffolding
 3. Simpler standards can be covered in a single day
 4. Each day should build on previous days
+5. Each day's activities should represent roughly one hour of learning time (about 45-60 minutes of instruction, practice, and wrap-up)
 
 Respond with a JSON object in this exact format:
 {{
