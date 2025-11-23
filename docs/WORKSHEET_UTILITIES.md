@@ -56,3 +56,9 @@ Builds a literacy worksheet containing a passage, free-response questions, and v
 - `render_reading_worksheet_to_image` / `render_reading_worksheet_to_pdf`: Do the same for `ReadingWorksheet` objects, handling name/date fields, italic instructions, multi-paragraph passages, question blocks, and vocabulary sections automatically.
 
 When generating artifacts, remember to create the `artifacts/` directory or point to another writable location. The renderers will create missing parent folders for you.
+
+---
+
+## Structured LLM Requests
+
+Pair these helpers with the JSON contract in `docs/WORKSHEET_REQUEST_SCHEMA.md` when you want the lesson-planning LLM to ask for printable worksheets. That schema mirrors the signatures of `generate_two_operand_math_worksheet` and `generate_reading_comprehension_worksheet`, so any payload that validates against it can be fed directly into the corresponding generator before rendering.
