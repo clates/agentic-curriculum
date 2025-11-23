@@ -79,3 +79,25 @@ def test_extract_with_reading_resources():
     assert resources is not None
     assert resources.readingWorksheet is not None
     assert resources.readingWorksheet.passage_title == "Garden Morning"
+
+
+def test_extract_string_questions_promoted_to_objects():
+    payload = {
+        "lesson_plan": {"objective": "Compare numbers"},
+        "resources": {
+            "readingWorksheet": {
+                "passage_title": "Compare It",
+                "passage": "Use <, >, and = symbols to compare numbers.",
+                "questions": [
+                    "1.  12 ____ 21",
+                    {"prompt": "Explain when to use ="}
+                ]
+            }
+        }
+    }
+    _, resources = _extract_lesson_and_resources(payload, "Thursday")
+    assert resources is not None
+    assert resources.readingWorksheet is not None
+    prompts = [q.prompt for q in resources.readingWorksheet.questions]
+    assert prompts[0] == "1.  12 ____ 21"
+    assert prompts[1] == "Explain when to use ="

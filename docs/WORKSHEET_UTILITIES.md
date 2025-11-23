@@ -10,12 +10,12 @@ Create a structured worksheet for early math practice (addition/subtraction). Th
 
 ### Parameters
 
-| Name | Type | Default | Description |
-| --- | --- | --- | --- |
-| `problems` | `Sequence[TwoOperandProblem | dict]` | **required** | Iterable of problems. Dict entries must include `operand_one`, `operand_two`, and `operator` ("+" / "-"). |
-| `title` | `str` | "Two-Operand Practice" | Display title printed at the top of the worksheet. |
-| `instructions` | `str` | "Solve each problem. Show your work if needed." | Optional instructions printed under the title. |
-| `metadata` | `dict | None` | `{}` | Arbitrary metadata bag (not rendered but useful if you store worksheets elsewhere). |
+| Name           | Type                        | Default                                         | Description                                        |
+| -------------- | --------------------------- | ----------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `problems`     | `Sequence[TwoOperandProblem | dict]`                                          | **required**                                       | Iterable of problems. Dict entries must include `operand_one`, `operand_two`, and `operator` ("+" / "-"). |
+| `title`        | `str`                       | "Two-Operand Practice"                          | Display title printed at the top of the worksheet. |
+| `instructions` | `str`                       | "Solve each problem. Show your work if needed." | Optional instructions printed under the title.     |
+| `metadata`     | `dict                       | None`                                           | `{}`                                               | Arbitrary metadata bag (not rendered but useful if you store worksheets elsewhere).                       |
 
 ### Callouts
 
@@ -31,15 +31,15 @@ Builds a literacy worksheet containing a passage, free-response questions, and v
 
 ### Parameters
 
-| Name | Type | Default | Description |
-| --- | --- | --- | --- |
-| `passage_title` | `str` | **required** | Title shown at the top-left of the page. |
-| `passage` | `str` | **required** | Main reading selection; can span multiple paragraphs. Blank entries raise `ValueError`. |
-| `questions` | `Sequence[ReadingQuestion | dict]` | **required** | Ordered list of comprehension prompts. Each item supports `prompt` and optional `response_lines` (defaults to 2). |
-| `vocabulary` | `Sequence[VocabularyEntry | dict] | None` | `[]` | Optional vocabulary list. Entries accept `term`, optional `definition`, and optional `response_lines` (defaults to 1 when definition is omitted). |
-| `title` | `str` | "Reading Comprehension" | Logical identifier stored on the object (not printed after latest layout tweaks). |
-| `instructions` | `str` | "Read the passage carefully, then answer the questions and review the vocabulary." | Italicized block under the header. |
-| `metadata` | `dict | None` | `{}` | Free-form metadata container. |
+| Name            | Type                      | Default                                                                            | Description                                                                             |
+| --------------- | ------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `passage_title` | `str`                     | **required**                                                                       | Title shown at the top-left of the page.                                                |
+| `passage`       | `str`                     | **required**                                                                       | Main reading selection; can span multiple paragraphs. Blank entries raise `ValueError`. |
+| `questions`     | `Sequence[ReadingQuestion | dict]`                                                                             | **required**                                                                            | Ordered list of comprehension prompts. Each item supports `prompt` and optional `response_lines` (defaults to 2). |
+| `vocabulary`    | `Sequence[VocabularyEntry | dict]                                                                              | None`                                                                                   | `[]`                                                                                                              | Optional vocabulary list. Entries accept `term`, optional `definition`, and optional `response_lines` (defaults to 1 when definition is omitted). |
+| `title`         | `str`                     | "Reading Comprehension"                                                            | Logical identifier stored on the object (not printed after latest layout tweaks).       |
+| `instructions`  | `str`                     | "Read the passage carefully, then answer the questions and review the vocabulary." | Italicized block under the header.                                                      |
+| `metadata`      | `dict                     | None`                                                                              | `{}`                                                                                    | Free-form metadata container.                                                                                     |
 
 ### Callouts
 
