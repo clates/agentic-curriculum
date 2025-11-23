@@ -7,7 +7,9 @@ LLM-based agent for generating lesson plans using OpenAI API.
 import os
 import sys
 import json
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from openai import OpenAI
 from pydantic import ValidationError
 
@@ -17,6 +19,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from db_utils import get_student_profile
 from logic import get_filtered_standards
 from resource_models import ResourceRequests
+from worksheet_requests import build_worksheets_from_requests
 from datetime import datetime, timedelta
 
 
@@ -24,6 +27,8 @@ from datetime import datetime, timedelta
 # Default is 5 (one per weekday). Raising this may reduce latency but
 # increases OpenAI rate-limit pressure and local CPU usage.
 MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
+LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
+LLM_LOG_DIR = LOG_DIR / "llm_exchanges"
 
 RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
 - `mathWorksheet`: requires `problems` (array of {operand_one, operand_two, operator:+|-}) and optional `title`, `instructions`, `metadata`.
@@ -52,6 +57,43 @@ RESOURCE_FEW_SHOT = {
     }
 }
 RESOURCE_FEW_SHOT_JSON = json.dumps(RESOURCE_FEW_SHOT, indent=2)
+
+
+def _slugify(value: str) -> str:
+    if not value:
+        return "entry"
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", value)
+
+
+def _log_llm_exchange(
+    phase: str,
+    metadata: dict,
+    request_payload: dict,
+    response_payload: dict | None = None,
+    error: str | None = None,
+) -> None:
+    """Persist the LLM request/response payloads under logs/llm_exchanges."""
+
+    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S_%f")
+    label = metadata.get("day") or metadata.get("label") or phase
+    filename = f"{timestamp}_{_slugify(label)}.json"
+    phase_dir = LLM_LOG_DIR / phase
+    phase_dir.mkdir(parents=True, exist_ok=True)
+    logfile = phase_dir / filename
+
+    log_payload = {
+        "timestamp": timestamp,
+        "phase": phase,
+        "metadata": metadata,
+        "request": request_payload,
+    }
+    if response_payload is not None:
+        log_payload["response"] = response_payload
+    if error is not None:
+        log_payload["error"] = error
+
+    with logfile.open("w", encoding="utf-8") as handle:
+        json.dump(log_payload, handle, indent=2)
 
 
 def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
@@ -143,6 +185,8 @@ def _assemble_day_plan(
     day_focus: str,
     lesson_plan: dict,
     resources: dict | None = None,
+    worksheet_plans: list | None = None,
+    worksheet_errors: list | None = None,
 ) -> dict:
     """Compose the day plan payload from provided components."""
     payload = {
@@ -154,10 +198,14 @@ def _assemble_day_plan(
     }
     if resources:
         payload["resources"] = resources
+    if worksheet_plans:
+        payload["worksheet_plans"] = worksheet_plans
+    if worksheet_errors:
+        payload.setdefault("resource_errors", []).extend(worksheet_errors)
     return payload
 
 
-def _extract_lesson_and_resources(payload: dict, day_label: str) -> tuple[dict, dict | None]:
+def _extract_lesson_and_resources(payload: dict, day_label: str) -> tuple[dict, ResourceRequests | None]:
     """Normalize LLM response into lesson plan + optional worksheet resources."""
 
     lesson_plan = payload.get("lesson_plan")
@@ -165,17 +213,17 @@ def _extract_lesson_and_resources(payload: dict, day_label: str) -> tuple[dict, 
         lesson_plan = payload
 
     raw_resources = payload.get("resources") if isinstance(payload, dict) else None
-    resources_dict: dict | None = None
+    resource_model: ResourceRequests | None = None
     if isinstance(raw_resources, dict) and raw_resources:
         try:
             resource_model = ResourceRequests.model_validate(raw_resources)
         except ValidationError as exc:
             print(f"Warning: Invalid worksheet resources for {day_label}: {exc}")
         else:
-            if resource_model.has_requests():
-                resources_dict = resource_model.model_dump(exclude_none=True)
+            if not resource_model.has_requests():
+                resource_model = None
 
-    return lesson_plan, resources_dict
+    return lesson_plan, resource_model
 
 
 def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, rules: dict, client: OpenAI, model: str) -> dict:
@@ -210,31 +258,74 @@ def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, ru
     if day_focus:
         prompt += f"\n\nDay Focus: {day_focus}"
 
-    resources_dict: dict | None = None
+    resources_model: ResourceRequests | None = None
+
+    messages = [
+        {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
+        {"role": "user", "content": prompt}
+    ]
+    llm_request_payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.7,
+        "response_format": {"type": "json_object"},
+    }
 
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            response_format={"type": "json_object"}
+        response = client.chat.completions.create(**llm_request_payload)
+        _log_llm_exchange(
+            phase="daily_plan",
+            metadata={"day": day},
+            request_payload=llm_request_payload,
+            response_payload=response.model_dump(),
         )
         lesson_plan_json = response.choices[0].message.content or "{}"
         payload = json.loads(lesson_plan_json)
-        lesson_plan, resources_dict = _extract_lesson_and_resources(payload, day)
+        lesson_plan, resources_model = _extract_lesson_and_resources(payload, day)
     except json.JSONDecodeError as e:
         print(f"Warning: Failed to parse lesson plan JSON for {day}: {e}")
         lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
-        resources_dict = None
+        resources_model = None
     except Exception as e:
+        _log_llm_exchange(
+            phase="daily_plan",
+            metadata={"day": day},
+            request_payload=llm_request_payload,
+            error=str(e),
+        )
         print(f"Warning: Failed to generate lesson plan for {day}: {e}")
         lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
-        resources_dict = None
+        resources_model = None
 
-    return _assemble_day_plan(day, day_standards, day_focus, lesson_plan, resources_dict)
+    worksheet_plans = []
+    worksheet_errors = []
+    resources_payload: dict | None = None
+
+    if resources_model:
+        plans, errors = build_worksheets_from_requests(resources_model)
+        worksheet_plans = [
+            {
+                "kind": plan.kind,
+                "filename_hint": plan.filename_hint,
+                "metadata": plan.metadata,
+            }
+            for plan in plans
+        ]
+        worksheet_errors = [
+            {"kind": err.kind, "message": err.message}
+            for err in errors
+        ]
+        resources_payload = resources_model.model_dump(exclude_none=True)
+
+    return _assemble_day_plan(
+        day,
+        day_standards,
+        day_focus,
+        lesson_plan,
+        resources_payload,
+        worksheet_plans or None,
+        worksheet_errors or None,
+    )
 
 
 def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dict:
@@ -321,16 +412,25 @@ Respond with a JSON object in this exact format:
   ]
 }}"""
 
+    scaffold_messages = [
+        {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
+        {"role": "user", "content": scaffold_prompt}
+    ]
+    scaffold_request_payload = {
+        "model": model,
+        "messages": scaffold_messages,
+        "temperature": 0.7,
+        "response_format": {"type": "json_object"},
+    }
+
     # Get the weekly scaffold from LLM
     try:
-        scaffold_response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
-                {"role": "user", "content": scaffold_prompt}
-            ],
-            temperature=0.7,
-            response_format={"type": "json_object"}
+        scaffold_response = client.chat.completions.create(**scaffold_request_payload)
+        _log_llm_exchange(
+            phase="weekly_scaffold",
+            metadata={"label": "weekly_scaffold"},
+            request_payload=scaffold_request_payload,
+            response_payload=scaffold_response.model_dump(),
         )
         
         scaffold_json = scaffold_response.choices[0].message.content or "{}"
@@ -340,6 +440,12 @@ Respond with a JSON object in this exact format:
     except json.JSONDecodeError as e:
         # JSON parsing error from LLM - log and use fallback
         print(f"Warning: Failed to parse scaffold JSON: {e}")
+        _log_llm_exchange(
+            phase="weekly_scaffold",
+            metadata={"label": "weekly_scaffold"},
+            request_payload=scaffold_request_payload,
+            error=str(e),
+        )
         weekly_overview = "Weekly plan using standard curriculum progression"
         daily_assignments = [
             {"day": day, "standard_ids": [standards[i].get('standard_id')], "focus": f"Day {i+1} focus"}
@@ -398,7 +504,15 @@ Respond with a JSON object in this exact format:
                 assignment = daily_assignments[idx]
                 day_standards = _resolve_day_standards(assignment, standards_by_id, standards)
                 fallback_plan = _create_fallback_lesson_plan(day_standards, rules)
-                daily_plan[idx] = _assemble_day_plan(assignment.get('day') or '', day_standards, assignment.get('focus', '') or '', fallback_plan, None)
+                daily_plan[idx] = _assemble_day_plan(
+                    assignment.get('day') or '',
+                    day_standards,
+                    assignment.get('focus', '') or '',
+                    fallback_plan,
+                    None,
+                    None,
+                    None,
+                )
     
     # Calculate week_of date (Monday of current week)
     today = datetime.now()

@@ -48,8 +48,8 @@ def test_extract_with_math_resources():
     parsed_lesson, resources = _extract_lesson_and_resources(payload, "Tuesday")
     assert parsed_lesson == payload["lesson_plan"]
     assert resources is not None
-    assert "mathWorksheet" in resources
-    assert resources["mathWorksheet"]["problems"][0]["operator"] == "+"
+    assert resources.mathWorksheet is not None
+    assert resources.mathWorksheet.problems[0].operator == "+"
 
 
 def test_extract_invalid_resources_logs_and_drops(capsys):
@@ -82,5 +82,5 @@ def test_extract_with_reading_resources():
     }
     _, resources = _extract_lesson_and_resources(payload, "Thursday")
     assert resources is not None
-    assert "readingWorksheet" in resources
-    assert resources["readingWorksheet"]["passage_title"] == "Garden Morning"
+    assert resources.readingWorksheet is not None
+    assert resources.readingWorksheet.passage_title == "Garden Morning"
