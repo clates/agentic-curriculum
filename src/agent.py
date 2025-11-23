@@ -9,12 +9,14 @@ import sys
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
+from pydantic import ValidationError
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
 from db_utils import get_student_profile
 from logic import get_filtered_standards
+from resource_models import ResourceRequests
 from datetime import datetime, timedelta
 
 
@@ -22,6 +24,34 @@ from datetime import datetime, timedelta
 # Default is 5 (one per weekday). Raising this may reduce latency but
 # increases OpenAI rate-limit pressure and local CPU usage.
 MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
+
+RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
+- `mathWorksheet`: requires `problems` (array of {operand_one, operand_two, operator:+|-}) and optional `title`, `instructions`, `metadata`.
+- `readingWorksheet`: requires `passage_title`, `passage`, and `questions` (prompt + optional response_lines). Optional `vocabulary`, `instructions`, `metadata`.
+Only emit the worksheet fields you need. Omit the `resources` key entirely when no worksheet is needed.
+"""
+
+RESOURCE_FEW_SHOT = {
+    "lesson_plan": {
+        "objective": "Students practice repeated addition to prepare for multiplication.",
+        "materials_needed": ["Counters", "Paper"],
+        "procedure": [
+            "Model repeated addition with counters.",
+            "Have students solve two practice problems.",
+            "Discuss how repeated addition relates to multiplication."
+        ],
+    },
+    "resources": {
+        "mathWorksheet": {
+            "title": "Repeated Addition Warm-Up",
+            "problems": [
+                {"operand_one": 2, "operand_two": 2, "operator": "+"},
+                {"operand_one": 3, "operand_two": 3, "operator": "+"}
+            ]
+        }
+    }
+}
+RESOURCE_FEW_SHOT_JSON = json.dumps(RESOURCE_FEW_SHOT, indent=2)
 
 
 def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
@@ -41,6 +71,12 @@ def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
     parent_notes = rules.get('parent_notes', 'keep procedures under 3 steps')
     
     # Build the prompt
+    resource_guidance = f"""{RESOURCE_GUIDANCE}
+
+Example (trim fields you do not need):
+{RESOURCE_FEW_SHOT_JSON}
+"""
+
     prompt = f"""You are an expert K-12 educator. Create a lesson plan for the following educational standard.
 
 Standard: {standard.get('description', '')}
@@ -59,11 +95,19 @@ Requirements:
    - Keep the lesson age-appropriate for the grade level
    - The objective should directly address the standard
 
-Respond ONLY with a valid JSON object in this exact format:
+{resource_guidance}
+
+Respond ONLY with valid JSON:
 {{
-  "objective": "Clear learning objective here",
-  "materials_needed": ["Material1", "Material2"],
-  "procedure": ["Step 1", "Step 2", "Step 3"]
+    "lesson_plan": {{
+        "objective": "Clear learning objective here",
+        "materials_needed": ["Material1", "Material2"],
+        "procedure": ["Step 1", "Step 2", "Step 3"]
+    }},
+    "resources": {{
+        "mathWorksheet": {{ ... }},
+        "readingWorksheet": {{ ... }}
+    }} // omit this entire key when no worksheet is needed
 }}"""
     
     return prompt
@@ -93,15 +137,45 @@ def _create_fallback_lesson_plan(day_standards: list, rules: dict) -> dict:
     }
 
 
-def _assemble_day_plan(day: str, day_standards: list, day_focus: str, lesson_plan: dict) -> dict:
+def _assemble_day_plan(
+    day: str,
+    day_standards: list,
+    day_focus: str,
+    lesson_plan: dict,
+    resources: dict | None = None,
+) -> dict:
     """Compose the day plan payload from provided components."""
-    return {
+    payload = {
         "day": day,
         "lesson_plan": lesson_plan,
         "standard": day_standards[0] if day_standards else {},
         "standards": day_standards,
         "focus": day_focus
     }
+    if resources:
+        payload["resources"] = resources
+    return payload
+
+
+def _extract_lesson_and_resources(payload: dict, day_label: str) -> tuple[dict, dict | None]:
+    """Normalize LLM response into lesson plan + optional worksheet resources."""
+
+    lesson_plan = payload.get("lesson_plan")
+    if not isinstance(lesson_plan, dict):
+        lesson_plan = payload
+
+    raw_resources = payload.get("resources") if isinstance(payload, dict) else None
+    resources_dict: dict | None = None
+    if isinstance(raw_resources, dict) and raw_resources:
+        try:
+            resource_model = ResourceRequests.model_validate(raw_resources)
+        except ValidationError as exc:
+            print(f"Warning: Invalid worksheet resources for {day_label}: {exc}")
+        else:
+            if resource_model.has_requests():
+                resources_dict = resource_model.model_dump(exclude_none=True)
+
+    return lesson_plan, resources_dict
 
 
 def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, rules: dict, client: OpenAI, model: str) -> dict:
@@ -136,6 +210,8 @@ def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, ru
     if day_focus:
         prompt += f"\n\nDay Focus: {day_focus}"
 
+    resources_dict: dict | None = None
+
     try:
         response = client.chat.completions.create(
             model=model,
@@ -147,15 +223,18 @@ def _build_day_plan(assignment: dict, standards_by_id: dict, standards: list, ru
             response_format={"type": "json_object"}
         )
         lesson_plan_json = response.choices[0].message.content or "{}"
-        lesson_plan = json.loads(lesson_plan_json)
+        payload = json.loads(lesson_plan_json)
+        lesson_plan, resources_dict = _extract_lesson_and_resources(payload, day)
     except json.JSONDecodeError as e:
         print(f"Warning: Failed to parse lesson plan JSON for {day}: {e}")
         lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
+        resources_dict = None
     except Exception as e:
         print(f"Warning: Failed to generate lesson plan for {day}: {e}")
         lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
+        resources_dict = None
 
-    return _assemble_day_plan(day, day_standards, day_focus, lesson_plan)
+    return _assemble_day_plan(day, day_standards, day_focus, lesson_plan, resources_dict)
 
 
 def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dict:
@@ -319,7 +398,7 @@ Respond with a JSON object in this exact format:
                 assignment = daily_assignments[idx]
                 day_standards = _resolve_day_standards(assignment, standards_by_id, standards)
                 fallback_plan = _create_fallback_lesson_plan(day_standards, rules)
-                daily_plan[idx] = _assemble_day_plan(assignment.get('day') or '', day_standards, assignment.get('focus', '') or '', fallback_plan)
+                daily_plan[idx] = _assemble_day_plan(assignment.get('day') or '', day_standards, assignment.get('focus', '') or '', fallback_plan, None)
     
     # Calculate week_of date (Monday of current week)
     today = datetime.now()

@@ -146,4 +146,5 @@ worksheet = generate_reading_comprehension_worksheet(
 2. Both payloads mirror the exact parameters accepted by the underlying helpers, so no additional inference is required before calling `generate_*`.
 3. Input validation lives in `src/resource_models.py` (Pydantic models). Use `ResourceRequests.model_validate(...)` to parse any LLM output before invoking worksheet helpers.
 4. Pass-through `metadata` fields allow the LLM to tag artifacts ("warmup", "homework", etc.) without affecting the renderers.
-5. Post-processing code should render each worksheet to the desired formats (`PNG`, `PDF`, etc.) and attach the resulting artifact URIs back onto the daily plan response for the client.
+5. `src/agent.py` already bakes a short worksheet primer into `create_lesson_plan_prompt`, so the LLM sees the JSON key names (`resources.mathWorksheet` / `resources.readingWorksheet`) and understands to omit the entire `resources` block when nothing is needed.
+6. Post-processing code should render each worksheet to the desired formats (`PNG`, `PDF`, etc.) and attach the resulting artifact URIs back onto the daily plan response for the client.
