@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import re
+import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable, cast
@@ -23,6 +24,7 @@ try:  # Prefer package-relative imports when available
     from .resource_models import ResourceRequests
     from .worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan
     from .worksheets import Worksheet, ReadingWorksheet
+    from .packet_store import save_weekly_packet
     from .worksheet_renderer import (
         render_worksheet_to_image,
         render_worksheet_to_pdf,
@@ -42,6 +44,7 @@ except ImportError:  # Fallback for direct script execution
         render_reading_worksheet_to_image,
         render_reading_worksheet_to_pdf,
     )
+    from packet_store import save_weekly_packet  # type: ignore
 
 from datetime import datetime, timedelta
 
@@ -342,6 +345,25 @@ def _unique_artifact_path(directory: Path, filename_hint: str, extension: str) -
     return candidate
 
 
+def _artifact_file_metadata(path: Path) -> tuple[int | None, str | None]:
+    """Return (size_bytes, sha256) for the given artifact path."""
+
+    try:
+        size = path.stat().st_size
+    except OSError:
+        return None, None
+
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(8192), b""):
+                digest.update(chunk)
+    except OSError:
+        return size, None
+
+    return size, digest.hexdigest()
+
+
 def _render_worksheet_artifacts(
     plan_id: str,
     day_label: str,
@@ -391,8 +413,15 @@ def _render_worksheet_artifacts(
                     generation_logger.log_daily_error(day_label, "artifact_render", message)
                 continue
 
+            rendered_file = Path(rendered_path)
+            size_bytes, checksum = _artifact_file_metadata(rendered_file)
             artifacts_by_kind.setdefault(plan.kind, []).append(
-                {"type": fmt, "path": _relative_artifact_path(Path(rendered_path))}
+                {
+                    "type": fmt,
+                    "path": _relative_artifact_path(rendered_file),
+                    "size_bytes": size_bytes,
+                    "sha256": checksum,
+                }
             )
 
     return artifacts_by_kind, artifact_errors
@@ -745,11 +774,19 @@ Respond with a JSON object in this exact format:
     weekly_plan = {
         "plan_id": plan_id,
         "student_id": student_id,
+        "grade_level": grade_level,
+        "subject": subject,
         "week_of": week_of,
         "weekly_overview": weekly_overview,
         "daily_plan": daily_plan
     }
 
     generation_logger.log_weekly_plan(weekly_plan)
+
+    try:
+        save_weekly_packet(weekly_plan)
+    except Exception as exc:  # pragma: no cover - relies on sqlite errors
+        print(f"Error: Failed to persist weekly packet {plan_id}: {exc}")
+        raise
     
     return weekly_plan
