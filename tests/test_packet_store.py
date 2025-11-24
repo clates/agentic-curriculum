@@ -115,3 +115,38 @@ def test_get_weekly_packet_returns_payload_and_etag(tmp_path):
     assert result is not None
     assert result["payload"]["plan_id"] == "plan_detail"
     assert result["etag"]
+
+
+def test_list_packet_artifacts_enforces_ownership(tmp_path):
+    db_path = tmp_path / "packets.db"
+    packet_store = _reload_modules(db_path)
+
+    plan = build_weekly_plan(plan_id="plan_artifacts", student_id="student-xyz")
+    packet_store.save_weekly_packet(plan)
+
+    owned = packet_store.list_packet_artifacts("student-xyz", "plan_artifacts")
+    assert owned is not None
+    assert len(owned) == 3
+    assert owned[0]["artifact_id"] > 0
+
+    unauthorized = packet_store.list_packet_artifacts("student-123", "plan_artifacts")
+    assert unauthorized is None
+
+
+def test_get_artifact_for_student_returns_none_when_mismatch(tmp_path):
+    db_path = tmp_path / "packets.db"
+    packet_store = _reload_modules(db_path)
+
+    plan = build_weekly_plan(plan_id="plan_artifacts", student_id="student-xyz")
+    packet_store.save_weekly_packet(plan)
+
+    artifacts = packet_store.list_packet_artifacts("student-xyz", "plan_artifacts")
+    assert artifacts is not None
+    first_id = artifacts[0]["artifact_id"]
+
+    owned = packet_store.get_artifact_for_student("student-xyz", first_id)
+    assert owned is not None
+    assert owned["artifact_id"] == first_id
+
+    mismatch = packet_store.get_artifact_for_student("student-123", first_id)
+    assert mismatch is None
