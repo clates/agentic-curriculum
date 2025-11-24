@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from .factories import build_weekly_plan
 
 
 def _reload_modules(db_path: Path):
@@ -25,72 +26,11 @@ def _reload_modules(db_path: Path):
     return packet_store
 
 
-def _sample_weekly_plan():
-    return {
-        "plan_id": "plan_student_2025-11-24",
-        "student_id": "student-123",
-        "grade_level": 4,
-        "subject": "Mathematics",
-        "week_of": "2025-11-24",
-        "weekly_overview": "Focus on multiplying fractions.",
-        "daily_plan": [
-            {
-                "day": "Monday",
-                "focus": "Intro",
-                "lesson_plan": {"objective": "Learn", "procedure": ["Do"]},
-                "standards": [{"standard_id": "MATH.4.1"}],
-                "resources": {
-                    "mathWorksheet": {
-                        "title": "Warmup",
-                        "artifacts": [
-                            {
-                                "type": "pdf",
-                                "path": "artifacts/plan_student_2025-11-24/monday.pdf",
-                                "size_bytes": 1024,
-                                "sha256": "abc123",
-                            },
-                            {
-                                "type": "png",
-                                "path": "artifacts/plan_student_2025-11-24/monday.png",
-                                "size_bytes": 2048,
-                                "sha256": "def456",
-                            },
-                        ],
-                    }
-                },
-                "worksheet_plans": [{"kind": "mathWorksheet", "filename_hint": "warmup"}],
-                "resource_errors": [],
-            },
-            {
-                "day": "Tuesday",
-                "focus": "Apply",
-                "lesson_plan": {"objective": "Practice", "procedure": ["Explain"]},
-                "standards": [{"standard_id": "MATH.4.2"}],
-                "resources": {
-                    "readingWorksheet": {
-                        "title": "Story",
-                        "artifacts": [
-                            {
-                                "type": "pdf",
-                                "path": "artifacts/plan_student_2025-11-24/tuesday.pdf",
-                                "size_bytes": 512,
-                                "sha256": "ghi789",
-                            }
-                        ],
-                    }
-                },
-                "worksheet_plans": [{"kind": "readingWorksheet", "filename_hint": "story"}],
-                "resource_errors": [],
-            },
-        ],
-    }
-
-
 def test_save_weekly_packet_persists_rows(tmp_path):
     db_path = tmp_path / "packets.db"
     packet_store = _reload_modules(db_path)
 
-    weekly_plan = _sample_weekly_plan()
+    weekly_plan = build_weekly_plan()
     packet_store.save_weekly_packet(weekly_plan)
 
     conn = sqlite3.connect(str(db_path))
@@ -123,7 +63,7 @@ def test_save_weekly_packet_rolls_back_on_error(tmp_path):
     def boom(*_args, **_kwargs):
         raise RuntimeError("boom")
 
-    weekly_plan = _sample_weekly_plan()
+    weekly_plan = build_weekly_plan()
     # Patch helper so it raises inside the transaction.
     original = packet_store._persist_daily_lessons
     packet_store._persist_daily_lessons = boom  # type: ignore[attr-defined]
@@ -138,3 +78,40 @@ def test_save_weekly_packet_rolls_back_on_error(tmp_path):
     count = conn.execute("SELECT COUNT(*) FROM weekly_packets").fetchone()[0]
     assert count == 0
     conn.close()
+
+
+def test_list_weekly_packets_supports_pagination(tmp_path):
+    db_path = tmp_path / "packets.db"
+    packet_store = _reload_modules(db_path)
+
+    newer = build_weekly_plan(plan_id="plan_newer", week_of="2025-12-01")
+    older = build_weekly_plan(plan_id="plan_older", week_of="2025-11-17")
+    packet_store.save_weekly_packet(newer)
+    packet_store.save_weekly_packet(older)
+
+    items, has_more = packet_store.list_weekly_packets("student-123", limit=1)
+    assert has_more is True
+    assert len(items) == 1
+    assert items[0]["packet_id"] == "plan_newer"
+    assert items[0]["worksheet_counts"]["mathWorksheet"] == 2
+
+    items_page_2, has_more_second = packet_store.list_weekly_packets(
+        "student-123",
+        limit=1,
+        offset=1,
+    )
+    assert has_more_second is False
+    assert items_page_2[0]["packet_id"] == "plan_older"
+
+
+def test_get_weekly_packet_returns_payload_and_etag(tmp_path):
+    db_path = tmp_path / "packets.db"
+    packet_store = _reload_modules(db_path)
+
+    plan = build_weekly_plan(plan_id="plan_detail")
+    packet_store.save_weekly_packet(plan)
+
+    result = packet_store.get_weekly_packet("student-123", "plan_detail")
+    assert result is not None
+    assert result["payload"]["plan_id"] == "plan_detail"
+    assert result["etag"]
