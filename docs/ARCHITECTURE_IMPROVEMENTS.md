@@ -46,7 +46,10 @@ export OPENAI_MODEL="gpt-4"  # Optional
 Example scaffold response:
 ```json
 {
-  "weekly_overview": "Progressive introduction to multiplication starting with repeated addition",
+  "weekly_overview": {
+    "before_you_start": "Gather counters and a math journal, preview the week's focus, and set norms for quick daily warm-ups",
+    "summary": "Progressive introduction to multiplication starting with repeated addition"
+  },
   "daily_assignments": [
     {
       "day": "Monday",

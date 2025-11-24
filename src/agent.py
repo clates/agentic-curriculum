@@ -39,6 +39,13 @@ MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
 LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
 GENERATE_WEEKLY_DIR = LOG_DIR / "generate-weekly"
 
+# Default scaffolding text for weekly overview fallbacks
+DEFAULT_WEEKLY_SUMMARY = "Weekly plan using standard curriculum progression"
+DEFAULT_BEFORE_YOU_START = (
+    "Take 10 minutes to gather basic supplies, preview the week's focus aloud, "
+    "and agree on a calm workspace so the learner starts confidently."
+)
+
 RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
 - `mathWorksheet`: requires `problems` (array of {operand_one, operand_two, operator:+|-}) and optional `title`, `instructions`, `metadata`.
 - `readingWorksheet`: requires `passage_title`, `passage`, and `questions` (prompt + optional response_lines). Optional `vocabulary`, `instructions`, `metadata`.
@@ -193,6 +200,34 @@ class GenerationLogger:
         if request_payload is not None:
             payload["request"] = request_payload
         self._write_json(self._daily_path(day_label, "_error"), payload)
+
+
+def _normalize_weekly_overview(
+    raw_overview: Any,
+    fallback_summary: str | None = None,
+) -> dict[str, str]:
+    """Return a structured weekly overview with before_you_start + summary."""
+
+    summary_text = fallback_summary or DEFAULT_WEEKLY_SUMMARY
+    before_text = DEFAULT_BEFORE_YOU_START
+
+    if isinstance(raw_overview, str):
+        raw_summary = raw_overview.strip()
+        if raw_summary:
+            summary_text = raw_summary
+    elif isinstance(raw_overview, dict):
+        extracted_summary = raw_overview.get("summary")
+        if isinstance(extracted_summary, str) and extracted_summary.strip():
+            summary_text = extracted_summary.strip()
+
+        extracted_before = raw_overview.get("before_you_start")
+        if isinstance(extracted_before, str) and extracted_before.strip():
+            before_text = extracted_before.strip()
+
+    return {
+        "before_you_start": before_text,
+        "summary": summary_text,
+    }
 
 
 def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
@@ -587,19 +622,25 @@ Create a weekly plan that:
 3. Simpler standards can be covered in a single day
 4. Each day should build on previous days
 5. Each day's activities should represent roughly one hour of learning time (about 45-60 minutes of instruction, practice, and wrap-up)
+6. Add a parent-friendly "before_you_start" paragraph inside the weekly overview that lists any prep tasks (materials to gather, workspace setup, motivational message) to complete before Monday's lesson
 
 Respond with a JSON object in this exact format:
 {{
-  "weekly_overview": "Brief description of how the week progresses",
-  "daily_assignments": [
-    {{
-      "day": "Monday",
-      "standard_ids": ["standard_id_1"],
-      "focus": "Brief description of this day's focus"
+    "weekly_overview": {{
+        "before_you_start": "2-3 sentence setup guidance for the caregiver",
+        "summary": "Brief description of how the week progresses"
     }},
-    ...
-  ]
-}}"""
+    "daily_assignments": [
+        {{
+            "day": "Monday",
+            "standard_ids": ["standard_id_1"],
+            "focus": "Brief description of this day's focus"
+        }},
+        ...
+    ]
+}}
+
+Keep the rest of the JSON identical to this schema (five ordered weekdays, valid arrays, double-quoted strings)."""
 
     scaffold_messages = [
         {"role": "system", "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only."},
@@ -625,7 +666,7 @@ Respond with a JSON object in this exact format:
         print(f"Warning: Failed to parse scaffold JSON: {e}")
         generation_logger.log_weekly_scaffold_content(
             None, scaffold_raw_content, str(e))
-        weekly_overview = "Weekly plan using standard curriculum progression"
+        weekly_overview = _normalize_weekly_overview(None)
         daily_assignments = [
             {"day": day, "standard_ids": [standards[i].get(
                 'standard_id')], "focus": f"Day {i+1} focus"}
@@ -638,7 +679,7 @@ Respond with a JSON object in this exact format:
             scaffold_request_payload, error=str(e))
         generation_logger.log_weekly_scaffold_content(
             None, scaffold_raw_content or "", str(e))
-        weekly_overview = "Weekly plan using standard curriculum progression"
+        weekly_overview = _normalize_weekly_overview(None)
         daily_assignments = [
             {"day": day, "standard_ids": [standards[i].get(
                 'standard_id')], "focus": f"Day {i+1} focus"}
@@ -649,7 +690,8 @@ Respond with a JSON object in this exact format:
         generation_logger.log_weekly_scaffold_content(
             weekly_scaffold, scaffold_raw_content)
         daily_assignments = weekly_scaffold.get('daily_assignments', [])
-        weekly_overview = weekly_scaffold.get('weekly_overview', '')
+        weekly_overview = _normalize_weekly_overview(
+            weekly_scaffold.get('weekly_overview'))
 
     # Ensure we have exactly 5 days
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]

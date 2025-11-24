@@ -47,11 +47,11 @@ except Exception as e:
    - API key issues
    - Network connectivity problems
 
-### 2. Added Weekly Overview to Response (Comment on line 246)
+### 2. Structured Weekly Overview with Caregiver Prep (Comment on line 246)
 
-**Problem**: The weekly overview created during scaffolding was not included in the final response.
+**Problem**: The weekly overview created during scaffolding was a single string and did not capture the caregiver preparation guidance we discussed.
 
-**Solution**: Added `weekly_overview` field to the final weekly plan.
+**Solution**: The final response now contains a structured `weekly_overview` object with a `before_you_start` paragraph plus the summary text.
 
 #### Updated Response Structure:
 ```json
@@ -59,7 +59,10 @@ except Exception as e:
   "plan_id": "plan_student_01_2025-11-10",
   "student_id": "student_01",
   "week_of": "2025-11-10",
-  "weekly_overview": "Progressive introduction to multiplication...",  // NEW
+  "weekly_overview": {
+    "before_you_start": "Gather manipulatives, preview the week's routine, and set a calm workspace before Monday.",
+    "summary": "Progressive introduction to multiplication..."
+  },
   "daily_plan": [
     {
       "day": "Monday",
@@ -74,15 +77,15 @@ except Exception as e:
 ```
 
 #### Benefits:
-- **Context**: Provides high-level understanding of the week's pedagogical approach
-- **Transparency**: Shows how the LLM planned the week's progression
-- **User Value**: Helps teachers/parents understand the learning arc
-- **Planning Visibility**: Makes the scaffolding strategy explicit
+- **Caregiver Readiness**: `before_you_start` lists materials, workspace setup, and motivational cues to complete before the first lesson
+- **Context**: The `summary` still explains how the week progresses pedagogically
+- **Transparency**: Shows how the scaffold directs both prep work and daily flow
+- **User Value**: Parents know how to prime the learner before Monday and what the week aims to accomplish
 
-#### Example Weekly Overviews:
-- "Progressive introduction to multiplication starting with repeated addition, building to times tables"
-- "Foundation week for reading comprehension, starting with letter recognition and building to simple words"
-- "Review week combining counting, shapes, and basic addition for reinforcement"
+#### Example Weekly Overview Content:
+- `before_you_start`: "Gather crayons, math journal, and counters; read the week's objective aloud and agree on a daily start time."
+- `summary`: "Progressive introduction to multiplication starting with repeated addition, building to times tables."
+- `summary`: "Foundation week for reading comprehension, starting with letter recognition and building to simple words."
 
 ### 3. Consistent Error Handling Pattern
 

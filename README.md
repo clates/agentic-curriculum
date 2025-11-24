@@ -195,7 +195,10 @@ Generate a complete weekly lesson plan for a student using AI.
   "plan_id": "plan_student_01_2025-01-15",
   "student_id": "student_01",
   "week_of": "2025-01-15",
-  "weekly_overview": "Brief description of the week's learning progression",
+  "weekly_overview": {
+    "before_you_start": "2-3 sentence prep guidance for caregivers",
+    "summary": "Brief description of the week's learning progression"
+  },
   "daily_plan": [
     {
       "day": "Monday",
