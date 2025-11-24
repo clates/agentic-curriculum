@@ -2,12 +2,20 @@
 from __future__ import annotations
 
 import math
+import os
+import sys
 from pathlib import Path
 from typing import cast
 
 from PIL import Image, ImageDraw, ImageFont
 
-from .worksheets import ReadingWorksheet, Worksheet, format_vertical_problem
+try:
+    from .worksheets import ReadingWorksheet, Worksheet, format_vertical_problem
+except ImportError:  # Fallback when executed outside package context
+    CURRENT_DIR = os.path.dirname(__file__)
+    if CURRENT_DIR not in sys.path:
+        sys.path.insert(0, CURRENT_DIR)
+    from worksheets import ReadingWorksheet, Worksheet, format_vertical_problem  # type: ignore
 
 _FONT_CANDIDATES = (
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",

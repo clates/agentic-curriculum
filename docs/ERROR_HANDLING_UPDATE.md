@@ -103,6 +103,38 @@ except Exception as e:
     # Appropriate fallback
 ```
 
+### 4. Worksheet Artifact Rendering & Response Augmentation
+
+**Problem**: Even when the LLM requested worksheets, we only stored the raw worksheet definitions in memory; no files were rendered and the API response could not surface download links.
+
+**Solution**: After worksheet requests are validated and transformed into worksheet objects, the agent now renders PNG + PDF artifacts under `artifacts/{plan_id}/{day_slug}/` and injects metadata back into the response:
+
+```jsonc
+"resources": {
+  "mathWorksheet": {
+    "title": "Repeated Addition Warm-Up",
+    "problems": [ ... ],
+    "artifacts": [
+      {"type": "png", "path": "artifacts/plan_student_01_2025-11-10/monday/warmup_math.png"},
+      {"type": "pdf", "path": "artifacts/plan_student_01_2025-11-10/monday/warmup_math.pdf"}
+    ]
+  }
+}
+```
+
+Rendering happens per worksheet, so failures are localized. Any exception raised by the rendering helpers produces a `resource_errors` entry while other worksheets (and lesson generation) continue unaffected:
+
+```jsonc
+"resource_errors": [
+  {"kind": "mathWorksheet", "format": "png", "message": "png boom"}
+]
+```
+
+**Benefits**:
+- **Deliverable Artifacts**: Caregivers receive concrete files moments after the API call finishes.
+- **Deterministic Layout**: Files always live under `artifacts/{plan_id}/{day_slug}/`, simplifying hosting or synchronization.
+- **Granular Error Reporting**: Failures surface next to the affected day and worksheet kind, enabling quick retries without replaying the entire week.
+
 ## Testing Recommendations
 
 ### Test JSON Errors:
