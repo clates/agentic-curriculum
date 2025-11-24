@@ -402,3 +402,94 @@ def get_weekly_packet(student_id: str, packet_id: str) -> dict[str, Any] | None:
         "updated_at": updated_at,
         "etag": _compute_etag(packet_id, updated_at),
     }
+
+
+def _packet_exists(conn: sqlite3.Connection, student_id: str, packet_id: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM weekly_packets WHERE packet_id = ? AND student_id = ? LIMIT 1",
+        (packet_id, student_id),
+    ).fetchone()
+    return row is not None
+
+
+def list_packet_artifacts(student_id: str, packet_id: str) -> list[dict[str, Any]] | None:
+    """Return artifacts for a packet when the student owns it."""
+
+    ensure_schema()
+    conn = _get_connection()
+    try:
+        if not _packet_exists(conn, student_id, packet_id):
+            return None
+        rows = conn.execute(
+            """
+            SELECT id, day_label, kind, file_format, file_path, checksum,
+                   file_size_bytes, metadata_json, created_at
+            FROM worksheet_artifacts
+            WHERE packet_id = ?
+            ORDER BY day_label, kind, id
+            """,
+            (packet_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    artifacts: list[dict[str, Any]] = []
+    for row in rows:
+        metadata_json = row["metadata_json"]
+        metadata = json.loads(metadata_json) if metadata_json else None
+        artifacts.append(
+            {
+                "artifact_id": row["id"],
+                "packet_id": packet_id,
+                "day_label": row["day_label"],
+                "kind": row["kind"],
+                "file_format": row["file_format"],
+                "file_path": row["file_path"],
+                "checksum": row["checksum"],
+                "file_size_bytes": row["file_size_bytes"],
+                "metadata": metadata,
+                "created_at": row["created_at"],
+            }
+        )
+
+    return artifacts
+
+
+def get_artifact_for_student(student_id: str, artifact_id: int) -> dict[str, Any] | None:
+    """Return artifact metadata + path when student owns it."""
+
+    ensure_schema()
+    conn = _get_connection()
+    try:
+        row = conn.execute(
+            """
+            SELECT wa.id, wa.packet_id, wa.day_label, wa.kind, wa.file_format,
+                   wa.file_path, wa.checksum, wa.file_size_bytes, wa.metadata_json,
+                   wa.created_at, wp.student_id
+            FROM worksheet_artifacts wa
+            JOIN weekly_packets wp ON wa.packet_id = wp.packet_id
+            WHERE wa.id = ? AND wp.student_id = ?
+            LIMIT 1
+            """,
+            (artifact_id, student_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return None
+
+    metadata_json = row["metadata_json"]
+    metadata = json.loads(metadata_json) if metadata_json else None
+    return {
+        "artifact_id": row["id"],
+        "packet_id": row["packet_id"],
+        "day_label": row["day_label"],
+        "kind": row["kind"],
+        "file_format": row["file_format"],
+        "file_path": row["file_path"],
+        "checksum": row["checksum"],
+        "file_size_bytes": row["file_size_bytes"],
+        "metadata": metadata,
+        "created_at": row["created_at"],
+    }
