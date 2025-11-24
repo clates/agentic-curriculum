@@ -1,13 +1,14 @@
 """Persistence helpers for weekly packets, daily lessons, and worksheet artifacts."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, Sequence
 
 try:  # Prefer package-relative import when available
     from .db_utils import DB_FILE  # type: ignore
@@ -295,3 +296,109 @@ def save_weekly_packet(
         _delete_existing_packet(conn, packet_id)
         _insert_weekly_packet(conn, weekly_plan, status)
         _persist_daily_lessons(conn, packet_id, weekly_plan.get("daily_plan", []))
+
+
+def _compute_etag(packet_id: str, updated_at: str) -> str:
+    """Return a deterministic etag string for a packet."""
+
+    payload = f"{packet_id}:{updated_at}".encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _deserialize_summary(summary_json: str | None) -> dict[str, Any]:
+    if not summary_json:
+        return {}
+    try:
+        return json.loads(summary_json)
+    except json.JSONDecodeError:  # pragma: no cover - defensive fallback
+        return {}
+
+
+def list_weekly_packets(
+    student_id: str,
+    *,
+    limit: int,
+    offset: int = 0,
+    week_of: str | None = None,
+) -> tuple[list[dict[str, Any]], bool]:
+    """Return packet summaries for a student ordered by week desc."""
+
+    ensure_schema()
+    limit = max(1, limit)
+    query = [
+        "SELECT packet_id, student_id, grade_level, subject, week_of, status, summary_json, updated_at",
+        "FROM weekly_packets",
+        "WHERE student_id = ?",
+    ]
+    params: list[Any] = [student_id]
+    if week_of:
+        query.append("AND week_of = ?")
+        params.append(week_of)
+    query.append("ORDER BY week_of DESC, updated_at DESC")
+    query.append("LIMIT ? OFFSET ?")
+    params.extend([limit + 1, offset])
+
+    sql = "\n".join(query)
+    conn = _get_connection()
+    try:
+        rows = conn.execute(sql, params).fetchall()
+    finally:
+        conn.close()
+
+    has_more = len(rows) > limit
+    rows_to_use: Sequence[sqlite3.Row] = rows[:limit]
+
+    summaries: list[dict[str, Any]] = []
+    for row in rows_to_use:
+        summary = _deserialize_summary(row["summary_json"])
+        summaries.append(
+            {
+                "packet_id": row["packet_id"],
+                "student_id": row["student_id"],
+                "grade_level": row["grade_level"],
+                "subject": row["subject"],
+                "week_of": row["week_of"],
+                "status": row["status"],
+                "updated_at": row["updated_at"],
+                "worksheet_counts": summary.get("worksheet_counts", {}),
+                "artifact_count": summary.get("artifact_count", 0),
+                "resource_days": summary.get("resource_days", 0),
+                "daily_count": summary.get("daily_count", 0),
+            }
+        )
+
+    return summaries, has_more
+
+
+def get_weekly_packet(student_id: str, packet_id: str) -> dict[str, Any] | None:
+    """Return persisted packet payload for a student or None when missing."""
+
+    ensure_schema()
+    conn = _get_connection()
+    try:
+        row = conn.execute(
+            """
+            SELECT payload_json, updated_at
+            FROM weekly_packets
+            WHERE packet_id = ? AND student_id = ?
+            LIMIT 1
+            """,
+            (packet_id, student_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return None
+
+    try:
+        payload = json.loads(row["payload_json"])
+    except json.JSONDecodeError as exc:  # pragma: no cover - unexpected
+        raise ValueError(f"Corrupted payload for packet {packet_id}: {exc}") from exc
+
+    updated_at = row["updated_at"]
+    return {
+        "payload": payload,
+        "updated_at": updated_at,
+        "etag": _compute_etag(packet_id, updated_at),
+    }

@@ -9,14 +9,15 @@ import os
 import sys
 from datetime import datetime
 from uuid import uuid4
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Query, Response
+from pydantic import BaseModel, Field, ConfigDict
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
 from db_utils import get_student_profile
 from agent import generate_weekly_plan
+from packet_store import get_weekly_packet, list_weekly_packets
 
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,6 +52,38 @@ class PlanRequest(BaseModel):
     student_id: str
     grade_level: int
     subject: str
+
+
+class PaginationMeta(BaseModel):
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1)
+    has_more: bool
+    next_page: int | None = Field(default=None, ge=1)
+
+
+class WeeklyPacketSummary(BaseModel):
+    packet_id: str
+    student_id: str
+    week_of: str
+    subject: str
+    grade_level: int
+    status: str
+    worksheet_counts: dict[str, int] = Field(default_factory=dict)
+    artifact_count: int = 0
+    resource_days: int = 0
+    daily_count: int = 0
+    updated_at: str
+
+
+class WeeklyPacketListResponse(BaseModel):
+    items: list[WeeklyPacketSummary]
+    pagination: PaginationMeta
+
+
+class WeeklyPacketDetail(BaseModel):
+    """Flexible representation of a stored weekly packet."""
+
+    model_config = ConfigDict(extra="allow")
 
 
 @app.get("/")
@@ -124,3 +157,54 @@ def create_weekly_plan(request: PlanRequest):
         duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
         log_context["duration_ms"] = duration_ms
         _write_weekly_plan_log(log_context)
+
+
+@app.get(
+    "/students/{student_id}/weekly-packets",
+    response_model=WeeklyPacketListResponse,
+)
+def list_student_weekly_packets(
+    student_id: str,
+    week_of: str | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=50),
+):
+    """List weekly packets for a student with basic metadata."""
+
+    offset = (page - 1) * page_size
+    summaries, has_more = list_weekly_packets(
+        student_id,
+        limit=page_size,
+        offset=offset,
+        week_of=week_of,
+    )
+    next_page = page + 1 if has_more else None
+    return {
+        "items": summaries,
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "has_more": has_more,
+            "next_page": next_page,
+        },
+    }
+
+
+@app.get(
+    "/students/{student_id}/weekly-packets/{packet_id}",
+    response_model=WeeklyPacketDetail,
+)
+def get_student_weekly_packet(
+    student_id: str,
+    packet_id: str,
+    response: Response,
+):
+    """Return the stored weekly packet payload."""
+
+    packet = get_weekly_packet(student_id, packet_id)
+    if packet is None:
+        raise HTTPException(status_code=404, detail="Weekly packet not found")
+
+    response.headers["ETag"] = packet["etag"]
+    response.headers["Last-Modified"] = packet["updated_at"]
+    return packet["payload"]
