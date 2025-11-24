@@ -7,7 +7,8 @@ FastAPI application for serving student data from curriculum.db
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
+from email.utils import formatdate
 from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Query, Response
 from pydantic import BaseModel, Field, ConfigDict
@@ -205,6 +206,13 @@ def get_student_weekly_packet(
     if packet is None:
         raise HTTPException(status_code=404, detail="Weekly packet not found")
 
-    response.headers["ETag"] = packet["etag"]
-    response.headers["Last-Modified"] = packet["updated_at"]
+    etag = packet["etag"]
+    response.headers["ETag"] = f'"{etag}"'
+
+    updated_at = packet["updated_at"]
+    try:
+        updated_dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+    except ValueError:
+        updated_dt = datetime.now(UTC)
+    response.headers["Last-Modified"] = formatdate(updated_dt.timestamp(), usegmt=True)
     return packet["payload"]
