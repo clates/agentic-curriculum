@@ -21,6 +21,7 @@ Each entry in `weekly_plan.daily_plan` augments the existing structure with a `r
 
 - `resources` is optional; omit it (or a specific worksheet key) when no artifact is needed to keep responses sparse.
 - Additional resource types can be appended later without breaking consumers because each entry is keyed by name.
+- After worksheet rendering completes, each populated resource gains an `artifacts` array populated by the orchestrator with repo-relative file paths (clients never need to guess file names).
 
 ## MathWorksheetRequest Schema
 
@@ -122,7 +123,11 @@ worksheet = generate_reading_comprehension_worksheet(
         { "operand_one": 3, "operand_two": 3, "operator": "+" },
         { "operand_one": 4, "operand_two": 4, "operator": "+" }
       ],
-      "metadata": { "artifact_label": "warmup" }
+      "metadata": { "artifact_label": "warmup" },
+      "artifacts": [
+        { "type": "png", "path": "artifacts/plan_student_01_2025-11-10/tuesday/repeated_addition_math.png" },
+        { "type": "pdf", "path": "artifacts/plan_student_01_2025-11-10/tuesday/repeated_addition_math.pdf" }
+      ]
     },
     "readingWorksheet": {
       "passage_title": "Seeds on the Windowsill",
@@ -134,6 +139,10 @@ worksheet = generate_reading_comprehension_worksheet(
       "vocabulary": [
         { "term": "sprout" },
         { "term": "windowsill", "definition": "The flat part at the bottom of a window." }
+      ],
+      "artifacts": [
+        { "type": "png", "path": "artifacts/plan_student_01_2025-11-10/tuesday/reading_seed_story.png" },
+        { "type": "pdf", "path": "artifacts/plan_student_01_2025-11-10/tuesday/reading_seed_story.pdf" }
       ]
     }
   }
@@ -147,4 +156,4 @@ worksheet = generate_reading_comprehension_worksheet(
 3. Input validation lives in `src/resource_models.py` (Pydantic models). Use `ResourceRequests.model_validate(...)` to parse any LLM output before invoking worksheet helpers.
 4. Pass-through `metadata` fields allow the LLM to tag artifacts ("warmup", "homework", etc.) without affecting the renderers.
 5. `src/agent.py` already bakes a short worksheet primer into `create_lesson_plan_prompt`, so the LLM sees the JSON key names (`resources.mathWorksheet` / `resources.readingWorksheet`) and understands to omit the entire `resources` block when nothing is needed.
-6. Post-processing code should render each worksheet to the desired formats (`PNG`, `PDF`, etc.) and attach the resulting artifact URIs back onto the daily plan response for the client.
+6. Post-processing code renders every worksheet to PNG + PDF under `artifacts/{plan_id}/{day_slug}/` and appends entries like `{ "type": "png", "path": "artifacts/plan_student_01_2025-01-15/monday/warmup_math.png" }` to the corresponding worksheet definition.

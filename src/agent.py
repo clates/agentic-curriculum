@@ -10,7 +10,7 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, cast
 from openai import OpenAI
 from pydantic import ValidationError
 
@@ -21,13 +21,27 @@ try:  # Prefer package-relative imports when available
     from .db_utils import get_student_profile
     from .logic import get_filtered_standards
     from .resource_models import ResourceRequests
-    from .worksheet_requests import build_worksheets_from_requests
+    from .worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan
+    from .worksheets import Worksheet, ReadingWorksheet
+    from .worksheet_renderer import (
+        render_worksheet_to_image,
+        render_worksheet_to_pdf,
+        render_reading_worksheet_to_image,
+        render_reading_worksheet_to_pdf,
+    )
 except ImportError:  # Fallback for direct script execution
     sys.path.insert(0, os.path.dirname(__file__))
     from db_utils import get_student_profile  # type: ignore
     from logic import get_filtered_standards  # type: ignore
     from resource_models import ResourceRequests  # type: ignore
-    from worksheet_requests import build_worksheets_from_requests  # type: ignore
+    from worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan  # type: ignore
+    from worksheets import Worksheet, ReadingWorksheet  # type: ignore
+    from worksheet_renderer import (  # type: ignore
+        render_worksheet_to_image,
+        render_worksheet_to_pdf,
+        render_reading_worksheet_to_image,
+        render_reading_worksheet_to_pdf,
+    )
 
 from datetime import datetime, timedelta
 
@@ -35,9 +49,11 @@ from datetime import datetime, timedelta
 # Maximum number of concurrent threads for generating daily lesson plans.
 # Default is 5 (one per weekday). Raising this may reduce latency but
 # increases OpenAI rate-limit pressure and local CPU usage.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
-LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
+LOG_DIR = PROJECT_ROOT / "logs"
 GENERATE_WEEKLY_DIR = LOG_DIR / "generate-weekly"
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 
 RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
 - `mathWorksheet`: requires `problems` (array of {operand_one, operand_two, operator:+|-}) and optional `title`, `instructions`, `metadata`.
@@ -304,6 +320,84 @@ def _assemble_day_plan(
     return payload
 
 
+def _artifact_day_dir(plan_id: str, day_label: str) -> Path:
+    day_slug = _slugify(day_label.strip().lower()) if day_label else "day"
+    return ARTIFACTS_DIR / plan_id / day_slug
+
+
+def _relative_artifact_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _unique_artifact_path(directory: Path, filename_hint: str, extension: str) -> Path:
+    safe_hint = _slugify(filename_hint or "worksheet")
+    candidate = directory / f"{safe_hint}.{extension}"
+    counter = 1
+    while candidate.exists():
+        candidate = directory / f"{safe_hint}_{counter}.{extension}"
+        counter += 1
+    return candidate
+
+
+def _render_worksheet_artifacts(
+    plan_id: str,
+    day_label: str,
+    plans: list[WorksheetArtifactPlan],
+    generation_logger: GenerationLogger | None = None,
+) -> tuple[dict[str, list[dict]], list[dict]]:
+    """Render worksheet artifacts and return payload + error metadata."""
+
+    artifacts_by_kind: dict[str, list[dict]] = {}
+    artifact_errors: list[dict] = []
+
+    if not plans:
+        return artifacts_by_kind, artifact_errors
+
+    day_dir = _artifact_day_dir(plan_id, day_label)
+    day_dir.mkdir(parents=True, exist_ok=True)
+
+    for plan in plans:
+        render_jobs: list[tuple[str, Callable[[Path], Path]]] = []
+        if plan.kind == "mathWorksheet":
+            worksheet = cast(Worksheet, plan.worksheet)
+            render_jobs = [
+                ("png", lambda output_path, worksheet=worksheet: render_worksheet_to_image(worksheet, output_path)),
+                ("pdf", lambda output_path, worksheet=worksheet: render_worksheet_to_pdf(worksheet, output_path)),
+            ]
+        elif plan.kind == "readingWorksheet":
+            worksheet = cast(ReadingWorksheet, plan.worksheet)
+            render_jobs = [
+                ("png", lambda output_path, worksheet=worksheet: render_reading_worksheet_to_image(worksheet, output_path)),
+                ("pdf", lambda output_path, worksheet=worksheet: render_reading_worksheet_to_pdf(worksheet, output_path)),
+            ]
+        else:
+            message = f"Unsupported worksheet kind '{plan.kind}'"
+            artifact_errors.append({"kind": plan.kind, "message": message})
+            if generation_logger:
+                generation_logger.log_daily_error(day_label, "artifact_render", message)
+            continue
+
+        for fmt, renderer in render_jobs:
+            output_path = _unique_artifact_path(day_dir, plan.filename_hint or plan.kind, fmt)
+            try:
+                rendered_path = renderer(output_path)
+            except Exception as exc:  # pragma: no cover - exercised via unit tests
+                message = str(exc)
+                artifact_errors.append({"kind": plan.kind, "format": fmt, "message": message})
+                if generation_logger:
+                    generation_logger.log_daily_error(day_label, "artifact_render", message)
+                continue
+
+            artifacts_by_kind.setdefault(plan.kind, []).append(
+                {"type": fmt, "path": _relative_artifact_path(Path(rendered_path))}
+            )
+
+    return artifacts_by_kind, artifact_errors
+
+
 def _extract_lesson_and_resources(payload: dict, day_label: str) -> tuple[dict, ResourceRequests | None]:
     """Normalize LLM response into lesson plan + optional worksheet resources."""
 
@@ -332,6 +426,7 @@ def _build_day_plan(
     rules: dict,
     client: OpenAI,
     model: str,
+    plan_id: str,
     generation_logger: GenerationLogger | None = None,
 ) -> dict:
     """Generate one day's plan inside the thread pool with deterministic fallbacks.
@@ -424,6 +519,21 @@ def _build_day_plan(
         ]
         resources_payload = resources_model.model_dump(exclude_none=True)
 
+        artifact_map, artifact_render_errors = _render_worksheet_artifacts(
+            plan_id,
+            day,
+            plans,
+            generation_logger,
+        )
+        if artifact_render_errors:
+            worksheet_errors.extend(artifact_render_errors)
+        if artifact_map:
+            if resources_payload is None:
+                resources_payload = {}
+            for kind, entries in artifact_map.items():
+                kind_payload = resources_payload.setdefault(kind, {})
+                kind_payload["artifacts"] = entries
+
     day_payload = _assemble_day_plan(
         day,
         day_standards,
@@ -483,6 +593,11 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
         raise ValueError(f"No standards found for student {student_id}.")
     
     generation_logger = GenerationLogger(student_id, grade_level, subject)
+
+    today = datetime.now()
+    monday = today - timedelta(days=today.weekday())
+    week_of = monday.strftime("%Y-%m-%d")
+    plan_id = f"plan_{student_id}_{week_of}"
 
     # Precompute a pretty JSON preview of the first few standards for the prompt
     available_standards_preview = [
@@ -596,6 +711,7 @@ Respond with a JSON object in this exact format:
                 rules,
                 client,
                 model,
+                plan_id,
                 generation_logger,
             ): idx
             for idx, assignment in enumerate(daily_assignments)
@@ -625,14 +741,9 @@ Respond with a JSON object in this exact format:
                     generation_logger.log_daily_error(day_label, "worker_exception", str(e))
                     generation_logger.log_daily_plan(day_label, fallback_payload)
     
-    # Calculate week_of date (Monday of current week)
-    today = datetime.now()
-    monday = today - timedelta(days=today.weekday())
-    week_of = monday.strftime("%Y-%m-%d")
-    
     # Construct the final weekly plan
     weekly_plan = {
-        "plan_id": f"plan_{student_id}_{week_of}",
+        "plan_id": plan_id,
         "student_id": student_id,
         "week_of": week_of,
         "weekly_overview": weekly_overview,

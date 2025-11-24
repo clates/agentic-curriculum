@@ -107,6 +107,20 @@ Each daily plan item now includes:
 - Wednesday-Thursday: Application (Standard B, building on A)
 - Friday: Integration (Standards A+B together)
 
+### 5. Worksheet Artifact Generation & Surfacing
+**Problem**: Even after worksheets were requested and synthesized in-memory, no files were rendered and API consumers had no way to download them.
+
+**Solution**:
+- Introduced an artifact pipeline that renders every worksheet to both PNG and PDF right after the worksheet objects are built.
+- Artifacts are stored under `artifacts/{plan_id}/{day_slug}/` using sanitized file names derived from the LLM-provided `filename_hint` metadata.
+- The orchestrator appends an `artifacts` array to each worksheet definition inside `daily_plan[n].resources` with repo-relative file paths, e.g. `{"type": "png", "path": "artifacts/plan_student_01_2025-11-10/monday/warmup_math.png"}`.
+- Rendering failures are captured per artifact and surfaced through `daily_plan[n].resource_errors` without blocking the rest of the weekly plan or other worksheets for the same day.
+
+**Benefits**:
+- Parents and teachers can click/download worksheets immediately after plan generation with no manual rendering step.
+- Artifact layout is deterministic, making it easy to sync, archive, or serve via a CDN.
+- Error handling is localized, so one bad worksheet request won't derail the others.
+
 ## Backward Compatibility
 
 The changes maintain backward compatibility:

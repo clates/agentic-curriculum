@@ -209,12 +209,39 @@ Generate a complete weekly lesson plan for a student using AI.
         "json_blob": "..."
       },
       "standards": [...],
-      "focus": "Day-specific learning focus"
+      "focus": "Day-specific learning focus",
+      "resources": {
+        "mathWorksheet": {
+          "title": "Repeated Addition Warm-Up",
+          "problems": [
+            {"operand_one": 3, "operand_two": 3, "operator": "+"}
+          ],
+          "artifacts": [
+            {
+              "type": "png",
+              "path": "artifacts/plan_student_01_2025-01-15/monday/repeated_addition_math.png"
+            },
+            {
+              "type": "pdf",
+              "path": "artifacts/plan_student_01_2025-01-15/monday/repeated_addition_math.pdf"
+            }
+          ]
+        }
+      },
+      "worksheet_plans": [
+        {
+          "kind": "mathWorksheet",
+          "filename_hint": "repeated_addition_math",
+          "metadata": {"artifact_label": "warmup"}
+        }
+      ]
     }
     // ... Tuesday through Friday
   ]
 }
 ```
+
+Worksheet artifacts are rendered under `artifacts/{plan_id}/{day_slug}/`. The API response references those files via repo-relative paths so clients can download and present them immediately after the weekly plan is generated.
 
 **Error Responses:**
 - `400`: Invalid request or error generating plan
