@@ -153,3 +153,36 @@ def test_download_endpoint_streams_files_and_handles_missing(tmp_path):
         f"/students/unauthorized/worksheet-artifacts/{artifact_entry['artifact_id']}"
     )
     assert unauthorized_resp.status_code == 404
+
+
+def test_download_endpoint_rejects_paths_outside_project_root(tmp_path):
+    db_path = tmp_path / "api.db"
+    main_module, packet_store = _reload_app(db_path)
+    main_module.PROJECT_ROOT = tmp_path
+    packet_store.PROJECT_ROOT = tmp_path
+
+    plan = build_weekly_plan(plan_id="plan_escape", student_id="student-escape")
+    outside_dir = tmp_path.parent / "outside"
+    outside_dir.mkdir(parents=True, exist_ok=True)
+    outside_file = outside_dir / "escape.pdf"
+    plan["daily_plan"][0]["resources"]["mathWorksheet"]["artifacts"][0]["path"] = str(
+        outside_file
+    )
+
+    packet_store.save_weekly_packet(plan)
+    outside_file.write_bytes(b"escape-artifact")
+
+    client = TestClient(main_module.app)
+    manifest = client.get(
+        f"/students/{plan['student_id']}/weekly-packets/{plan['plan_id']}/worksheets"
+    ).json()
+
+    escape_entry = next(
+        artifact
+        for item in manifest["items"]
+        for artifact in item["artifacts"]
+        if artifact["file_size_bytes"] == 1024
+    )
+
+    download_resp = client.get(escape_entry["download_url"])
+    assert download_resp.status_code == 404

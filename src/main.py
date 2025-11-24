@@ -265,7 +265,9 @@ def get_student_weekly_packet(
 def _resolve_artifact_path(file_path: str) -> Path:
     root = _project_root_path()
     candidate = Path(file_path)
-    if not candidate.is_absolute():
+    if candidate.is_absolute():
+        candidate = candidate.resolve()
+    else:
         candidate = (root / candidate).resolve()
     try:
         candidate.relative_to(root)
