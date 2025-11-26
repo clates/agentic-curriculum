@@ -17,7 +17,7 @@ class ReadingQuestion:
         prompt = payload.get("prompt")
         if not prompt:
             raise ValueError("ReadingQuestion requires a prompt")
-        response_lines = int(payload.get("response_lines", cls.response_lines))
+        response_lines = int(payload.get("response_lines", 2))
         return cls(prompt=prompt, response_lines=max(1, response_lines))
 
 
@@ -33,7 +33,7 @@ class VocabularyEntry:
         if not term:
             raise ValueError("VocabularyEntry requires a term")
         definition = payload.get("definition")
-        response_lines = int(payload.get("response_lines", cls.response_lines))
+        response_lines = int(payload.get("response_lines", 1))
         return cls(term=term, definition=definition, response_lines=max(1, response_lines))
 
 
