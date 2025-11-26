@@ -2,6 +2,8 @@
 
 This document summarizes the two printable worksheet helpers included in the project. Use it as a quick guide when generating math drill sheets or longer reading comprehension activities.
 
+> **Note:** For comprehensive documentation including detailed parameter descriptions and both typical and exotic usage examples, see [WORKSHEET_TYPES.md](./WORKSHEET_TYPES.md).
+
 ---
 
 ## `generate_two_operand_math_worksheet`
