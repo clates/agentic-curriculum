@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 from .base import BaseWorksheet
 from .two_operand import (
-    Worksheet,
+    MathWorksheet,
     generate_two_operand_math_worksheet,
 )
 from .reading_comprehension import (
@@ -14,7 +14,7 @@ from .reading_comprehension import (
 )
 
 
-def _create_two_operand(payload: dict[str, Any]) -> Worksheet:
+def _create_two_operand(payload: dict[str, Any]) -> MathWorksheet:
     """Create a two-operand math worksheet from payload."""
     return generate_two_operand_math_worksheet(
         problems=payload.get("problems", []),
@@ -57,7 +57,7 @@ class WorksheetFactory:
             payload: Dictionary containing worksheet configuration.
 
         Returns:
-            A worksheet instance (Worksheet or ReadingWorksheet).
+            A worksheet instance (MathWorksheet or ReadingWorksheet).
 
         Raises:
             ValueError: If the worksheet type is not supported.

@@ -12,7 +12,8 @@ from .base import BaseWorksheet
 from .two_operand import (
     Operator,
     TwoOperandProblem,
-    Worksheet,
+    MathWorksheet,
+    Worksheet,  # Backward compatibility alias
     generate_two_operand_math_worksheet,
     format_vertical_problem,
 )
@@ -34,7 +35,8 @@ __all__ = [
     # Two-operand
     "Operator",
     "TwoOperandProblem",
-    "Worksheet",
+    "MathWorksheet",
+    "Worksheet",  # Backward compatibility alias
     "generate_two_operand_math_worksheet",
     "format_vertical_problem",
     # Reading comprehension

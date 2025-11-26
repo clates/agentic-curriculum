@@ -1,6 +1,6 @@
 """Tests for WorksheetFactory in the new worksheets module."""
 import pytest
-from src.worksheets import WorksheetFactory, Worksheet, ReadingWorksheet, BaseWorksheet
+from src.worksheets import WorksheetFactory, MathWorksheet, ReadingWorksheet, BaseWorksheet
 
 
 def test_factory_creates_two_operand_worksheet():
@@ -9,7 +9,7 @@ def test_factory_creates_two_operand_worksheet():
         'problems': [{'operand_one': 2, 'operand_two': 3, 'operator': '+'}],
         'title': 'Factory Math Test',
     })
-    assert isinstance(worksheet, Worksheet)
+    assert isinstance(worksheet, MathWorksheet)
     assert isinstance(worksheet, BaseWorksheet)
     assert worksheet.title == 'Factory Math Test'
     assert len(worksheet.problems) == 1

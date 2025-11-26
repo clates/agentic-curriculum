@@ -63,7 +63,7 @@ def format_vertical_problem(problem: TwoOperandProblem) -> Tuple[List[str], int]
 
 
 @dataclass
-class Worksheet(BaseWorksheet):
+class MathWorksheet(BaseWorksheet):
     title: str
     instructions: str
     problems: List[TwoOperandProblem]
@@ -81,6 +81,10 @@ class Worksheet(BaseWorksheet):
             body.append(f"````\n{vertical_block}\n````")
 
         return "\n\n".join(header + body)
+
+
+# Backward compatibility alias
+Worksheet = MathWorksheet
 
 
 def _normalize_problems(problems: Sequence[TwoOperandProblem | dict]) -> List[TwoOperandProblem]:
@@ -101,13 +105,13 @@ def generate_two_operand_math_worksheet(
     title: str = "Two-Operand Practice",
     instructions: str = "Solve each problem. Show your work if needed.",
     metadata: dict | None = None,
-) -> Worksheet:
+) -> MathWorksheet:
     """Create a worksheet object for K-1 math practice."""
     normalized = _normalize_problems(problems)
     if not normalized:
         raise ValueError("At least one problem is required")
 
-    return Worksheet(
+    return MathWorksheet(
         title=title,
         instructions=instructions,
         problems=normalized,
@@ -118,7 +122,8 @@ def generate_two_operand_math_worksheet(
 __all__ = [
     "Operator",
     "TwoOperandProblem",
-    "Worksheet",
+    "MathWorksheet",
+    "Worksheet",  # Backward compatibility alias
     "generate_two_operand_math_worksheet",
     "format_vertical_problem",
 ]
