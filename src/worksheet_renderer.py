@@ -15,7 +15,7 @@ except ImportError:  # Fallback when executed outside package context
     CURRENT_DIR = os.path.dirname(__file__)
     if CURRENT_DIR not in sys.path:
         sys.path.insert(0, CURRENT_DIR)
-    from worksheets import ReadingWorksheet, Worksheet, format_vertical_problem  # type: ignore  # noqa: F401
+    from worksheets import ReadingWorksheet, Worksheet, format_vertical_problem  # type: ignore
 
 _FONT_CANDIDATES = (
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",

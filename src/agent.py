@@ -33,18 +33,18 @@ try:  # Prefer package-relative imports when available
     )
 except ImportError:  # Fallback for direct script execution
     sys.path.insert(0, os.path.dirname(__file__))
-    from db_utils import get_student_profile  # type: ignore  # noqa: F401
-    from logic import get_filtered_standards  # type: ignore  # noqa: F401
-    from resource_models import ResourceRequests  # type: ignore  # noqa: F401
-    from worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan  # type: ignore  # noqa: F401
-    from worksheets import Worksheet, ReadingWorksheet  # type: ignore  # noqa: F401
-    from worksheet_renderer import (  # type: ignore  # noqa: F401
+    from db_utils import get_student_profile  # type: ignore
+    from logic import get_filtered_standards  # type: ignore
+    from resource_models import ResourceRequests  # type: ignore
+    from worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan  # type: ignore
+    from worksheets import Worksheet, ReadingWorksheet  # type: ignore
+    from worksheet_renderer import (  # type: ignore
         render_worksheet_to_image,
         render_worksheet_to_pdf,
         render_reading_worksheet_to_image,
         render_reading_worksheet_to_pdf,
     )
-    from packet_store import save_weekly_packet  # type: ignore  # noqa: F401
+    from packet_store import save_weekly_packet  # type: ignore
 
 from datetime import datetime, timedelta
 
