@@ -29,7 +29,7 @@ def _connect_db():
     return sqlite3.connect(DB_FILE)
 
 
-def get_filtered_standards(student_id: str, grade_level: int, subject: str, limit: int = 15) -> list:
+def get_filtered_standards(student_id: str, grade_level: int, subject: str | None, limit: int = 15) -> list:
     """
     Get filtered standards for a student based on their progress and rules.
     
@@ -72,12 +72,15 @@ def get_filtered_standards(student_id: str, grade_level: int, subject: str, limi
     
     # Step f: Determine which subject to use
     force_weekly_theme = theme_rules.get('force_weekly_theme', False)
-    if force_weekly_theme and 'theme_subjects' in theme_rules and theme_rules['theme_subjects']:
-        # Use the first subject from theme_subjects list
-        selected_subject = theme_rules['theme_subjects'][0]
-    else:
-        # Use the provided subject parameter
+    theme_subjects = theme_rules.get('theme_subjects') or []
+    if subject:
+        # Caller explicitly requested a subject; honor it.
         selected_subject = subject
+    elif force_weekly_theme and theme_subjects:
+        # No subject provided, fall back to the scheduled theme rotation.
+        selected_subject = theme_subjects[0]
+    else:
+        selected_subject = theme_subjects[0] if theme_subjects else subject
     
     # Step g: Build SQL query
     conn = _connect_db()
