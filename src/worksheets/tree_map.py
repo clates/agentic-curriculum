@@ -1,7 +1,7 @@
 """Utilities for generating tree map worksheet data structures."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Sequence
 
 from .base import BaseWorksheet
