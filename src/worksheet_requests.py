@@ -24,13 +24,13 @@ except ImportError:  # Fallback for execution without package context
     CURRENT_DIR = os.path.dirname(__file__)
     if CURRENT_DIR not in sys.path:
         sys.path.insert(0, CURRENT_DIR)
-    from worksheets import (  # type: ignore
+    from worksheets import (  # type: ignore  # noqa: F401
         generate_reading_comprehension_worksheet,
         generate_two_operand_math_worksheet,
         ReadingWorksheet,
         Worksheet,
     )
-    from resource_models import (  # type: ignore
+    from resource_models import (  # type: ignore  # noqa: F401
         MathWorksheetRequest,
         ReadingWorksheetRequest,
         ResourceRequests,
