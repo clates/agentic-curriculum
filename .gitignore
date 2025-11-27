@@ -16,3 +16,6 @@ logs/
 
 # Generated previews
 artifacts/
+
+# Build artifacts
+*.egg-info/
