@@ -80,12 +80,13 @@ def test_system_options_worksheet_types_match_factory():
 
 
 def test_system_options_statuses_contains_expected_values():
-    """Statuses should contain MASTERED, DEVELOPING, and BENCHED."""
+    """Statuses should contain NOT_STARTED, DEVELOPING, MASTERED, and BENCHED."""
     response = client.get("/system/options")
     data = response.json()
 
     statuses = data["statuses"]
     assert isinstance(statuses, list)
-    assert "MASTERED" in statuses
+    assert "NOT_STARTED" in statuses
     assert "DEVELOPING" in statuses
+    assert "MASTERED" in statuses
     assert "BENCHED" in statuses

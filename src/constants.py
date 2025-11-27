@@ -38,8 +38,9 @@ GRADE_LEVELS: dict[int, str] = {
 
 # Evaluation statuses for student progress
 EVALUATION_STATUSES: list[str] = [
-    "MASTERED",
+    "NOT_STARTED",
     "DEVELOPING",
+    "MASTERED",
     "BENCHED",
 ]
 
