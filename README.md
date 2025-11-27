@@ -82,6 +82,7 @@ docker run --rm -p 8000:8000 \
 ```
 
 Notes:
+
 - `OPENAI_API_KEY` must be provided at runtime (and any other optional env vars such as `OPENAI_BASE_URL` or `OPENAI_MODEL`).
 - The image executes `python src/ingest_standards.py` during build so `curriculum.db` is ready before the server boots.
 - Container logs include the structured request logs written to `/app/logs` inside the image.
@@ -94,11 +95,11 @@ Notes:
 
 The system uses environment variables for configuration:
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `OPENAI_API_KEY` | **Yes** | None | Your OpenAI API key for generating lesson plans |
-| `OPENAI_BASE_URL` | No | None | Custom API base URL (e.g., for Azure OpenAI or local models) |
-| `OPENAI_MODEL` | No | `gpt-3.5-turbo` | The OpenAI model to use for generation |
+| Variable          | Required | Default         | Description                                                  |
+| ----------------- | -------- | --------------- | ------------------------------------------------------------ |
+| `OPENAI_API_KEY`  | **Yes**  | None            | Your OpenAI API key for generating lesson plans              |
+| `OPENAI_BASE_URL` | No       | None            | Custom API base URL (e.g., for Azure OpenAI or local models) |
+| `OPENAI_MODEL`    | No       | `gpt-3.5-turbo` | The OpenAI model to use for generation                       |
 
 **Setting environment variables:**
 
@@ -138,6 +139,7 @@ The FastAPI server exposes the following endpoints:
 Health check endpoint.
 
 **Response:**
+
 ```json
 {
   "message": "Hello World"
@@ -149,9 +151,11 @@ Health check endpoint.
 Retrieve a student's profile including their progress and learning rules.
 
 **Parameters:**
+
 - `student_id` (path): Unique identifier for the student
 
 **Response:**
+
 ```json
 {
   "student_id": "student_01",
@@ -161,6 +165,7 @@ Retrieve a student's profile including their progress and learning rules.
 ```
 
 **Error Responses:**
+
 - `404`: Student not found
 
 ### `POST /generate_weekly_plan`
@@ -168,6 +173,7 @@ Retrieve a student's profile including their progress and learning rules.
 Generate a complete weekly lesson plan for a student using AI.
 
 **Request Body:**
+
 ```json
 {
   "student_id": "string",
@@ -177,11 +183,13 @@ Generate a complete weekly lesson plan for a student using AI.
 ```
 
 **Request Model (PlanRequest):**
+
 - `student_id` (string, required): Unique identifier for the student
 - `grade_level` (integer, required): Grade level (0 = Kindergarten, 1 = 1st grade, etc.)
 - `subject` (string, required): Subject area (may be overridden by student's theme rules)
 
 **Response Model (WeeklyPlan):**
+
 ```json
 {
   "plan_id": "plan_student_01_2025-01-15",
@@ -244,10 +252,12 @@ Generate a complete weekly lesson plan for a student using AI.
 Worksheet artifacts are rendered under `artifacts/{plan_id}/{day_slug}/`. The API response references those files via repo-relative paths so clients can download and present them immediately after the weekly plan is generated.
 
 **Error Responses:**
+
 - `400`: Invalid request or error generating plan
 - `500`: Server error
 
 **Example Request:**
+
 ```bash
 curl -X POST "http://127.0.0.1:8000/generate_weekly_plan" \
   -H "Content-Type: application/json" \
@@ -263,6 +273,7 @@ curl -X POST "http://127.0.0.1:8000/generate_weekly_plan" \
 ## Overview
 
 This project provides tools to:
+
 - Initialize and manage a SQLite database for educational standards
 - Ingest curriculum standards from JSON files
 - Track student profiles and learning progress
@@ -279,6 +290,7 @@ pip install -r requirements.txt
 ```
 
 This will install:
+
 - FastAPI and Uvicorn for the web API
 - OpenAI Python client for LLM integration
 - Requests for API testing
@@ -293,6 +305,7 @@ python3 src/ingest_standards.py
 ```
 
 This script will:
+
 - Create `curriculum.db` SQLite database
 - Create two tables: `standards` and `student_profiles`
 - Read JSON files from `standards_data/` directory
@@ -305,23 +318,23 @@ This script will:
 
 Stores educational standards and curriculum information.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `standard_id` | TEXT | Primary key, unique identifier for the standard |
-| `source` | TEXT | Source of the standard (e.g., "VA", "CommonCore") |
-| `subject` | TEXT | Subject area (e.g., "Math", "Art") |
-| `grade_level` | INTEGER | Grade level (0 = Kindergarten) |
-| `description` | TEXT | Description of the standard |
-| `json_blob` | TEXT | Original JSON object as string |
+| Column        | Type    | Description                                       |
+| ------------- | ------- | ------------------------------------------------- |
+| `standard_id` | TEXT    | Primary key, unique identifier for the standard   |
+| `source`      | TEXT    | Source of the standard (e.g., "VA", "CommonCore") |
+| `subject`     | TEXT    | Subject area (e.g., "Math", "Art")                |
+| `grade_level` | INTEGER | Grade level (0 = Kindergarten)                    |
+| `description` | TEXT    | Description of the standard                       |
+| `json_blob`   | TEXT    | Original JSON object as string                    |
 
 ### `student_profiles` Table
 
 Stores student information and learning progress.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `student_id` | TEXT | Primary key, unique identifier for the student |
-| `progress_blob` | TEXT | JSON blob tracking mastered and developing standards |
+| Column            | Type | Description                                          |
+| ----------------- | ---- | ---------------------------------------------------- |
+| `student_id`      | TEXT | Primary key, unique identifier for the student       |
+| `progress_blob`   | TEXT | JSON blob tracking mastered and developing standards |
 | `plan_rules_blob` | TEXT | JSON blob with parent rules and learning preferences |
 
 ## JSON Format for Standards
@@ -347,22 +360,27 @@ Place JSON files in the `standards_data/` directory with the following format:
 ### Common Issues
 
 **"OPENAI_API_KEY environment variable not set"**
+
 - Make sure you've exported the API key before starting the server
 - Run: `export OPENAI_API_KEY="your-key-here"`
 
 **"Could not connect to server"**
+
 - Ensure the server is running with: `cd src && uvicorn main:app --reload`
 - Check that the server is running on the expected port (default: 8000)
 
 **"Student not found" (404 error)**
+
 - Run the ingestion script to create the dummy student: `python3 src/ingest_standards.py`
 - Use the correct student ID: `student_01`
 
 **"No standards found for student"**
+
 - Ensure the database has been populated: `python3 src/ingest_standards.py`
 - Check that standards exist for the requested grade level and subject
 
 **Connection refused or API errors**
+
 - Verify your OpenAI API key is valid
 - Check your internet connection
 - If using a custom BASE_URL, ensure it's correct
@@ -430,10 +448,12 @@ To add your own educational standards:
 ### Creating Student Profiles
 
 Students are stored in the `student_profiles` table with:
+
 - **Progress tracking**: Lists of mastered and developing standards
 - **Learning rules**: Parent preferences for materials, themes, and review schedules
 
 Example student profile:
+
 ```json
 {
   "student_id": "student_02",

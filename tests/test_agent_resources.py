@@ -40,7 +40,8 @@ def test_extract_with_math_resources():
             }
         }
     }
-    parsed_lesson, resources = _extract_lesson_and_resources(payload, "Tuesday")
+    parsed_lesson, resources = _extract_lesson_and_resources(
+        payload, "Tuesday")
     assert parsed_lesson == payload["lesson_plan"]
     assert resources is not None
     assert resources.mathWorksheet is not None

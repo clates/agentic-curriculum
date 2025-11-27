@@ -8,7 +8,11 @@ This document provides comprehensive documentation for each worksheet type suppo
 
 1. [Two-Operand Math Worksheet (`two_operand`)](#two-operand-math-worksheet)
 2. [Reading Comprehension Worksheet (`reading_comprehension`)](#reading-comprehension-worksheet)
-3. [Using the WorksheetFactory](#using-the-worksheetfactory)
+3. [Venn Diagram Worksheet (`venn_diagram`)](#venn-diagram-worksheet)
+4. [Feature Matrix Worksheet (`feature_matrix`)](#feature-matrix-worksheet)
+5. [Odd One Out Worksheet (`odd_one_out`)](#odd-one-out-worksheet)
+6. [Tree Map Worksheet (`tree_map`)](#tree-map-worksheet)
+7. [Using the WorksheetFactory](#using-the-worksheetfactory)
 
 ---
 
@@ -425,6 +429,305 @@ worksheet = generate_reading_comprehension_worksheet(
 
 ---
 
+## Venn Diagram Worksheet
+
+**Type identifier:** `venn_diagram`  
+**Class:** `VennDiagramWorksheet`  
+**Generator:** `generate_venn_diagram_worksheet`
+
+### Description
+
+Creates Venn diagram worksheets featuring two overlapping circles for classification and comparison activities. Students sort items from a word bank into the appropriate sections based on shared or unique characteristics.
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `left_label` | `str` | **Yes** | — | Label for the left circle. |
+| `right_label` | `str` | **Yes** | — | Label for the right circle. |
+| `both_label` | `str` | No | `"Both"` | Label for the overlapping section. |
+| `word_bank` | `List[str \| dict \| VennDiagramEntry]` | No | `[]` | Words/phrases for students to sort. |
+| `left_items` | `List[str]` | No | `[]` | Pre-filled items in left-only section. |
+| `right_items` | `List[str]` | No | `[]` | Pre-filled items in right-only section. |
+| `both_items` | `List[str]` | No | `[]` | Pre-filled items in overlap section. |
+| `title` | `str` | No | `"Venn Diagram"` | Worksheet title. |
+| `instructions` | `str` | No | `"Sort the words..."` | Instructions for students. |
+| `metadata` | `dict \| None` | No | `{}` | Arbitrary metadata for tracking. |
+
+### Typical Usage Examples
+
+#### Example 1: Animal Classification
+
+```python
+from src.worksheets import generate_venn_diagram_worksheet
+
+worksheet = generate_venn_diagram_worksheet(
+    left_label="Mammals",
+    right_label="Reptiles",
+    word_bank=["dog", "snake", "whale", "lizard", "cat", "turtle"],
+    title="Animal Classification",
+    instructions="Sort each animal into the correct section.",
+)
+```
+
+**JSON payload:**
+```json
+{
+  "type": "venn_diagram",
+  "left_label": "Mammals",
+  "right_label": "Reptiles",
+  "word_bank": ["dog", "snake", "whale", "lizard", "cat", "turtle"],
+  "title": "Animal Classification"
+}
+```
+
+#### Example 2: Number Properties with Pre-filled Items
+
+```python
+worksheet = generate_venn_diagram_worksheet(
+    left_label="Even Numbers",
+    right_label="Multiples of 3",
+    both_label="Both (Even and Multiple of 3)",
+    left_items=["2", "4", "8"],
+    right_items=["3", "9", "15"],
+    both_items=["6", "12"],
+    word_bank=["10", "18", "21", "24"],
+)
+```
+
+---
+
+## Feature Matrix Worksheet
+
+**Type identifier:** `feature_matrix`  
+**Class:** `FeatureMatrixWorksheet`  
+**Generator:** `generate_feature_matrix_worksheet`
+
+### Description
+
+Creates grid-based worksheets where students classify items by checking which properties apply. Items are listed as rows and properties as columns, with checkboxes at each intersection.
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `items` | `List[str \| dict \| FeatureMatrixItem]` | **Yes** | — | Items to classify (rows). |
+| `properties` | `List[str]` | **Yes** | — | Properties to check (columns). |
+| `title` | `str` | No | `"Feature Matrix"` | Worksheet title. |
+| `instructions` | `str` | No | `"Check the boxes..."` | Instructions for students. |
+| `show_answers` | `bool` | No | `False` | Show pre-checked answers (for answer key). |
+| `metadata` | `dict \| None` | No | `{}` | Arbitrary metadata for tracking. |
+
+### Item Structure (when using dict)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `str` | **Yes** | The item name (displayed in row). |
+| `checked_properties` | `List[str]` | No | Properties that should be checked (for answer key). |
+
+### Typical Usage Examples
+
+#### Example 1: Animal Features
+
+```python
+from src.worksheets import generate_feature_matrix_worksheet
+
+worksheet = generate_feature_matrix_worksheet(
+    items=["Dog", "Fish", "Bird", "Snake"],
+    properties=["Has Fur", "Has Legs", "Can Fly", "Lives in Water"],
+    title="Animal Features",
+    instructions="Check all the features that apply to each animal.",
+)
+```
+
+**JSON payload:**
+```json
+{
+  "type": "feature_matrix",
+  "items": ["Dog", "Fish", "Bird", "Snake"],
+  "properties": ["Has Fur", "Has Legs", "Can Fly", "Lives in Water"],
+  "title": "Animal Features"
+}
+```
+
+#### Example 2: Answer Key with Pre-checked Answers
+
+```python
+worksheet = generate_feature_matrix_worksheet(
+    items=[
+        {"name": "Apple", "checked_properties": ["Red", "Sweet", "Fruit"]},
+        {"name": "Lemon", "checked_properties": ["Yellow", "Sour", "Fruit"]},
+        {"name": "Carrot", "checked_properties": ["Orange", "Vegetable"]},
+    ],
+    properties=["Red", "Yellow", "Orange", "Sweet", "Sour", "Fruit", "Vegetable"],
+    show_answers=True,
+    title="Food Classification - Answer Key",
+)
+```
+
+---
+
+## Odd One Out Worksheet
+
+**Type identifier:** `odd_one_out`  
+**Class:** `OddOneOutWorksheet`  
+**Generator:** `generate_odd_one_out_worksheet`
+
+### Description
+
+Creates worksheets where students identify the item that doesn't belong in each row and explain their reasoning. Supports configurable reasoning lines and optional answer keys.
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `rows` | `List[dict \| OddOneOutRow]` | **Yes** | — | Rows of items to compare. |
+| `title` | `str` | No | `"Odd One Out"` | Worksheet title. |
+| `instructions` | `str` | No | `"Look at each row..."` | Instructions for students. |
+| `show_answers` | `bool` | No | `False` | Show correct answers (for answer key). |
+| `reasoning_lines` | `int` | No | `2` | Number of blank lines for student reasoning. |
+| `metadata` | `dict \| None` | No | `{}` | Arbitrary metadata for tracking. |
+
+### Row Structure
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `items` | `List[str]` | **Yes** | At least 3 items to compare. |
+| `odd_item` | `str` | No | The correct answer (for answer key). |
+| `explanation` | `str` | No | Why this item is the odd one. |
+
+### Typical Usage Examples
+
+#### Example 1: Basic Categorization
+
+```python
+from src.worksheets import generate_odd_one_out_worksheet
+
+worksheet = generate_odd_one_out_worksheet(
+    rows=[
+        {"items": ["dog", "cat", "car", "bird"]},
+        {"items": ["red", "blue", "happy", "green"]},
+        {"items": ["apple", "banana", "chair", "orange"]},
+    ],
+    title="Find the Odd One Out",
+    reasoning_lines=2,
+)
+```
+
+**JSON payload:**
+```json
+{
+  "type": "odd_one_out",
+  "rows": [
+    {"items": ["dog", "cat", "car", "bird"]},
+    {"items": ["red", "blue", "happy", "green"]},
+    {"items": ["apple", "banana", "chair", "orange"]}
+  ],
+  "reasoning_lines": 2
+}
+```
+
+#### Example 2: Answer Key with Explanations
+
+```python
+worksheet = generate_odd_one_out_worksheet(
+    rows=[
+        {
+            "items": ["dog", "cat", "car", "bird"],
+            "odd_item": "car",
+            "explanation": "Car is not an animal."
+        },
+        {
+            "items": ["red", "blue", "happy", "green"],
+            "odd_item": "happy",
+            "explanation": "Happy is an emotion, not a color."
+        },
+    ],
+    show_answers=True,
+    title="Odd One Out - Answer Key",
+)
+```
+
+---
+
+## Tree Map Worksheet
+
+**Type identifier:** `tree_map`  
+**Class:** `TreeMapWorksheet`  
+**Generator:** `generate_tree_map_worksheet`
+
+### Description
+
+Creates hierarchical tree diagrams with a root category branching into subcategories, each containing slots for items. Ideal for classification and organization activities.
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `root_label` | `str` | **Yes** | — | Label for the root/top-level category. |
+| `branches` | `List[dict \| TreeMapBranch]` | **Yes** | — | Subcategories under the root. |
+| `word_bank` | `List[str]` | No | `[]` | Words for students to sort. |
+| `title` | `str` | No | `"Tree Map"` | Worksheet title. |
+| `instructions` | `str` | No | `"Fill in the tree map..."` | Instructions for students. |
+| `metadata` | `dict \| None` | No | `{}` | Arbitrary metadata for tracking. |
+
+### Branch Structure
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `label` | `str` | **Yes** | The branch/subcategory name. |
+| `slots` | `List[str \| dict \| None]` | No | Pre-filled items or blank slots. |
+| `slot_count` | `int` | No | Number of empty slots if slots not provided (default 3). |
+
+### Typical Usage Examples
+
+#### Example 1: Food Groups
+
+```python
+from src.worksheets import generate_tree_map_worksheet
+
+worksheet = generate_tree_map_worksheet(
+    root_label="Food Groups",
+    branches=[
+        {"label": "Fruits", "slot_count": 3},
+        {"label": "Vegetables", "slot_count": 3},
+        {"label": "Proteins", "slot_count": 3},
+    ],
+    word_bank=["apple", "carrot", "chicken", "banana", "broccoli", "fish", "orange", "spinach", "beef"],
+    title="Classify the Foods",
+)
+```
+
+**JSON payload:**
+```json
+{
+  "type": "tree_map",
+  "root_label": "Food Groups",
+  "branches": [
+    {"label": "Fruits", "slot_count": 3},
+    {"label": "Vegetables", "slot_count": 3},
+    {"label": "Proteins", "slot_count": 3}
+  ],
+  "word_bank": ["apple", "carrot", "chicken", "banana", "broccoli", "fish"]
+}
+```
+
+#### Example 2: Pre-filled Tree Map
+
+```python
+worksheet = generate_tree_map_worksheet(
+    root_label="States of Matter",
+    branches=[
+        {"label": "Solid", "slots": ["ice", "rock", "wood"]},
+        {"label": "Liquid", "slots": ["water", "juice", "milk"]},
+        {"label": "Gas", "slots": ["steam", "air", "helium"]},
+    ],
+    title="States of Matter - Reference Chart",
+)
+```
+
+---
+
 ## Using the WorksheetFactory
 
 The `WorksheetFactory` provides a unified interface for creating worksheets from JSON payloads, making it easy to dispatch to the correct generator based on type.
@@ -457,7 +760,7 @@ from src.worksheets import WorksheetFactory
 
 # Get list of supported worksheet types
 supported = WorksheetFactory.get_supported_types()
-print(supported)  # ['two_operand', 'reading_comprehension']
+print(supported)  # ['two_operand', 'reading_comprehension', 'venn_diagram', 'feature_matrix', 'odd_one_out', 'tree_map']
 ```
 
 ### Registering Custom Types
@@ -514,11 +817,65 @@ render_reading_worksheet_to_image(worksheet, "output/reading.png")
 render_reading_worksheet_to_pdf(worksheet, "output/reading.pdf")
 ```
 
+For structural relationship worksheets:
+
+```python
+from src.worksheets import (
+    generate_venn_diagram_worksheet,
+    generate_feature_matrix_worksheet,
+    generate_odd_one_out_worksheet,
+    generate_tree_map_worksheet,
+)
+from src.worksheet_renderer import (
+    render_venn_diagram_to_pdf,
+    render_venn_diagram_to_image,
+    render_feature_matrix_to_pdf,
+    render_feature_matrix_to_image,
+    render_odd_one_out_to_pdf,
+    render_odd_one_out_to_image,
+    render_tree_map_to_pdf,
+    render_tree_map_to_image,
+)
+
+# Venn Diagram
+venn = generate_venn_diagram_worksheet(
+    left_label="Mammals",
+    right_label="Reptiles",
+    word_bank=["dog", "snake", "whale"],
+)
+render_venn_diagram_to_image(venn, "output/venn.png")
+render_venn_diagram_to_pdf(venn, "output/venn.pdf")
+
+# Feature Matrix
+matrix = generate_feature_matrix_worksheet(
+    items=["Dog", "Fish", "Bird"],
+    properties=["Has Fur", "Can Fly", "Lives in Water"],
+)
+render_feature_matrix_to_image(matrix, "output/matrix.png")
+render_feature_matrix_to_pdf(matrix, "output/matrix.pdf")
+
+# Odd One Out
+odd = generate_odd_one_out_worksheet(
+    rows=[{"items": ["dog", "cat", "car", "bird"]}],
+)
+render_odd_one_out_to_image(odd, "output/odd.png")
+render_odd_one_out_to_pdf(odd, "output/odd.pdf")
+
+# Tree Map
+tree = generate_tree_map_worksheet(
+    root_label="Animals",
+    branches=[{"label": "Mammals", "slot_count": 3}],
+    word_bank=["dog", "cat", "whale"],
+)
+render_tree_map_to_image(tree, "output/tree.png")
+render_tree_map_to_pdf(tree, "output/tree.pdf")
+```
+
 ---
 
 ## Error Handling
 
-Both generators perform validation and raise appropriate exceptions:
+All generators perform validation and raise appropriate exceptions:
 
 | Error | Cause |
 |-------|-------|
@@ -528,6 +885,15 @@ Both generators perform validation and raise appropriate exceptions:
 | `ValueError("Reading passage text is required")` | Empty or whitespace-only passage. |
 | `ValueError("ReadingQuestion requires a prompt")` | Question without prompt text. |
 | `ValueError("VocabularyEntry requires a term")` | Vocabulary entry without term. |
+| `ValueError("Left label is required")` | Empty left label for Venn diagram. |
+| `ValueError("Right label is required")` | Empty right label for Venn diagram. |
+| `ValueError("At least one item is required")` | Empty items list for feature matrix. |
+| `ValueError("At least one property is required")` | Empty properties list for feature matrix. |
+| `ValueError("At least one row is required")` | Empty rows list for odd-one-out. |
+| `ValueError("OddOneOutRow requires at least 3 items")` | Row with fewer than 3 items. |
+| `ValueError("Root label is required")` | Empty root label for tree map. |
+| `ValueError("At least one branch is required")` | Empty branches list for tree map. |
+| `ValueError("TreeMapBranch requires a label")` | Branch without label. |
 
 ---
 
@@ -538,3 +904,7 @@ Both generators perform validation and raise appropriate exceptions:
 3. **Vary question complexity**: Mix recall, comprehension, and open-ended questions.
 4. **Balance vocabulary**: Include both defined terms (for reference) and undefined terms (for practice).
 5. **Test with rendering**: Always render to PNG/PDF to verify layout before distribution.
+6. **Use word banks strategically**: For Venn diagrams and tree maps, include enough items to fill each section.
+7. **Keep feature matrices manageable**: Limit to 6-8 items and 4-6 properties for readability.
+8. **Provide clear categories**: For odd-one-out, ensure the distinction is appropriate for the grade level.
+9. **Balance pre-filled and blank slots**: Use pre-filled items as examples, blanks for practice.
