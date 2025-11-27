@@ -430,6 +430,7 @@ def _render_venn_diagram_image(
     meta_font = _load_font(24)
     instruction_font = _load_font(22, italic=True)
     label_font = _load_font(28, bold=True)
+    overlap_label_font = _load_font(24, bold=True)
     body_font = _load_font(22)
     word_bank_font = _load_font(24)
 
@@ -437,6 +438,7 @@ def _render_venn_diagram_image(
     meta_line_height = _line_height(meta_font, extra=2)
     instruction_line_height = _line_height(instruction_font, extra=4)
     label_height = _line_height(label_font, extra=4)
+    overlap_label_height = _line_height(overlap_label_font, extra=2)
     body_line_height = _line_height(body_font, extra=4)
     word_bank_height = _line_height(word_bank_font, extra=4)
 
@@ -444,9 +446,9 @@ def _render_venn_diagram_image(
     instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
 
     # Calculate circle dimensions
-    circle_radius = min(180, (content_width - 60) // 4)
-    overlap_offset = int(circle_radius * 0.6)  # How much circles overlap
-    diagram_height = circle_radius * 2 + 80  # Extra for labels
+    base_radius = max(180, (content_width // 2) - 40)
+    circle_radius = min(260, base_radius)
+    diagram_height = circle_radius * 2 + 120  # Extra breathing room for labels
 
     # Calculate total height
     total_height = margin + title_height + meta_line_height * 2 + body_line_height // 2
@@ -493,9 +495,10 @@ def _render_venn_diagram_image(
         y += body_line_height // 2
 
     # Draw Venn diagram circles
-    diagram_center_x = width // 2
-    left_center_x = diagram_center_x - overlap_offset
-    right_center_x = diagram_center_x + overlap_offset
+    left_center_x = margin + circle_radius
+    right_center_x = width - margin - circle_radius
+    center_distance = right_center_x - left_center_x
+    diagram_center_x = (left_center_x + right_center_x) // 2
     circle_center_y = y + circle_radius + 20
 
     # Draw circles (outline only)
@@ -515,26 +518,42 @@ def _render_venn_diagram_image(
     draw.ellipse(right_bbox, outline="black", width=3)
 
     # Draw labels
-    left_label_x = left_center_x - circle_radius // 2
-    right_label_x = right_center_x + circle_radius // 2
     both_label_x = diagram_center_x
+    label_top_y = circle_center_y - circle_radius + 25
+    # Position overlap label near top of intersection for readability
+    half_distance = center_distance / 2
+    overlap_depth = math.sqrt(max(circle_radius**2 - half_distance**2, 0))
+    overlap_top_y = circle_center_y - overlap_depth
+    overlap_label_y = overlap_top_y + 10
 
     draw.text(
-        (left_label_x - _text_width(label_font, worksheet.left_label) // 2, circle_center_y - 15),
+        (left_center_x - _text_width(label_font, worksheet.left_label) // 2, label_top_y),
         worksheet.left_label,
         font=label_font,
         fill="black",
     )
     draw.text(
-        (right_label_x - _text_width(label_font, worksheet.right_label) // 2, circle_center_y - 15),
+        (right_center_x - _text_width(label_font, worksheet.right_label) // 2, label_top_y),
         worksheet.right_label,
         font=label_font,
         fill="black",
     )
+    overlap_text_width = _text_width(overlap_label_font, worksheet.both_label)
+    overlap_text_x = both_label_x - overlap_text_width // 2
+    overlap_padding = 6
+    draw.rectangle(
+        (
+            overlap_text_x - overlap_padding,
+            overlap_label_y - overlap_padding,
+            overlap_text_x + overlap_text_width + overlap_padding,
+            overlap_label_y + overlap_label_height + overlap_padding,
+        ),
+        fill="white",
+    )
     draw.text(
-        (both_label_x - _text_width(label_font, worksheet.both_label) // 2, circle_center_y + circle_radius + 10),
+        (overlap_text_x, overlap_label_y),
         worksheet.both_label,
-        font=label_font,
+        font=overlap_label_font,
         fill="black",
     )
 
