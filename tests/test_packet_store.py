@@ -38,19 +38,16 @@ def test_save_weekly_packet_persists_rows(tmp_path):
     weekly_row = conn.execute("SELECT * FROM weekly_packets").fetchone()
     assert weekly_row is not None
 
-    stored_payload = json.loads(
-        weekly_row["payload_json"])  # type: ignore[index]
+    stored_payload = json.loads(weekly_row["payload_json"])  # type: ignore[index]
     assert stored_payload["plan_id"] == weekly_plan["plan_id"]
     summary = json.loads(weekly_row["summary_json"])  # type: ignore[index]
     assert summary["artifact_count"] == 3
     assert summary["worksheet_counts"]["mathWorksheet"] == 2
 
-    daily_count = conn.execute(
-        "SELECT COUNT(*) FROM daily_lessons").fetchone()[0]
+    daily_count = conn.execute("SELECT COUNT(*) FROM daily_lessons").fetchone()[0]
     assert daily_count == len(weekly_plan["daily_plan"])
 
-    artifact_rows = conn.execute(
-        "SELECT * FROM worksheet_artifacts ORDER BY id").fetchall()
+    artifact_rows = conn.execute("SELECT * FROM worksheet_artifacts ORDER BY id").fetchall()
     assert len(artifact_rows) == 3
     assert artifact_rows[0]["file_format"] == "pdf"  # type: ignore[index]
     assert artifact_rows[0]["file_size_bytes"] == 1024  # type: ignore[index]
@@ -125,8 +122,7 @@ def test_list_packet_artifacts_enforces_ownership(tmp_path):
     db_path = tmp_path / "packets.db"
     packet_store = _reload_modules(db_path)
 
-    plan = build_weekly_plan(plan_id="plan_artifacts",
-                             student_id="student-xyz")
+    plan = build_weekly_plan(plan_id="plan_artifacts", student_id="student-xyz")
     packet_store.save_weekly_packet(plan)
 
     owned = packet_store.list_packet_artifacts("student-xyz", "plan_artifacts")
@@ -134,8 +130,7 @@ def test_list_packet_artifacts_enforces_ownership(tmp_path):
     assert len(owned) == 3
     assert owned[0]["artifact_id"] > 0
 
-    unauthorized = packet_store.list_packet_artifacts(
-        "student-123", "plan_artifacts")
+    unauthorized = packet_store.list_packet_artifacts("student-123", "plan_artifacts")
     assert unauthorized is None
 
 
@@ -143,12 +138,10 @@ def test_get_artifact_for_student_returns_none_when_mismatch(tmp_path):
     db_path = tmp_path / "packets.db"
     packet_store = _reload_modules(db_path)
 
-    plan = build_weekly_plan(plan_id="plan_artifacts",
-                             student_id="student-xyz")
+    plan = build_weekly_plan(plan_id="plan_artifacts", student_id="student-xyz")
     packet_store.save_weekly_packet(plan)
 
-    artifacts = packet_store.list_packet_artifacts(
-        "student-xyz", "plan_artifacts")
+    artifacts = packet_store.list_packet_artifacts("student-xyz", "plan_artifacts")
     assert artifacts is not None
     first_id = artifacts[0]["artifact_id"]
 

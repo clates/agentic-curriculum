@@ -1,9 +1,9 @@
 [tool.black]
 line-length = 100
 target-version = ["py311"]
-include = "\.(py|pyi)$"
+include = "\\.(py|pyi)$"
 exclude = """
-(/\.|venv/|__pycache__/|build/|dist/|artifacts/|logs/)
+(/\\.|venv/|__pycache__/|build/|dist/|artifacts/|logs/)
 """
 
 [tool.ruff]
@@ -17,7 +17,7 @@ select = [
 	"F",  # pyflakes (unused imports, etc.)
 	"B",  # flake8-bugbear
 ]
-ignore = []
+ignore = ["E501"]
 
 [tool.ruff.format]
 quote-style = "double"

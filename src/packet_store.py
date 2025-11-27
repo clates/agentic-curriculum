@@ -1,4 +1,5 @@
 """Persistence helpers for weekly packets, daily lessons, and worksheet artifacts."""
+
 from __future__ import annotations
 
 import hashlib
@@ -149,8 +150,7 @@ def _build_summary(weekly_plan: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _delete_existing_packet(conn: sqlite3.Connection, packet_id: str) -> None:
-    conn.execute(
-        "DELETE FROM weekly_packets WHERE packet_id = ?", (packet_id,))
+    conn.execute("DELETE FROM weekly_packets WHERE packet_id = ?", (packet_id,))
 
 
 def _insert_weekly_packet(
@@ -231,8 +231,7 @@ def _persist_daily_lessons(
         daily_lesson_id = cursor.lastrowid
         if daily_lesson_id is None:  # pragma: no cover - sqlite guarantees an id for inserts
             raise RuntimeError("Failed to persist daily lesson row")
-        _persist_artifacts(conn, packet_id, daily_lesson_id,
-                           day_label, day.get("resources"))
+        _persist_artifacts(conn, packet_id, daily_lesson_id, day_label, day.get("resources"))
 
 
 def _persist_artifacts(
@@ -297,8 +296,7 @@ def save_weekly_packet(
     with _get_connection() as conn:
         _delete_existing_packet(conn, packet_id)
         _insert_weekly_packet(conn, weekly_plan, status)
-        _persist_daily_lessons(
-            conn, packet_id, weekly_plan.get("daily_plan", []))
+        _persist_daily_lessons(conn, packet_id, weekly_plan.get("daily_plan", []))
 
 
 def _compute_etag(packet_id: str, updated_at: str) -> str:
@@ -397,8 +395,7 @@ def get_weekly_packet(student_id: str, packet_id: str) -> dict[str, Any] | None:
     try:
         payload = json.loads(row["payload_json"])
     except json.JSONDecodeError as exc:  # pragma: no cover - unexpected
-        raise ValueError(
-            f"Corrupted payload for packet {packet_id}: {exc}") from exc
+        raise ValueError(f"Corrupted payload for packet {packet_id}: {exc}") from exc
 
     updated_at = row["updated_at"]
     return {

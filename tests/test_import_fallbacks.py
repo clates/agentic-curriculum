@@ -1,4 +1,5 @@
 """Regression tests ensuring src modules work when executed as scripts."""
+
 from __future__ import annotations
 
 import runpy

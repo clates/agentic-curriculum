@@ -1,4 +1,5 @@
 """Utilities for generating odd-one-out worksheet data structures."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

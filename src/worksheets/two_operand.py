@@ -1,4 +1,5 @@
 """Utilities for generating two-operand math worksheet data structures."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

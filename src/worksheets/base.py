@@ -1,4 +1,5 @@
 """Base worksheet classes and interfaces."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

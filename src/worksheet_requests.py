@@ -1,4 +1,5 @@
 """Glue between worksheet request models and worksheet generators."""
+
 from __future__ import annotations
 
 import os
@@ -82,7 +83,8 @@ def _build_reading_worksheet(request: ReadingWorksheetRequest) -> WorksheetArtif
         passage=request.passage,
         questions=[question.model_dump() for question in request.questions],
         vocabulary=[entry.model_dump() for entry in request.vocabulary],
-        instructions=request.instructions or "Read the passage carefully, then answer the questions and review the vocabulary.",
+        instructions=request.instructions
+        or "Read the passage carefully, then answer the questions and review the vocabulary.",
         title=request.title or "Reading Comprehension",
         metadata=request.metadata or {},
     )
@@ -94,7 +96,9 @@ def _build_reading_worksheet(request: ReadingWorksheetRequest) -> WorksheetArtif
     )
 
 
-def build_worksheets_from_requests(resources: ResourceRequests) -> tuple[List[WorksheetArtifactPlan], List[WorksheetRequestError]]:
+def build_worksheets_from_requests(
+    resources: ResourceRequests,
+) -> tuple[List[WorksheetArtifactPlan], List[WorksheetRequestError]]:
     """Generate worksheet objects for the provided ResourceRequests."""
 
     plans: List[WorksheetArtifactPlan] = []

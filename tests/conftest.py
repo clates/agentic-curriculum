@@ -1,4 +1,5 @@
 """Test configuration for agentic-curriculum."""
+
 from pathlib import Path
 import sys
 

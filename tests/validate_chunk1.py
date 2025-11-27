@@ -8,6 +8,7 @@ print(f"--- Running Validation for {DB_FILE} ---")
 
 errors = 0
 
+
 def check(condition, error_message):
     global errors
     if not condition:
@@ -15,6 +16,7 @@ def check(condition, error_message):
         errors += 1
     else:
         print(f"PASS: {error_message.split('.')[0]}")
+
 
 # Test 1: Database file creation
 check(os.path.exists(DB_FILE), "Database file 'curriculum.db' was not created.")
@@ -34,8 +36,11 @@ except Exception as e:
 try:
     cursor.execute("SELECT * FROM standards LIMIT 1")
     cols = [desc[0] for desc in cursor.description]
-    expected_cols = ['standard_id', 'source', 'subject', 'grade_level', 'description', 'json_blob']
-    check(cols == expected_cols, f"'standards' table columns are incorrect. Expected {expected_cols}, Got {cols}")
+    expected_cols = ["standard_id", "source", "subject", "grade_level", "description", "json_blob"]
+    check(
+        cols == expected_cols,
+        f"'standards' table columns are incorrect. Expected {expected_cols}, Got {cols}",
+    )
 except sqlite3.OperationalError:
     check(False, "'standards' table does not exist or failed to query.")
 
@@ -43,8 +48,11 @@ except sqlite3.OperationalError:
 try:
     cursor.execute("SELECT * FROM student_profiles LIMIT 1")
     cols = [desc[0] for desc in cursor.description]
-    expected_cols = ['student_id', 'progress_blob', 'plan_rules_blob']
-    check(cols == expected_cols, f"'student_profiles' table columns are incorrect. Expected {expected_cols}, Got {cols}")
+    expected_cols = ["student_id", "progress_blob", "plan_rules_blob"]
+    check(
+        cols == expected_cols,
+        f"'student_profiles' table columns are incorrect. Expected {expected_cols}, Got {cols}",
+    )
 except sqlite3.OperationalError:
     check(False, "'student_profiles' table does not exist or failed to query.")
 
@@ -61,22 +69,26 @@ try:
     cursor.execute("SELECT * FROM student_profiles WHERE student_id = 'student_01'")
     student = cursor.fetchone()
     check(student is not None, "Dummy 'student_01' not found in 'student_profiles'.")
-    
+
     # Test 5b: Validate dummy data content
     if student:
         student_id, progress, rules = student
         try:
             json.loads(progress)
             check(True, "progress_blob is valid JSON.")
-        except:
+        except json.JSONDecodeError:
             check(False, "progress_blob is NOT valid JSON.")
-        
+
         try:
             rules_json = json.loads(rules)
-            check(rules_json['allowed_materials'] == ["Crayons", "Paper"], "plan_rules_blob content is incorrect.")
-        except:
+        except json.JSONDecodeError:
             check(False, "plan_rules_blob is NOT valid JSON or content is wrong.")
-            
+        else:
+            check(
+                rules_json["allowed_materials"] == ["Crayons", "Paper"],
+                "plan_rules_blob content is incorrect.",
+            )
+
 except Exception as e:
     check(False, f"Failed to query 'student_profiles': {e}")
 

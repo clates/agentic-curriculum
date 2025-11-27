@@ -71,6 +71,7 @@ def _write_weekly_plan_log(log_context: dict) -> None:
 
 class PlanRequest(BaseModel):
     """Request model for generating weekly plans."""
+
     student_id: str
     grade_level: int
     subject: str
@@ -177,14 +178,12 @@ def create_weekly_plan(request: PlanRequest):
     log_context = {
         "timestamp_utc": start_time.isoformat(timespec="microseconds") + "Z",
         "request": request_payload,
-        "status": "pending"
+        "status": "pending",
     }
 
     try:
         plan = generate_weekly_plan(
-            student_id=request.student_id,
-            grade_level=request.grade_level,
-            subject=request.subject
+            student_id=request.student_id, grade_level=request.grade_level, subject=request.subject
         )
         log_context["response"] = plan
         log_context["status"] = "success"
@@ -192,15 +191,13 @@ def create_weekly_plan(request: PlanRequest):
     except ValueError as e:
         log_context["error"] = {"type": type(e).__name__, "message": str(e)}
         log_context["status"] = "client_error"
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         log_context["error"] = {"type": type(e).__name__, "message": str(e)}
         log_context["status"] = "server_error"
-        raise HTTPException(
-            status_code=500, detail=f"Error generating plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating plan: {str(e)}") from e
     finally:
-        duration_ms = int(
-            (datetime.utcnow() - start_time).total_seconds() * 1000)
+        duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
         log_context["duration_ms"] = duration_ms
         _write_weekly_plan_log(log_context)
 
@@ -259,8 +256,7 @@ def get_student_weekly_packet(
         updated_dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
     except ValueError:
         updated_dt = datetime.now(UTC)
-    response.headers["Last-Modified"] = formatdate(
-        updated_dt.timestamp(), usegmt=True)
+    response.headers["Last-Modified"] = formatdate(updated_dt.timestamp(), usegmt=True)
     return packet["payload"]
 
 
@@ -273,8 +269,8 @@ def _resolve_artifact_path(file_path: str) -> Path:
         candidate = (root / candidate).resolve()
     try:
         candidate.relative_to(root)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Artifact not found")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail="Artifact not found") from e
     return candidate
 
 
@@ -297,12 +293,10 @@ def _artifact_headers(artifact: dict[str, Any]) -> dict[str, str]:
     created_at = artifact.get("created_at")
     if created_at:
         try:
-            created_dt = datetime.fromisoformat(
-                created_at.replace("Z", "+00:00"))
+            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
         except ValueError:
             created_dt = datetime.now(UTC)
-        headers["Last-Modified"] = formatdate(
-            created_dt.timestamp(), usegmt=True)
+        headers["Last-Modified"] = formatdate(created_dt.timestamp(), usegmt=True)
     return headers
 
 
@@ -368,8 +362,7 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
     if not file_path.exists():
         logger.warning(
             "Worksheet artifact missing",
-            extra={"artifact_id": artifact_id,
-                   "student_id": student_id, "path": str(file_path)},
+            extra={"artifact_id": artifact_id, "student_id": student_id, "path": str(file_path)},
         )
         raise HTTPException(status_code=410, detail="Artifact unavailable")
 
