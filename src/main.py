@@ -12,7 +12,7 @@ from packet_store import (
     list_weekly_packets,
 )
 from agent import generate_weekly_plan
-from db_utils import get_student_profile
+from db_utils import create_student, delete_student, get_student_profile, update_student
 
 import json
 import logging
@@ -131,13 +131,46 @@ class WorksheetArtifactManifest(BaseModel):
     items: list[WorksheetArtifactGroup]
 
 
+class StudentMetadata(BaseModel):
+    """Model containing student metadata."""
+
+    name: str
+    birthday: str
+    avatar_url: str | None = None
+    notes: str | None = None
+
+
+class CreateStudentRequest(BaseModel):
+    """Request model for creating a new student."""
+
+    student_id: str
+    metadata: StudentMetadata
+    plan_rules: dict[str, Any] = Field(default_factory=dict)
+
+
+class UpdateStudentRequest(BaseModel):
+    """Request model for updating a student."""
+
+    metadata: StudentMetadata | None = None
+    plan_rules: dict[str, Any] | None = None
+
+
+class StudentResponse(BaseModel):
+    """Response model for student profile."""
+
+    student_id: str
+    progress_blob: str | None = None
+    plan_rules_blob: str | None = None
+    metadata_blob: str | None = None
+
+
 @app.get("/")
 def read_root():
     """Root endpoint that returns a simple hello message."""
     return {"message": "Hello World"}
 
 
-@app.get("/student/{student_id}")
+@app.get("/student/{student_id}", response_model=StudentResponse)
 def read_student(student_id: str):
     """
     Get student profile by student_id.
@@ -146,7 +179,7 @@ def read_student(student_id: str):
         student_id: The unique identifier for the student
 
     Returns:
-        Student profile data as JSON
+        Student profile data as JSON including metadata_blob
 
     Raises:
         HTTPException: 404 if student not found
@@ -157,6 +190,76 @@ def read_student(student_id: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
     return profile
+
+
+@app.post("/students", response_model=StudentResponse, status_code=201)
+def create_student_endpoint(request: CreateStudentRequest):
+    """
+    Create a new student profile.
+
+    Args:
+        request: CreateStudentRequest containing student_id, metadata, and plan_rules
+
+    Returns:
+        The created student profile data
+
+    Raises:
+        HTTPException: 400 if student already exists
+    """
+    try:
+        student = create_student(
+            student_id=request.student_id,
+            metadata=request.metadata.model_dump(),
+            plan_rules=request.plan_rules,
+        )
+        return student
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.put("/student/{student_id}", response_model=StudentResponse)
+def update_student_endpoint(student_id: str, request: UpdateStudentRequest):
+    """
+    Update an existing student profile.
+
+    Args:
+        student_id: The unique identifier for the student
+        request: UpdateStudentRequest containing optional metadata and plan_rules
+
+    Returns:
+        The updated student profile data
+
+    Raises:
+        HTTPException: 404 if student not found
+    """
+    metadata_dict = request.metadata.model_dump() if request.metadata else None
+    student = update_student(
+        student_id=student_id,
+        metadata=metadata_dict,
+        plan_rules=request.plan_rules,
+    )
+
+    if student is None:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    return student
+
+
+@app.delete("/student/{student_id}", status_code=204)
+def delete_student_endpoint(student_id: str):
+    """
+    Delete a student profile.
+
+    Args:
+        student_id: The unique identifier for the student
+
+    Raises:
+        HTTPException: 404 if student not found
+    """
+    deleted = delete_student(student_id)
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Student not found")
 
 
 @app.post("/generate_weekly_plan")

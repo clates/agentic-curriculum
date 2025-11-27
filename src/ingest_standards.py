@@ -45,7 +45,8 @@ def create_database():
         CREATE TABLE IF NOT EXISTS student_profiles (
             student_id TEXT PRIMARY KEY,
             progress_blob TEXT,
-            plan_rules_blob TEXT
+            plan_rules_blob TEXT,
+            metadata_blob TEXT
         )
     """
     )
@@ -118,14 +119,20 @@ def insert_dummy_student():
             "theme_rules": {"force_weekly_theme": True, "theme_subjects": ["Math", "Art"]},
         }
     )
+    metadata_blob = json.dumps(
+        {
+            "name": "Student One",
+            "birthday": "2018-01-15",
+        }
+    )
 
     cursor.execute(
         """
         INSERT OR REPLACE INTO student_profiles 
-        (student_id, progress_blob, plan_rules_blob)
-        VALUES (?, ?, ?)
+        (student_id, progress_blob, plan_rules_blob, metadata_blob)
+        VALUES (?, ?, ?, ?)
     """,
-        (student_id, progress_blob, plan_rules_blob),
+        (student_id, progress_blob, plan_rules_blob, metadata_blob),
     )
 
     conn.commit()
