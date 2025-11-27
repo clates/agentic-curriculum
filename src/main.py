@@ -172,6 +172,8 @@ class StudentResponse(BaseModel):
     progress_blob: str | None = None
     plan_rules_blob: str | None = None
     metadata_blob: str | None = None
+
+
 class GradeLevelOption(BaseModel):
     """A grade level option with value and label."""
 
