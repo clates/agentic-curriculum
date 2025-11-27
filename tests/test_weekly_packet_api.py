@@ -66,15 +66,18 @@ def test_weekly_packet_list_endpoint_returns_paginated(tmp_path):
 
     student_id = "student-123"
     packet_store.save_weekly_packet(
-        build_weekly_plan(plan_id="plan_future", week_of="2025-12-08", student_id=student_id)
+        build_weekly_plan(plan_id="plan_future",
+                          week_of="2025-12-08", student_id=student_id)
     )
     packet_store.save_weekly_packet(
-        build_weekly_plan(plan_id="plan_current", week_of="2025-12-01", student_id=student_id)
+        build_weekly_plan(plan_id="plan_current",
+                          week_of="2025-12-01", student_id=student_id)
     )
 
     client = TestClient(main_module.app)
 
-    resp = client.get(f"/students/{student_id}/weekly-packets", params={"page_size": 1})
+    resp = client.get(
+        f"/students/{student_id}/weekly-packets", params={"page_size": 1})
     assert resp.status_code == 200
     payload = resp.json()
     assert payload["pagination"]["has_more"] is True
@@ -122,10 +125,12 @@ def test_weekly_packet_manifest_endpoint_groups_artifacts(tmp_path):
     assert payload["artifact_count"] == 3
     assert len(payload["items"]) == 2  # Monday and Tuesday
 
-    monday_group = next(item for item in payload["items"] if item["day_label"] == "Monday")
+    monday_group = next(
+        item for item in payload["items"] if item["day_label"] == "Monday")
     assert monday_group["resource_kind"] == "mathWorksheet"
     assert len(monday_group["artifacts"]) == 2
-    assert monday_group["artifacts"][0]["download_url"].startswith("/students/")
+    assert monday_group["artifacts"][0]["download_url"].startswith(
+        "/students/")
 
 
 def test_download_endpoint_streams_files_and_handles_missing(tmp_path):
@@ -138,13 +143,16 @@ def test_download_endpoint_streams_files_and_handles_missing(tmp_path):
 
     download_resp = client.get(artifact_entry["download_url"])
     assert download_resp.status_code == 200
-    assert download_resp.headers.get("Content-Type") in {"application/pdf", "image/png"}
+    assert download_resp.headers.get(
+        "Content-Type") in {"application/pdf", "image/png"}
     assert download_resp.headers.get("ETag")
     assert download_resp.headers.get("Last-Modified")
-    assert download_resp.headers.get("Content-Disposition", "").startswith("attachment;")
+    assert download_resp.headers.get(
+        "Content-Disposition", "").startswith("attachment;")
     assert download_resp.content
 
-    missing_path = Path(tmp_path) / plan["daily_plan"][0]["resources"]["mathWorksheet"]["artifacts"][0]["path"]
+    missing_path = Path(
+        tmp_path) / plan["daily_plan"][0]["resources"]["mathWorksheet"]["artifacts"][0]["path"]
     missing_path.unlink()
     missing_resp = client.get(artifact_entry["download_url"])
     assert missing_resp.status_code == 410
@@ -161,7 +169,8 @@ def test_download_endpoint_rejects_paths_outside_project_root(tmp_path):
     main_module.PROJECT_ROOT = tmp_path
     packet_store.PROJECT_ROOT = tmp_path
 
-    plan = build_weekly_plan(plan_id="plan_escape", student_id="student-escape")
+    plan = build_weekly_plan(plan_id="plan_escape",
+                             student_id="student-escape")
     outside_dir = tmp_path.parent / "outside"
     outside_dir.mkdir(parents=True, exist_ok=True)
     outside_file = outside_dir / "escape.pdf"

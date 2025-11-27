@@ -5,6 +5,14 @@ FastAPI application for serving student data from curriculum.db
 """
 
 from __future__ import annotations
+from packet_store import (
+    get_artifact_for_student,
+    get_weekly_packet,
+    list_packet_artifacts,
+    list_weekly_packets,
+)
+from agent import generate_weekly_plan
+from db_utils import get_student_profile
 
 import json
 import logging
@@ -23,15 +31,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
-
-from db_utils import get_student_profile
-from agent import generate_weekly_plan
-from packet_store import (
-    get_artifact_for_student,
-    get_weekly_packet,
-    list_packet_artifacts,
-    list_weekly_packets,
-)
 
 
 logger = logging.getLogger(__name__)
@@ -141,21 +140,21 @@ def read_root():
 def read_student(student_id: str):
     """
     Get student profile by student_id.
-    
+
     Args:
         student_id: The unique identifier for the student
-        
+
     Returns:
         Student profile data as JSON
-        
+
     Raises:
         HTTPException: 404 if student not found
     """
     profile = get_student_profile(student_id)
-    
+
     if profile is None:
         raise HTTPException(status_code=404, detail="Student not found")
-    
+
     return profile
 
 
@@ -163,13 +162,13 @@ def read_student(student_id: str):
 def create_weekly_plan(request: PlanRequest):
     """
     Generate a weekly lesson plan for a student using LLM.
-    
+
     Args:
         request: PlanRequest containing student_id, grade_level, and subject
-        
+
     Returns:
         A complete weekly plan JSON with daily lesson plans
-        
+
     Raises:
         HTTPException: 400 if there's an error generating the plan
     """
@@ -197,9 +196,11 @@ def create_weekly_plan(request: PlanRequest):
     except Exception as e:
         log_context["error"] = {"type": type(e).__name__, "message": str(e)}
         log_context["status"] = "server_error"
-        raise HTTPException(status_code=500, detail=f"Error generating plan: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error generating plan: {str(e)}")
     finally:
-        duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        duration_ms = int(
+            (datetime.utcnow() - start_time).total_seconds() * 1000)
         log_context["duration_ms"] = duration_ms
         _write_weekly_plan_log(log_context)
 
@@ -258,7 +259,8 @@ def get_student_weekly_packet(
         updated_dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
     except ValueError:
         updated_dt = datetime.now(UTC)
-    response.headers["Last-Modified"] = formatdate(updated_dt.timestamp(), usegmt=True)
+    response.headers["Last-Modified"] = formatdate(
+        updated_dt.timestamp(), usegmt=True)
     return packet["payload"]
 
 
@@ -295,10 +297,12 @@ def _artifact_headers(artifact: dict[str, Any]) -> dict[str, str]:
     created_at = artifact.get("created_at")
     if created_at:
         try:
-            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            created_dt = datetime.fromisoformat(
+                created_at.replace("Z", "+00:00"))
         except ValueError:
             created_dt = datetime.now(UTC)
-        headers["Last-Modified"] = formatdate(created_dt.timestamp(), usegmt=True)
+        headers["Last-Modified"] = formatdate(
+            created_dt.timestamp(), usegmt=True)
     return headers
 
 
@@ -364,7 +368,8 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
     if not file_path.exists():
         logger.warning(
             "Worksheet artifact missing",
-            extra={"artifact_id": artifact_id, "student_id": student_id, "path": str(file_path)},
+            extra={"artifact_id": artifact_id,
+                   "student_id": student_id, "path": str(file_path)},
         )
         raise HTTPException(status_code=410, detail="Artifact unavailable")
 

@@ -1,6 +1,7 @@
 # Error Handling and Weekly Overview Updates
 
 ## Overview
+
 This document describes the improvements made to error handling and response structure based on the latest code review feedback.
 
 ## Changes Made
@@ -12,6 +13,7 @@ This document describes the improvements made to error handling and response str
 **Solution**: Separated JSON parsing errors from other exceptions.
 
 #### Before:
+
 ```python
 except Exception as e:
     # If LLM call fails, provide a basic fallback
@@ -19,6 +21,7 @@ except Exception as e:
 ```
 
 #### After:
+
 ```python
 except json.JSONDecodeError as e:
     # JSON parsing error from LLM - log and use fallback
@@ -31,13 +34,16 @@ except Exception as e:
 ```
 
 #### Benefits:
+
 - **Better Debugging**: Clearly identifies if the issue is LLM response format vs infrastructure
 - **Targeted Logging**: Different log messages for different error types
 - **Appropriate Handling**: Both errors use fallback, but with context-specific messages
 - **Production Monitoring**: Easier to track and alert on specific error types
 
 #### Error Types:
+
 1. **`json.JSONDecodeError`**: LLM returned invalid JSON
+
    - Could indicate prompt issues
    - Might need prompt refinement
    - Log includes the malformed response
@@ -54,6 +60,7 @@ except Exception as e:
 **Solution**: Added `weekly_overview` field to the final weekly plan.
 
 #### Updated Response Structure:
+
 ```json
 {
   "plan_id": "plan_student_01_2025-11-10",
@@ -74,12 +81,14 @@ except Exception as e:
 ```
 
 #### Benefits:
+
 - **Context**: Provides high-level understanding of the week's pedagogical approach
 - **Transparency**: Shows how the LLM planned the week's progression
 - **User Value**: Helps teachers/parents understand the learning arc
 - **Planning Visibility**: Makes the scaffolding strategy explicit
 
 #### Example Weekly Overviews:
+
 - "Progressive introduction to multiplication starting with repeated addition, building to times tables"
 - "Foundation week for reading comprehension, starting with letter recognition and building to simple words"
 - "Review week combining counting, shapes, and basic addition for reinforcement"
@@ -131,6 +140,7 @@ Rendering happens per worksheet, so failures are localized. Any exception raised
 ```
 
 **Benefits**:
+
 - **Deliverable Artifacts**: Caregivers receive concrete files moments after the API call finishes.
 - **Deterministic Layout**: Files always live under `artifacts/{plan_id}/{day_slug}/`, simplifying hosting or synchronization.
 - **Granular Error Reporting**: Failures surface next to the affected day and worksheet kind, enabling quick retries without replaying the entire week.
@@ -138,24 +148,28 @@ Rendering happens per worksheet, so failures are localized. Any exception raised
 ## Testing Recommendations
 
 ### Test JSON Errors:
+
 1. Mock OpenAI to return invalid JSON
 2. Verify specific error message appears
 3. Confirm fallback plan is used
 4. Check that other functionality continues
 
 ### Test API Errors:
+
 1. Mock OpenAI to raise connection error
 2. Verify different error message appears
 3. Confirm fallback plan is used
 4. Check that other functionality continues
 
 ### Test Weekly Overview:
+
 1. Generate a plan with valid API key
 2. Verify `weekly_overview` field is present
 3. Check content is meaningful
 4. Confirm it matches the scaffolding logic
 
 ### Test Fallback Behavior:
+
 1. When scaffold fails, verify fallback overview is used
 2. When lesson generation fails, verify fallback lessons are used
 3. Confirm final plan still has valid structure
@@ -165,6 +179,7 @@ Rendering happens per worksheet, so failures are localized. Any exception raised
 ✅ **Maintained**: The new `weekly_overview` field is an addition, not a breaking change.
 
 Existing code that doesn't check for `weekly_overview` will continue to work:
+
 - `daily_plan` structure unchanged
 - All existing fields still present
 - Validation scripts continue to work

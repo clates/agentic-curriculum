@@ -27,12 +27,12 @@ Each entry in `weekly_plan.daily_plan` augments the existing structure with a `r
 
 Shape emitted when the LLM wants `generate_two_operand_math_worksheet` + `render_worksheet_to_image/pdf` to run for that day.
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `title` | `string` | No | Overrides the worksheet heading (`"Two-Operand Practice"` default mirrors helper signature). |
-| `instructions` | `string` | No | Printed under the title. Defaults to `"Solve each problem. Show your work if needed."` |
-| `problems` | `TwoOperandProblem[]` | **Yes** | Ordered list of vertical problems (see below). Must contain at least one entry. |
-| `metadata` | `object` | No | Forwarded to the `Worksheet.metadata` bag for downstream tracking. |
+| Field          | Type                  | Required | Description                                                                                  |
+| -------------- | --------------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `title`        | `string`              | No       | Overrides the worksheet heading (`"Two-Operand Practice"` default mirrors helper signature). |
+| `instructions` | `string`              | No       | Printed under the title. Defaults to `"Solve each problem. Show your work if needed."`       |
+| `problems`     | `TwoOperandProblem[]` | **Yes**  | Ordered list of vertical problems (see below). Must contain at least one entry.              |
+| `metadata`     | `object`              | No       | Forwarded to the `Worksheet.metadata` bag for downstream tracking.                           |
 
 ### `TwoOperandProblem`
 
@@ -64,15 +64,15 @@ worksheet = generate_two_operand_math_worksheet(
 
 Shape emitted when the LLM wants `generate_reading_comprehension_worksheet` + `render_reading_worksheet_to_image/pdf` to run.
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `passage_title` | `string` | **Yes** | Printed in the worksheet header (e.g., "The Busy Garden"). |
-| `passage` | `string` | **Yes** | Body text of the reading selection. Must be non-empty after trimming whitespace. |
-| `questions` | `ReadingQuestion[]` | **Yes** | Ordered set of comprehension prompts (see below). |
-| `vocabulary` | `VocabularyEntry[]` | No | Optional list of vocab items for the footer section. |
-| `instructions` | `string` | No | Italicized hint under the header. Defaults to the helper's stock instructions. |
-| `title` | `string` | No | Logical identifier stored on the worksheet object (not rendered after layout tweaks). |
-| `metadata` | `object` | No | Passed through for bookkeeping. |
+| Field           | Type                | Required | Description                                                                           |
+| --------------- | ------------------- | -------- | ------------------------------------------------------------------------------------- |
+| `passage_title` | `string`            | **Yes**  | Printed in the worksheet header (e.g., "The Busy Garden").                            |
+| `passage`       | `string`            | **Yes**  | Body text of the reading selection. Must be non-empty after trimming whitespace.      |
+| `questions`     | `ReadingQuestion[]` | **Yes**  | Ordered set of comprehension prompts (see below).                                     |
+| `vocabulary`    | `VocabularyEntry[]` | No       | Optional list of vocab items for the footer section.                                  |
+| `instructions`  | `string`            | No       | Italicized hint under the header. Defaults to the helper's stock instructions.        |
+| `title`         | `string`            | No       | Logical identifier stored on the worksheet object (not rendered after layout tweaks). |
+| `metadata`      | `object`            | No       | Passed through for bookkeeping.                                                       |
 
 ### `ReadingQuestion`
 
@@ -115,7 +115,9 @@ worksheet = generate_reading_comprehension_worksheet(
 {
   "day": "Tuesday",
   "focus": "Apply repeated addition to story problems",
-  "lesson_plan": { "objective": "Students connect repeated addition to multiplication." },
+  "lesson_plan": {
+    "objective": "Students connect repeated addition to multiplication."
+  },
   "resources": {
     "mathWorksheet": {
       "title": "Repeated Addition Warm-Up",
@@ -125,24 +127,42 @@ worksheet = generate_reading_comprehension_worksheet(
       ],
       "metadata": { "artifact_label": "warmup" },
       "artifacts": [
-        { "type": "png", "path": "artifacts/plan_student_01_2025-11-10/tuesday/repeated_addition_math.png" },
-        { "type": "pdf", "path": "artifacts/plan_student_01_2025-11-10/tuesday/repeated_addition_math.pdf" }
+        {
+          "type": "png",
+          "path": "artifacts/plan_student_01_2025-11-10/tuesday/repeated_addition_math.png"
+        },
+        {
+          "type": "pdf",
+          "path": "artifacts/plan_student_01_2025-11-10/tuesday/repeated_addition_math.pdf"
+        }
       ]
     },
     "readingWorksheet": {
       "passage_title": "Seeds on the Windowsill",
       "passage": "Mira planted bean seeds in a jar...",
       "questions": [
-        { "prompt": "What routine helped the beans grow?", "response_lines": 3 },
+        {
+          "prompt": "What routine helped the beans grow?",
+          "response_lines": 3
+        },
         { "prompt": "How does the story show patience?" }
       ],
       "vocabulary": [
         { "term": "sprout" },
-        { "term": "windowsill", "definition": "The flat part at the bottom of a window." }
+        {
+          "term": "windowsill",
+          "definition": "The flat part at the bottom of a window."
+        }
       ],
       "artifacts": [
-        { "type": "png", "path": "artifacts/plan_student_01_2025-11-10/tuesday/reading_seed_story.png" },
-        { "type": "pdf", "path": "artifacts/plan_student_01_2025-11-10/tuesday/reading_seed_story.pdf" }
+        {
+          "type": "png",
+          "path": "artifacts/plan_student_01_2025-11-10/tuesday/reading_seed_story.png"
+        },
+        {
+          "type": "pdf",
+          "path": "artifacts/plan_student_01_2025-11-10/tuesday/reading_seed_story.pdf"
+        }
       ]
     }
   }
