@@ -6,6 +6,8 @@ and evaluation statuses used throughout the application.
 
 from __future__ import annotations
 
+from worksheets.factory import WorksheetFactory
+
 # Subjects available in the curriculum
 SUBJECTS: list[str] = [
     "Math",
@@ -48,8 +50,6 @@ def get_worksheet_types() -> list[str]:
     This function dynamically retrieves the types from WorksheetFactory
     to ensure consistency with the actual implementation.
     """
-    from worksheets.factory import WorksheetFactory
-
     return WorksheetFactory.get_supported_types()
 
 

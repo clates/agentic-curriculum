@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from main import app
+from worksheets.factory import WorksheetFactory
 
 
 client = TestClient(app)
@@ -72,18 +73,10 @@ def test_system_options_worksheet_types_match_factory():
     data = response.json()
 
     worksheet_types = data["worksheet_types"]
-    expected_types = [
-        "two_operand",
-        "reading_comprehension",
-        "venn_diagram",
-        "feature_matrix",
-        "odd_one_out",
-        "tree_map",
-    ]
+    expected_types = WorksheetFactory.get_supported_types()
 
     assert isinstance(worksheet_types, list)
-    for expected_type in expected_types:
-        assert expected_type in worksheet_types
+    assert set(worksheet_types) == set(expected_types)
 
 
 def test_system_options_statuses_contains_expected_values():
