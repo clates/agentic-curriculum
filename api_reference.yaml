@@ -1,0 +1,185 @@
+endpoints:
+  - path: "/"
+    method: "GET"
+    description: "Root endpoint that returns a simple hello message."
+    request_body: null
+    response_body:
+      message: "string"
+
+  - path: "/student/{student_id}"
+    method: "GET"
+    description: "Retrieves student profile and rule blobs by student ID."
+    path_parameters:
+      student_id: "string"
+    request_body: null
+    response_body:
+      student_id: "string"
+      progress_blob: "string"
+      plan_rules_blob: "string"
+    error_responses:
+      - status_code: 404
+        detail: "Student not found"
+
+  - path: "/generate_weekly_plan"
+    method: "POST"
+    description: "Generates a weekly lesson plan and optional worksheets based on student progress. Uses LLM to create scaffolded daily plans with appropriate standards distribution."
+    request_body:
+      student_id: "string"
+      grade_level: "integer"
+      subject: "string"
+    response_body:
+      plan_id: "string"
+      student_id: "string"
+      grade_level: "integer"
+      subject: "string"
+      week_of: "string"
+      weekly_overview: "string"
+      daily_plan:
+        - day: "string"
+          lesson_plan:
+            objective: "string"
+            materials_needed: "list[string]"
+            procedure: "list[string]"
+          standard:
+            standard_id: "string"
+            description: "string"
+            subject: "string"
+            grade_level: "integer"
+          standards: "list[object] (array of standard objects with same structure as 'standard' field above)"
+          focus: "string"
+          resources:
+            mathWorksheet:
+              title: "string (optional)"
+              instructions: "string (optional)"
+              problems:
+                - operand_one: "integer"
+                  operand_two: "integer"
+                  operator: "string ('+' for addition, '-' for subtraction)"
+              artifacts:
+                - type: "string (png|pdf)"
+                  path: "string"
+                  size_bytes: "integer"
+                  sha256: "string"
+            readingWorksheet:
+              passage_title: "string"
+              passage: "string"
+              questions:
+                - prompt: "string"
+                  response_lines: "integer"
+              vocabulary:
+                - term: "string"
+                  definition: "string (optional)"
+                  response_lines: "integer"
+              artifacts:
+                - type: "string (png|pdf)"
+                  path: "string"
+                  size_bytes: "integer"
+                  sha256: "string"
+          worksheet_plans:
+            - kind: "string"
+              filename_hint: "string"
+              metadata: "object"
+          resource_errors:
+            - kind: "string"
+              message: "string"
+    error_responses:
+      - status_code: 400
+        detail: "string (validation or generation error)"
+      - status_code: 500
+        detail: "Error generating plan: {error_message}"
+
+  - path: "/students/{student_id}/weekly-packets"
+    method: "GET"
+    description: "Lists weekly packets for a student with basic metadata, supporting pagination and optional week filtering."
+    path_parameters:
+      student_id: "string"
+    query_parameters:
+      week_of: "string (optional, ISO date format YYYY-MM-DD)"
+      page: "integer (default: 1, min: 1)"
+      page_size: "integer (default: 20, min: 1, max: 50)"
+    request_body: null
+    response_body:
+      items:
+        - packet_id: "string"
+          student_id: "string"
+          week_of: "string"
+          subject: "string"
+          grade_level: "integer"
+          status: "string"
+          worksheet_counts: "object (mapping of worksheet type to count)"
+          artifact_count: "integer"
+          resource_days: "integer"
+          daily_count: "integer"
+          updated_at: "string (ISO timestamp)"
+      pagination:
+        page: "integer"
+        page_size: "integer"
+        has_more: "boolean"
+        next_page: "integer (null if no more pages)"
+
+  - path: "/students/{student_id}/weekly-packets/{packet_id}"
+    method: "GET"
+    description: "Returns the stored weekly packet payload for a specific student and packet. Includes ETag and Last-Modified headers for caching."
+    path_parameters:
+      student_id: "string"
+      packet_id: "string"
+    request_body: null
+    response_body:
+      plan_id: "string"
+      student_id: "string"
+      grade_level: "integer"
+      subject: "string"
+      week_of: "string"
+      weekly_overview: "string"
+      daily_plan: "list[object] (same structure as /generate_weekly_plan response)"
+    response_headers:
+      ETag: "string (quoted hash for cache validation)"
+      Last-Modified: "string (HTTP date format)"
+    error_responses:
+      - status_code: 404
+        detail: "Weekly packet not found"
+
+  - path: "/students/{student_id}/weekly-packets/{packet_id}/worksheets"
+    method: "GET"
+    description: "Returns grouped worksheet artifact metadata for a packet, including download URLs for each artifact."
+    path_parameters:
+      student_id: "string"
+      packet_id: "string"
+    request_body: null
+    response_body:
+      packet_id: "string"
+      artifact_count: "integer"
+      items:
+        - day_label: "string"
+          resource_kind: "string"
+          artifacts:
+            - artifact_id: "integer"
+              format: "string (png|pdf)"
+              download_url: "string"
+              checksum: "string (optional)"
+              file_size_bytes: "integer (optional)"
+              metadata: "object (optional)"
+              created_at: "string (ISO timestamp)"
+    error_responses:
+      - status_code: 404
+        detail: "Weekly packet not found"
+
+  - path: "/students/{student_id}/worksheet-artifacts/{artifact_id}"
+    method: "GET"
+    description: "Downloads a worksheet artifact file when the student owns it. Returns the file as an attachment with appropriate content type."
+    path_parameters:
+      student_id: "string"
+      artifact_id: "integer"
+    request_body: null
+    response_body: "binary (file download)"
+    response_headers:
+      Content-Type: "string (application/pdf, image/png, or application/octet-stream)"
+      Content-Disposition: "attachment; filename=\"{filename}\""
+      Cache-Control: "private, max-age=86400"
+      ETag: "string (checksum or artifact ID)"
+      Last-Modified: "string (HTTP date format)"
+    error_responses:
+      - status_code: 404
+        detail: "Artifact not found"
+      - status_code: 410
+        detail: "Artifact unavailable"
