@@ -1,5 +1,5 @@
 """Tests for rendering structural relationship worksheets to images and PDFs."""
-import os
+
 import tempfile
 from pathlib import Path
 
@@ -42,7 +42,7 @@ def test_render_venn_diagram_to_image(temp_dir):
     )
     output_path = Path(temp_dir) / "venn.png"
     result = render_venn_diagram_to_image(worksheet, output_path)
-    
+
     assert result == output_path
     assert output_path.exists()
     assert output_path.stat().st_size > 0
@@ -61,7 +61,7 @@ def test_render_venn_diagram_to_pdf(temp_dir):
     )
     output_path = Path(temp_dir) / "venn.pdf"
     result = render_venn_diagram_to_pdf(worksheet, output_path)
-    
+
     assert result == output_path
     assert output_path.exists()
     assert output_path.stat().st_size > 0
@@ -74,8 +74,8 @@ def test_render_venn_diagram_creates_parent_dirs(temp_dir):
         right_label="B",
     )
     output_path = Path(temp_dir) / "nested" / "dir" / "venn.png"
-    result = render_venn_diagram_to_image(worksheet, output_path)
-    
+    render_venn_diagram_to_image(worksheet, output_path)
+
     assert output_path.exists()
 
 
@@ -90,7 +90,7 @@ def test_render_feature_matrix_to_image(temp_dir):
     )
     output_path = Path(temp_dir) / "matrix.png"
     result = render_feature_matrix_to_image(worksheet, output_path)
-    
+
     assert result == output_path
     assert output_path.exists()
     assert output_path.stat().st_size > 0
@@ -108,7 +108,7 @@ def test_render_feature_matrix_to_pdf(temp_dir):
     )
     output_path = Path(temp_dir) / "matrix.pdf"
     result = render_feature_matrix_to_pdf(worksheet, output_path)
-    
+
     assert result == output_path
     assert output_path.exists()
     assert output_path.stat().st_size > 0
@@ -121,8 +121,8 @@ def test_render_feature_matrix_handles_long_names(temp_dir):
         properties=["Property A", "Property B"],
     )
     output_path = Path(temp_dir) / "matrix_long.png"
-    result = render_feature_matrix_to_image(worksheet, output_path)
-    
+    render_feature_matrix_to_image(worksheet, output_path)
+
     assert output_path.exists()
 
 
@@ -139,7 +139,7 @@ def test_render_odd_one_out_to_image(temp_dir):
     )
     output_path = Path(temp_dir) / "odd.png"
     result = render_odd_one_out_to_image(worksheet, output_path)
-    
+
     assert result == output_path
     assert output_path.exists()
     assert output_path.stat().st_size > 0
@@ -149,13 +149,17 @@ def test_render_odd_one_out_to_pdf(temp_dir):
     """Odd one out renders to PDF."""
     worksheet = generate_odd_one_out_worksheet(
         rows=[
-            {"items": ["dog", "cat", "car", "bird"], "odd_item": "car", "explanation": "Not an animal"},
+            {
+                "items": ["dog", "cat", "car", "bird"],
+                "odd_item": "car",
+                "explanation": "Not an animal",
+            },
         ],
         show_answers=True,
     )
     output_path = Path(temp_dir) / "odd.pdf"
     result = render_odd_one_out_to_pdf(worksheet, output_path)
-    
+
     assert result == output_path
     assert output_path.exists()
     assert output_path.stat().st_size > 0
@@ -168,8 +172,8 @@ def test_render_odd_one_out_with_reasoning_lines(temp_dir):
         reasoning_lines=4,
     )
     output_path = Path(temp_dir) / "odd_lines.png"
-    result = render_odd_one_out_to_image(worksheet, output_path)
-    
+    render_odd_one_out_to_image(worksheet, output_path)
+
     assert output_path.exists()
 
 
@@ -187,7 +191,7 @@ def test_render_tree_map_to_image(temp_dir):
     )
     output_path = Path(temp_dir) / "tree.png"
     result = render_tree_map_to_image(worksheet, output_path)
-    
+
     assert result == output_path
     assert output_path.exists()
     assert output_path.stat().st_size > 0
@@ -206,7 +210,7 @@ def test_render_tree_map_to_pdf(temp_dir):
     )
     output_path = Path(temp_dir) / "tree.pdf"
     result = render_tree_map_to_pdf(worksheet, output_path)
-    
+
     assert result == output_path
     assert output_path.exists()
     assert output_path.stat().st_size > 0
@@ -222,8 +226,8 @@ def test_render_tree_map_with_empty_slots(temp_dir):
         ],
     )
     output_path = Path(temp_dir) / "tree_empty.png"
-    result = render_tree_map_to_image(worksheet, output_path)
-    
+    render_tree_map_to_image(worksheet, output_path)
+
     assert output_path.exists()
 
 
@@ -236,6 +240,6 @@ def test_render_tree_map_single_branch(temp_dir):
         ],
     )
     output_path = Path(temp_dir) / "tree_single.png"
-    result = render_tree_map_to_image(worksheet, output_path)
-    
+    render_tree_map_to_image(worksheet, output_path)
+
     assert output_path.exists()

@@ -26,12 +26,10 @@ def build_reading_payload(question_count: int = 2, vocab_count: int = 1):
         "passage_title": "Garden Morning",
         "passage": "Lina checked on the beans every morning.",
         "questions": [
-            {"prompt": f"Question {i}", "response_lines": 2}
-            for i in range(1, question_count + 1)
+            {"prompt": f"Question {i}", "response_lines": 2} for i in range(1, question_count + 1)
         ],
         "vocabulary": [
-            {"term": f"word{i}", "definition": "definition"}
-            for i in range(1, vocab_count + 1)
+            {"term": f"word{i}", "definition": "definition"} for i in range(1, vocab_count + 1)
         ],
         "instructions": "Read and respond",
         "metadata": {"artifact_label": "literacy"},

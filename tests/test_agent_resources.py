@@ -2,7 +2,7 @@ import pytest
 
 import src.agent as agent
 
-_extract_lesson_and_resources = getattr(agent, "_extract_lesson_and_resources")
+_extract_lesson_and_resources = agent._extract_lesson_and_resources
 
 
 @pytest.fixture(scope="module")
@@ -38,10 +38,9 @@ def test_extract_with_math_resources():
                     {"operand_one": 2, "operand_two": 3, "operator": "+"},
                 ]
             }
-        }
+        },
     }
-    parsed_lesson, resources = _extract_lesson_and_resources(
-        payload, "Tuesday")
+    parsed_lesson, resources = _extract_lesson_and_resources(payload, "Tuesday")
     assert parsed_lesson == payload["lesson_plan"]
     assert resources is not None
     assert resources.mathWorksheet is not None
@@ -57,7 +56,7 @@ def test_extract_invalid_resources_logs_and_drops(capsys):
                     {"operand_one": 2, "operand_two": 3, "operator": "*"},
                 ]
             }
-        }
+        },
     }
     _, resources = _extract_lesson_and_resources(payload, "Wednesday")
     captured = capsys.readouterr()
@@ -72,9 +71,9 @@ def test_extract_with_reading_resources():
             "readingWorksheet": {
                 "passage_title": "Garden Morning",
                 "passage": "Lina checked on the beans every morning.",
-                "questions": [{"prompt": "What did Lina do?"}]
+                "questions": [{"prompt": "What did Lina do?"}],
             }
-        }
+        },
     }
     _, resources = _extract_lesson_and_resources(payload, "Thursday")
     assert resources is not None

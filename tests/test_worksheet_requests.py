@@ -8,9 +8,7 @@ def test_build_math_only():
         {
             "mathWorksheet": {
                 "title": "Warm-Up",
-                "problems": [
-                    {"operand_one": 2, "operand_two": 3, "operator": "+"}
-                ]
+                "problems": [{"operand_one": 2, "operand_two": 3, "operator": "+"}],
             }
         }
     )
@@ -42,16 +40,12 @@ def test_build_reading_only():
 def test_build_both_resources():
     resources = ResourceRequests.model_validate(
         {
-            "mathWorksheet": {
-                "problems": [
-                    {"operand_one": 5, "operand_two": 1, "operator": "-"}
-                ]
-            },
+            "mathWorksheet": {"problems": [{"operand_one": 5, "operand_two": 1, "operator": "-"}]},
             "readingWorksheet": {
                 "passage_title": "Garden",
                 "passage": "Text",
                 "questions": [{"prompt": "Question"}],
-            }
+            },
         }
     )
     plans, errors = build_worksheets_from_requests(resources)
@@ -63,13 +57,7 @@ def test_build_both_resources():
 
 def test_math_generator_failure_is_captured(monkeypatch):
     resources = ResourceRequests.model_validate(
-        {
-            "mathWorksheet": {
-                "problems": [
-                    {"operand_one": 5, "operand_two": 1, "operator": "-"}
-                ]
-            }
-        }
+        {"mathWorksheet": {"problems": [{"operand_one": 5, "operand_two": 1, "operator": "-"}]}}
     )
 
     monkeypatch.setattr(
@@ -89,9 +77,7 @@ def test_filename_hint_uses_metadata():
         {
             "mathWorksheet": {
                 "metadata": {"artifact_label": "warmup"},
-                "problems": [
-                    {"operand_one": 2, "operand_two": 3, "operator": "+"}
-                ]
+                "problems": [{"operand_one": 2, "operand_two": 3, "operator": "+"}],
             }
         }
     )

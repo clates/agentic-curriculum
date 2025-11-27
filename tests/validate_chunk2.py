@@ -8,6 +8,7 @@ print(f"--- Running Validation for FastAPI App at {BASE_URL} ---")
 
 errors = 0
 
+
 def check(condition, error_message):
     global errors
     if not condition:
@@ -15,6 +16,7 @@ def check(condition, error_message):
         errors += 1
     else:
         print(f"PASS: {error_message.split('.')[0]}")
+
 
 # Test 1: Check required files
 check(os.path.exists("main.py"), "File 'main.py' was not created.")
@@ -30,8 +32,10 @@ try:
     check(response.status_code == 200, "Root GET / endpoint did not return 200.")
     try:
         data = response.json()
-        check(data == {"message": "Hello World"}, "Root GET / endpoint did not return correct JSON.")
-    except:
+        check(
+            data == {"message": "Hello World"}, "Root GET / endpoint did not return correct JSON."
+        )
+    except ValueError:
         check(False, "Root GET / endpoint did not return valid JSON.")
 except requests.ConnectionError:
     print("\nFATAL: Could not connect to server.")
@@ -45,16 +49,22 @@ except Exception as e:
 try:
     response = requests.get(f"{BASE_URL}/student/student_01")
     check(response.status_code == 200, "GET /student/student_01 did not return 200.")
-    
+
     if response.status_code == 200:
         try:
             data = response.json()
-            check(data['student_id'] == 'student_01', "Student data does not contain correct 'student_id'.")
-            
+            check(
+                data["student_id"] == "student_01",
+                "Student data does not contain correct 'student_id'.",
+            )
+
             # Check if rules blob is correct
-            rules = json.loads(data['plan_rules_blob'])
-            check(rules['allowed_materials'] == ["Crayons", "Paper"], "Student 'plan_rules_blob' content is incorrect.")
-            
+            rules = json.loads(data["plan_rules_blob"])
+            check(
+                rules["allowed_materials"] == ["Crayons", "Paper"],
+                "Student 'plan_rules_blob' content is incorrect.",
+            )
+
         except Exception as e:
             check(False, f"Could not parse JSON or validate data from /student/student_01: {e}")
 
@@ -65,14 +75,17 @@ except Exception as e:
 try:
     response = requests.get(f"{BASE_URL}/student/non_existent_student_id_12345")
     check(response.status_code == 404, "GET /student/non_existent... did not return 404 Not Found.")
-    
+
     if response.status_code == 404:
         try:
             data = response.json()
-            check('detail' in data and "not found" in data['detail'].lower(), "404 response JSON missing 'detail' message.")
-        except:
+            check(
+                "detail" in data and "not found" in data["detail"].lower(),
+                "404 response JSON missing 'detail' message.",
+            )
+        except ValueError:
             check(False, "404 response was not valid JSON.")
-            
+
 except Exception as e:
     check(False, f"Error testing non-existent student endpoint: {e}")
 

@@ -1,4 +1,5 @@
 """Utilities for generating tree map worksheet data structures."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -32,10 +33,10 @@ class TreeMapBranch:
         label = payload.get("label")
         if not label:
             raise ValueError("TreeMapBranch requires a label")
-        
+
         slots_data = payload.get("slots", [])
         slot_count = int(payload.get("slot_count", 3))
-        
+
         if slots_data:
             slots: List[TreeMapSlot] = []
             for item in slots_data:
@@ -52,7 +53,7 @@ class TreeMapBranch:
         else:
             # Create empty slots based on slot_count
             slots = [TreeMapSlot() for _ in range(max(1, slot_count))]
-        
+
         return cls(label=label, slots=slots, slot_count=len(slots))
 
 

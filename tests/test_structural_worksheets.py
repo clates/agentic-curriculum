@@ -1,4 +1,5 @@
 """Tests for structural relationship worksheets (Venn diagram, feature matrix, odd-one-out, tree map)."""
+
 import pytest
 from src.worksheets import (
     WorksheetFactory,
@@ -91,13 +92,16 @@ def test_venn_diagram_to_markdown():
 
 def test_factory_creates_venn_diagram():
     """Factory correctly creates Venn diagram worksheet."""
-    worksheet = WorksheetFactory.create('venn_diagram', {
-        'left_label': 'Animals',
-        'right_label': 'Plants',
-        'word_bank': ['dog', 'tree'],
-    })
+    worksheet = WorksheetFactory.create(
+        "venn_diagram",
+        {
+            "left_label": "Animals",
+            "right_label": "Plants",
+            "word_bank": ["dog", "tree"],
+        },
+    )
     assert isinstance(worksheet, VennDiagramWorksheet)
-    assert worksheet.left_label == 'Animals'
+    assert worksheet.left_label == "Animals"
 
 
 # ============ Feature Matrix Tests ============
@@ -105,7 +109,9 @@ def test_factory_creates_venn_diagram():
 
 def test_feature_matrix_item_from_mapping():
     """FeatureMatrixItem correctly parses from dict."""
-    item = FeatureMatrixItem.from_mapping({"name": "Dog", "checked_properties": ["has fur", "has legs"]})
+    item = FeatureMatrixItem.from_mapping(
+        {"name": "Dog", "checked_properties": ["has fur", "has legs"]}
+    )
     assert item.name == "Dog"
     assert item.checked_properties == ["has fur", "has legs"]
 
@@ -165,10 +171,13 @@ def test_feature_matrix_to_markdown():
 
 def test_factory_creates_feature_matrix():
     """Factory correctly creates feature matrix worksheet."""
-    worksheet = WorksheetFactory.create('feature_matrix', {
-        'items': ['Dog', 'Cat'],
-        'properties': ['Fur', 'Tail'],
-    })
+    worksheet = WorksheetFactory.create(
+        "feature_matrix",
+        {
+            "items": ["Dog", "Cat"],
+            "properties": ["Fur", "Tail"],
+        },
+    )
     assert isinstance(worksheet, FeatureMatrixWorksheet)
     assert len(worksheet.items) == 2
 
@@ -178,11 +187,13 @@ def test_factory_creates_feature_matrix():
 
 def test_odd_one_out_row_from_mapping():
     """OddOneOutRow correctly parses from dict."""
-    row = OddOneOutRow.from_mapping({
-        "items": ["dog", "cat", "car", "bird"],
-        "odd_item": "car",
-        "explanation": "Car is not an animal"
-    })
+    row = OddOneOutRow.from_mapping(
+        {
+            "items": ["dog", "cat", "car", "bird"],
+            "odd_item": "car",
+            "explanation": "Car is not an animal",
+        }
+    )
     assert len(row.items) == 4
     assert row.odd_item == "car"
     assert row.explanation == "Car is not an animal"
@@ -213,7 +224,11 @@ def test_generate_odd_one_out_with_answers():
     """Odd one out supports show_answers for answer key."""
     worksheet = generate_odd_one_out_worksheet(
         rows=[
-            {"items": ["dog", "cat", "car", "bird"], "odd_item": "car", "explanation": "Not an animal"},
+            {
+                "items": ["dog", "cat", "car", "bird"],
+                "odd_item": "car",
+                "explanation": "Not an animal",
+            },
         ],
         show_answers=True,
     )
@@ -241,9 +256,12 @@ def test_odd_one_out_to_markdown():
 
 def test_factory_creates_odd_one_out():
     """Factory correctly creates odd-one-out worksheet."""
-    worksheet = WorksheetFactory.create('odd_one_out', {
-        'rows': [{'items': ['cat', 'dog', 'car', 'bird']}],
-    })
+    worksheet = WorksheetFactory.create(
+        "odd_one_out",
+        {
+            "rows": [{"items": ["cat", "dog", "car", "bird"]}],
+        },
+    )
     assert isinstance(worksheet, OddOneOutWorksheet)
     assert len(worksheet.rows) == 1
 
@@ -255,17 +273,19 @@ def test_tree_map_slot_from_mapping():
     """TreeMapSlot correctly parses from dict."""
     slot = TreeMapSlot.from_mapping({"text": "apple"})
     assert slot.text == "apple"
-    
+
     empty_slot = TreeMapSlot.from_mapping({})
     assert empty_slot.text is None
 
 
 def test_tree_map_branch_from_mapping():
     """TreeMapBranch correctly parses from dict."""
-    branch = TreeMapBranch.from_mapping({
-        "label": "Fruits",
-        "slots": ["apple", "banana", {"text": "orange"}],
-    })
+    branch = TreeMapBranch.from_mapping(
+        {
+            "label": "Fruits",
+            "slots": ["apple", "banana", {"text": "orange"}],
+        }
+    )
     assert branch.label == "Fruits"
     assert len(branch.slots) == 3
     assert branch.slots[0].text == "apple"
@@ -335,12 +355,15 @@ def test_tree_map_to_markdown():
 
 def test_factory_creates_tree_map():
     """Factory correctly creates tree map worksheet."""
-    worksheet = WorksheetFactory.create('tree_map', {
-        'root_label': 'Categories',
-        'branches': [{'label': 'Type A', 'slot_count': 3}],
-    })
+    worksheet = WorksheetFactory.create(
+        "tree_map",
+        {
+            "root_label": "Categories",
+            "branches": [{"label": "Type A", "slot_count": 3}],
+        },
+    )
     assert isinstance(worksheet, TreeMapWorksheet)
-    assert worksheet.root_label == 'Categories'
+    assert worksheet.root_label == "Categories"
 
 
 # ============ Factory Integration Tests ============
@@ -349,7 +372,7 @@ def test_factory_creates_tree_map():
 def test_factory_supports_all_new_types():
     """Factory lists all new worksheet types."""
     supported = WorksheetFactory.get_supported_types()
-    assert 'venn_diagram' in supported
-    assert 'feature_matrix' in supported
-    assert 'odd_one_out' in supported
-    assert 'tree_map' in supported
+    assert "venn_diagram" in supported
+    assert "feature_matrix" in supported
+    assert "odd_one_out" in supported
+    assert "tree_map" in supported

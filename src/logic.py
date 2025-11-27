@@ -15,8 +15,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_FILE = os.environ.get("CURRICULUM_DB_PATH",
-                         os.path.join(PROJECT_ROOT, "curriculum.db"))
+DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
 
 
 def _connect_db():
@@ -29,7 +28,9 @@ def _connect_db():
     return sqlite3.connect(DB_FILE)
 
 
-def get_filtered_standards(student_id: str, grade_level: int, subject: str | None, limit: int = 15) -> list:
+def get_filtered_standards(
+    student_id: str, grade_level: int, subject: str | None, limit: int = 15
+) -> list:
     """
     Get filtered standards for a student based on their progress and rules.
 
@@ -61,18 +62,18 @@ def get_filtered_standards(student_id: str, grade_level: int, subject: str | Non
         raise ValueError(f"Student with id '{student_id}' not found")
 
     # Step c: Parse the JSON blobs
-    progress_blob = json.loads(student_profile['progress_blob'])
-    plan_rules_blob = json.loads(student_profile['plan_rules_blob'])
+    progress_blob = json.loads(student_profile["progress_blob"])
+    plan_rules_blob = json.loads(student_profile["plan_rules_blob"])
 
     # Step d: Extract mastered standards
-    mastered_standards = progress_blob.get('mastered_standards', [])
+    mastered_standards = progress_blob.get("mastered_standards", [])
 
     # Step e: Extract theme rules
-    theme_rules = plan_rules_blob.get('theme_rules', {})
+    theme_rules = plan_rules_blob.get("theme_rules", {})
 
     # Step f: Determine which subject to use
-    force_weekly_theme = theme_rules.get('force_weekly_theme', False)
-    theme_subjects = theme_rules.get('theme_subjects') or []
+    force_weekly_theme = theme_rules.get("force_weekly_theme", False)
+    theme_subjects = theme_rules.get("theme_subjects") or []
     if subject:
         # Caller explicitly requested a subject; honor it.
         selected_subject = subject
@@ -101,7 +102,7 @@ def get_filtered_standards(student_id: str, grade_level: int, subject: str | Non
     # Add filter for mastered standards if any exist
     if mastered_standards:
         # Create placeholders for the mastered standards
-        placeholders = ','.join('?' * len(mastered_standards))
+        placeholders = ",".join("?" * len(mastered_standards))
         query += f" AND standard_id NOT IN ({placeholders})"
         params.extend(mastered_standards)
 

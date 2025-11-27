@@ -16,3 +16,8 @@ Pillow>=10.0.0,<11.0.0
 
 # Testing
 pytest>=7.4.0,<9.0.0
+
+# Tooling
+black>=24.4.0,<25.0.0
+pre-commit>=3.6.0,<4.0.0
+ruff>=0.6.0,<1.0.0
