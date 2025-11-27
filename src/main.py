@@ -12,6 +12,7 @@ from packet_store import (
     list_weekly_packets,
 )
 from agent import generate_weekly_plan
+from constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
 from db_utils import get_student_profile
 
 import json
@@ -131,10 +132,46 @@ class WorksheetArtifactManifest(BaseModel):
     items: list[WorksheetArtifactGroup]
 
 
+class GradeLevelOption(BaseModel):
+    """A grade level option with value and label."""
+
+    value: int
+    label: str
+
+
+class SystemOptionsResponse(BaseModel):
+    """Response model for system configuration options."""
+
+    subjects: list[str]
+    grades: list[GradeLevelOption]
+    worksheet_types: list[str]
+    statuses: list[str]
+
+
 @app.get("/")
 def read_root():
     """Root endpoint that returns a simple hello message."""
     return {"message": "Hello World"}
+
+
+@app.get("/system/options", response_model=SystemOptionsResponse)
+def get_system_options():
+    """
+    Return valid configuration options for the frontend.
+
+    Returns a JSON object containing:
+    - subjects: List of valid subject names
+    - grades: List of grade level options with value and label
+    - worksheet_types: List of supported worksheet type keys
+    - statuses: List of evaluation status values
+    """
+    grades = [GradeLevelOption(value=k, label=v) for k, v in GRADE_LEVELS.items()]
+    return SystemOptionsResponse(
+        subjects=SUBJECTS,
+        grades=grades,
+        worksheet_types=get_worksheet_types(),
+        statuses=EVALUATION_STATUSES,
+    )
 
 
 @app.get("/student/{student_id}")
