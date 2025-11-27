@@ -231,6 +231,25 @@ class TestUpdateStudentEndpoint:
         assert metadata["birthday"] == "2018-05-15"
         assert metadata["notes"] == "Added notes"
 
+    def test_update_student_partial_metadata_patch(self, test_client):
+        """PUT /student/{id} allows partial metadata updates without requiring all fields."""
+        # Update with only notes - should not require name/birthday
+        update_payload = {
+            "metadata": {
+                "notes": "Just adding notes without other fields",
+            }
+        }
+        response = test_client.put("/student/existing_student", json=update_payload)
+        assert response.status_code == 200
+
+        data = response.json()
+        metadata = json.loads(data["metadata_blob"])
+        # Original name and birthday should be preserved
+        assert metadata["name"] == "Existing Student"
+        assert metadata["birthday"] == "2018-05-15"
+        # Notes should be updated
+        assert metadata["notes"] == "Just adding notes without other fields"
+
     def test_update_student_plan_rules(self, test_client):
         """PUT /student/{id} can update plan_rules_blob."""
         update_payload = {

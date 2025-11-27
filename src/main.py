@@ -140,6 +140,15 @@ class StudentMetadata(BaseModel):
     notes: str | None = None
 
 
+class StudentMetadataPatch(BaseModel):
+    """Model for partial updates to student metadata."""
+
+    name: str | None = None
+    birthday: str | None = None
+    avatar_url: str | None = None
+    notes: str | None = None
+
+
 class CreateStudentRequest(BaseModel):
     """Request model for creating a new student."""
 
@@ -151,7 +160,7 @@ class CreateStudentRequest(BaseModel):
 class UpdateStudentRequest(BaseModel):
     """Request model for updating a student."""
 
-    metadata: StudentMetadata | None = None
+    metadata: StudentMetadataPatch | None = None
     plan_rules: dict[str, Any] | None = None
 
 
@@ -232,7 +241,7 @@ def update_student_endpoint(student_id: str, request: UpdateStudentRequest):
     Raises:
         HTTPException: 404 if student not found
     """
-    metadata_dict = request.metadata.model_dump() if request.metadata else None
+    metadata_dict = request.metadata.model_dump(exclude_unset=True) if request.metadata else None
     student = update_student(
         student_id=student_id,
         metadata=metadata_dict,
