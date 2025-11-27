@@ -63,6 +63,36 @@ curl -X POST "http://127.0.0.1:8000/generate_weekly_plan" \
   }'
 ```
 
+---
+
+## 🧹 Code Style & Linting
+
+All Python files are auto-formatted with [Black](https://github.com/psf/black) and linted with [Ruff](https://docs.astral.sh/ruff/), enforced automatically via [pre-commit](https://pre-commit.com/) hooks.
+
+### Setup
+
+```bash
+pip install -r requirements.txt
+pre-commit install
+```
+
+`pre-commit install` adds a git `pre-commit` hook that runs Ruff (lint/fix) and then Black on staged Python files. Commits will fail until formatting or lint issues are resolved, ensuring a consistent style and catching mistakes like unused imports before they land.
+
+### Linting/formatting the entire repo
+
+```bash
+pre-commit run --all-files
+```
+
+Or run the tools directly:
+
+```bash
+ruff check --fix .
+black .
+```
+
+Run this after updating formatting rules to clean the entire codebase in a single commit.
+
 You'll receive a complete 5-day lesson plan with objectives, materials, and procedures!
 
 ---

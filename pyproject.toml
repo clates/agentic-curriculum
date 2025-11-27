@@ -1,0 +1,25 @@
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = "\.(py|pyi)$"
+exclude = """
+(/\.|venv/|__pycache__/|build/|dist/|artifacts/|logs/)
+"""
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["venv", "__pycache__", "build", "dist", "artifacts", "logs"]
+
+[tool.ruff.lint]
+select = [
+	"E",  # pycodestyle errors
+	"F",  # pyflakes (unused imports, etc.)
+	"B",  # flake8-bugbear
+]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
