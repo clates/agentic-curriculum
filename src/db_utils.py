@@ -14,6 +14,26 @@ import sqlite3
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
 
+# Cache for column existence check to avoid repeated PRAGMA queries
+_metadata_column_cache: dict[str, bool] = {}
+
+
+def _has_metadata_column(db_file: str) -> bool:
+    """Check if metadata_blob column exists in student_profiles table (cached)."""
+    if db_file in _metadata_column_cache:
+        return _metadata_column_cache[db_file]
+
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("PRAGMA table_info(student_profiles)")
+        columns = {row[1] for row in cursor.fetchall()}
+        has_metadata = "metadata_blob" in columns
+        _metadata_column_cache[db_file] = has_metadata
+        return has_metadata
+    finally:
+        conn.close()
+
 
 def get_student_profile(student_id: str) -> dict | None:
     """
@@ -30,10 +50,7 @@ def get_student_profile(student_id: str) -> dict | None:
     cursor = conn.cursor()
 
     try:
-        # First check if metadata_blob column exists
-        cursor.execute("PRAGMA table_info(student_profiles)")
-        columns = {row[1] for row in cursor.fetchall()}
-        has_metadata = "metadata_blob" in columns
+        has_metadata = _has_metadata_column(DB_FILE)
 
         if has_metadata:
             cursor.execute(
