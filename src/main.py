@@ -13,6 +13,7 @@ from packet_store import (
 )
 from agent import generate_weekly_plan
 from db_utils import create_student, delete_student, get_student_profile, update_student
+from constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
 
 import json
 import logging
@@ -171,6 +172,20 @@ class StudentResponse(BaseModel):
     progress_blob: str | None = None
     plan_rules_blob: str | None = None
     metadata_blob: str | None = None
+class GradeLevelOption(BaseModel):
+    """A grade level option with value and label."""
+
+    value: int
+    label: str
+
+
+class SystemOptionsResponse(BaseModel):
+    """Response model for system configuration options."""
+
+    subjects: list[str]
+    grades: list[GradeLevelOption]
+    worksheet_types: list[str]
+    statuses: list[str]
 
 
 @app.get("/")
@@ -179,7 +194,27 @@ def read_root():
     return {"message": "Hello World"}
 
 
-@app.get("/student/{student_id}", response_model=StudentResponse)
+@app.get("/system/options", response_model=SystemOptionsResponse)
+def get_system_options():
+    """
+    Return valid configuration options for the frontend.
+
+    Returns a JSON object containing:
+    - subjects: List of valid subject names
+    - grades: List of grade level options with value and label
+    - worksheet_types: List of supported worksheet type keys
+    - statuses: List of evaluation status values
+    """
+    grades = [GradeLevelOption(value=k, label=v) for k, v in GRADE_LEVELS.items()]
+    return SystemOptionsResponse(
+        subjects=SUBJECTS,
+        grades=grades,
+        worksheet_types=get_worksheet_types(),
+        statuses=EVALUATION_STATUSES,
+    )
+
+
+@app.get("/student/{student_id}")
 def read_student(student_id: str):
     """
     Get student profile by student_id.
