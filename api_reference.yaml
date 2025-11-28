@@ -6,6 +6,18 @@ endpoints:
     response_body:
       message: "string"
 
+  - path: "/system/options"
+    method: "GET"
+    description: "Return valid configuration options for the frontend (subjects, grades, worksheet types, statuses)."
+    request_body: null
+    response_body:
+      subjects: "list[string]"
+      grades:
+        - value: "integer"
+          label: "string"
+      worksheet_types: "list[string]"
+      statuses: "list[string]"
+
   - path: "/student/{student_id}"
     method: "GET"
     description: "Retrieves student profile, rule blobs, and metadata by student ID."

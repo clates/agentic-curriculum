@@ -27,6 +27,7 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -39,6 +40,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def _project_root_path() -> Path:
