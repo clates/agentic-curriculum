@@ -21,6 +21,46 @@ endpoints:
       - status_code: 404
         detail: "Student not found"
 
+  - method: GET
+    path: /system/options
+    description: Get system configuration options (subjects, grades, worksheet types, statuses)
+    request_body: null
+    response_body:
+      subjects: ["Math", "English", "Science", "History", "ComputerScience"]
+      grades: [{"value": 0, "label": "Kindergarten"}, {"value": 1, "label": "1st Grade"}]
+      worksheet_types: ["mathWorksheet", "readingWorksheet", "vennDiagramWorksheet"]
+      statuses: ["draft", "ready", "archived"]
+
+  - method: POST
+    path: /students/{student_id}/weekly-packets/{packet_id}/feedback
+    description: Submit feedback for a completed weekly packet
+    request_body:
+      mastery_feedback:
+        standard_id_1: "MASTERED|DEVELOPING|NOT_STARTED|BENCHED"
+        standard_id_2: "MASTERED|DEVELOPING|NOT_STARTED|BENCHED"
+      quantity_feedback: -2 # Range: -2 to 2
+    response_body: null # 204 No Content on success
+    errors:
+      - code: 400
+        description: Invalid feedback values or packet not found
+      - code: 404
+        description: Student not found
+
+  - method: GET
+    path: /students/{student_id}/weekly-packets/{packet_id}/feedback
+    description: Retrieve feedback for a weekly packet
+    request_body: null
+    response_body:
+      packet_id: "plan_student_01_2025-11-24"
+      student_id: "student_01"
+      completed_at: "2025-11-29T20:19:37Z"
+      mastery_feedback:
+        standard_id_1: "MASTERED"
+      quantity_feedback: -1
+    errors:
+      - code: 404
+        description: Feedback not found
+
   - path: "/students"
     method: "POST"
     description: "Creates a new student profile with metadata and plan rules."

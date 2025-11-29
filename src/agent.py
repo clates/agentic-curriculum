@@ -657,6 +657,33 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
     if len(standards) == 0:
         raise ValueError(f"No standards found for student {student_id}.")
 
+    # Filter standards by cooldown (feedback mechanism)
+    # Only include standards that have completed their cooldown period
+    try:
+        from feedback_processor import is_standard_eligible
+
+        progress = json.loads(student_profile.get("progress_blob") or "{}")
+        standard_metadata = progress.get("standard_metadata", {})
+        current_time = datetime.utcnow().isoformat() + "Z"
+
+        eligible_standards = [
+            s
+            for s in standards
+            if is_standard_eligible(standard_metadata.get(s.get("standard_id"), {}), current_time)
+        ]
+
+        # If filtering removed all standards, log warning and use all standards
+        if not eligible_standards:
+            print(
+                f"Warning: All standards in cooldown for {student_id}. Using all standards anyway."
+            )
+            eligible_standards = standards
+
+        standards = eligible_standards
+    except Exception as e:
+        # If cooldown filtering fails, continue with all standards
+        print(f"Warning: Failed to filter by cooldown: {e}. Using all standards.")
+
     generation_logger = GenerationLogger(student_id, grade_level, subject)
 
     today = datetime.now()
@@ -669,6 +696,23 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
         {"id": s.get("standard_id"), "description": s.get("description")} for s in standards[:5]
     ]
     available_standards_text = json.dumps(available_standards_preview, indent=2)
+
+    # Get activity bias from quantity feedback
+    quantity_prefs = rules.get("quantity_preferences", {})
+    activity_bias = quantity_prefs.get("activity_bias", 0.0)
+
+    # Calculate suggested base activity count (default ~3 per day)
+    base_activities = 3
+    adjusted_activities = int(base_activities * (1 + activity_bias * 0.5))
+    adjusted_activities = max(1, min(adjusted_activities, 6))  # Clamp to [1, 6]
+
+    # Build activity guidance based on bias
+    if activity_bias < -0.1:
+        activity_guidance = f"Each day should have approximately {adjusted_activities} activities (parent feedback indicates lessons should be shorter)."
+    elif activity_bias > 0.1:
+        activity_guidance = f"Each day should have approximately {adjusted_activities} activities (parent feedback indicates more content is desired)."
+    else:
+        activity_guidance = f"Each day should have approximately {adjusted_activities} activities."
 
     # First pass: Create a weekly overview/scaffold
     # This helps ensure complex standards get multiple days if needed
@@ -689,7 +733,7 @@ Create a weekly plan that:
 2. Complex standards should span multiple days with scaffolding
 3. Simpler standards can be covered in a single day
 4. Each day should build on previous days
-5. Each day's activities should represent roughly one hour of learning time (about 45-60 minutes of instruction, practice, and wrap-up)
+5. {activity_guidance}
 
 Respond with a JSON object in this exact format:
 {{

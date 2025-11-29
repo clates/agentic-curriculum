@@ -51,6 +51,21 @@ def create_database():
     """
     )
 
+    # Create packet_feedback table
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS packet_feedback (
+            feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            packet_id TEXT NOT NULL,
+            student_id TEXT NOT NULL,
+            completed_at TEXT NOT NULL,
+            mastery_feedback_blob TEXT,
+            quantity_feedback INTEGER,
+            FOREIGN KEY (student_id) REFERENCES student_profiles(student_id)
+        )
+    """
+    )
+
     conn.commit()
     conn.close()
     print(f"Database '{DB_FILE}' created successfully with tables.")

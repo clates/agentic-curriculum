@@ -7,13 +7,21 @@ FastAPI application for serving student data from curriculum.db
 from __future__ import annotations
 from packet_store import (
     get_artifact_for_student,
+    get_packet_feedback,
     get_weekly_packet,
     list_packet_artifacts,
     list_weekly_packets,
+    save_packet_feedback,
 )
 from agent import generate_weekly_plan
 from db_utils import create_student, delete_student, get_student_profile, update_student
 from constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
+from feedback_processor import (
+    process_mastery_feedback,
+    process_quantity_feedback,
+    validate_mastery_feedback,
+    validate_quantity_feedback,
+)
 
 import json
 import logging
@@ -534,3 +542,101 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
         filename=file_path.name,
         headers=headers,
     )
+
+
+@app.post("/students/{student_id}/weekly-packets/{packet_id}/feedback", status_code=204)
+def submit_packet_feedback(student_id: str, packet_id: str, request: dict[str, Any]):
+    """
+    Submit feedback for a completed weekly packet.
+
+    Args:
+        student_id: The student ID
+        packet_id: The packet ID
+        request: Feedback data with mastery_feedback and quantity_feedback
+
+    Raises:
+        HTTPException: 400 for validation errors, 404 if packet not found
+    """
+    mastery_feedback = request.get("mastery_feedback")
+    quantity_feedback = request.get("quantity_feedback")
+
+    # Validate feedback
+    try:
+        if mastery_feedback:
+            validate_mastery_feedback(mastery_feedback)
+        if quantity_feedback is not None:
+            validate_quantity_feedback(quantity_feedback)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    # Get current student profile
+    profile = get_student_profile(student_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    # Process feedback and update blobs
+    feedback_date = datetime.utcnow().isoformat() + "Z"
+
+    progress_blob = profile["progress_blob"] or json.dumps(
+        {"mastered_standards": [], "developing_standards": []}
+    )
+    plan_rules_blob = profile["plan_rules_blob"] or json.dumps({})
+
+    if mastery_feedback:
+        progress_blob = process_mastery_feedback(progress_blob, mastery_feedback, feedback_date)
+
+    if quantity_feedback is not None:
+        plan_rules_blob = process_quantity_feedback(
+            plan_rules_blob, quantity_feedback, feedback_date
+        )
+
+    # Update student profile
+    update_student(
+        student_id=student_id,
+        metadata=None,
+        plan_rules=json.loads(plan_rules_blob) if quantity_feedback is not None else None,
+    )
+
+    # Store raw feedback in packet_feedback table
+    # Note: progress_blob update needs a direct db update (not via update_student)
+    try:
+        if mastery_feedback:
+            import sqlite3
+            from db_utils import DB_FILE
+
+            conn = sqlite3.connect(DB_FILE)
+            try:
+                conn.execute(
+                    "UPDATE student_profiles SET progress_blob = ? WHERE student_id = ?",
+                    (progress_blob, student_id),
+                )
+                conn.commit()
+            finally:
+                conn.close()
+
+        save_packet_feedback(student_id, packet_id, mastery_feedback, quantity_feedback)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.get("/students/{student_id}/weekly-packets/{packet_id}/feedback")
+def get_packet_feedback_endpoint(student_id: str, packet_id: str):
+    """
+    Retrieve feedback for a weekly packet.
+
+    Args:
+        student_id: The student ID
+        packet_id: The packet ID
+
+    Returns:
+        Feedback data if it exists
+
+    Raises:
+        HTTPException: 404 if feedback not found
+    """
+    feedback = get_packet_feedback(student_id, packet_id)
+
+    if feedback is None:
+        raise HTTPException(status_code=404, detail="Feedback not found for this packet")
+
+    return feedback

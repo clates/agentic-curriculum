@@ -494,3 +494,79 @@ def get_artifact_for_student(student_id: str, artifact_id: int) -> dict[str, Any
         "metadata": metadata,
         "created_at": row["created_at"],
     }
+
+
+def save_packet_feedback(
+    student_id: str,
+    packet_id: str,
+    mastery_feedback: dict[str, str] | None,
+    quantity_feedback: int | None,
+) -> None:
+    """Save feedback for a weekly packet."""
+    ensure_schema()
+
+    conn = _get_connection()
+    try:
+        # Verify packet exists and belongs to student
+        if not _packet_exists(conn, student_id, packet_id):
+            raise ValueError(f"Packet {packet_id} not found for student {student_id}")
+
+        # Check if feedback already exists
+        existing = conn.execute(
+            "SELECT feedback_id FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
+            (packet_id, student_id),
+        ).fetchone()
+
+        if existing:
+            raise ValueError(f"Feedback already exists for packet {packet_id}")
+
+        # Insert feedback
+        mastery_blob = _json(mastery_feedback) if mastery_feedback else None
+        conn.execute(
+            """
+            INSERT INTO packet_feedback (
+                packet_id,
+                student_id,
+                completed_at,
+                mastery_feedback_blob,
+                quantity_feedback
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (packet_id, student_id, _utc_now(), mastery_blob, quantity_feedback),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_packet_feedback(student_id: str, packet_id: str) -> dict[str, Any] | None:
+    """Retrieve feedback for a weekly packet."""
+    ensure_schema()
+
+    conn = _get_connection()
+    try:
+        row = conn.execute(
+            """
+            SELECT packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback
+            FROM packet_feedback
+            WHERE packet_id = ? AND student_id = ?
+            LIMIT 1
+            """,
+            (packet_id, student_id),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return None
+
+    mastery_blob = row["mastery_feedback_blob"]
+    mastery_feedback = json.loads(mastery_blob) if mastery_blob else None
+
+    return {
+        "packet_id": row["packet_id"],
+        "student_id": row["student_id"],
+        "completed_at": row["completed_at"],
+        "mastery_feedback": mastery_feedback,
+        "quantity_feedback": row["quantity_feedback"],
+    }
