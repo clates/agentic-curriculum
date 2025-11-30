@@ -135,6 +135,7 @@ def update_student(
     student_id: str,
     metadata: dict | None = None,
     plan_rules: dict | None = None,
+    progress: dict | None = None,
 ) -> dict | None:
     """
     Update an existing student profile in the database.
@@ -165,6 +166,9 @@ def update_student(
         current_plan_rules_blob = result[2]
         current_metadata_blob = result[3]
 
+        if progress is not None:
+            current_progress_blob = json.dumps(progress)
+
         # Merge metadata if provided
         if metadata is not None:
             existing_metadata = json.loads(current_metadata_blob) if current_metadata_blob else {}
@@ -178,10 +182,10 @@ def update_student(
         cursor.execute(
             """
             UPDATE student_profiles 
-            SET plan_rules_blob = ?, metadata_blob = ?
+            SET progress_blob = ?, plan_rules_blob = ?, metadata_blob = ?
             WHERE student_id = ?
             """,
-            (current_plan_rules_blob, current_metadata_blob, student_id),
+            (current_progress_blob, current_plan_rules_blob, current_metadata_blob, student_id),
         )
         conn.commit()
 

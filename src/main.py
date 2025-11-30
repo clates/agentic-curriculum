@@ -591,30 +591,17 @@ def submit_packet_feedback(student_id: str, packet_id: str, request: SubmitFeedb
             plan_rules_blob, quantity_feedback, feedback_date
         )
 
-    # Update student profile
-    update_student(
-        student_id=student_id,
-        metadata=None,
-        plan_rules=json.loads(plan_rules_blob) if quantity_feedback is not None else None,
-    )
+    plan_rules_payload = json.loads(plan_rules_blob) if quantity_feedback is not None else None
+    progress_payload = json.loads(progress_blob) if mastery_feedback else None
 
-    # Store raw feedback in packet_feedback table
-    # Note: progress_blob update needs a direct db update (not via update_student)
+    # Update student profile and store raw feedback in packet_feedback
     try:
-        if mastery_feedback:
-            import sqlite3
-            from db_utils import DB_FILE
-
-            conn = sqlite3.connect(DB_FILE)
-            try:
-                conn.execute(
-                    "UPDATE student_profiles SET progress_blob = ? WHERE student_id = ?",
-                    (progress_blob, student_id),
-                )
-                conn.commit()
-            finally:
-                conn.close()
-
+        update_student(
+            student_id=student_id,
+            metadata=None,
+            plan_rules=plan_rules_payload,
+            progress=progress_payload,
+        )
         save_packet_feedback(student_id, packet_id, mastery_feedback, quantity_feedback)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
