@@ -15,6 +15,14 @@ async function handler(
   const { path } = await params;
   const pathname = Array.isArray(path) ? path.join('/') : path;
 
+  // Validate pathname doesn't contain suspicious patterns
+  if (pathname.includes('..') || pathname.startsWith('/')) {
+    return NextResponse.json(
+      { error: 'Invalid path' },
+      { status: 400 }
+    );
+  }
+
   // Construct the backend URL
   const url = new URL(`${BACKEND_URL}/${pathname}`);
   
