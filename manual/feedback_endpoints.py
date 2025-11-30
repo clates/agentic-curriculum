@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Test script for feedback endpoints.
+Manual smoke test for feedback endpoints.
 
-Creates a weekly packet, submits feedback, and retrieves it.
+Creates a weekly packet, submits feedback, and retrieves it. Designed for
+interactive usage against a running API server (not pytest).
 """
 
 import requests
@@ -11,7 +12,7 @@ import sys
 BASE_URL = "http://localhost:8000"
 
 
-def test_feedback_workflow():
+def test_feedback_workflow() -> bool:
     print("=== Testing Feedback Workflow ===\n")
 
     # Step 1: Verify student exists
@@ -83,10 +84,14 @@ def test_feedback_workflow():
         return False
 
 
-if __name__ == "__main__":
+def main() -> int:
     try:
         success = test_feedback_workflow()
-        sys.exit(0 if success else 1)
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        sys.exit(1)
+        return 0 if success else 1
+    except Exception as exc:  # pragma: no cover - manual script
+        print(f"❌ Error: {exc}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

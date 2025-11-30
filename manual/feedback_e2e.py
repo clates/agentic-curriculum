@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-End-to-end test of feedback workflow.
-Requires OPENAI_API_KEY to be set.
+Manual end-to-end feedback workflow test.
+Requires OPENAI_API_KEY and a running FastAPI server.
 """
 
-import requests
 import json
+import requests
 import sqlite3
 import sys
 
@@ -13,8 +13,8 @@ BASE_URL = "http://localhost:8000"
 DB_PATH = "curriculum.db"
 
 
-def check_blobs(label):
-    """Print current blob state from database."""
+def check_blobs(label: str) -> None:
+    """Print current blob state from database for manual inspection."""
     print(f"\n--- {label} ---")
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.execute(
@@ -39,7 +39,7 @@ def check_blobs(label):
         print(f"  quantity_preferences: {plan_rules_blob['quantity_preferences']}")
 
 
-def main():
+def main() -> bool:
     print("=== End-to-End Feedback Test ===\n")
 
     # Check initial state
@@ -125,8 +125,8 @@ if __name__ == "__main__":
     try:
         success = main()
         sys.exit(0 if success else 1)
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
+    except Exception as exc:  # pragma: no cover - manual script
+        print(f"\n❌ Error: {exc}")
         import traceback
 
         traceback.print_exc()
