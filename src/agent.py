@@ -4,7 +4,7 @@ agent.py
 LLM-based agent for generating lesson plans using OpenAI API.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 import os
 import sys
 import json
@@ -664,7 +664,7 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
 
         progress = json.loads(student_profile.get("progress_blob") or "{}")
         standard_metadata = progress.get("standard_metadata", {})
-        current_time = datetime.utcnow().isoformat() + "Z"
+        current_time = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
         eligible_standards = [
             s

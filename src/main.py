@@ -69,7 +69,7 @@ def _write_weekly_plan_log(log_context: dict) -> None:
     """Persist the request/response payload for a weekly plan call."""
     log_dir = _log_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S%fZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
     student_id = log_context.get("request", {}).get("student_id", "")
     safe_student_id = _sanitize_for_filename(student_id)
     log_id = uuid4().hex[:8]
@@ -332,7 +332,7 @@ def create_weekly_plan(request: PlanRequest):
         HTTPException: 400 if there's an error generating the plan
     """
     request_payload = request.dict()
-    start_time = datetime.utcnow()
+    start_time = datetime.now(UTC)
     log_context = {
         "timestamp_utc": start_time.isoformat(timespec="microseconds") + "Z",
         "request": request_payload,
@@ -355,7 +355,7 @@ def create_weekly_plan(request: PlanRequest):
         log_context["status"] = "server_error"
         raise HTTPException(status_code=500, detail=f"Error generating plan: {str(e)}") from e
     finally:
-        duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        duration_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
         log_context["duration_ms"] = duration_ms
         _write_weekly_plan_log(log_context)
 
@@ -576,7 +576,7 @@ def submit_packet_feedback(student_id: str, packet_id: str, request: SubmitFeedb
         raise HTTPException(status_code=404, detail="Student not found")
 
     # Process feedback and update blobs
-    feedback_date = datetime.utcnow().isoformat() + "Z"
+    feedback_date = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
     progress_blob = profile["progress_blob"] or json.dumps(
         {"mastered_standards": [], "developing_standards": []}

@@ -5,7 +5,7 @@ Module for processing parent feedback on weekly packets.
 Handles mastery feedback (per-standard) and quantity feedback (overall lesson density).
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Dict, Any
 import json
 
@@ -195,7 +195,7 @@ def is_standard_eligible(standard_metadata: Dict[str, Any], reference_date: str 
         return True
 
     if reference_date is None:
-        reference_date = datetime.utcnow().isoformat()
+        reference_date = datetime.now(UTC).isoformat()
 
     last_seen_dt = datetime.fromisoformat(last_seen.replace("Z", "+00:00"))
     reference_dt = datetime.fromisoformat(reference_date.replace("Z", "+00:00"))
