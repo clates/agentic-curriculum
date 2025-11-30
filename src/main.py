@@ -22,6 +22,7 @@ from feedback_processor import (
     validate_mastery_feedback,
     validate_quantity_feedback,
 )
+from feedback_models import FeedbackResponse, SubmitFeedbackRequest
 
 import json
 import logging
@@ -545,7 +546,7 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
 
 
 @app.post("/students/{student_id}/weekly-packets/{packet_id}/feedback", status_code=204)
-def submit_packet_feedback(student_id: str, packet_id: str, request: dict[str, Any]):
+def submit_packet_feedback(student_id: str, packet_id: str, request: SubmitFeedbackRequest):
     """
     Submit feedback for a completed weekly packet.
 
@@ -557,8 +558,8 @@ def submit_packet_feedback(student_id: str, packet_id: str, request: dict[str, A
     Raises:
         HTTPException: 400 for validation errors, 404 if packet not found
     """
-    mastery_feedback = request.get("mastery_feedback")
-    quantity_feedback = request.get("quantity_feedback")
+    mastery_feedback = request.mastery_feedback
+    quantity_feedback = request.quantity_feedback
 
     # Validate feedback
     try:
@@ -619,7 +620,10 @@ def submit_packet_feedback(student_id: str, packet_id: str, request: dict[str, A
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-@app.get("/students/{student_id}/weekly-packets/{packet_id}/feedback")
+@app.get(
+    "/students/{student_id}/weekly-packets/{packet_id}/feedback",
+    response_model=FeedbackResponse,
+)
 def get_packet_feedback_endpoint(student_id: str, packet_id: str):
     """
     Retrieve feedback for a weekly packet.
@@ -639,4 +643,4 @@ def get_packet_feedback_endpoint(student_id: str, packet_id: str):
     if feedback is None:
         raise HTTPException(status_code=404, detail="Feedback not found for this packet")
 
-    return feedback
+    return FeedbackResponse(**feedback)
