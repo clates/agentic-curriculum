@@ -92,7 +92,7 @@ export default function PlansPage() {
 
   const handleDownloadArtifact = (downloadUrl: string) => {
     // downloadUrl is already the correct path like /students/{id}/worksheet-artifacts/{artifact_id}
-    const fullUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${downloadUrl}`;
+    const fullUrl = `/api${downloadUrl}`;
     window.open(fullUrl, '_blank');
   };
 

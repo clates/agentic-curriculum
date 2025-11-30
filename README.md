@@ -99,25 +99,32 @@ You'll receive a complete 5-day lesson plan with objectives, materials, and proc
 
 ## 🐳 Run with Docker
 
-Prefer containers? The repo ships with a `Dockerfile` that bakes in dependencies, ingests standards, and starts Uvicorn automatically.
+The application uses a multi-stage build with both frontend (Next.js) and backend (FastAPI). All API requests are proxied through Next.js, eliminating CORS issues and allowing single-port deployment.
 
 ```bash
 # Build the image (run from repo root)
 docker build -t agentic-curriculum .
 
-# Run the API (exposes port 8000 by default)
-docker run --rm -p 8000:8000 \
+# Run the application (exposes port 3000 only)
+docker run --rm -p 3000:3000 \
   -e OPENAI_API_KEY="your-api-key" \
   agentic-curriculum
 ```
 
+**Access the application:**
+- Frontend: `http://localhost:3000`
+- API (proxied through Next.js): `http://localhost:3000/api/*`
+
 Notes:
 
-- `OPENAI_API_KEY` must be provided at runtime (and any other optional env vars such as `OPENAI_BASE_URL` or `OPENAI_MODEL`).
-- The image executes `python src/ingest_standards.py` during build so `curriculum.db` is ready before the server boots.
-- Container logs include the structured request logs written to `/app/logs` inside the image.
+- **Port 3000 only**: The frontend runs on port 3000 and proxies all `/api/*` requests to the backend (port 8000 internal only)
+- **No CORS issues**: All requests are same-origin through the Next.js proxy
+- `OPENAI_API_KEY` must be provided at runtime (and any other optional env vars such as `OPENAI_BASE_URL` or `OPENAI_MODEL`)
+- `BACKEND_URL` can optionally be set if the backend runs on a different internal URL (defaults to `http://localhost:8000`)
+- The image executes `python src/ingest_standards.py` during build so `curriculum.db` is ready before the server boots
+- Container logs include the structured request logs written to `/app/logs` inside the image
 
----
+
 
 ## Configuration
 
@@ -130,6 +137,7 @@ The system uses environment variables for configuration:
 | `OPENAI_API_KEY`  | **Yes**  | None            | Your OpenAI API key for generating lesson plans              |
 | `OPENAI_BASE_URL` | No       | None            | Custom API base URL (e.g., for Azure OpenAI or local models) |
 | `OPENAI_MODEL`    | No       | `gpt-3.5-turbo` | The OpenAI model to use for generation                       |
+| `BACKEND_URL`     | No       | `http://localhost:8000` | Backend URL for Next.js API proxy (server-side only)  |
 
 **Setting environment variables:**
 
