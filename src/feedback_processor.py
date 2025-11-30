@@ -6,7 +6,7 @@ Handles mastery feedback (per-standard) and quantity feedback (overall lesson de
 """
 
 from datetime import UTC, datetime
-from typing import Dict, Any
+from typing import Any
 import json
 
 
@@ -20,7 +20,7 @@ BENCHED_COOLDOWN_WEEKS = 8
 ACTIVITY_BIAS_CLAMP = 1.0
 
 
-def validate_mastery_feedback(mastery_feedback: Dict[str, str]) -> None:
+def validate_mastery_feedback(mastery_feedback: dict[str, str]) -> None:
     """
     Validate mastery feedback ratings.
 
@@ -55,7 +55,7 @@ def validate_quantity_feedback(quantity_feedback: int) -> None:
 
 
 def process_mastery_feedback(
-    progress_blob: str, mastery_feedback: Dict[str, str], feedback_date: str
+    progress_blob: str, mastery_feedback: dict[str, str], feedback_date: str
 ) -> str:
     """
     Update progress_blob based on mastery feedback.
@@ -174,7 +174,7 @@ def process_quantity_feedback(
     return json.dumps(plan_rules)
 
 
-def is_standard_eligible(standard_metadata: Dict[str, Any], reference_date: str = None) -> bool:
+def is_standard_eligible(standard_metadata: dict[str, Any], reference_date: str = None) -> bool:
     """
     Check if a standard is eligible to appear in a lesson based on cooldown.
 
