@@ -57,8 +57,8 @@ RUN python src/ingest_standards.py
 # Ensure application files are owned by the non-root user
 RUN chown -R appuser:appuser /app
 
-# Expose backend and frontend ports
-EXPOSE 8000 3000
+# Expose only frontend port (backend is proxied through Next.js API routes)
+EXPOSE 3000
 
 USER appuser
 
