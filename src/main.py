@@ -7,13 +7,22 @@ FastAPI application for serving student data from curriculum.db
 from __future__ import annotations
 from packet_store import (
     get_artifact_for_student,
+    get_packet_feedback,
     get_weekly_packet,
     list_packet_artifacts,
     list_weekly_packets,
+    save_packet_feedback,
 )
 from agent import generate_weekly_plan
 from db_utils import create_student, delete_student, get_student_profile, update_student
 from constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
+from feedback_processor import (
+    process_mastery_feedback,
+    process_quantity_feedback,
+    validate_mastery_feedback,
+    validate_quantity_feedback,
+)
+from feedback_models import FeedbackResponse, SubmitFeedbackRequest
 
 import json
 import logging
@@ -60,7 +69,7 @@ def _write_weekly_plan_log(log_context: dict) -> None:
     """Persist the request/response payload for a weekly plan call."""
     log_dir = _log_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S%fZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
     student_id = log_context.get("request", {}).get("student_id", "")
     safe_student_id = _sanitize_for_filename(student_id)
     log_id = uuid4().hex[:8]
@@ -323,7 +332,7 @@ def create_weekly_plan(request: PlanRequest):
         HTTPException: 400 if there's an error generating the plan
     """
     request_payload = request.dict()
-    start_time = datetime.utcnow()
+    start_time = datetime.now(UTC)
     log_context = {
         "timestamp_utc": start_time.isoformat(timespec="microseconds") + "Z",
         "request": request_payload,
@@ -346,7 +355,7 @@ def create_weekly_plan(request: PlanRequest):
         log_context["status"] = "server_error"
         raise HTTPException(status_code=500, detail=f"Error generating plan: {str(e)}") from e
     finally:
-        duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        duration_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
         log_context["duration_ms"] = duration_ms
         _write_weekly_plan_log(log_context)
 
@@ -534,3 +543,91 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
         filename=file_path.name,
         headers=headers,
     )
+
+
+@app.post("/students/{student_id}/weekly-packets/{packet_id}/feedback", status_code=204)
+def submit_packet_feedback(student_id: str, packet_id: str, request: SubmitFeedbackRequest):
+    """
+    Submit feedback for a completed weekly packet.
+
+    Args:
+        student_id: The student ID
+        packet_id: The packet ID
+        request: Feedback data with mastery_feedback and quantity_feedback
+
+    Raises:
+        HTTPException: 400 for validation errors, 404 if packet not found
+    """
+    mastery_feedback = request.mastery_feedback
+    quantity_feedback = request.quantity_feedback
+
+    # Validate feedback
+    try:
+        if mastery_feedback:
+            validate_mastery_feedback(mastery_feedback)
+        if quantity_feedback is not None:
+            validate_quantity_feedback(quantity_feedback)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    # Get current student profile
+    profile = get_student_profile(student_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    # Process feedback and update blobs
+    feedback_date = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+    progress_blob = profile["progress_blob"] or json.dumps(
+        {"mastered_standards": [], "developing_standards": []}
+    )
+    plan_rules_blob = profile["plan_rules_blob"] or json.dumps({})
+
+    if mastery_feedback:
+        progress_blob = process_mastery_feedback(progress_blob, mastery_feedback, feedback_date)
+
+    if quantity_feedback is not None:
+        plan_rules_blob = process_quantity_feedback(
+            plan_rules_blob, quantity_feedback, feedback_date
+        )
+
+    plan_rules_payload = json.loads(plan_rules_blob) if quantity_feedback is not None else None
+    progress_payload = json.loads(progress_blob) if mastery_feedback else None
+
+    # Update student profile and store raw feedback in packet_feedback
+    try:
+        update_student(
+            student_id=student_id,
+            metadata=None,
+            plan_rules=plan_rules_payload,
+            progress=progress_payload,
+        )
+        save_packet_feedback(student_id, packet_id, mastery_feedback, quantity_feedback)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.get(
+    "/students/{student_id}/weekly-packets/{packet_id}/feedback",
+    response_model=FeedbackResponse,
+)
+def get_packet_feedback_endpoint(student_id: str, packet_id: str):
+    """
+    Retrieve feedback for a weekly packet.
+
+    Args:
+        student_id: The student ID
+        packet_id: The packet ID
+
+    Returns:
+        Feedback data if it exists
+
+    Raises:
+        HTTPException: 404 if feedback not found
+    """
+    feedback = get_packet_feedback(student_id, packet_id)
+
+    if feedback is None:
+        raise HTTPException(status_code=404, detail="Feedback not found for this packet")
+
+    return FeedbackResponse(**feedback)
