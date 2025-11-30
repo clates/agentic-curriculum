@@ -5,7 +5,7 @@ FastAPI application for serving student data from curriculum.db
 """
 
 from __future__ import annotations
-from packet_store import (
+from src.packet_store import (
     get_artifact_for_student,
     get_packet_feedback,
     get_weekly_packet,
@@ -13,16 +13,16 @@ from packet_store import (
     list_weekly_packets,
     save_packet_feedback,
 )
-from agent import generate_weekly_plan
-from db_utils import create_student, delete_student, get_student_profile, update_student
-from constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
-from feedback_processor import (
+from src.agent import generate_weekly_plan
+from src.db_utils import create_student, delete_student, get_student_profile, update_student
+from src.constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
+from src.feedback_processor import (
     process_mastery_feedback,
     process_quantity_feedback,
     validate_mastery_feedback,
     validate_quantity_feedback,
 )
-from feedback_models import FeedbackResponse, SubmitFeedbackRequest
+from src.feedback_models import FeedbackResponse, SubmitFeedbackRequest
 
 import json
 import logging
@@ -254,6 +254,20 @@ def read_student(student_id: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
     return profile
+
+
+@app.get("/students", response_model=list[StudentResponse])
+def list_students_endpoint():
+    """
+    List all student profiles.
+
+    Returns:
+        A list of all student profile data
+    """
+    from db_utils import list_all_students
+
+    students = list_all_students()
+    return students
 
 
 @app.post("/students", response_model=StudentResponse, status_code=201)

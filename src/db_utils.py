@@ -80,6 +80,48 @@ def get_student_profile(student_id: str) -> dict | None:
         conn.close()
 
 
+def list_all_students() -> list[dict]:
+    """
+    Query all student profiles from the database.
+
+    Returns:
+        A list of dictionaries with student data
+        Each dictionary format: {"student_id": "...", "progress_blob": "...", "plan_rules_blob": "...", "metadata_blob": "..."}
+    """
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+
+    try:
+        has_metadata = _has_metadata_column(DB_FILE)
+
+        if has_metadata:
+            cursor.execute(
+                "SELECT student_id, progress_blob, plan_rules_blob, metadata_blob FROM student_profiles"
+            )
+        else:
+            cursor.execute(
+                "SELECT student_id, progress_blob, plan_rules_blob FROM student_profiles"
+            )
+        results = cursor.fetchall()
+
+        students = []
+        for result in results:
+            profile = {
+                "student_id": result[0],
+                "progress_blob": result[1],
+                "plan_rules_blob": result[2],
+            }
+            if has_metadata:
+                profile["metadata_blob"] = result[3]
+            else:
+                profile["metadata_blob"] = None
+            students.append(profile)
+
+        return students
+    finally:
+        conn.close()
+
+
 def create_student(student_id: str, metadata: dict, plan_rules: dict) -> dict:
     """
     Create a new student profile in the database.
