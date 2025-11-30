@@ -68,7 +68,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <div className="min-h-screen bg-background">
       {/* Navigation Bar */}
       <Navigation />
 
@@ -238,5 +239,19 @@ export default function Dashboard() {
         </button>
       </main>
     </div>
-  );
+
+    {/* Generate Plan Modal */}
+    <GeneratePlanModal
+      isOpen={generateModalOpen}
+      onClose={() => {
+        setGenerateModalOpen(false);
+        setSelectedStudent(null);
+      }}
+      preSelectedStudent={selectedStudent || undefined}
+      onSuccess={() => {
+        // TODO: Show success toast
+        console.log('Plan generation started successfully!');
+      }}
+    />
+  </>;
 }
