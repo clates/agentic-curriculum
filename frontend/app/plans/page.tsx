@@ -4,18 +4,24 @@ import { useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, Button, Badge, Modal } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
-import { usePendingPackets, useCompletedPackets } from '@/lib/hooks';
-import { plansApi } from '@/lib/api';
+import { usePendingPackets, useCompletedPackets, useStudents } from '@/lib/hooks';
+import { plansApi, parseMetadata } from '@/lib/api';
+import { GeneratePlanModal } from '@/components/GeneratePlanModal';
 
 export default function PlansPage() {
   const { packets: pendingPackets, isLoading: pendingLoading } = usePendingPackets();
   const { packets: completedPackets, isLoading: completedLoading } = useCompletedPackets();
+  const { data: students } = useStudents();
+  
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [planDetailOpen, setPlanDetailOpen] = useState(false);
   const [selectedPacket, setSelectedPacket] = useState<any>(null);
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [masteryRating, setMasteryRating] = useState<string | null>(null);
   const [quantityRating, setQuantityRating] = useState<string | null>(null);
+  
+  // Modal state for plan generation
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -135,7 +141,15 @@ export default function PlansPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-foreground mb-2">Weekly Plans</h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-semibold text-foreground">Weekly Plans</h1>
+            <Button 
+              onClick={() => setGenerateModalOpen(true)}
+              className="bg-primary-600 hover:bg-primary-700"
+            >
+              Generate New Plan
+            </Button>
+          </div>
           <p className="text-neutral-600">Review lesson plans and provide feedback to improve future lessons</p>
         </div>
 
@@ -613,6 +627,21 @@ export default function PlansPage() {
           </div>
         </Modal>
       )}
+
+      {/* Generate Plan Modal */}
+      <GeneratePlanModal
+        isOpen={generateModalOpen}
+        onClose={() => setGenerateModalOpen(false)}
+        students={(students || []).map(s => ({
+          id: s.student_id,
+          name: parseMetadata(s.metadata_blob)?.name || 'Unknown',
+          grade: 0, // TODO: Extract from student metadata
+        }))}
+        onSuccess={() => {
+          // TODO: Show success toast
+          console.log('Plan generation started successfully!');
+        }}
+      />
     </div>
   );
 }
