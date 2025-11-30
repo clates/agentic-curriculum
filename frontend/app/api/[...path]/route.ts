@@ -11,7 +11,7 @@ async function handler(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
-  // In Next.js 16, params is a Promise
+  // In Next.js 15+, params is a Promise
   const { path } = await params;
   const pathname = Array.isArray(path) ? path.join('/') : path;
 
@@ -24,18 +24,21 @@ async function handler(
   });
 
   try {
+    // Build request headers - only forward if present
+    const headers: HeadersInit = {};
+    if (request.headers.get('Content-Type')) {
+      headers['Content-Type'] = request.headers.get('Content-Type')!;
+    }
+    if (request.headers.get('Authorization')) {
+      headers['Authorization'] = request.headers.get('Authorization')!;
+    }
+
     // Forward the request to the backend
     const backendResponse = await fetch(url.toString(), {
       method: request.method,
-      headers: {
-        'Content-Type': request.headers.get('Content-Type') || 'application/json',
-        // Forward other relevant headers
-        ...(request.headers.get('Authorization') && {
-          Authorization: request.headers.get('Authorization')!,
-        }),
-      },
-      // Forward body for POST, PUT, PATCH, DELETE
-      ...(request.method !== 'GET' && request.method !== 'HEAD' && {
+      headers,
+      // Only include body for requests that can have one
+      ...(request.body && request.method !== 'GET' && request.method !== 'HEAD' && {
         body: await request.text(),
       }),
     });
@@ -43,12 +46,40 @@ async function handler(
     // Get the response body
     const data = await backendResponse.text();
 
-    // Return the response with the same status and headers
+    // Build response headers - forward all important headers from backend
+    const responseHeaders: HeadersInit = {};
+    
+    // Forward Content-Type if present (critical for file downloads)
+    const contentType = backendResponse.headers.get('Content-Type');
+    if (contentType) {
+      responseHeaders['Content-Type'] = contentType;
+    }
+    
+    // Forward other important headers for file downloads and caching
+    const contentDisposition = backendResponse.headers.get('Content-Disposition');
+    if (contentDisposition) {
+      responseHeaders['Content-Disposition'] = contentDisposition;
+    }
+    
+    const contentLength = backendResponse.headers.get('Content-Length');
+    if (contentLength) {
+      responseHeaders['Content-Length'] = contentLength;
+    }
+    
+    const cacheControl = backendResponse.headers.get('Cache-Control');
+    if (cacheControl) {
+      responseHeaders['Cache-Control'] = cacheControl;
+    }
+    
+    const etag = backendResponse.headers.get('ETag');
+    if (etag) {
+      responseHeaders['ETag'] = etag;
+    }
+
+    // Return the response with the same status and forwarded headers
     return new NextResponse(data, {
       status: backendResponse.status,
-      headers: {
-        'Content-Type': backendResponse.headers.get('Content-Type') || 'application/json',
-      },
+      headers: responseHeaders,
     });
   } catch (error) {
     console.error('Backend proxy error:', error);
