@@ -56,7 +56,22 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// API functions
+// System configuration API
+export interface SystemOptions {
+  subjects: string[];
+  grades: { value: number; label: string }[];
+  worksheet_types: string[];
+  statuses: string[];
+}
+
+export const systemApi = {
+  getOptions: async (): Promise<SystemOptions> => {
+    const { data } = await apiClient.get('/system/options');
+    return data;
+  },
+};
+
+// Students API
 export const studentsApi = {
   listStudents: async (): Promise<StudentProfile[]> => {
     const { data } = await apiClient.get('/students');
@@ -174,5 +189,14 @@ export const plansApi = {
   downloadArtifact: (path: string): string => {
     // This is now just for legacy - we should use artifact IDs from worksheets endpoint
     return `${API_BASE_URL}/artifact?path=${encodeURIComponent(path)}`;
+  },
+
+  generateWeeklyPlan: async (payload: {
+    student_id: string;
+    grade_level: number;
+    subject: string;
+  }): Promise<WeeklyPacketDetail> => {
+    const { data } = await apiClient.post('/generate_weekly_plan', payload);
+    return data;
   },
 };

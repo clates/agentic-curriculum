@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { studentsApi, parseMetadata, parseProgress, StudentProfile, WeeklyPacketSummary } from '@/lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { studentsApi, systemApi, plansApi, parseMetadata, parseProgress } from '@/lib/api';
 
 export interface EnrichedStudent {
   id: string;
@@ -138,3 +138,27 @@ export function useCompletedPackets() {
 
   return { packets: completedPackets, isLoading, error };
 }
+
+// Get system options (subjects, grades, etc.)
+export function useSystemOptions() {
+  return useQuery({
+    queryKey: ['system-options'],
+    queryFn: systemApi.getOptions,
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+  });
+}
+
+// Generate weekly plan mutation
+export function useGenerateWeeklyPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: plansApi.generateWeeklyPlan,
+    onSuccess: () => {
+      // Invalidate cached packet lists so they refresh
+      queryClient.invalidateQueries({ queryKey: ['all-weekly-packets'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-packets-stats'] });
+    },
+  });
+}
+
