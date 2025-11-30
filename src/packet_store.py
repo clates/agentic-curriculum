@@ -110,6 +110,17 @@ def ensure_schema() -> None:
         CREATE INDEX IF NOT EXISTS idx_daily_lessons_packet
         ON daily_lessons(packet_id)
         """,
+        """
+        CREATE TABLE IF NOT EXISTS packet_feedback (
+            feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            packet_id TEXT NOT NULL,
+            student_id TEXT NOT NULL,
+            completed_at TEXT NOT NULL,
+            mastery_feedback_blob TEXT,
+            quantity_feedback INTEGER,
+            FOREIGN KEY(packet_id) REFERENCES weekly_packets(packet_id) ON DELETE CASCADE
+        )
+        """,
     ]
 
     conn = _get_connection()
