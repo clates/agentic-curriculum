@@ -31,24 +31,31 @@ endpoints:
       worksheet_types: ["mathWorksheet", "readingWorksheet", "vennDiagramWorksheet"]
       statuses: ["draft", "ready", "archived"]
 
-  - method: POST
-    path: /students/{student_id}/weekly-packets/{packet_id}/feedback
-    description: Submit feedback for a completed weekly packet
+  - path: /students/{student_id}/weekly-packets/{packet_id}/feedback
+    method: POST
+    description: Submit feedback for a completed weekly packet.
+    path_parameters:
+      student_id: "string"
+      packet_id: "string"
     request_body:
       mastery_feedback:
         standard_id_1: "MASTERED|DEVELOPING|NOT_STARTED|BENCHED"
         standard_id_2: "MASTERED|DEVELOPING|NOT_STARTED|BENCHED"
       quantity_feedback: -2 # Range: -2 to 2
-    response_body: null # 204 No Content on success
-    errors:
-      - code: 400
-        description: Invalid feedback values or packet not found
-      - code: 404
-        description: Student not found
+    response_body: null
+    success_status_code: 204
+    error_responses:
+      - status_code: 400
+        detail: "Invalid feedback values or packet not found"
+      - status_code: 404
+        detail: "Student not found"
 
-  - method: GET
-    path: /students/{student_id}/weekly-packets/{packet_id}/feedback
-    description: Retrieve feedback for a weekly packet
+  - path: /students/{student_id}/weekly-packets/{packet_id}/feedback
+    method: GET
+    description: Retrieve previously submitted feedback for a weekly packet.
+    path_parameters:
+      student_id: "string"
+      packet_id: "string"
     request_body: null
     response_body:
       packet_id: "plan_student_01_2025-11-24"
@@ -57,9 +64,9 @@ endpoints:
       mastery_feedback:
         standard_id_1: "MASTERED"
       quantity_feedback: -1
-    errors:
-      - code: 404
-        description: Feedback not found
+    error_responses:
+      - status_code: 404
+        detail: "Feedback not found"
 
   - path: "/students"
     method: "POST"

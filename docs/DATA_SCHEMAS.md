@@ -30,8 +30,9 @@ Tracks the student's mastery of educational standards.
 - `standard_metadata` (Dict[str, Object], optional): Per-standard tracking for feedback and cooldown.
   - `last_seen` (str): ISO timestamp when standard was last used in a lesson.
   - `last_feedback` (str): Most recent feedback rating.
-  - `cooldown_weeks` (int): Number of weeks before standard can appear again.
+  - `cooldown_weeks` (int): Number of weeks before the agent may surface that standard again.
   - `feedback_history` (List[Object]): Array of all feedback submissions for this standard.
+  - _Usage_: The weekly plan generator consults `cooldown_weeks` when filtering candidate standards so that recently mastered or benched standards respect parent input.
 
 **Example:**
 ```json
@@ -90,6 +91,7 @@ Contains configuration and preferences for generating lesson plans. This control
 - `quantity_preferences` (Object, optional): Configuration for lesson quantity based on parent feedback.
     - `activity_bias` (float): Range -1.0 to 1.0. Negative values reduce activity count, positive increases.
     - `feedback_history` (List[Object]): Array of all quantity feedback submissions.
+  - _Usage_: The agent scales the “activities per day” guidance using `activity_bias`, so repeated feedback immediately adjusts future lesson density.
 
 **Example:**
 ```json
