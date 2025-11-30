@@ -253,5 +253,6 @@ export default function Dashboard() {
         console.log('Plan generation started successfully!');
       }}
     />
-  </>;
+  </>
+  );
 }
