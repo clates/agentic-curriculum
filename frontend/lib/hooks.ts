@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { studentsApi, systemApi, plansApi, parseMetadata, parseProgress, StudentProfile, WeeklyPacketSummary } from '@/lib/api';
+import { studentsApi, systemApi, plansApi, parseMetadata, parseProgress } from '@/lib/api';
 
 export interface EnrichedStudent {
   id: string;

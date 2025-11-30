@@ -72,7 +72,6 @@ export function GeneratePlanModal({
     }
   };
 
-  const selectedStudent = preSelectedStudent || students.find(s => s.id === selectedStudentId);
   const canSubmit = selectedStudentId && subject && !generateMutation.isPending;
 
   return (
@@ -131,7 +130,7 @@ export function GeneratePlanModal({
               required
             >
               <option value="">Select a subject...</option>
-              {systemOptions?.subjects.map(subj => (
+              {(systemOptions?.subjects || []).map(subj => (
                 <option key={subj} value={subj}>
                   {subj}
                 </option>
@@ -145,19 +144,23 @@ export function GeneratePlanModal({
           <label htmlFor="grade" className="block text-sm font-medium text-neutral-700 mb-2">
             Grade Level
           </label>
-          <select
-            id="grade"
-            value={gradeLevel}
-            onChange={(e) => setGradeLevel(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-            required
-          >
-            {systemOptions?.grades.map(grade => (
-              <option key={grade.value} value={grade.value}>
-                {grade.label}
-              </option>
-            ))}
-          </select>
+          {optionsLoading ? (
+            <div className="h-10 bg-neutral-100 rounded animate-pulse" />
+          ) : (
+            <select
+              id="grade"
+              value={gradeLevel}
+              onChange={(e) => setGradeLevel(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              required
+            >
+              {(systemOptions?.grades || []).map(grade => (
+                <option key={grade.value} value={grade.value}>
+                  {grade.label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Error Display */}

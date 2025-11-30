@@ -40,10 +40,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       
       {/* Toast Container */}
-      <div className="fixed bottom-4 right-4 z-50 space-y-2">
+      <div 
+        className="fixed bottom-4 right-4 z-50 space-y-2"
+        role="region"
+        aria-live="polite"
+        aria-label="Notifications"
+      >
         {toasts.map(toast => (
           <div
             key={toast.id}
+            role="alert"
             className={`
               min-w-80 px-4 py-3 rounded-lg shadow-lg
               transform transition-all duration-300 ease-in-out

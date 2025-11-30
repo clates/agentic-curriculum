@@ -640,7 +640,7 @@ export default function PlansPage() {
           grade: 0, // TODO: Extract from student metadata
         }))}
         onSuccess={() => {
-          showToast('Plan is being generated! Go to Plans page to view progress.', 'success');
+          showToast('Plan is being generated! The page will refresh when complete.', 'success');
         }}
       />
     </div>
