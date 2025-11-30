@@ -1,12 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, Button, Badge } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
-import { useEnrichedStudents, useWeeklyPacketsStats } from '@/lib/hooks';
+import { useEnrichedStudents, useWeeklyPacketsStats, usePendingPackets } from '@/lib/hooks';
+import { GeneratePlanModal } from '@/components/GeneratePlanModal';
 
 export default function Dashboard() {
   const { students, isLoading: studentsLoading, error: studentsError } = useEnrichedStudents();
   const { data: stats, isLoading: statsLoading } = useWeeklyPacketsStats();
+  const { packets: pendingPackets } = usePendingPackets();
+  
+  const [generateModalOpen, setGenerateModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string; grade: number } | null>(null);
 
   const progressPercentage = (mastered: number, total: number) => {
     if (total === 0) return 0;
@@ -184,10 +190,37 @@ export default function Dashboard() {
                     </p>
                   </div>
 
-                  {/* View Progress Button */}
-                  <Button variant="secondary" size="md" className="w-full">
-                    View Progress
-                  </Button>
+                  {/* Action Button */}
+                  {(() => {
+                    // Check if this student has pending packets
+                    const hasPendingPacket = pendingPackets?.some(p => p.student_id === student.id);
+                    
+                    if (hasPendingPacket) {
+                      return (
+                        <Button variant="primary" size="md" className="w-full">
+                          Submit Feedback
+                        </Button>
+                      );
+                    } else {
+                      return (
+                        <Button 
+                          variant="secondary" 
+                          size="md" 
+                          className="w-full"
+                          onClick={() => {
+                            setSelectedStudent({
+                              id: student.id,
+                              name: student.name,
+                              grade: 0, // TODO: extract from student metadata
+                            });
+                            setGenerateModalOpen(true);
+                          }}
+                        >
+                          Generate Plan
+                        </Button>
+                      );
+                    }
+                  })()}
                 </div>
               </Card>
             ))}
