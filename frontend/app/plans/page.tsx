@@ -7,11 +7,13 @@ import { Navigation } from '@/components/Navigation';
 import { usePendingPackets, useCompletedPackets, useStudents } from '@/lib/hooks';
 import { plansApi, parseMetadata } from '@/lib/api';
 import { GeneratePlanModal } from '@/components/GeneratePlanModal';
+import { useToast } from '@/components/ToastProvider';
 
 export default function PlansPage() {
   const { packets: pendingPackets, isLoading: pendingLoading } = usePendingPackets();
   const { packets: completedPackets, isLoading: completedLoading } = useCompletedPackets();
   const { data: students } = useStudents();
+  const { showToast } = useToast();
   
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [planDetailOpen, setPlanDetailOpen] = useState(false);
@@ -638,8 +640,7 @@ export default function PlansPage() {
           grade: 0, // TODO: Extract from student metadata
         }))}
         onSuccess={() => {
-          // TODO: Show success toast
-          console.log('Plan generation started successfully!');
+          showToast('Plan is being generated! Go to Plans page to view progress.', 'success');
         }}
       />
     </div>

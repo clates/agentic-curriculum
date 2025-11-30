@@ -5,11 +5,13 @@ import { Card, Button, Badge } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
 import { useEnrichedStudents, useWeeklyPacketsStats, usePendingPackets } from '@/lib/hooks';
 import { GeneratePlanModal } from '@/components/GeneratePlanModal';
+import { useToast } from '@/components/ToastProvider';
 
 export default function Dashboard() {
   const { students, isLoading: studentsLoading, error: studentsError } = useEnrichedStudents();
   const { data: stats, isLoading: statsLoading } = useWeeklyPacketsStats();
   const { packets: pendingPackets } = usePendingPackets();
+  const { showToast } = useToast();
   
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string; grade: number } | null>(null);
@@ -249,8 +251,7 @@ export default function Dashboard() {
       }}
       preSelectedStudent={selectedStudent || undefined}
       onSuccess={() => {
-        // TODO: Show success toast
-        console.log('Plan generation started successfully!');
+        showToast('Plan is being generated! Go to Plans page to view progress.', 'success');
       }}
     />
   </>
