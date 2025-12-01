@@ -80,7 +80,7 @@ export function GeneratePlanModal({
         {/* Student Selector */}
         {!preSelectedStudent && students.length > 0 && (
           <div>
-            <label htmlFor="student" className="block text-sm font-medium text-neutral-700 mb-2">
+            <label htmlFor="student" className="mb-2 block text-sm font-medium text-neutral-700">
               Student
             </label>
             <select
@@ -88,16 +88,16 @@ export function GeneratePlanModal({
               value={selectedStudentId}
               onChange={(e) => {
                 setSelectedStudentId(e.target.value);
-                const student = students.find(s => s.id === e.target.value);
+                const student = students.find((s) => s.id === e.target.value);
                 if (student) {
                   setGradeLevel(student.grade);
                 }
               }}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="focus:ring-primary-500 w-full rounded-md border border-neutral-300 px-3 py-2 focus:ring-2 focus:outline-none"
               required
             >
               <option value="">Select a student...</option>
-              {students.map(student => (
+              {students.map((student) => (
                 <option key={student.id} value={student.id}>
                   {student.name}
                 </option>
@@ -108,29 +108,29 @@ export function GeneratePlanModal({
 
         {/* Show selected student name if pre-selected */}
         {preSelectedStudent && (
-          <div className="bg-neutral-50 rounded-lg p-4">
+          <div className="rounded-lg bg-neutral-50 p-4">
             <p className="text-sm text-neutral-600">Student</p>
-            <p className="font-semibold text-foreground">{preSelectedStudent.name}</p>
+            <p className="text-foreground font-semibold">{preSelectedStudent.name}</p>
           </div>
         )}
 
         {/* Subject Dropdown */}
         <div>
-          <label htmlFor="subject" className="block text-sm font-medium text-neutral-700 mb-2">
+          <label htmlFor="subject" className="mb-2 block text-sm font-medium text-neutral-700">
             Subject
           </label>
           {optionsLoading ? (
-            <div className="h-10 bg-neutral-100 rounded animate-pulse" />
+            <div className="h-10 animate-pulse rounded bg-neutral-100" />
           ) : (
             <select
               id="subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="focus:ring-primary-500 w-full rounded-md border border-neutral-300 px-3 py-2 focus:ring-2 focus:outline-none"
               required
             >
               <option value="">Select a subject...</option>
-              {(systemOptions?.subjects || []).map(subj => (
+              {(systemOptions?.subjects || []).map((subj) => (
                 <option key={subj} value={subj}>
                   {subj}
                 </option>
@@ -141,20 +141,20 @@ export function GeneratePlanModal({
 
         {/* Grade Level */}
         <div>
-          <label htmlFor="grade" className="block text-sm font-medium text-neutral-700 mb-2">
+          <label htmlFor="grade" className="mb-2 block text-sm font-medium text-neutral-700">
             Grade Level
           </label>
           {optionsLoading ? (
-            <div className="h-10 bg-neutral-100 rounded animate-pulse" />
+            <div className="h-10 animate-pulse rounded bg-neutral-100" />
           ) : (
             <select
               id="grade"
               value={gradeLevel}
               onChange={(e) => setGradeLevel(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="focus:ring-primary-500 w-full rounded-md border border-neutral-300 px-3 py-2 focus:ring-2 focus:outline-none"
               required
             >
-              {(systemOptions?.grades || []).map(grade => (
+              {(systemOptions?.grades || []).map((grade) => (
                 <option key={grade.value} value={grade.value}>
                   {grade.label}
                 </option>
@@ -165,16 +165,28 @@ export function GeneratePlanModal({
 
         {/* Error Display */}
         {generateMutation.isError && (
-          <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
+          <div className="bg-danger-50 border-danger-200 rounded-lg border p-4">
             <div className="flex items-start space-x-3">
-              <svg className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="text-danger-500 mt-0.5 h-5 w-5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-danger-800 mb-1">Failed to Generate Plan</h4>
-                <p className="text-sm text-danger-700">
-                  {generateMutation.error instanceof Error 
-                    ? generateMutation.error.message 
+                <h4 className="text-danger-800 mb-1 text-sm font-semibold">
+                  Failed to Generate Plan
+                </h4>
+                <p className="text-danger-700 text-sm">
+                  {generateMutation.error instanceof Error
+                    ? generateMutation.error.message
                     : 'An error occurred while generating the plan. Please try again.'}
                 </p>
               </div>
@@ -184,12 +196,12 @@ export function GeneratePlanModal({
 
         {/* Loading State */}
         {generateMutation.isPending && (
-          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+          <div className="bg-primary-50 border-primary-200 rounded-lg border p-4">
             <div className="flex items-center space-x-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600" />
+              <div className="border-primary-600 h-5 w-5 animate-spin rounded-full border-b-2" />
               <div>
-                <p className="text-sm font-medium text-primary-900">Generating plan...</p>
-                <p className="text-xs text-primary-700 mt-1">This may take 30-60 seconds</p>
+                <p className="text-primary-900 text-sm font-medium">Generating plan...</p>
+                <p className="text-primary-700 mt-1 text-xs">This may take 30-60 seconds</p>
               </div>
             </div>
           </div>

@@ -1,13 +1,21 @@
 import { HTMLAttributes, forwardRef } from 'react';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: 'mastered' | 'developing' | 'not-started' | 'benched' | 'subject' | 'default' | 'warning' | 'success';
+  variant?:
+    | 'mastered'
+    | 'developing'
+    | 'not-started'
+    | 'benched'
+    | 'subject'
+    | 'default'
+    | 'warning'
+    | 'success';
 }
 
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   ({ variant = 'default', className = '', children, ...props }, ref) => {
     const baseStyles = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium';
-    
+
     const variants = {
       mastered: 'bg-sage-100 text-sage-700',
       developing: 'bg-secondary-100 text-secondary-700',
@@ -18,13 +26,9 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       warning: 'bg-secondary-100 text-secondary-700 font-semibold',
       success: 'bg-sage-100 text-sage-700',
     };
-    
+
     return (
-      <span
-        ref={ref}
-        className={`${baseStyles} ${variants[variant]} ${className}`}
-        {...props}
-      >
+      <span ref={ref} className={`${baseStyles} ${variants[variant]} ${className}`} {...props}>
         {children}
       </span>
     );

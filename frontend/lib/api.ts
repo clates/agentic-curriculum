@@ -171,7 +171,9 @@ export const plansApi = {
   },
 
   getPacketWorksheets: async (studentId: string, packetId: string): Promise<any> => {
-    const { data } = await apiClient.get(`/students/${studentId}/weekly-packets/${packetId}/worksheets`);
+    const { data } = await apiClient.get(
+      `/students/${studentId}/weekly-packets/${packetId}/worksheets`
+    );
     return data;
   },
 
