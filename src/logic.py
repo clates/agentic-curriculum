@@ -6,10 +6,10 @@ Rules Engine for selecting educational standards based on student progress and p
 
 import json
 import os
+import sqlite3
+import sys
 
 from src.db_utils import get_student_profile
-import sys
-import sqlite3
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))

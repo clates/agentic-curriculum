@@ -17,7 +17,7 @@ from openai import OpenAI
 from pydantic import ValidationError
 
 from src.resource_models import ResourceRequests
-from src.worksheet_requests import WorksheetArtifactPlan
+from src.worksheet_requests import WorksheetArtifactPlan, build_worksheets_from_requests
 from src.db_utils import get_student_profile
 from src.logic import get_filtered_standards
 from src.packet_store import save_weekly_packet
@@ -28,7 +28,6 @@ from src.worksheet_renderer import (
     render_reading_worksheet_to_image,
     render_reading_worksheet_to_pdf,
 )
-from src.worksheet_requests import build_worksheets_from_requests
 from src.prompts import (
     build_lesson_plan_prompt,
     build_weekly_scaffold_prompt,
@@ -77,8 +76,8 @@ ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 #         "mathWorksheet": {
 #             "title": "Repeated Addition Warm-Up",
 #             "problems": [
-#                 {"operand_one": 2, "operand_one": 2, "operator": "+"},
-#                 {"operand_one": 3, "operand_one": 3, "operator": "+"},
+#                 {"operand_one": 2, "operand_two": 2, "operator": "+"},
+#                 {"operand_one": 3, "operand_two": 3, "operator": "+"},
 #             ],
 #         }
 #     },

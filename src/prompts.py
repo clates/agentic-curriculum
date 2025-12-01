@@ -167,7 +167,7 @@ def build_lesson_plan_prompt(
             - subject: Subject area
             - grade_level: Grade level (0-12)
         allowed_materials: List of materials parent has available
-        parent_notes: Parent's guidance/preferences for lessons (default: "keep procedures under 3 steps")
+        parent_notes: Parent's guidance/preferences for lessons
         day_focus: Optional specific focus for this day (e.g., "Introduction to concept")
 
     Returns:
