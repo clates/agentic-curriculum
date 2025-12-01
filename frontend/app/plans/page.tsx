@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, Button, Badge, Modal } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
@@ -50,6 +50,16 @@ export default function PlansPage() {
     enabled: !!selectedPacket && planDetailOpen,
   });
 
+  // Map UI quantity ratings to backend integers
+  const quantityRatingMap: Record<string, number> = useMemo(
+    () => ({
+      TOO_LITTLE: 2,
+      JUST_RIGHT: 0,
+      TOO_MUCH: -2,
+    }),
+    []
+  );
+
   const feedbackMutation = useMutation({
     mutationFn: async ({
       studentId,
@@ -62,9 +72,11 @@ export default function PlansPage() {
       mastery: string;
       quantity: string;
     }) => {
+      // Convert quantity rating to integer
+      const quantityValue = quantityRatingMap[quantity];
       await plansApi.submitFeedback(studentId, packetId, {
         mastery_feedback: { overall: mastery },
-        quantity_feedback: quantity,
+        quantity_feedback: quantityValue,
       });
     },
     onSuccess: () => {

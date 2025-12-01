@@ -182,7 +182,7 @@ export const plansApi = {
     packetId: string,
     feedback: {
       mastery_feedback?: Record<string, string>;
-      quantity_feedback?: string;
+      quantity_feedback?: number;
     }
   ): Promise<void> => {
     await apiClient.post(`/students/${studentId}/weekly-packets/${packetId}/feedback`, feedback);
