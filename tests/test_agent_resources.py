@@ -1,7 +1,7 @@
 import pytest
 
 import src.agent as agent
-from src.prompts import build_lesson_plan_prompt
+from src.prompts import build_lesson_plan_prompt, RESOURCE_GUIDANCE
 
 _extract_lesson_and_resources = agent._extract_lesson_and_resources
 
@@ -21,7 +21,7 @@ def test_prompt_mentions_resources(sample_standard, sample_rules):
     parent_notes = sample_rules["parent_notes"]
     prompt = build_lesson_plan_prompt(sample_standard, allowed_materials, parent_notes)
     assert "resources" in prompt
-    assert agent.RESOURCE_GUIDANCE.strip() in prompt
+    assert RESOURCE_GUIDANCE.strip() in prompt
 
 
 def test_extract_without_resources():
