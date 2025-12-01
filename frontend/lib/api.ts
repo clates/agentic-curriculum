@@ -163,6 +163,22 @@ export interface WeeklyPacketDetail {
   [key: string]: any;
 }
 
+export interface WorksheetArtifact {
+  artifact_id: string;
+  format: string;
+  download_url: string;
+}
+
+export interface WorksheetItem {
+  resource_kind: string;
+  day_label: string;
+  artifacts: WorksheetArtifact[];
+}
+
+export interface PacketWorksheetsResponse {
+  items: WorksheetItem[];
+}
+
 // Plans API
 export const plansApi = {
   getPacketDetail: async (studentId: string, packetId: string): Promise<WeeklyPacketDetail> => {
@@ -170,7 +186,10 @@ export const plansApi = {
     return data;
   },
 
-  getPacketWorksheets: async (studentId: string, packetId: string): Promise<any> => {
+  getPacketWorksheets: async (
+    studentId: string,
+    packetId: string
+  ): Promise<PacketWorksheetsResponse> => {
     const { data } = await apiClient.get(
       `/students/${studentId}/weekly-packets/${packetId}/worksheets`
     );

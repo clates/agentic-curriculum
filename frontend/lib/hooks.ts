@@ -1,13 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  studentsApi,
-  systemApi,
-  plansApi,
-  parseMetadata,
-  parseProgress,
-  WeeklyPacketSummary,
-} from '@/lib/api';
+import { studentsApi, systemApi, plansApi, parseMetadata, WeeklyPacketSummary } from '@/lib/api';
 
 export interface EnrichedStudent {
   id: string;
@@ -27,7 +20,6 @@ export function useStudents() {
   return useQuery({
     queryKey: ['students'],
     queryFn: async () => {
-      console.log('Fetching students...');
       return await studentsApi.listStudents();
     },
     staleTime: Infinity,
@@ -79,9 +71,8 @@ function useWeeklyPacketsBase() {
   const { data: students } = useStudents();
 
   return useQuery({
-    queryKey: ['all-weekly-packets', students?.length || 0],
+    queryKey: ['all-weekly-packets'],
     queryFn: async () => {
-      console.log('Fetching weekly packets...');
       if (!students || students.length === 0) return [];
 
       const allPackets = await Promise.all(

@@ -4,19 +4,32 @@ import { useState, useMemo, useCallback } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, Button, Badge, Modal } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
-import { usePendingPackets, useCompletedPackets, useStudents } from '@/lib/hooks';
+import {
+  usePendingPackets,
+  useCompletedPackets,
+  useStudents,
+  WeeklyPacketWithStudent,
+} from '@/lib/hooks';
 import { plansApi, parseMetadata } from '@/lib/api';
 import { GeneratePlanModal } from '@/components/GeneratePlanModal';
 import { useToast } from '@/components/ToastProvider';
 
+// Map UI quantity ratings to backend integers
+const QUANTITY_RATING_MAP: Record<string, number> = {
+  TOO_LITTLE: 2,
+  JUST_RIGHT: 0,
+  TOO_MUCH: -2,
+};
+
 export default function PlansPage() {
+  const { data: students } = useStudents();
   const { packets: pendingPackets, isLoading: pendingLoading } = usePendingPackets();
   const { packets: completedPackets, isLoading: completedLoading } = useCompletedPackets();
-  const { data: students } = useStudents();
   const { showToast } = useToast();
 
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  // Modal state
   const [planDetailOpen, setPlanDetailOpen] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [selectedPacketIds, setSelectedPacketIds] = useState<{
     studentId: string;
     packetId: string;
@@ -55,13 +68,6 @@ export default function PlansPage() {
     enabled: !!selectedPacketIds && planDetailOpen,
   });
 
-  // Map UI quantity ratings to backend integers
-  const quantityRatingMap: Record<string, number> = {
-    TOO_LITTLE: 2,
-    JUST_RIGHT: 0,
-    TOO_MUCH: -2,
-  };
-
   const feedbackMutation = useMutation({
     mutationFn: async ({
       studentId,
@@ -75,7 +81,7 @@ export default function PlansPage() {
       quantity: string;
     }) => {
       // Convert quantity rating to integer
-      const quantityValue = quantityRatingMap[quantity];
+      const quantityValue = QUANTITY_RATING_MAP[quantity] ?? 0;
       await plansApi.submitFeedback(studentId, packetId, {
         mastery_feedback: { overall: mastery },
         quantity_feedback: quantityValue,
@@ -91,6 +97,8 @@ export default function PlansPage() {
     },
   });
 
+  const { mutate: submitFeedback } = feedbackMutation;
+
   // Helper to find the selected packet from lists
   const selectedPacket = useMemo(() => {
     if (!selectedPacketIds) return null;
@@ -101,7 +109,7 @@ export default function PlansPage() {
     );
   }, [selectedPacketIds, pendingPackets, completedPackets]);
 
-  const handleViewPlan = useCallback((packet: any) => {
+  const handleViewPlan = useCallback((packet: WeeklyPacketWithStudent) => {
     setSelectedPacketIds({
       studentId: packet.student_id,
       packetId: packet.packet_id,
@@ -119,13 +127,13 @@ export default function PlansPage() {
   const handleSubmitFeedback = useCallback(() => {
     if (!selectedPacketIds || !masteryRating || !quantityRating) return;
 
-    feedbackMutation.mutate({
+    submitFeedback({
       studentId: selectedPacketIds.studentId,
       packetId: selectedPacketIds.packetId,
       mastery: masteryRating,
       quantity: quantityRating,
     });
-  }, [selectedPacketIds, masteryRating, quantityRating, feedbackMutation]);
+  }, [selectedPacketIds, masteryRating, quantityRating, submitFeedback]);
 
   const handleDownloadArtifact = (downloadUrl: string) => {
     // downloadUrl is already the correct path like /students/{id}/worksheet-artifacts/{artifact_id}
@@ -194,7 +202,7 @@ export default function PlansPage() {
                     Pending Plans - Feedback Needed!
                   </h2>
                   <Badge variant="warning" className="px-4 py-2 text-base">
-                    {pendingPackets.length} {pendingPackets.length === 1 ? 'Plan' : 'Plans'}{' '}
+                    {pendingPackets.length} {pendingPackets.length === 1 ? 'Plan' : 'Plans'}
                     Awaiting Feedback
                   </Badge>
                 </div>
@@ -397,7 +405,10 @@ export default function PlansPage() {
       {selectedPacket && planDetailOpen && (
         <Modal
           isOpen={planDetailOpen}
-          onClose={() => setPlanDetailOpen(false)}
+          onClose={() => {
+            setPlanDetailOpen(false);
+            setSelectedPacketIds(null);
+          }}
           title="Plan Details"
         >
           <div className="space-y-6">
@@ -449,8 +460,8 @@ export default function PlansPage() {
                   <div>
                     <h4 className="mb-2 font-medium">Worksheets</h4>
                     <div className="space-y-2">
-                      {worksheetData.items.map((item: any) =>
-                        item.artifacts.map((artifact: any) => (
+                      {worksheetData.items.map((item) =>
+                        item.artifacts.map((artifact) => (
                           <div
                             key={artifact.artifact_id}
                             className="flex items-center justify-between rounded-lg border border-neutral-200 p-3"
@@ -482,7 +493,13 @@ export default function PlansPage() {
             )}
 
             <div className="flex justify-end space-x-3 pt-4">
-              <Button variant="ghost" onClick={() => setPlanDetailOpen(false)}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setPlanDetailOpen(false);
+                  setSelectedPacketIds(null);
+                }}
+              >
                 Close
               </Button>
               {selectedPacket.status === 'ready' && (
@@ -501,7 +518,11 @@ export default function PlansPage() {
       {selectedPacket && feedbackModalOpen && (
         <Modal
           isOpen={feedbackModalOpen}
-          onClose={() => setFeedbackModalOpen(false)}
+          onClose={() => {
+            setFeedbackModalOpen(false);
+            setMasteryRating(null);
+            setQuantityRating(null);
+          }}
           title="Provide Feedback"
         >
           <div className="space-y-6">
