@@ -4,99 +4,88 @@ agent.py
 LLM-based agent for generating lesson plans using OpenAI API.
 """
 
-from datetime import UTC, datetime, timedelta
-import os
-import sys
-import json
-import re
 import hashlib
+import json
+import os
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, cast
+
 from openai import OpenAI
 from pydantic import ValidationError
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(__file__))
-
-try:  # Prefer package-relative imports when available
-    from .db_utils import get_student_profile
-    from .logic import get_filtered_standards
-    from .resource_models import ResourceRequests
-    from .worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan
-    from .worksheets import Worksheet, ReadingWorksheet
-    from .packet_store import save_weekly_packet
-    from .worksheet_renderer import (
-        render_worksheet_to_image,
-        render_worksheet_to_pdf,
-        render_reading_worksheet_to_image,
-        render_reading_worksheet_to_pdf,
-    )
-except ImportError:  # Fallback for direct script execution
-    sys.path.insert(0, os.path.dirname(__file__))
-    from db_utils import get_student_profile  # type: ignore
-    from logic import get_filtered_standards  # type: ignore
-    from resource_models import ResourceRequests  # type: ignore
-    from worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan  # type: ignore
-    from worksheets import Worksheet, ReadingWorksheet  # type: ignore
-    from worksheet_renderer import (  # type: ignore
-        render_worksheet_to_image,
-        render_worksheet_to_pdf,
-        render_reading_worksheet_to_image,
-        render_reading_worksheet_to_pdf,
-    )
-    from packet_store import save_weekly_packet  # type: ignore
+from config import ARTIFACTS_DIR, GENERATE_WEEKLY_DIR, MAX_DAILY_PLAN_THREADS, PROJECT_ROOT
+from datamodels import ResourceRequests, WorksheetArtifactPlan
+from db import get_student_profile
+from logic import get_filtered_standards
+from packet_store import save_weekly_packet
+from reading_worksheets import (
+    ReadingWorksheet,
+    render_reading_worksheet_to_image,
+    render_reading_worksheet_to_pdf,
+)
+from worksheets import Worksheet, render_worksheet_to_image, render_worksheet_to_pdf
+from worksheet_builder import build_worksheets_from_requests
+from prompts import (
+    build_lesson_plan_prompt,
+    build_weekly_scaffold_prompt,
+    LLM_SYSTEM_MESSAGE,
+)
 
 
 # Maximum number of concurrent threads for generating daily lesson plans.
 # Default is 5 (one per weekday). Raising this may reduce latency but
 # increases OpenAI rate-limit pressure and local CPU usage.
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
-LOG_DIR = PROJECT_ROOT / "logs"
-GENERATE_WEEKLY_DIR = LOG_DIR / "generate-weekly"
-ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+# Note: These constants are now imported from config.py
+# PROJECT_ROOT = Path(__file__).resolve().parents[1]
+# MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
+# LOG_DIR = PROJECT_ROOT / "logs"
+# GENERATE_WEEKLY_DIR = LOG_DIR / "generate-weekly"
+# ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 
-RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
+# Note: Resource guidance has been moved to src/prompts.py for easier editing.
+# RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
 
-Supported worksheet payloads (summarized from docs/WORKSHEET_TYPES.md):
-1. `mathWorksheet` (two-operand vertical math): requires `problems` (each item has `operand_one`, `operand_two`, `operator:+|-`). Optional `title`, `instructions`, `metadata`.
-    Example: "mathWorksheet": {"title": "Repeated Addition", "problems": [{"operand_one": 3, "operand_two": 3, "operator": "+"}]}
-2. `readingWorksheet` (reading comprehension passage): requires `passage_title`, `passage`, and `questions` (each question has `prompt` + optional `response_lines`). Optional `vocabulary`, `instructions`, `title`, `metadata`.
-    Example: "readingWorksheet": {"passage_title": "Garden Story", "passage": "...", "questions": [{"prompt": "What happened first?", "response_lines": 2}]}
-3. `vennDiagramWorksheet` (compare/contrast two sets): requires `left_label` and `right_label`. Optional `both_label`, `word_bank` entries, and pre-filled `left_items`/`right_items`/`both_items` arrays.
-    Example: "vennDiagramWorksheet": {"left_label": "Mammals", "right_label": "Reptiles", "word_bank": ["cat", "snake"]}
-4. `featureMatrixWorksheet` (items vs. properties grid): requires `items` and `properties`. Optional `show_answers`, `metadata`, and per-item `checked_properties` to pre-mark cells.
-    Example: "featureMatrixWorksheet": {"items": ["Dog", "Fish"], "properties": ["Has Fur", "Lives in Water"]}
-5. `oddOneOutWorksheet` (identify the item that doesn't belong): requires `rows` where each row has at least 3 `items`. Optional `odd_item`, `explanation`, `show_answers`, `reasoning_lines`.
-    Example: "oddOneOutWorksheet": {"rows": [{"items": ["dog", "cat", "car", "bird"]}], "reasoning_lines": 2}
-6. `treeMapWorksheet` (root + branches classification map): requires `root_label` and `branches`. Each branch supplies a `label` plus either explicit `slots` or a `slot_count`. Optional `word_bank`, `metadata`.
-    Example: "treeMapWorksheet": {"root_label": "Food Groups", "branches": [{"label": "Fruits", "slot_count": 3}]}
+# Supported worksheet payloads (summarized from docs/WORKSHEET_TYPES.md):
+# 1. `mathWorksheet` (two-operand vertical math): requires `problems` (each item has `operand_one`, `operand_two`, `operator:+|-`). Optional `title`, `instructions`, `metadata`.
+#     Example: "mathWorksheet": {"title": "Repeated Addition", "problems": [{"operand_one": 3, "operand_two": 3, "operator": "+"}]}
+# 2. `readingWorksheet` (reading comprehension passage): requires `passage_title`, `passage`, and `questions` (each question has `prompt` + optional `response_lines`). Optional `vocabulary`, `instructions`, `title`, `metadata`.
+#     Example: "readingWorksheet": {"passage_title": "Garden Story", "passage": "...", "questions": [{"prompt": "What happened first?", "response_lines": 2}]}
+# 3. `vennDiagramWorksheet` (compare/contrast two sets): requires `left_label` and `right_label`. Optional `both_label`, `word_bank` entries, and pre-filled `left_items`/`right_items`/`both_items` arrays.
+#     Example: "vennDiagramWorksheet": {"left_label": "Mammals", "right_label": "Reptiles", "word_bank": ["cat", "snake"]}
+# 4. `featureMatrixWorksheet` (items vs. properties grid): requires `items` and `properties`. Optional `show_answers`, `metadata`, and per-item `checked_properties` to pre-mark cells.
+#     Example: "featureMatrixWorksheet": {"items": ["Dog", "Fish"], "properties": ["Has Fur", "Lives in Water"]}
+# 5. `oddOneOutWorksheet` (identify the item that doesn't belong): requires `rows` where each row has at least 3 `items`. Optional `odd_item`, `explanation`, `show_answers`, `reasoning_lines`.
+#     Example: "oddOneOutWorksheet": {"rows": [{"items": ["dog", "cat", "car", "bird"]}], "reasoning_lines": 2}
+# 6. `treeMapWorksheet` (root + branches classification map): requires `root_label` and `branches`. Each branch supplies a `label` plus either explicit `slots` or a `slot_count`. Optional `word_bank`, `metadata`.
+#     Example: "treeMapWorksheet": {"root_label": "Food Groups", "branches": [{"label": "Fruits", "slot_count": 3}]}
 
-Only emit the worksheet fields you need. Omit the `resources` key entirely when no worksheet is needed.
-"""
+# Only emit the worksheet fields you need. Omit the `resources` key entirely when no worksheet is needed.
+# """
 
-RESOURCE_FEW_SHOT = {
-    "lesson_plan": {
-        "objective": "Students practice repeated addition to prepare for multiplication.",
-        "materials_needed": ["Counters", "Paper"],
-        "procedure": [
-            "Model repeated addition with counters.",
-            "Have students solve two practice problems.",
-            "Discuss how repeated addition relates to multiplication.",
-        ],
-    },
-    "resources": {
-        "mathWorksheet": {
-            "title": "Repeated Addition Warm-Up",
-            "problems": [
-                {"operand_one": 2, "operand_two": 2, "operator": "+"},
-                {"operand_one": 3, "operand_two": 3, "operator": "+"},
-            ],
-        }
-    },
-}
-RESOURCE_FEW_SHOT_JSON = json.dumps(RESOURCE_FEW_SHOT, indent=2)
+# RESOURCE_FEW_SHOT = {
+#     "lesson_plan": {
+#         "objective": "Students practice repeated addition to prepare for multiplication.",
+#         "materials_needed": ["Counters", "Paper"],
+#         "procedure": [
+#             "Model repeated addition with counters.",
+#             "Have students solve two practice problems.",
+#             "Discuss how repeated addition relates to multiplication.",
+#         ],
+#     },
+#     "resources": {
+#         "mathWorksheet": {
+#             "title": "Repeated Addition Warm-Up",
+#             "problems": [
+#                 {"operand_one": 2, "operand_one": 2, "operator": "+"},
+#                 {"operand_one": 3, "operand_one": 3, "operator": "+"},
+#             ],
+#         }
+#     },
+# }
+# RESOURCE_FEW_SHOT_JSON = json.dumps(RESOURCE_FEW_SHOT, indent=2)
 
 
 def _slugify(value: str) -> str:
@@ -223,66 +212,8 @@ class GenerationLogger:
         self._write_json(self._daily_path(day_label, "_error"), payload)
 
 
-def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
-    """
-    Build the system prompt for the LLM to generate a lesson plan.
-
-    Args:
-        standard: Dictionary containing standard information (standard_id, subject, description, etc.)
-        rules: Dictionary containing parent rules (allowed_materials, parent_notes, etc.)
-
-    Returns:
-        A string containing the formatted prompt for the LLM
-    """
-    # Extract allowed materials and parent notes from rules
-    allowed_materials = rules.get("allowed_materials", [])
-    # Default to keeping procedures under 3 steps if parent_notes not provided
-    parent_notes = rules.get("parent_notes", "keep procedures under 3 steps")
-
-    # Build the prompt
-    resource_guidance = f"""{RESOURCE_GUIDANCE}
-
-Example (trim fields you do not need):
-{RESOURCE_FEW_SHOT_JSON}
-"""
-
-    prompt = f"""You are an expert K-12 educator. Create a lesson plan for the following educational standard.
-
-Standard: {standard.get('description', '')}
-Subject: {standard.get('subject', '')}
-Grade Level: {standard.get('grade_level', 0)}
-
-Requirements:
-1. Create a lesson_plan object with the following structure:
-   - objective: A clear learning objective based on the standard
-   - materials_needed: A list of materials (MUST only use items from: {allowed_materials})
-    - procedure: Step-by-step instructions for teaching the lesson (include approximate minutes for each step so the full lesson fits in about 60 minutes)
-
-2. Important constraints:
-   - Materials MUST ONLY come from this list: {allowed_materials}
-   - Follow this parent guidance: {parent_notes}
-    - Plan approximately one hour of focused work (45-60 minutes total) and keep procedure steps tightly scoped
-   - Keep the lesson age-appropriate for the grade level
-   - The objective should directly address the standard
-
-{resource_guidance}
-
-Respond ONLY with valid JSON:
-{{
-    "lesson_plan": {{
-        "objective": "Clear learning objective here",
-        "materials_needed": ["Material1", "Material2"],
-        "procedure": ["Step 1", "Step 2", "Step 3"]
-    }},
-    "resources": {{
-        "mathWorksheet": {{ ... }},
-        "readingWorksheet": {{ ... }}
-    }}
-}}
-If no worksheet is needed, omit the entire `resources` key.
-"""
-
-    return prompt
+# Note: Resource guidance has been moved to src/prompts.py for easier editing.
+# Use build_lesson_plan_prompt() instead
 
 
 def _resolve_day_standards(assignment: dict, standards_by_id: dict, standards: list) -> list:
@@ -509,8 +440,15 @@ def _build_day_plan(
     day_focus = assignment.get("focus", "") or ""
     day_standards = _resolve_day_standards(assignment, standards_by_id, standards)
 
+    # Extract rules for prompt generation
+    allowed_materials = rules.get("allowed_materials", [])
+    parent_notes = rules.get("parent_notes", "keep procedures under 3 steps")
+
+    # Build prompt for single or combined standards
     if len(day_standards) == 1:
-        prompt = create_lesson_plan_prompt(day_standards[0], rules)
+        prompt = build_lesson_plan_prompt(
+            day_standards[0], allowed_materials, parent_notes, day_focus
+        )
     else:
         combined_descriptions = " AND ".join([s.get("description", "") for s in day_standards])
         combined_standard = {
@@ -518,18 +456,14 @@ def _build_day_plan(
             "subject": day_standards[0].get("subject") if day_standards else "",
             "grade_level": day_standards[0].get("grade_level") if day_standards else 0,
         }
-        prompt = create_lesson_plan_prompt(combined_standard, rules)
-
-    if day_focus:
-        prompt += f"\n\nDay Focus: {day_focus}"
+        prompt = build_lesson_plan_prompt(
+            combined_standard, allowed_materials, parent_notes, day_focus
+        )
 
     resources_model: ResourceRequests | None = None
 
     messages = [
-        {
-            "role": "system",
-            "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only.",
-        },
+        {"role": "system", "content": LLM_SYSTEM_MESSAGE},
         {"role": "user", "content": prompt},
     ]
     llm_request_payload = {
@@ -691,11 +625,10 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
     week_of = monday.strftime("%Y-%m-%d")
     plan_id = f"plan_{student_id}_{week_of}"
 
-    # Precompute a pretty JSON preview of the first few standards for the prompt
+    # Precompute a preview of the first few standards for the prompt
     available_standards_preview = [
         {"id": s.get("standard_id"), "description": s.get("description")} for s in standards[:5]
     ]
-    available_standards_text = json.dumps(available_standards_preview, indent=2)
 
     # Get activity bias from quantity feedback
     quantity_prefs = rules.get("quantity_preferences", {})
@@ -714,45 +647,18 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
     else:
         activity_guidance = f"Each day should have approximately {adjusted_activities} activities."
 
-    # First pass: Create a weekly overview/scaffold
-    # This helps ensure complex standards get multiple days if needed
-    scaffold_prompt = f"""You are an expert K-12 educator creating a weekly lesson plan scaffold.
-
-Grade Level: {grade_level}
-Subject: {subject}
-
-Available Standards (may use 1 or more):
-{available_standards_text}
-
-Parent Constraints:
-- Allowed materials: {rules.get('allowed_materials', [])}
-- Parent guidance: {rules.get('parent_notes', 'keep procedures under 3 steps')}
-
-Create a weekly plan that:
-1. Distributes standards across Monday-Friday appropriately
-2. Complex standards should span multiple days with scaffolding
-3. Simpler standards can be covered in a single day
-4. Each day should build on previous days
-5. {activity_guidance}
-
-Respond with a JSON object in this exact format:
-{{
-  "weekly_overview": "Brief description of how the week progresses",
-  "daily_assignments": [
-    {{
-      "day": "Monday",
-      "standard_ids": ["standard_id_1"],
-      "focus": "Brief description of this day's focus"
-    }},
-    ...
-  ]
-}}"""
+    # Build weekly scaffold prompt using the prompts module
+    scaffold_prompt = build_weekly_scaffold_prompt(
+        grade_level=grade_level,
+        subject=subject,
+        available_standards=available_standards_preview,
+        allowed_materials=rules.get("allowed_materials", []),
+        parent_notes=rules.get("parent_notes", "keep procedures under 3 steps"),
+        activity_guidance=activity_guidance,
+    )
 
     scaffold_messages = [
-        {
-            "role": "system",
-            "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only.",
-        },
+        {"role": "system", "content": LLM_SYSTEM_MESSAGE},
         {"role": "user", "content": scaffold_prompt},
     ]
     scaffold_request_payload = {
