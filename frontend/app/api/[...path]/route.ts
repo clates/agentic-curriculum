@@ -47,9 +47,6 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
         }),
     });
 
-    // Get the response body
-    const data = await backendResponse.text();
-
     // Build response headers - forward all important headers from backend
     const responseHeaders: HeadersInit = {};
 
@@ -79,6 +76,9 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
     if (etag) {
       responseHeaders['ETag'] = etag;
     }
+
+    // Get the response body as ArrayBuffer to ensure binary data is preserved
+    const data = await backendResponse.arrayBuffer();
 
     // Return the response with the same status and forwarded headers
     return new NextResponse(data, {
