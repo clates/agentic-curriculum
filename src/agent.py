@@ -21,8 +21,7 @@ from src.worksheet_requests import WorksheetArtifactPlan
 from src.db_utils import get_student_profile
 from src.logic import get_filtered_standards
 from src.packet_store import save_weekly_packet
-from src.worksheets.reading_comprehension import ReadingWorksheet
-from src.worksheets.two_operand_math import Worksheet
+from src.worksheets import ReadingWorksheet, Worksheet
 from src.worksheet_renderer import (
     render_worksheet_to_image,
     render_worksheet_to_pdf,
