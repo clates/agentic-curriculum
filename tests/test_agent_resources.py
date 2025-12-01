@@ -1,22 +1,25 @@
 import pytest
 
 import src.agent as agent
+from src.prompts import build_lesson_plan_prompt
 
 _extract_lesson_and_resources = agent._extract_lesson_and_resources
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def sample_rules():
     return {"allowed_materials": ["Paper", "Counters"], "parent_notes": "stay upbeat"}
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def sample_standard():
     return {"description": "Practice repeated addition", "subject": "Math", "grade_level": 2}
 
 
 def test_prompt_mentions_resources(sample_standard, sample_rules):
-    prompt = agent.create_lesson_plan_prompt(sample_standard, sample_rules)
+    allowed_materials = sample_rules["allowed_materials"]
+    parent_notes = sample_rules["parent_notes"]
+    prompt = build_lesson_plan_prompt(sample_standard, allowed_materials, parent_notes)
     assert "resources" in prompt
     assert agent.RESOURCE_GUIDANCE.strip() in prompt
 
