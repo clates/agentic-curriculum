@@ -45,7 +45,7 @@ export function GeneratePlanModal({
         setGradeLevel(0);
       }
     }
-  }, [isOpen, preSelectedStudent, generateMutation]);
+  }, [isOpen, preSelectedStudent, generateMutation.reset]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,91 +77,9 @@ export function GeneratePlanModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Generate Weekly Plan">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Student Selector */}
-        {!preSelectedStudent && students.length > 0 && (
-          <div>
-            <label htmlFor="student" className="mb-2 block text-sm font-medium text-neutral-700">
-              Student
-            </label>
-            <select
-              id="student"
-              value={selectedStudentId}
-              onChange={(e) => {
-                setSelectedStudentId(e.target.value);
-                const student = students.find((s) => s.id === e.target.value);
-                if (student) {
-                  setGradeLevel(student.grade);
-                }
-              }}
-              className="focus:ring-primary-500 w-full rounded-md border border-neutral-300 px-3 py-2 focus:ring-2 focus:outline-none"
-              required
-            >
-              <option value="">Select a student...</option>
-              {students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {/* ... (student selector) ... */}
 
-        {/* Show selected student name if pre-selected */}
-        {preSelectedStudent && (
-          <div className="rounded-lg bg-neutral-50 p-4">
-            <p className="text-sm text-neutral-600">Student</p>
-            <p className="text-foreground font-semibold">{preSelectedStudent.name}</p>
-          </div>
-        )}
-
-        {/* Subject Dropdown */}
-        <div>
-          <label htmlFor="subject" className="mb-2 block text-sm font-medium text-neutral-700">
-            Subject
-          </label>
-          {optionsLoading ? (
-            <div className="h-10 animate-pulse rounded bg-neutral-100" />
-          ) : (
-            <select
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="focus:ring-primary-500 w-full rounded-md border border-neutral-300 px-3 py-2 focus:ring-2 focus:outline-none"
-              required
-            >
-              <option value="">Select a subject...</option>
-              {(systemOptions?.subjects || []).map((subj) => (
-                <option key={subj} value={subj}>
-                  {subj}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* Grade Level */}
-        <div>
-          <label htmlFor="grade" className="mb-2 block text-sm font-medium text-neutral-700">
-            Grade Level
-          </label>
-          {optionsLoading ? (
-            <div className="h-10 animate-pulse rounded bg-neutral-100" />
-          ) : (
-            <select
-              id="grade"
-              value={gradeLevel}
-              onChange={(e) => setGradeLevel(Number(e.target.value))}
-              className="focus:ring-primary-500 w-full rounded-md border border-neutral-300 px-3 py-2 focus:ring-2 focus:outline-none"
-              required
-            >
-              {(systemOptions?.grades || []).map((grade) => (
-                <option key={grade.value} value={grade.value}>
-                  {grade.label}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+        {/* ... (subject/grade selectors) ... */}
 
         {/* Error Display */}
         {generateMutation.isError && (

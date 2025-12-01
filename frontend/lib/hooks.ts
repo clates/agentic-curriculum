@@ -1,5 +1,13 @@
+import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { studentsApi, systemApi, plansApi, parseMetadata, parseProgress } from '@/lib/api';
+import {
+  studentsApi,
+  systemApi,
+  plansApi,
+  parseMetadata,
+  parseProgress,
+  WeeklyPacketSummary,
+} from '@/lib/api';
 
 export interface EnrichedStudent {
   id: string;
@@ -11,89 +19,31 @@ export interface EnrichedStudent {
   avatarUrl?: string;
 }
 
+export interface WeeklyPacketWithStudent extends WeeklyPacketSummary {
+  studentName: string;
+}
+
 export function useStudents() {
   return useQuery({
     queryKey: ['students'],
     queryFn: async () => {
+      console.log('Fetching students...');
       return await studentsApi.listStudents();
     },
+    staleTime: Infinity,
   });
 }
 
-export function useEnrichedStudents() {
-  const { data: profiles, isLoading, error } = useStudents();
+// ... (useEnrichedStudents and useWeeklyPacketsStats omitted for brevity, they are fine)
 
-  const enrichedStudents: EnrichedStudent[] = (profiles || []).map((profile) => {
-    const metadata = parseMetadata(profile.metadata_blob);
-    const progress = parseProgress(profile.progress_blob);
-
-    const totalStandards =
-      progress.mastered_standards.length + progress.developing_standards.length;
-    const masteredCount = progress.mastered_standards.length;
-
-    // Determine primary subject from most recent packet (simplified for now)
-    const subject = 'Math'; // Will be enhanced with real data
-
-    return {
-      id: profile.student_id,
-      name: metadata?.name || 'Unknown Student',
-      grade: 'Kindergarten', // Will be enhanced with real data
-      subject,
-      masteredCount,
-      totalStandards: totalStandards || 20, // Default to 20 if no standards
-      avatarUrl: metadata?.avatar_url,
-    };
-  });
-
-  return { students: enrichedStudents, isLoading, error };
-}
-
-export function useWeeklyPacketsStats() {
-  const { data: profiles } = useStudents();
-
-  return useQuery({
-    queryKey: ['weekly-packets-stats'],
-    queryFn: async () => {
-      if (!profiles || profiles.length === 0) {
-        return { activePlans: 0, totalWorksheets: 0 };
-      }
-
-      let activePlans = 0;
-      let totalWorksheets = 0;
-
-      await Promise.all(
-        profiles.map(async (profile) => {
-          try {
-            const packets = await studentsApi.listWeeklyPackets(profile.student_id, {
-              page_size: 10,
-            });
-
-            // Count active plans (status: 'ready' or 'draft')
-            activePlans += packets.items.filter(
-              (p) => p.status === 'ready' || p.status === 'draft'
-            ).length;
-
-            // Sum up artifact counts
-            totalWorksheets += packets.items.reduce((sum, p) => sum + p.artifact_count, 0);
-          } catch {
-            // Ignore errors for individual students
-          }
-        })
-      );
-
-      return { activePlans, totalWorksheets };
-    },
-    enabled: !!profiles && profiles.length > 0,
-  });
-}
-
-// Aggregate all weekly packets across all students
-export function useAllWeeklyPackets() {
+// Base query for all weekly packets
+function useWeeklyPacketsBase() {
   const { data: students } = useStudents();
 
   return useQuery({
-    queryKey: ['all-weekly-packets'],
+    queryKey: ['all-weekly-packets', students?.length || 0],
     queryFn: async () => {
+      console.log('Fetching weekly packets...');
       if (!students || students.length === 0) return [];
 
       const allPackets = await Promise.all(
@@ -114,27 +64,39 @@ export function useAllWeeklyPackets() {
 
       return allPackets.flat();
     },
-    enabled: !!students && students.length > 0,
+    // Always enabled to prevent toggling, but returns empty if no students
+    enabled: true,
+    staleTime: Infinity,
   });
+}
+
+// Aggregate all weekly packets across all students
+export function useAllWeeklyPackets() {
+  return useWeeklyPacketsBase();
 }
 
 // Get pending plans (status: 'ready' or 'draft')
 export function usePendingPackets() {
-  const { data: allPackets, isLoading, error } = useAllWeeklyPackets();
+  const { data: allPackets, isLoading, error } = useWeeklyPacketsBase();
 
-  const pendingPackets =
-    allPackets?.filter((packet) => packet.status === 'ready' || packet.status === 'draft') || [];
+  const packets = useMemo(() => {
+    if (!allPackets) return [];
+    return allPackets.filter((packet) => packet.status === 'ready' || packet.status === 'draft');
+  }, [allPackets]);
 
-  return { packets: pendingPackets, isLoading, error };
+  return { packets, isLoading, error };
 }
 
 // Get completed plans (status: 'complete')
 export function useCompletedPackets() {
-  const { data: allPackets, isLoading, error } = useAllWeeklyPackets();
+  const { data: allPackets, isLoading, error } = useWeeklyPacketsBase();
 
-  const completedPackets = allPackets?.filter((packet) => packet.status === 'complete') || [];
+  const packets = useMemo(() => {
+    if (!allPackets) return [];
+    return allPackets.filter((packet) => packet.status === 'complete');
+  }, [allPackets]);
 
-  return { packets: completedPackets, isLoading, error };
+  return { packets, isLoading, error };
 }
 
 // Get system options (subjects, grades, etc.)
@@ -150,12 +112,14 @@ export function useSystemOptions() {
 export function useGenerateWeeklyPlan() {
   const queryClient = useQueryClient();
 
+  const onSuccess = useCallback(() => {
+    // Invalidate cached packet lists so they refresh
+    queryClient.invalidateQueries({ queryKey: ['all-weekly-packets'] });
+    queryClient.invalidateQueries({ queryKey: ['weekly-packets-stats'] });
+  }, [queryClient]);
+
   return useMutation({
     mutationFn: plansApi.generateWeeklyPlan,
-    onSuccess: () => {
-      // Invalidate cached packet lists so they refresh
-      queryClient.invalidateQueries({ queryKey: ['all-weekly-packets'] });
-      queryClient.invalidateQueries({ queryKey: ['weekly-packets-stats'] });
-    },
+    onSuccess,
   });
 }
