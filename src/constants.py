@@ -9,14 +9,13 @@ from __future__ import annotations
 from worksheets.factory import WorksheetFactory
 
 # Subjects available in the curriculum
+# NOTE: These must match the subjects in the standards database
 SUBJECTS: list[str] = [
-    "Math",
-    "Reading",
-    "Science",
-    "Social Studies",
-    "English",
     "Computer Science",
+    "English",
     "History",
+    "Math",
+    "Science",
 ]
 
 # Grade levels mapped from integer to human-readable label
