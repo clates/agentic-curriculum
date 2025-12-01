@@ -38,19 +38,24 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-white rounded-lg shadow-lg max-w-2xl w-full p-6"
+          className="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-lg"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-foreground text-2xl font-semibold">{title}</h2>
             <button
               onClick={onClose}
-              className="text-neutral-500 hover:text-foreground transition-colors"
+              className="hover:text-foreground text-neutral-500 transition-colors"
               aria-label="Close modal"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>

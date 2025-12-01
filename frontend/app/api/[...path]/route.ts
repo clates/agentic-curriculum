@@ -7,25 +7,19 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
  * Catch-all API route that proxies requests to the backend
  * This eliminates CORS issues and allows us to only expose port 3000
  */
-async function handler(
-  request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
+async function handler(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   // In Next.js 15+, params is a Promise
   const { path } = await params;
   const pathname = Array.isArray(path) ? path.join('/') : path;
 
   // Validate pathname doesn't contain suspicious patterns
   if (pathname.includes('..') || pathname.startsWith('/')) {
-    return NextResponse.json(
-      { error: 'Invalid path' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
   }
 
   // Construct the backend URL
   const url = new URL(`${BACKEND_URL}/${pathname}`);
-  
+
   // Forward query parameters
   request.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.append(key, value);
@@ -46,9 +40,11 @@ async function handler(
       method: request.method,
       headers,
       // Only include body for requests that can have one
-      ...(request.body && request.method !== 'GET' && request.method !== 'HEAD' && {
-        body: await request.text(),
-      }),
+      ...(request.body &&
+        request.method !== 'GET' &&
+        request.method !== 'HEAD' && {
+          body: await request.text(),
+        }),
     });
 
     // Get the response body
@@ -56,29 +52,29 @@ async function handler(
 
     // Build response headers - forward all important headers from backend
     const responseHeaders: HeadersInit = {};
-    
+
     // Forward Content-Type if present (critical for file downloads)
     const contentType = backendResponse.headers.get('Content-Type');
     if (contentType) {
       responseHeaders['Content-Type'] = contentType;
     }
-    
+
     // Forward other important headers for file downloads and caching
     const contentDisposition = backendResponse.headers.get('Content-Disposition');
     if (contentDisposition) {
       responseHeaders['Content-Disposition'] = contentDisposition;
     }
-    
+
     const contentLength = backendResponse.headers.get('Content-Length');
     if (contentLength) {
       responseHeaders['Content-Length'] = contentLength;
     }
-    
+
     const cacheControl = backendResponse.headers.get('Cache-Control');
     if (cacheControl) {
       responseHeaders['Cache-Control'] = cacheControl;
     }
-    
+
     const etag = backendResponse.headers.get('ETag');
     if (etag) {
       responseHeaders['ETag'] = etag;
@@ -91,10 +87,7 @@ async function handler(
     });
   } catch (error) {
     console.error('Backend proxy error:', error);
-    return NextResponse.json(
-      { error: 'Failed to connect to backend' },
-      { status: 502 }
-    );
+    return NextResponse.json({ error: 'Failed to connect to backend' }, { status: 502 });
   }
 }
 

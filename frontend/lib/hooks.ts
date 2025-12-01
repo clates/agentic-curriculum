@@ -27,7 +27,8 @@ export function useEnrichedStudents() {
     const metadata = parseMetadata(profile.metadata_blob);
     const progress = parseProgress(profile.progress_blob);
 
-    const totalStandards = progress.mastered_standards.length + progress.developing_standards.length;
+    const totalStandards =
+      progress.mastered_standards.length + progress.developing_standards.length;
     const masteredCount = progress.mastered_standards.length;
 
     // Determine primary subject from most recent packet (simplified for now)
@@ -121,9 +122,8 @@ export function useAllWeeklyPackets() {
 export function usePendingPackets() {
   const { data: allPackets, isLoading, error } = useAllWeeklyPackets();
 
-  const pendingPackets = allPackets?.filter(
-    (packet) => packet.status === 'ready' || packet.status === 'draft'
-  ) || [];
+  const pendingPackets =
+    allPackets?.filter((packet) => packet.status === 'ready' || packet.status === 'draft') || [];
 
   return { packets: pendingPackets, isLoading, error };
 }
@@ -132,9 +132,7 @@ export function usePendingPackets() {
 export function useCompletedPackets() {
   const { data: allPackets, isLoading, error } = useAllWeeklyPackets();
 
-  const completedPackets = allPackets?.filter(
-    (packet) => packet.status === 'complete'
-  ) || [];
+  const completedPackets = allPackets?.filter((packet) => packet.status === 'complete') || [];
 
   return { packets: completedPackets, isLoading, error };
 }
@@ -161,4 +159,3 @@ export function useGenerateWeeklyPlan() {
     },
   });
 }
-
