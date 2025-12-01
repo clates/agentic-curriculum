@@ -16,34 +16,33 @@ from typing import Any, Callable, cast
 from openai import OpenAI
 from pydantic import ValidationError
 
-from config import ARTIFACTS_DIR, GENERATE_WEEKLY_DIR, MAX_DAILY_PLAN_THREADS, PROJECT_ROOT
-from datamodels import ResourceRequests, WorksheetArtifactPlan
-from db import get_student_profile
-from logic import get_filtered_standards
-from packet_store import save_weekly_packet
-from reading_worksheets import (
-    ReadingWorksheet,
+from src.resource_models import ResourceRequests
+from src.worksheet_requests import WorksheetArtifactPlan
+from src.db_utils import get_student_profile
+from src.logic import get_filtered_standards
+from src.packet_store import save_weekly_packet
+from src.worksheets.reading_comprehension import ReadingWorksheet
+from src.worksheets.two_operand_math import Worksheet
+from src.worksheet_renderer import (
+    render_worksheet_to_image,
+    render_worksheet_to_pdf,
     render_reading_worksheet_to_image,
     render_reading_worksheet_to_pdf,
 )
-from worksheets import Worksheet, render_worksheet_to_image, render_worksheet_to_pdf
-from worksheet_builder import build_worksheets_from_requests
-from prompts import (
+from src.worksheet_requests import build_worksheets_from_requests
+from src.prompts import (
     build_lesson_plan_prompt,
     build_weekly_scaffold_prompt,
     LLM_SYSTEM_MESSAGE,
 )
 
 
-# Maximum number of concurrent threads for generating daily lesson plans.
-# Default is 5 (one per weekday). Raising this may reduce latency but
-# increases OpenAI rate-limit pressure and local CPU usage.
-# Note: These constants are now imported from config.py
-# PROJECT_ROOT = Path(__file__).resolve().parents[1]
-# MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
-# LOG_DIR = PROJECT_ROOT / "logs"
-# GENERATE_WEEKLY_DIR = LOG_DIR / "generate-weekly"
-# ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+# Configuration constants
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
+LOG_DIR = PROJECT_ROOT / "logs"
+GENERATE_WEEKLY_DIR = LOG_DIR / "generate-weekly"
+ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 
 # Note: Resource guidance has been moved to src/prompts.py for easier editing.
 # RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
