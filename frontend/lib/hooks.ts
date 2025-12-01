@@ -34,7 +34,45 @@ export function useStudents() {
   });
 }
 
-// ... (useEnrichedStudents and useWeeklyPacketsStats omitted for brevity, they are fine)
+export function useEnrichedStudents() {
+  const { data: students, isLoading, error } = useStudents();
+
+  const enrichedStudents = useMemo(() => {
+    if (!students) return [];
+    return students.map((s) => ({
+      id: s.student_id,
+      name: parseMetadata(s.metadata_blob)?.name || 'Unknown',
+      grade: '3rd Grade', // TODO: Extract from metadata
+      subject: 'Math', // TODO: Extract from metadata
+      masteredCount: 0, // TODO: Calculate from progress
+      totalStandards: 20, // TODO: Calculate from progress
+      avatarUrl: undefined,
+    }));
+  }, [students]);
+
+  return { students: enrichedStudents, isLoading, error };
+}
+
+export function useWeeklyPacketsStats() {
+  const { data: allPackets, isLoading } = useAllWeeklyPackets();
+
+  const stats = useMemo(() => {
+    if (!allPackets) return { activePlans: 0, totalWorksheets: 0 };
+
+    const activePlans = allPackets.length;
+    const totalWorksheets = allPackets.reduce((acc, packet) => {
+      if (!packet.worksheet_counts) return acc;
+      return acc + Object.values(packet.worksheet_counts).reduce((sum, count) => sum + count, 0);
+    }, 0);
+
+    return {
+      activePlans,
+      totalWorksheets,
+    };
+  }, [allPackets]);
+
+  return { data: stats, isLoading };
+}
 
 // Base query for all weekly packets
 function useWeeklyPacketsBase() {
