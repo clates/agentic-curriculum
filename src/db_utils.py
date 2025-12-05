@@ -263,3 +263,30 @@ def delete_student(student_id: str) -> bool:
         return cursor.rowcount > 0
     finally:
         conn.close()
+
+
+def ensure_database_initialized() -> None:
+    """
+    Check if the database has the required tables, and if not, initialize them.
+    This handles cases where the DB file is missing or empty (e.g. volume mount).
+    """
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='student_profiles'"
+        )
+        if not cursor.fetchone():
+            print("Database missing required tables. Initializing...")
+            # Import here to avoid circular imports if any
+            from ingest_standards import main as ingest_main
+
+            # Close our connection before calling ingest which manages its own connections
+            conn.close()
+            ingest_main()
+            return
+    finally:
+        try:
+            conn.close()
+        except sqlite3.ProgrammingError:
+            pass
