@@ -274,8 +274,10 @@ def ensure_database_initialized() -> None:
     cursor = conn.cursor()
     try:
         required_tables = {"student_profiles", "standards", "packet_feedback"}
+        placeholders = ", ".join("?" * len(required_tables))
         cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('student_profiles', 'standards', 'packet_feedback')"
+            f"SELECT name FROM sqlite_master WHERE type='table' AND name IN ({placeholders})",
+            tuple(required_tables),
         )
         existing_tables = {row[0] for row in cursor.fetchall()}
         if not required_tables.issubset(existing_tables):
