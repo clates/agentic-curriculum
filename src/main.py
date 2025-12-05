@@ -31,6 +31,7 @@ from src.feedback_processor import (
 from src.feedback_models import FeedbackResponse, SubmitFeedbackRequest
 
 import json
+from contextlib import asynccontextmanager
 import logging
 import os
 import sys
@@ -54,7 +55,16 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure database is initialized on startup
+    from src.db_utils import ensure_database_initialized
+
+    ensure_database_initialized()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
