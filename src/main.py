@@ -14,7 +14,13 @@ from src.packet_store import (
     save_packet_feedback,
 )
 from src.agent import generate_weekly_plan
-from src.db_utils import create_student, delete_student, get_student_profile, update_student
+from src.db_utils import (
+    create_student,
+    delete_student,
+    get_student_profile,
+    update_student,
+    list_all_students,
+)
 from src.constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
 from src.feedback_processor import (
     process_mastery_feedback,
@@ -264,10 +270,12 @@ def list_students_endpoint():
     Returns:
         A list of all student profile data
     """
-    from db_utils import list_all_students
-
-    students = list_all_students()
-    return students
+    try:
+        students = list_all_students()
+        return students
+    except Exception as e:
+        logger.error(f"Error listing students: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
 
 
 @app.post("/students", response_model=StudentResponse, status_code=201)
