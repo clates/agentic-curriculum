@@ -86,7 +86,7 @@ export const studentsApi = {
   createStudent: async (payload: {
     student_id: string;
     metadata: StudentMetadata;
-    plan_rules?: Record<string, any>;
+    plan_rules?: Record<string, unknown>;
   }): Promise<StudentProfile> => {
     const { data } = await apiClient.post('/students', payload);
     return data;
@@ -96,7 +96,7 @@ export const studentsApi = {
     studentId: string,
     payload: {
       metadata?: Partial<StudentMetadata>;
-      plan_rules?: Record<string, any>;
+      plan_rules?: Record<string, unknown>;
     }
   ): Promise<StudentProfile> => {
     const { data } = await apiClient.put(`/student/${studentId}`, payload);
@@ -141,14 +141,14 @@ export const parseProgress = (progressBlob: string | null): ProgressBlob => {
 export interface LessonPlan {
   title: string;
   pdf_path: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface Worksheet {
   title: string;
   type: string;
   pdf_path: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface WeeklyPacketDetail {
@@ -160,7 +160,7 @@ export interface WeeklyPacketDetail {
   status: string;
   lesson_plan?: LessonPlan;
   worksheets?: Worksheet[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface WorksheetArtifact {
