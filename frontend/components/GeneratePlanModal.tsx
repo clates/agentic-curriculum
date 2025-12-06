@@ -45,7 +45,7 @@ export function GeneratePlanModal({
         setGradeLevel(0);
       }
     }
-  }, [isOpen, preSelectedStudent, generateMutation.reset]);
+  }, [isOpen, preSelectedStudent, generateMutation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,9 +77,78 @@ export function GeneratePlanModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Generate Weekly Plan">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* ... (student selector) ... */}
+        {/* Student Selector */}
+        {!preSelectedStudent && students.length > 0 && (
+          <div>
+            <label htmlFor="student" className="text-secondary-700 mb-1 block text-sm font-medium">
+              Student
+            </label>
+            <select
+              id="student"
+              value={selectedStudentId}
+              onChange={(e) => {
+                const student = students.find((s) => s.id === e.target.value);
+                setSelectedStudentId(e.target.value);
+                if (student) {
+                  setGradeLevel(student.grade);
+                }
+              }}
+              className="border-secondary-300 focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md shadow-sm sm:text-sm"
+              required
+            >
+              <option value="">Select a student</option>
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>
+                  {student.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-        {/* ... (subject/grade selectors) ... */}
+        {/* Grade Level Selector */}
+        <div>
+          <label htmlFor="grade" className="text-secondary-700 mb-1 block text-sm font-medium">
+            Grade Level
+          </label>
+          <select
+            id="grade"
+            value={gradeLevel || ''}
+            onChange={(e) => setGradeLevel(e.target.value ? Number(e.target.value) : 0)}
+            className="border-secondary-300 focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md shadow-sm sm:text-sm"
+            disabled={optionsLoading}
+            required
+          >
+            <option value="">Select grade level</option>
+            {systemOptions?.grades.map((grade) => (
+              <option key={grade.value} value={grade.value}>
+                {grade.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Subject Selector */}
+        <div>
+          <label htmlFor="subject" className="text-secondary-700 mb-1 block text-sm font-medium">
+            Subject
+          </label>
+          <select
+            id="subject"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="border-secondary-300 focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md shadow-sm sm:text-sm"
+            disabled={optionsLoading}
+            required
+          >
+            <option value="">Select subject</option>
+            {systemOptions?.subjects.map((sub) => (
+              <option key={sub} value={sub}>
+                {sub}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Error Display */}
         {generateMutation.isError && (
