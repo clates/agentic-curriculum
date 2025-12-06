@@ -45,7 +45,7 @@ export function GeneratePlanModal({
         setGradeLevel(0);
       }
     }
-  }, [isOpen, preSelectedStudent, generateMutation.reset]);
+  }, [isOpen, preSelectedStudent, generateMutation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,13 +113,13 @@ export function GeneratePlanModal({
           </label>
           <select
             id="grade"
-            value={gradeLevel}
-            onChange={(e) => setGradeLevel(Number(e.target.value))}
+            value={gradeLevel || ''}
+            onChange={(e) => setGradeLevel(e.target.value ? Number(e.target.value) : 0)}
             className="border-secondary-300 focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md shadow-sm sm:text-sm"
             disabled={optionsLoading}
             required
           >
-            <option value={0}>Select grade level</option>
+            <option value="">Select grade level</option>
             {systemOptions?.grades.map((grade) => (
               <option key={grade.value} value={grade.value}>
                 {grade.label}
