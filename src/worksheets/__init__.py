@@ -57,6 +57,67 @@ from .tree_map import (
     generate_tree_map_worksheet,
 )
 
+# Handwriting worksheet components
+from .handwriting import (
+    HandwritingItem,
+    HandwritingWorksheet,
+    generate_handwriting_worksheet,
+)
+
+# Pixel copy worksheet components
+from .pixel_copy import (
+    PixelCopyWorksheet,
+    generate_pixel_copy_worksheet,
+)
+
+# Matching worksheet components
+from .matching import (
+    MatchingItem,
+    MatchingWorksheet,
+    generate_matching_worksheet,
+)
+
+# Alphabet worksheet components
+from .alphabet import (
+    AlphabetWorksheet,
+    generate_alphabet_worksheet,
+)
+
+# Sequencing worksheet components
+from .sequencing import (
+    SequencingStep,
+    SequencingWorksheet,
+    generate_sequencing_worksheet,
+)
+
+# T-Chart worksheet components
+from .t_chart import (
+    TChartColumn,
+    TChartWorksheet,
+    generate_t_chart_worksheet,
+)
+
+# Fill-in-the-blank worksheet components
+from .fill_in_the_blank import (
+    FillBlankSegment,
+    FillBlankWorksheet,
+    generate_fill_in_the_blank_worksheet,
+)
+
+# Word sort worksheet components
+from .word_sort import (
+    WordSortTile,
+    WordSortWorksheet,
+    generate_word_sort_worksheet,
+)
+
+# Story map worksheet components
+from .story_map import (
+    StoryMapField,
+    StoryMapWorksheet,
+    generate_story_map_worksheet,
+)
+
 # Factory for creating worksheets from JSON payloads
 from .factory import WorksheetFactory
 
@@ -92,6 +153,40 @@ __all__ = [
     "TreeMapBranch",
     "TreeMapWorksheet",
     "generate_tree_map_worksheet",
+    # Handwriting
+    "HandwritingItem",
+    "HandwritingWorksheet",
+    "generate_handwriting_worksheet",
+    # Alphabet
+    "AlphabetWorksheet",
+    "generate_alphabet_worksheet",
+    # Pixel Copy
+    "PixelCopyWorksheet",
+    "generate_pixel_copy_worksheet",
+    # Matching
+    "MatchingItem",
+    "MatchingWorksheet",
+    "generate_matching_worksheet",
+    # Sequencing
+    "SequencingStep",
+    "SequencingWorksheet",
+    "generate_sequencing_worksheet",
+    # T-Chart
+    "TChartColumn",
+    "TChartWorksheet",
+    "generate_t_chart_worksheet",
+    # Fill-in-the-blank
+    "FillBlankSegment",
+    "FillBlankWorksheet",
+    "generate_fill_in_the_blank_worksheet",
+    # Word sort
+    "WordSortTile",
+    "WordSortWorksheet",
+    "generate_word_sort_worksheet",
+    # Story map
+    "StoryMapField",
+    "StoryMapWorksheet",
+    "generate_story_map_worksheet",
     # Factory
     "WorksheetFactory",
 ]
