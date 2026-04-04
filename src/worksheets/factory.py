@@ -29,6 +29,46 @@ from .tree_map import (
     TreeMapWorksheet,
     generate_tree_map_worksheet,
 )
+from .handwriting import (
+    HandwritingWorksheet,
+    generate_handwriting_worksheet,
+)
+from .pixel_copy import (
+    PixelCopyWorksheet,
+    generate_pixel_copy_worksheet,
+)
+from .matching import (
+    MatchingWorksheet,
+    generate_matching_worksheet,
+)
+from .alphabet import (
+    AlphabetWorksheet,
+    generate_alphabet_worksheet,
+)
+from .sequencing import (
+    SequencingWorksheet,
+    generate_sequencing_worksheet,
+)
+from .t_chart import (
+    TChartWorksheet,
+    generate_t_chart_worksheet,
+)
+from .fill_in_the_blank import (
+    FillBlankWorksheet,
+    generate_fill_in_the_blank_worksheet,
+)
+from .word_sort import (
+    WordSortWorksheet,
+    generate_word_sort_worksheet,
+)
+from .story_map import (
+    StoryMapWorksheet,
+    generate_story_map_worksheet,
+)
+from .writing_scaffold import (
+    WritingScaffoldWorksheet,
+    generate_writing_scaffold_worksheet,
+)
 
 
 def _create_two_operand(payload: dict[str, Any]) -> MathWorksheet:
@@ -118,6 +158,153 @@ def _create_tree_map(payload: dict[str, Any]) -> TreeMapWorksheet:
     )
 
 
+def _create_handwriting(payload: dict[str, Any]) -> HandwritingWorksheet:
+    """Create a handwriting worksheet from payload."""
+    return generate_handwriting_worksheet(
+        items=payload.get("items", []),
+        title=payload.get("title", "Handwriting Practice"),
+        instructions=payload.get(
+            "instructions", "Look at the picture and practice writing the word on the lines."
+        ),
+        rows=payload.get("rows", 4),
+        cols=payload.get("cols", 2),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_pixel_copy(payload: dict[str, Any]) -> PixelCopyWorksheet:
+    """Create a pixel copy worksheet from payload."""
+    return generate_pixel_copy_worksheet(
+        image_path=payload.get("image_path", ""),
+        title=payload.get("title", "Pixel Copy"),
+        instructions=payload.get(
+            "instructions", "Look at the colors on the left. Copy them to the grid on the right!"
+        ),
+        grid_size=payload.get("grid_size", 24),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_matching(payload: dict[str, Any]) -> MatchingWorksheet:
+    """Create a matching worksheet from payload."""
+    return generate_matching_worksheet(
+        left_items=payload.get("left_items", []),
+        right_items=payload.get("right_items", []),
+        title=payload.get("title", "Match the Pairs"),
+        instructions=payload.get(
+            "instructions",
+            "Draw a line to match the item on the left with the correct one on the right.",
+        ),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_alphabet(payload: dict[str, Any]) -> AlphabetWorksheet:
+    """Create an alphabet worksheet from payload."""
+    return generate_alphabet_worksheet(
+        letter=payload.get("letter", ""),
+        starting_words=payload.get("starting_words", []),
+        containing_words=payload.get("containing_words", []),
+        character_image_path=payload.get("character_image_path"),
+        title=payload.get("title", "Alphabet Practice"),
+        instructions=payload.get("instructions", "Practice your letters and reading words!"),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_sequencing(payload: dict[str, Any]) -> SequencingWorksheet:
+    """Create a sequencing worksheet from payload."""
+    return generate_sequencing_worksheet(
+        activity_name=payload.get("activity_name", "Activity"),
+        steps=payload.get("steps", []),
+        title=payload.get("title", "Put It in Order!"),
+        instructions=payload.get(
+            "instructions",
+            "Cut out each step below. Paste them in the correct order on another sheet of paper.",
+        ),
+        show_answers=payload.get("show_answers", False),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_t_chart(payload: dict[str, Any]) -> TChartWorksheet:
+    """Create a T-chart worksheet from payload."""
+    return generate_t_chart_worksheet(
+        columns=payload.get("columns", []),
+        row_count=payload.get("row_count", 6),
+        word_bank=payload.get("word_bank"),
+        title=payload.get("title", "T-Chart"),
+        instructions=payload.get(
+            "instructions",
+            "Sort the words from the word bank into the correct column.",
+        ),
+        show_answers=payload.get("show_answers", False),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_fill_in_the_blank(payload: dict[str, Any]) -> FillBlankWorksheet:
+    """Create a fill-in-the-blank worksheet from payload."""
+    return generate_fill_in_the_blank_worksheet(
+        segments=payload.get("segments", []),
+        word_bank=payload.get("word_bank"),
+        answers=payload.get("answers"),
+        title=payload.get("title", "Fill in the Blank"),
+        instructions=payload.get(
+            "instructions",
+            "Use the word bank to fill in the blanks.",
+        ),
+        show_answers=payload.get("show_answers", False),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_word_sort(payload: dict[str, Any]) -> WordSortWorksheet:
+    """Create a word sort worksheet from payload."""
+    return generate_word_sort_worksheet(
+        categories=payload.get("categories", []),
+        tiles=payload.get("tiles", []),
+        title=payload.get("title", "Word Sort"),
+        instructions=payload.get(
+            "instructions",
+            "Cut out the word tiles below. Sort them into the correct category boxes.",
+        ),
+        show_answers=payload.get("show_answers", False),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_story_map(payload: dict[str, Any]) -> StoryMapWorksheet:
+    """Create a story map worksheet from payload."""
+    return generate_story_map_worksheet(
+        title=payload.get("title", "Story Map"),
+        instructions=payload.get(
+            "instructions",
+            "Fill in each box about the story you read.",
+        ),
+        story_title_field=payload.get("story_title_field", True),
+        fields=payload.get("fields", []),
+        show_answers=payload.get("show_answers", False),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_writing_scaffold(payload: dict[str, Any]) -> WritingScaffoldWorksheet:
+    """Create a writing scaffold worksheet from payload."""
+    return generate_writing_scaffold_worksheet(
+        title=payload.get("title", "Writing Scaffold"),
+        instructions=payload.get(
+            "instructions", "Use the sentence starters below to write your paragraph."
+        ),
+        frame_type=payload.get("frame_type", "custom"),
+        topic=payload.get("topic"),
+        sections=payload.get("sections", []),
+        show_example=payload.get("show_example", False),
+        example_texts=payload.get("example_texts"),
+        metadata=payload.get("metadata"),
+    )
+
+
 class WorksheetFactory:
     """Factory class for dispatching JSON requests to the correct worksheet renderer."""
 
@@ -128,6 +315,15 @@ class WorksheetFactory:
         "feature_matrix": _create_feature_matrix,
         "odd_one_out": _create_odd_one_out,
         "tree_map": _create_tree_map,
+        "handwriting": _create_handwriting,
+        "alphabet": _create_alphabet,
+        "pixel_copy": _create_pixel_copy,
+        "matching": _create_matching,
+        "sequencing": _create_sequencing,
+        "t_chart": _create_t_chart,
+        "fill_in_the_blank": _create_fill_in_the_blank,
+        "word_sort": _create_word_sort,
+        "writing_scaffold": _create_writing_scaffold,
     }
 
     @classmethod
