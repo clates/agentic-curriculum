@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import os
+import random
 import sys
 from pathlib import Path
 from typing import cast
@@ -17,13 +18,34 @@ try:
         FeatureMatrixWorksheet,
         OddOneOutWorksheet,
         TreeMapWorksheet,
+        HandwritingWorksheet,
+        AlphabetWorksheet,
+        PixelCopyWorksheet,
+        MatchingWorksheet,
+        SequencingWorksheet,
+        TChartWorksheet,
+        FillBlankWorksheet,
+        WordSortWorksheet,
     )
 except ImportError:  # Fallback when executed outside package context
     CURRENT_DIR = os.path.dirname(__file__)
     if CURRENT_DIR not in sys.path:
         sys.path.insert(0, CURRENT_DIR)
     from worksheets import ReadingWorksheet, Worksheet, format_vertical_problem  # type: ignore
-    from worksheets import VennDiagramWorksheet, FeatureMatrixWorksheet, OddOneOutWorksheet, TreeMapWorksheet  # type: ignore
+    from worksheets import (
+        VennDiagramWorksheet,
+        FeatureMatrixWorksheet,
+        OddOneOutWorksheet,
+        TreeMapWorksheet,
+        HandwritingWorksheet,
+        AlphabetWorksheet,
+        PixelCopyWorksheet,
+        MatchingWorksheet,
+        SequencingWorksheet,
+        TChartWorksheet,
+        FillBlankWorksheet,
+        WordSortWorksheet,
+    )  # type: ignore
 
 _FONT_CANDIDATES = (
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
@@ -129,6 +151,25 @@ def _wrap_paragraphs(
         if idx < len(paragraphs) - 1:
             lines.append("")
     return lines
+
+
+def _prepare_sprite(image_path: str, size: int) -> Image.Image | None:
+    """Load and resize a sprite, preserving pixel art if small."""
+    if not os.path.exists(image_path):
+        return None
+    try:
+        img = Image.open(image_path).convert("RGBA")
+        if img.width < size or img.height < size:
+            # Upscale small images using NEAREST to keep pixel art crisp
+            scale = size / max(img.width, img.height)
+            new_size = (int(img.width * scale), int(img.height * scale))
+            return img.resize(new_size, Image.Resampling.NEAREST)
+        else:
+            # Downscale large images using LANCZOS
+            img.thumbnail((size, size), Image.Resampling.LANCZOS)
+            return img
+    except Exception:
+        return None
 
 
 def _render_image(
@@ -919,18 +960,39 @@ def _render_odd_one_out_image(
         items_area_width = content_width - 40
         item_spacing = items_area_width // len(row.items)
 
-        for item_idx, item_text in enumerate(row.items):
+        for item_idx, item in enumerate(row.items):
             item_x = items_x_start + item_idx * item_spacing
+
+            # Determine content dimensions
+            content_w, content_h = 0, 0
+            max_sprite_h = item_line_height - 10
+            sprite = _prepare_sprite(item.image_path, max_sprite_h) if item.image_path else None
+            if sprite:
+                content_w, content_h = sprite.size
+
+            if item.text:
+                text_w = _text_width(item_font, item.text)
+                content_w = max(content_w, text_w)
+                content_h = max(content_h, item_line_height - 10)
+
             # Draw box around each item
-            text_width = _text_width(item_font, item_text)
             box_padding = 10
             box_x1 = item_x - box_padding
             box_y1 = y - 5
-            box_x2 = item_x + text_width + box_padding
+            box_x2 = item_x + content_w + box_padding
             box_y2 = y + item_line_height - 10
 
             draw.rectangle((box_x1, box_y1, box_x2, box_y2), outline="black", width=2)
-            draw.text((item_x, y), item_text, font=item_font, fill="black")
+
+            if sprite:
+                image.paste(sprite, (int(item_x), int(y)), sprite)
+                if item.text:
+                    # Draw text below image if both exist (though usually one or the other)
+                    draw.text(
+                        (item_x, y + sprite.height + 2), item.text, font=item_font, fill="black"
+                    )
+            elif item.text:
+                draw.text((item_x, y), item.text, font=item_font, fill="black")
 
         y += item_line_height + 10
 
@@ -977,6 +1039,231 @@ def render_odd_one_out_to_pdf(worksheet: OddOneOutWorksheet, output_path: str | 
     output.parent.mkdir(parents=True, exist_ok=True)
     rgb_image.save(output, format="PDF")
     return output
+
+    return output
+
+
+def _draw_primary_lines(
+    draw: ImageDraw.ImageDraw,
+    x_start: float,
+    x_end: float,
+    y_start: float,
+    line_height: int = 60,
+    line_color: tuple[int, int, int] = (150, 150, 150),
+    bottom_rail: bool = False,
+) -> None:
+    """Draw handwriting paper style lines (Solid, Dashed, Solid)."""
+    top_y = y_start
+    mid_y = y_start + (line_height // 2)
+    bot_y = y_start + line_height
+
+    # Draw Top (Solid)
+    draw.line([(x_start, top_y), (x_end, top_y)], fill=line_color, width=2)
+
+    # Draw Bottom
+    if bottom_rail:
+        # Draw thick short segments (underscores) to encourage tighter spacing
+        segment_len = 40
+        gap_len = 15
+        for x in range(int(x_start), int(x_end), segment_len + gap_len):
+            draw.line(
+                [(x, bot_y), (min(x + segment_len, x_end), bot_y)],
+                fill=line_color,
+                width=4,
+            )
+    else:
+        # Draw Bottom (Solid)
+        draw.line([(x_start, bot_y), (x_end, bot_y)], fill=line_color, width=2)
+
+    # Draw Middle (Dashed)
+    dash_len = 10
+    for x in range(int(x_start), int(x_end), dash_len * 2):
+        draw.line(
+            [(x, mid_y), (min(x + dash_len, x_end), mid_y)],
+            fill=line_color,
+            width=1,
+        )
+
+
+def _render_handwriting_image(
+    worksheet: HandwritingWorksheet,
+    *,
+    width: int = 1050,
+    margin: int = 72,
+) -> Image.Image:
+    """Render a handwriting worksheet to an image."""
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    label_font = _load_font(32, bold=True)
+    sub_label_font = _load_font(18)
+
+    title_height = _line_height(title_font, extra=4)
+    meta_line_height = _line_height(meta_font, extra=2)
+    instruction_line_height = _line_height(instruction_font, extra=4)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    # Header height
+    header_height = margin + title_height + meta_line_height * 2 + 20
+    if instruction_lines:
+        header_height += len(instruction_lines) * instruction_line_height + 10
+
+    # Grid settings
+    row_height = 240
+    total_height = header_height + worksheet.rows * row_height + margin
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    # Header
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    y += title_height
+
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text((margin, y), name_text, font=meta_font, fill="black")
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += meta_line_height * 2
+
+    if instruction_lines:
+        for line in instruction_lines:
+            draw.text((margin, y), line, font=instruction_font, fill="black")
+            y += instruction_line_height
+        y += 10
+
+    # Grid items
+    col_width = content_width // worksheet.cols
+    sprite_size = 140
+
+    for i, item in enumerate(worksheet.items[: worksheet.rows * worksheet.cols]):
+        row = i // worksheet.cols
+        col = i % worksheet.cols
+
+        cell_x = margin + col * col_width
+        cell_y = y + row * row_height
+
+        # Image
+        sprite = _prepare_sprite(item.image_path, sprite_size) if item.image_path else None
+        if sprite:
+            offset_x = (sprite_size - sprite.width) // 2
+            offset_y = (sprite_size - sprite.height) // 2
+            image.paste(sprite, (int(cell_x + offset_x), int(cell_y + offset_y)), sprite)
+
+        # Text label
+        text_x = cell_x + sprite_size + 20
+        text_y = cell_y + 30
+        draw.text((text_x, text_y), item.text, font=label_font, fill="black")
+
+        if item.sub_label:
+            draw.text((text_x, text_y + 40), item.sub_label, font=sub_label_font, fill="gray")
+
+        # Handwriting lines
+        line_start_x = text_x
+        line_end_x = cell_x + col_width - 20
+        line_start_y = cell_y + sprite_size - 35
+        bottom_rail = worksheet.metadata.get("bottom_rail", False) if worksheet.metadata else False
+        _draw_primary_lines(
+            draw,
+            line_start_x,
+            line_end_x,
+            line_start_y,
+            line_height=80,
+            bottom_rail=bottom_rail,
+        )
+
+    return image
+
+
+def _render_pixel_copy_image(
+    worksheet: PixelCopyWorksheet,
+    *,
+    width: int = 1050,
+    margin: int = 72,
+) -> Image.Image:
+    """Render a pixel copy worksheet to an image."""
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+
+    title_height = _line_height(title_font, extra=4)
+    meta_line_height = _line_height(meta_font, extra=2)
+    instruction_line_height = _line_height(instruction_font, extra=4)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    box_size = (content_width - 60) // 2
+    header_height = margin + title_height + meta_line_height * 2 + 20
+    if instruction_lines:
+        header_height += len(instruction_lines) * instruction_line_height + 20
+
+    total_height = header_height + box_size + margin + 40
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    # Header
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    y += title_height
+
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text((margin, y), name_text, font=meta_font, fill="black")
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += meta_line_height * 2
+
+    if instruction_lines:
+        for line in instruction_lines:
+            draw.text((margin, y), line, font=instruction_font, fill="black")
+            y += instruction_line_height
+        y += 20
+
+    # Grid Setup
+    grid_size = worksheet.grid_size
+    cell_size = box_size / grid_size
+
+    # Left side: Reference Image
+    left_x = margin
+    if worksheet.image_path and os.path.exists(worksheet.image_path):
+        try:
+            source = Image.open(worksheet.image_path).convert("RGBA")
+            bg = Image.new("RGBA", source.size, "WHITE")
+            bg.alpha_composite(source)
+            pixelated = bg.resize((grid_size, grid_size), Image.Resampling.NEAREST)
+            scaled = pixelated.resize((box_size, box_size), Image.Resampling.NEAREST)
+            image.paste(scaled, (int(left_x), int(y)))
+        except Exception:
+            draw.rectangle((left_x, y, left_x + box_size, y + box_size), outline="black")
+    else:
+        draw.rectangle((left_x, y, left_x + box_size, y + box_size), outline="black")
+
+    # Right side: Empty Grid
+    right_x = margin + box_size + 60
+    draw.rectangle((right_x, y, right_x + box_size, y + box_size), outline="black", width=2)
+
+    # Draw grid lines
+    for i in range(grid_size + 1):
+        offset = i * cell_size
+        draw.line([(left_x + offset, y), (left_x + offset, y + box_size)], fill="black", width=1)
+        draw.line([(right_x + offset, y), (right_x + offset, y + box_size)], fill="black", width=1)
+        draw.line([(left_x, y + offset), (left_x + box_size, y + offset)], fill="black", width=1)
+        draw.line([(right_x, y + offset), (right_x + box_size, y + offset)], fill="black", width=1)
+
+    return image
 
 
 def _render_tree_map_image(
@@ -1166,6 +1453,1146 @@ def render_tree_map_to_pdf(worksheet: TreeMapWorksheet, output_path: str | Path)
     return output
 
 
+def render_handwriting_to_image(worksheet: HandwritingWorksheet, output_path: str | Path) -> Path:
+    """Render handwriting worksheet to a PNG image."""
+    image = _render_handwriting_image(worksheet)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG")
+    return output
+
+
+def render_handwriting_to_pdf(worksheet: HandwritingWorksheet, output_path: str | Path) -> Path:
+    """Render handwriting worksheet to a PDF."""
+    image = _render_handwriting_image(worksheet)
+    rgb_image = image.convert("RGB")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    rgb_image.save(output, format="PDF")
+    return output
+
+
+def render_pixel_copy_to_image(worksheet: PixelCopyWorksheet, output_path: str | Path) -> Path:
+    """Render pixel copy worksheet to a PNG image."""
+    image = _render_pixel_copy_image(worksheet)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG")
+    return output
+
+
+def render_pixel_copy_to_pdf(worksheet: PixelCopyWorksheet, output_path: str | Path) -> Path:
+    """Render pixel copy worksheet to a PDF."""
+    image = _render_pixel_copy_image(worksheet)
+    rgb_image = image.convert("RGB")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    rgb_image.save(output, format="PDF")
+    return output
+
+
+def _render_alphabet_image(
+    worksheet: AlphabetWorksheet,
+    *,
+    width: int = 1050,
+    margin: int = 72,
+) -> Image.Image:
+    """Render an alphabet worksheet to an image."""
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    centerpiece_font = _load_font(200, bold=True)
+    reading_header_font = _load_font(32, bold=True)
+    reading_word_font = _load_font(40)
+    trace_font = _load_font(80)
+
+    title_height = _line_height(title_font, extra=4)
+    meta_line_height = _line_height(meta_font, extra=2)
+    instruction_line_height = _line_height(instruction_font, extra=4)
+
+    content_width = width - 2 * margin
+
+    # Calculate total height (approximate)
+    header_height = margin + title_height + meta_line_height * 2 + 20
+    if worksheet.instructions:
+        header_height += (
+            _line_height(instruction_font)
+            * len(_wrap_text(worksheet.instructions, instruction_font, content_width))
+            + 20
+        )
+
+    centerpiece_height = 250
+    handwriting_section_height = 550
+    reading_section_height = 400
+
+    total_height = (
+        header_height
+        + centerpiece_height
+        + handwriting_section_height
+        + reading_section_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    # Header
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    y += title_height
+
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text((margin, y), name_text, font=meta_font, fill="black")
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += meta_line_height * 2
+
+    if worksheet.instructions:
+        lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+        for line in lines:
+            draw.text((margin, y), line, font=instruction_font, fill="black")
+            y += instruction_line_height
+        y += 20
+
+    # Centerpiece and Character
+    centerpiece_text = f"{worksheet.letter} {worksheet.letter.lower()}"
+    text_w = _text_width(centerpiece_font, centerpiece_text)
+
+    # Position centerpiece slightly left of center to make room for character
+    text_x = margin + (content_width // 2) - (text_w // 2) - 50
+    draw.text((text_x, y + 20), centerpiece_text, font=centerpiece_font, fill="black")
+
+    if worksheet.character_image_path:
+        sprite_size = 220
+        sprite = _prepare_sprite(worksheet.character_image_path, sprite_size)
+        if sprite:
+            image.paste(sprite, (int(width - margin - sprite.width), int(y + 20)), sprite)
+
+    y += centerpiece_height
+
+    # Handwriting Lines
+    y += 20
+    line_spacing = 130
+
+    # Line 1: Trace-a-long (Uppercase, Fading)
+    line_y = y
+    _draw_primary_lines(draw, margin, width - margin, line_y, line_height=80)
+
+    trace_char_upper = worksheet.letter
+    trace_x = margin + 20
+    for i in range(4):
+        # Calculate fade: 0 (black) to ~180 (light gray)
+        alpha = int(i * 60)
+        color = (alpha, alpha, alpha)
+        draw.text((trace_x, line_y + 5), trace_char_upper, font=trace_font, fill=color)
+        trace_x += _text_width(trace_font, trace_char_upper) + 60
+
+    # Line 2: Trace-a-long (Lowercase, Fading)
+    line_y += line_spacing
+    _draw_primary_lines(draw, margin, width - margin, line_y, line_height=80)
+
+    trace_char_lower = worksheet.letter.lower()
+    trace_x = margin + 20
+    for i in range(4):
+        alpha = int(i * 60)
+        color = (alpha, alpha, alpha)
+        draw.text((trace_x, line_y + 5), trace_char_lower, font=trace_font, fill=color)
+        trace_x += _text_width(trace_font, trace_char_lower) + 60
+
+    # Line 3: Free practice (Frame)
+    line_y += line_spacing
+    _draw_primary_lines(draw, margin, width - margin, line_y, line_height=80)
+
+    # Line 4: Spacing practice (Double-underscores)
+    line_y += line_spacing
+    underscore_y = line_y + 60
+    for x in range(margin + 40, width - margin - 40, 150):
+        draw.text((x, underscore_y), "__  __", font=reading_word_font, fill="black")
+
+    y = line_y + line_spacing
+
+    # Reading Sections
+    y += 40
+    col_width = content_width // 2
+
+    # Section: Starts with
+    draw.text(
+        (margin, y), f"Starts with {worksheet.letter}", font=reading_header_font, fill="black"
+    )
+    word_y = y + 50
+    for word in worksheet.starting_words[:4]:
+        draw.text((margin + 20, word_y), f"• {word}", font=reading_word_font, fill="black")
+        word_y += 60
+
+    # Section: Contains
+    draw.text(
+        (margin + col_width, y),
+        f"Contains {worksheet.letter}",
+        font=reading_header_font,
+        fill="black",
+    )
+    word_y = y + 50
+    for word in worksheet.containing_words[:4]:
+        draw.text(
+            (margin + col_width + 20, word_y), f"• {word}", font=reading_word_font, fill="black"
+        )
+        word_y += 60
+
+    return image
+
+
+def render_alphabet_to_image(worksheet: AlphabetWorksheet, output_path: str | Path) -> Path:
+    """Render alphabet worksheet to a PNG image."""
+    image = _render_alphabet_image(worksheet)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG")
+    return output
+
+
+def render_alphabet_to_pdf(worksheet: AlphabetWorksheet, output_path: str | Path) -> Path:
+    """Render alphabet worksheet to a PDF."""
+    image = _render_alphabet_image(worksheet)
+    rgb_image = image.convert("RGB")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    rgb_image.save(output, format="PDF")
+    return output
+
+
+def _render_matching_image(
+    worksheet: MatchingWorksheet,
+    *,
+    width: int = 1050,
+    margin: int = 72,
+) -> Image.Image:
+    """Render a matching worksheet to an image."""
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    word_font = _load_font(48, bold=True)
+
+    title_height = _line_height(title_font, extra=4)
+    meta_line_height = _line_height(meta_font, extra=2)
+    instruction_line_height = _line_height(instruction_font, extra=4)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    max_rows = max(len(worksheet.left_items), len(worksheet.right_items))
+    row_height = 200
+    header_height = margin + title_height + meta_line_height * 2 + 20
+    if instruction_lines:
+        header_height += len(instruction_lines) * instruction_line_height + 20
+
+    total_height = header_height + max_rows * row_height + margin
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    # Header
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    y += title_height
+
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text((margin, y), name_text, font=meta_font, fill="black")
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += meta_line_height * 2
+
+    if instruction_lines:
+        for line in instruction_lines:
+            draw.text((margin, y), line, font=instruction_font, fill="black")
+            y += instruction_line_height
+        y += 20
+
+    # Content
+    sprite_size = 140
+    dot_radius = 8
+    left_x = margin + 30
+    right_x = width - margin - 30
+    left_dot_x = left_x + 220
+    right_dot_x = right_x - 220
+
+    for i in range(max_rows):
+        row_y_center = y + i * row_height + row_height // 2
+
+        # Left Column
+        if i < len(worksheet.left_items):
+            item = worksheet.left_items[i]
+            if item.text:
+                draw.text((left_x, row_y_center - 30), item.text, font=word_font, fill="black")
+            sprite = _prepare_sprite(item.image_path, sprite_size) if item.image_path else None
+            if sprite:
+                image.paste(sprite, (int(left_x), int(row_y_center - sprite.height // 2)), sprite)
+
+            # Left Dot
+            draw.ellipse(
+                [
+                    left_dot_x - dot_radius,
+                    row_y_center - dot_radius,
+                    left_dot_x + dot_radius,
+                    row_y_center + dot_radius,
+                ],
+                fill="black",
+            )
+
+        # Right Column
+        if i < len(worksheet.right_items):
+            item = worksheet.right_items[i]
+            if item.text:
+                draw.text(
+                    (right_x - _text_width(word_font, item.text), row_y_center - 30),
+                    item.text,
+                    font=word_font,
+                    fill="black",
+                )
+            sprite = _prepare_sprite(item.image_path, sprite_size) if item.image_path else None
+            if sprite:
+                if item.as_shadow:
+                    # Create silhouette
+                    mask = sprite.getchannel("A")
+                    sprite = Image.new("RGBA", sprite.size, "BLACK")
+                    sprite.putalpha(mask)
+                image.paste(
+                    sprite,
+                    (int(right_x - sprite.width), int(row_y_center - sprite.height // 2)),
+                    sprite,
+                )
+
+            # Right Dot
+            draw.ellipse(
+                [
+                    right_dot_x - dot_radius,
+                    row_y_center - dot_radius,
+                    right_dot_x + dot_radius,
+                    row_y_center + dot_radius,
+                ],
+                fill="black",
+            )
+
+        # Row Separator (programmatic dash)
+        if i < max_rows - 1:
+            sep_y = y + (i + 1) * row_height
+            for dot_x in range(margin, width - margin, 40):
+                draw.line([(dot_x, sep_y), (dot_x + 20, sep_y)], fill=(220, 220, 220), width=2)
+
+    return image
+
+
+def render_matching_to_image(worksheet: MatchingWorksheet, output_path: str | Path) -> Path:
+    """Render matching worksheet to a PNG image."""
+    image = _render_matching_image(worksheet)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG")
+    return output
+
+
+def render_matching_to_pdf(worksheet: MatchingWorksheet, output_path: str | Path) -> Path:
+    """Render matching worksheet to a PDF."""
+    image = _render_matching_image(worksheet)
+    rgb_image = image.convert("RGB")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    rgb_image.save(output, format="PDF")
+    return output
+
+
+# ---------------------------------------------------------------------------
+# Sequencing worksheet renderer
+# ---------------------------------------------------------------------------
+
+
+def _render_sequencing_image(
+    worksheet: SequencingWorksheet,
+    *,
+    width: int = 1050,
+    margin: int = 72,
+) -> Image.Image:
+    """Render a sequencing (cut-and-order) worksheet to a PIL Image.
+
+    Each step is displayed as a dashed-border card with:
+    - A number box in the top-left (blank for students, filled for answer key)
+    - Optional image on the left inside the card
+    - Step text on the right inside the card
+    - Dashed border and scissors icon hint at the top to indicate cut-out cards
+
+    Cards are arranged in a 2-column grid.
+    """
+    COLS = 2
+    CARD_PADDING = 16
+    SPRITE_SIZE = 100
+    NUM_BOX_SIZE = 40
+    DASH_COLOR = (100, 100, 100)
+    CARD_BG = (252, 252, 252)
+    BORDER_COLOR = (60, 60, 60)
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    step_font = _load_font(26, bold=True)
+    num_font = _load_font(22, bold=True)
+    activity_font = _load_font(28, bold=True)
+    scissors_font = _load_font(18, italic=True)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    title_h = _line_height(title_font, extra=4)
+    meta_h = _line_height(meta_font, extra=2)
+    instr_h = _line_height(instruction_font, extra=4)
+    activity_h = _line_height(activity_font, extra=8)
+
+    # Header height
+    header_height = (
+        margin
+        + title_h
+        + meta_h * 2
+        + 10
+        + len(instruction_lines) * instr_h
+        + 10
+        + activity_h
+        + 16  # scissors hint line
+        + 20
+    )
+
+    # Card dimensions
+    col_width = content_width // COLS
+    # Card height: padding top/bottom + max(sprite_size, text lines)
+    max_text_width = col_width - CARD_PADDING * 3 - SPRITE_SIZE - NUM_BOX_SIZE - 8
+    # Estimate worst-case text height
+    sample_lines = max(
+        len(_wrap_text(step.text, step_font, max(max_text_width, 80))) for step in worksheet.steps
+    )
+    step_lh = _line_height(step_font, extra=6)
+    card_inner_height = max(SPRITE_SIZE, sample_lines * step_lh)
+    card_height = card_inner_height + CARD_PADDING * 2 + 10  # extra for num box row
+
+    rows_needed = math.ceil(len(worksheet.steps) / COLS)
+    total_height = header_height + rows_needed * (card_height + 20) + margin
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    # ---- Header ----
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    y += title_h
+
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text((margin, y), name_text, font=meta_font, fill="black")
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += meta_h * 2
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill=(80, 80, 80))
+        y += instr_h
+    y += 10
+
+    draw.text(
+        (margin, y), f"Activity: {worksheet.activity_name}", font=activity_font, fill=(30, 30, 120)
+    )
+    y += activity_h
+
+    # Scissors hint
+    scissors_hint = (
+        "✂  - - - Cut here - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+    )
+    draw.text((margin, y), scissors_hint, font=scissors_font, fill=(160, 160, 160))
+    y += 16 + 20
+
+    # ---- Cards ----
+    for idx, step in enumerate(worksheet.steps):
+        col = idx % COLS
+        row = idx // COLS
+
+        card_x = margin + col * col_width
+        card_y = y + row * (card_height + 20)
+        card_w = col_width - 12  # small gap between columns
+        card_h = card_height
+
+        # Card background
+        draw.rectangle(
+            [card_x, card_y, card_x + card_w, card_y + card_h],
+            fill=CARD_BG,
+        )
+
+        # Dashed border
+        dash = 10
+        gap = 6
+        # Top and bottom edges
+        for edge_y in [card_y, card_y + card_h]:
+            x_pos = card_x
+            while x_pos < card_x + card_w:
+                draw.line(
+                    [(x_pos, edge_y), (min(x_pos + dash, card_x + card_w), edge_y)],
+                    fill=DASH_COLOR,
+                    width=2,
+                )
+                x_pos += dash + gap
+        # Left and right edges
+        for edge_x in [card_x, card_x + card_w]:
+            y_pos = card_y
+            while y_pos < card_y + card_h:
+                draw.line(
+                    [(edge_x, y_pos), (edge_x, min(y_pos + dash, card_y + card_h))],
+                    fill=DASH_COLOR,
+                    width=2,
+                )
+                y_pos += dash + gap
+
+        # Number box (top-left inside card)
+        nb_x = card_x + CARD_PADDING
+        nb_y = card_y + CARD_PADDING
+        draw.rectangle(
+            [nb_x, nb_y, nb_x + NUM_BOX_SIZE, nb_y + NUM_BOX_SIZE],
+            outline=BORDER_COLOR,
+            width=2,
+        )
+        if worksheet.show_answers and step.correct_order is not None:
+            num_str = str(step.correct_order)
+            nw = _text_width(num_font, num_str)
+            nh = _line_height(num_font, extra=0)
+            draw.text(
+                (nb_x + (NUM_BOX_SIZE - nw) // 2, nb_y + (NUM_BOX_SIZE - nh) // 2),
+                num_str,
+                font=num_font,
+                fill=(200, 30, 30),
+            )
+
+        content_x = nb_x + NUM_BOX_SIZE + 10
+        content_y = card_y + CARD_PADDING
+
+        # Optional image
+        if step.image_path:
+            sprite = _prepare_sprite(step.image_path, SPRITE_SIZE)
+            if sprite:
+                image.paste(
+                    sprite, (content_x, content_y), sprite if sprite.mode == "RGBA" else None
+                )
+                content_x += SPRITE_SIZE + CARD_PADDING
+
+        # Step text (wrapped)
+        remaining_w = card_x + card_w - content_x - CARD_PADDING
+        text_lines = _wrap_text(step.text, step_font, max(remaining_w, 60))
+        ty = content_y + max(0, (card_inner_height - len(text_lines) * step_lh) // 2)
+        for tline in text_lines:
+            draw.text((content_x, ty), tline, font=step_font, fill="black")
+            ty += step_lh
+
+    return image
+
+
+def render_sequencing_to_image(worksheet: SequencingWorksheet, output_path: str | Path) -> Path:
+    """Render sequencing worksheet to a PNG image."""
+    image = _render_sequencing_image(worksheet)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG")
+    return output
+
+
+def render_sequencing_to_pdf(worksheet: SequencingWorksheet, output_path: str | Path) -> Path:
+    """Render sequencing worksheet to a PDF."""
+    image = _render_sequencing_image(worksheet)
+    rgb_image = image.convert("RGB")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    rgb_image.save(output, format="PDF")
+    return output
+
+
+# =============================================================================
+# T-Chart renderer
+# =============================================================================
+
+_T_CHART_ROW_HEIGHT = 36
+_T_CHART_HEADER_FILL = (240, 240, 240)
+_T_CHART_BORDER = 2
+_T_CHART_ANSWER_COLOR = (200, 30, 30)
+
+
+def _render_t_chart_image(worksheet: TChartWorksheet) -> Image.Image:
+    """Render a TChartWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 72
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    header_font = _load_font(26, bold=True)
+    answer_font = _load_font(20, italic=True)
+    word_bank_label_font = _load_font(24, bold=True)
+    word_bank_font = _load_font(22)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    col_header_lh = _line_height(header_font, extra=8)
+    word_bank_lh = _line_height(word_bank_font, extra=4)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    num_cols = len(worksheet.columns)
+    col_width = content_width // num_cols
+    table_width = col_width * num_cols
+    table_body_height = worksheet.row_count * _T_CHART_ROW_HEIGHT
+
+    word_bank_lines: list[str] = []
+    word_bank_section_height = 0
+    if worksheet.word_bank:
+        wb_label_lh = _line_height(word_bank_label_font, extra=4)
+        wb_text = ", ".join(worksheet.word_bank)
+        word_bank_lines = _wrap_text(wb_text, word_bank_font, content_width)
+        word_bank_section_height = wb_label_lh + len(word_bank_lines) * word_bank_lh + 20
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 12
+        + len(instruction_lines) * instruction_lh
+        + 20
+        + col_header_lh
+        + table_body_height
+        + 24
+        + word_bank_section_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    name_w = _text_width(meta_font, name_text)
+    date_w = _text_width(meta_font, date_text)
+    right_edge = width - margin
+    draw.text((right_edge - name_w, y), name_text, font=meta_font, fill="black")
+    draw.text((right_edge - date_w, y + meta_lh), date_text, font=meta_font, fill="black")
+    y += title_lh + 12
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 20
+
+    table_x = margin
+    table_top = y
+
+    for col_idx, col in enumerate(worksheet.columns):
+        cell_x = table_x + col_idx * col_width
+        draw.rectangle(
+            (cell_x, table_top, cell_x + col_width, table_top + col_header_lh),
+            fill=_T_CHART_HEADER_FILL,
+            outline=None,
+        )
+        label_w = _text_width(header_font, col.label)
+        label_x = cell_x + (col_width - label_w) // 2
+        label_y = table_top + (col_header_lh - _line_height(header_font, extra=0)) // 2
+        draw.text((label_x, label_y), col.label, font=header_font, fill="black")
+
+    draw.rectangle(
+        (table_x, table_top, table_x + table_width, table_top + col_header_lh),
+        outline="black",
+        width=_T_CHART_BORDER,
+    )
+    for col_idx in range(1, num_cols):
+        div_x = table_x + col_idx * col_width
+        draw.line(
+            (div_x, table_top, div_x, table_top + col_header_lh),
+            fill="black",
+            width=_T_CHART_BORDER,
+        )
+
+    body_top = table_top + col_header_lh
+    for row_idx in range(worksheet.row_count):
+        row_y = body_top + row_idx * _T_CHART_ROW_HEIGHT
+        line_y = row_y + _T_CHART_ROW_HEIGHT
+        draw.line((table_x, line_y, table_x + table_width, line_y), fill="black", width=1)
+        if worksheet.show_answers:
+            for col_idx, col in enumerate(worksheet.columns):
+                if row_idx < len(col.answers):
+                    cell_x = table_x + col_idx * col_width + 8
+                    text_y = row_y + (_T_CHART_ROW_HEIGHT - _line_height(answer_font, extra=0)) // 2
+                    draw.text(
+                        (cell_x, text_y),
+                        col.answers[row_idx],
+                        font=answer_font,
+                        fill=_T_CHART_ANSWER_COLOR,
+                    )
+
+    for col_idx in range(1, num_cols):
+        div_x = table_x + col_idx * col_width
+        draw.line(
+            (div_x, body_top, div_x, body_top + table_body_height),
+            fill="black",
+            width=_T_CHART_BORDER,
+        )
+
+    table_bottom = body_top + table_body_height
+    draw.rectangle(
+        (table_x, table_top, table_x + table_width, table_bottom),
+        outline="black",
+        width=_T_CHART_BORDER,
+    )
+    y = table_bottom + 24
+
+    if worksheet.word_bank:
+        wb_label_lh = _line_height(word_bank_label_font, extra=4)
+        draw.text((margin, y), "Word Bank:", font=word_bank_label_font, fill="black")
+        y += wb_label_lh
+        for line in word_bank_lines:
+            draw.text((margin, y), line, font=word_bank_font, fill="black")
+            y += word_bank_lh
+
+    return image
+
+
+def render_t_chart_to_image(worksheet: TChartWorksheet, output_path: str | Path) -> Path:
+    """Render T-chart worksheet to a PNG image."""
+    image = _render_t_chart_image(worksheet)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG")
+    return output
+
+
+def render_t_chart_to_pdf(worksheet: TChartWorksheet, output_path: str | Path) -> Path:
+    """Render T-chart worksheet to a PDF."""
+    image = _render_t_chart_image(worksheet)
+    rgb_image = image.convert("RGB")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    rgb_image.save(output, format="PDF")
+    return output
+
+
+# =============================================================================
+# Fill-in-the-blank renderer
+# =============================================================================
+
+_FIB_GAP_WIDTH = 130
+_FIB_GAP_UNDERLINE_OFFSET = -6
+_FIB_GAP_NUMBER_YOFFSET = -2
+_FIB_GAP_TRAIL = 8
+_FIB_ANSWER_COLOR = (200, 30, 30)
+_FIB_GAP_NUMBER_COLOR = (130, 130, 130)
+
+
+def _fib_layout_passage(
+    segments,
+    margin: int,
+    content_width: int,
+    body_font,
+    gap_number_font,
+    answer_font,
+    answers: dict,
+    show_answers: bool,
+    draw,
+    start_y: int,
+) -> int:
+    """Layout fill-in-the-blank passage segments. Pass draw=None for dry-run."""
+    lh = _line_height(body_font)
+    x = margin
+    y = start_y
+    right_edge = margin + content_width
+
+    for seg in segments:
+        if seg.newline:
+            y += int(lh * 1.5)
+            x = margin
+        elif seg.text is not None:
+            words = seg.text.split()
+            for word in words:
+                word_with_space = word + " "
+                word_w = _text_width(body_font, word_with_space)
+                if x + word_w > right_edge and x > margin:
+                    y += lh
+                    x = margin
+                if draw is not None:
+                    draw.text((x, y), word_with_space, font=body_font, fill="black")
+                x += word_w
+        elif seg.gap is not None:
+            gap_num = seg.gap
+            gap_w = _FIB_GAP_WIDTH
+            if x + gap_w > right_edge and x > margin:
+                y += lh
+                x = margin
+            if draw is not None:
+                underline_y = y + lh + _FIB_GAP_UNDERLINE_OFFSET
+                draw.line((x, underline_y, x + gap_w, underline_y), fill="black", width=2)
+                num_text = f"({gap_num})"
+                num_w = _text_width(gap_number_font, num_text)
+                num_x = x + (gap_w - num_w) // 2
+                draw.text(
+                    (num_x, y + _FIB_GAP_NUMBER_YOFFSET),
+                    num_text,
+                    font=gap_number_font,
+                    fill=_FIB_GAP_NUMBER_COLOR,
+                )
+                if show_answers:
+                    ans_key = str(gap_num)
+                    if ans_key in answers:
+                        ans_text = answers[ans_key]
+                        ans_w = _text_width(answer_font, ans_text)
+                        ans_x = x + (gap_w - ans_w) // 2
+                        ans_y = y + lh - _line_height(answer_font) - 2
+                        draw.text(
+                            (ans_x, ans_y), ans_text, font=answer_font, fill=_FIB_ANSWER_COLOR
+                        )
+            x += gap_w + _FIB_GAP_TRAIL
+
+    y += lh
+    return y
+
+
+def _render_fill_in_blank_image(worksheet: FillBlankWorksheet) -> Image.Image:
+    """Render a FillBlankWorksheet to a PIL Image using two-pass layout."""
+    width = 1050
+    margin = 72
+    content_width = width - 2 * margin
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    body_font = _load_font(24)
+    gap_number_font = _load_font(16)
+    answer_font = _load_font(20)
+    word_bank_label_font = _load_font(24, bold=True)
+    word_bank_body_font = _load_font(22)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    wb_label_lh = _line_height(word_bank_label_font, extra=4)
+    wb_body_lh = _line_height(word_bank_body_font, extra=4)
+
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+    header_height = max(title_lh, meta_lh * 2)
+
+    # Pass 1: dry run to measure total height
+    y = margin + header_height + 12 + len(instruction_lines) * instruction_lh + 20
+    y = _fib_layout_passage(
+        worksheet.segments,
+        margin,
+        content_width,
+        body_font,
+        gap_number_font,
+        answer_font,
+        worksheet.answers,
+        worksheet.show_answers,
+        None,
+        y,
+    )
+    y += 20
+    if worksheet.word_bank:
+        y += wb_label_lh
+        items = [f"{i + 1}. {word}" for i, word in enumerate(worksheet.word_bank)]
+        wb_x = margin
+        for item in items:
+            item_w = _text_width(word_bank_body_font, item + "   ")
+            if wb_x + item_w > margin + content_width and wb_x > margin:
+                y += wb_body_lh
+                wb_x = margin
+            wb_x += item_w
+        y += wb_body_lh
+    total_height = y + margin
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    # Pass 2: draw
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    name_w = _text_width(meta_font, name_text)
+    date_w = _text_width(meta_font, date_text)
+    right_edge = width - margin
+    draw.text((right_edge - name_w, y), name_text, font=meta_font, fill="black")
+    draw.text((right_edge - date_w, y + meta_lh), date_text, font=meta_font, fill="black")
+    y += header_height + 12
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 20
+
+    y = _fib_layout_passage(
+        worksheet.segments,
+        margin,
+        content_width,
+        body_font,
+        gap_number_font,
+        answer_font,
+        worksheet.answers,
+        worksheet.show_answers,
+        draw,
+        y,
+    )
+    y += 20
+
+    if worksheet.word_bank:
+        draw.text((margin, y), "Word Bank:", font=word_bank_label_font, fill="black")
+        y += wb_label_lh
+        items = [f"{i + 1}. {word}" for i, word in enumerate(worksheet.word_bank)]
+        wb_x = margin
+        for item in items:
+            item_with_space = item + "   "
+            item_w = _text_width(word_bank_body_font, item_with_space)
+            if wb_x + item_w > margin + content_width and wb_x > margin:
+                y += wb_body_lh
+                wb_x = margin
+            draw.text((wb_x, y), item_with_space, font=word_bank_body_font, fill="black")
+            wb_x += item_w
+
+    return image
+
+
+def render_fill_in_blank_to_image(worksheet: FillBlankWorksheet, output_path: str | Path) -> Path:
+    """Render fill-in-the-blank worksheet to a PNG image."""
+    image = _render_fill_in_blank_image(worksheet)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG")
+    return output
+
+
+def render_fill_in_blank_to_pdf(worksheet: FillBlankWorksheet, output_path: str | Path) -> Path:
+    """Render fill-in-the-blank worksheet to a PDF."""
+    image = _render_fill_in_blank_image(worksheet)
+    rgb_image = image.convert("RGB")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    rgb_image.save(output, format="PDF")
+    return output
+
+
+# =============================================================================
+# Word sort renderer
+# =============================================================================
+
+
+def _ws_draw_dashed_hline(draw, x_start, x_end, y, fill, width=2, dash=10, gap=5):
+    x = x_start
+    on = True
+    while x < x_end:
+        if on:
+            seg_end = min(x + dash, x_end)
+            draw.line((x, y, seg_end, y), fill=fill, width=width)
+            x += dash
+        else:
+            x += gap
+        on = not on
+
+
+def _ws_draw_dashed_vline(draw, y_start, y_end, x, fill, width=2, dash=10, gap=5):
+    y = y_start
+    on = True
+    while y < y_end:
+        if on:
+            seg_end = min(y + dash, y_end)
+            draw.line((x, y, x, seg_end), fill=fill, width=width)
+            y += dash
+        else:
+            y += gap
+        on = not on
+
+
+def _ws_draw_dashed_rect(draw, x0, y0, x1, y1, fill, width=2, dash=10, gap=5):
+    _ws_draw_dashed_hline(draw, x0, x1, y0, fill=fill, width=width, dash=dash, gap=gap)
+    _ws_draw_dashed_hline(draw, x0, x1, y1, fill=fill, width=width, dash=dash, gap=gap)
+    _ws_draw_dashed_vline(draw, y0, y1, x0, fill=fill, width=width, dash=dash, gap=gap)
+    _ws_draw_dashed_vline(draw, y0, y1, x1, fill=fill, width=width, dash=dash, gap=gap)
+
+
+def _render_word_sort_image(worksheet: WordSortWorksheet) -> Image.Image:
+    """Render a WordSortWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 72
+    content_width = width - 2 * margin
+    box_gap = 12
+    tile_width = 200
+    tile_height = 52
+    tile_gap = 12
+
+    _DARK_GRAY = "#555555"
+    _DARK_BLUE = "#1a1a8c"
+    _GRAY = "#999999"
+    _LABEL_LINE_COLOR = (180, 180, 180)
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    category_label_font = _load_font(24, bold=True)
+    tile_text_font = _load_font(22, bold=True)
+    scissors_font = _load_font(18, italic=True)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    category_label_lh = _line_height(category_label_font, extra=8)
+    tile_text_lh = _line_height(tile_text_font, extra=4)
+    scissors_lh = _line_height(scissors_font, extra=4)
+
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    tiles_shuffled = list(worksheet.tiles)
+    random.seed(42)
+    random.shuffle(tiles_shuffled)
+
+    n_cats = len(worksheet.categories)
+    if n_cats <= 3:
+        cat_rows = 1
+        cats_per_row = n_cats
+    else:
+        cat_rows = 2
+        cats_per_row = 2
+
+    box_width = (content_width - (cats_per_row - 1) * box_gap) // cats_per_row
+    tiles_per_cat = math.ceil(len(worksheet.tiles) / n_cats)
+    slot_height = tile_text_lh + 12
+    box_content_height = tiles_per_cat * slot_height
+    box_height = max(120, category_label_lh + 8 + box_content_height + 16)
+    cat_zone_height = cat_rows * box_height + (cat_rows - 1) * box_gap
+
+    tiles_per_row = max(1, (content_width + tile_gap) // (tile_width + tile_gap))
+    tile_rows = math.ceil(len(tiles_shuffled) / tiles_per_row)
+    tile_zone_height = tile_rows * tile_height + max(0, tile_rows - 1) * tile_gap
+    divider_height = scissors_lh + 10 + 20
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 20
+        + cat_zone_height
+        + 24
+        + divider_height
+        + 20
+        + tile_zone_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    name_w = _text_width(meta_font, name_text)
+    date_w = _text_width(meta_font, date_text)
+    right_edge = width - margin
+    draw.text((right_edge - name_w, y), name_text, font=meta_font, fill="black")
+    draw.text((right_edge - date_w, y + meta_lh), date_text, font=meta_font, fill="black")
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 20
+
+    for row_idx in range(cat_rows):
+        start_cat = row_idx * cats_per_row
+        end_cat = min(start_cat + cats_per_row, n_cats)
+        row_cats = worksheet.categories[start_cat:end_cat]
+        for col_idx, category in enumerate(row_cats):
+            bx0 = margin + col_idx * (box_width + box_gap)
+            by0 = y
+            bx1 = bx0 + box_width
+            by1 = by0 + box_height
+            _ws_draw_dashed_rect(draw, bx0, by0, bx1, by1, fill=_DARK_GRAY, width=2, dash=10, gap=6)
+            label_y = by0 + 10
+            label_w = _text_width(category_label_font, category)
+            label_x = bx0 + (box_width - label_w) // 2
+            draw.text((label_x, label_y), category, font=category_label_font, fill="black")
+            sep_y = label_y + category_label_lh
+            draw.line((bx0 + 4, sep_y, bx1 - 4, sep_y), fill=_LABEL_LINE_COLOR, width=1)
+            if worksheet.show_answers:
+                cat_tiles = [t for t in worksheet.tiles if t.category == category]
+                tile_y = sep_y + 8
+                for tile in cat_tiles:
+                    draw.text((bx0 + 12, tile_y), tile.text, font=tile_text_font, fill=_DARK_BLUE)
+                    tile_y += tile_text_lh + 12
+        y += box_height + box_gap
+
+    y -= box_gap
+    y += 24
+
+    scissors_text = "\u2702  Cut out the tiles below and sort them into the boxes above."
+    sci_w = _text_width(scissors_font, scissors_text)
+    sci_x = margin + (content_width - sci_w) // 2
+    draw.text((sci_x, y), scissors_text, font=scissors_font, fill=_GRAY)
+    y += scissors_lh + 10
+    _ws_draw_dashed_hline(
+        draw, margin, margin + content_width, y, fill=_GRAY, width=2, dash=8, gap=4
+    )
+    y += 40
+
+    for tile_idx, tile in enumerate(tiles_shuffled):
+        col = tile_idx % tiles_per_row
+        row = tile_idx // tiles_per_row
+        tx0 = margin + col * (tile_width + tile_gap)
+        ty0 = y + row * (tile_height + tile_gap)
+        tx1 = tx0 + tile_width
+        ty1 = ty0 + tile_height
+        _ws_draw_dashed_rect(draw, tx0, ty0, tx1, ty1, fill=_DARK_GRAY, width=2, dash=8, gap=4)
+        tw = _text_width(tile_text_font, tile.text)
+        th = _line_height(tile_text_font, extra=0)
+        draw.text(
+            (tx0 + (tile_width - tw) // 2, ty0 + (tile_height - th) // 2),
+            tile.text,
+            font=tile_text_font,
+            fill="black",
+        )
+
+    return image
+
+
+def render_word_sort_to_image(worksheet: WordSortWorksheet, output_path: str | Path) -> Path:
+    """Render word sort worksheet to a PNG image."""
+    image = _render_word_sort_image(worksheet)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    image.save(output, format="PNG")
+    return output
+
+
+def render_word_sort_to_pdf(worksheet: WordSortWorksheet, output_path: str | Path) -> Path:
+    """Render word sort worksheet to a PDF."""
+    image = _render_word_sort_image(worksheet)
+    rgb_image = image.convert("RGB")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    rgb_image.save(output, format="PDF")
+    return output
+
+
 __all__ = [
     "render_worksheet_to_image",
     "render_worksheet_to_pdf",
@@ -1179,4 +2606,192 @@ __all__ = [
     "render_odd_one_out_to_pdf",
     "render_tree_map_to_image",
     "render_tree_map_to_pdf",
+    "render_handwriting_to_image",
+    "render_handwriting_to_pdf",
+    "render_alphabet_to_image",
+    "render_alphabet_to_pdf",
+    "render_pixel_copy_to_image",
+    "render_pixel_copy_to_pdf",
+    "render_matching_to_image",
+    "render_matching_to_pdf",
+    "render_sequencing_to_image",
+    "render_sequencing_to_pdf",
+    "render_t_chart_to_image",
+    "render_t_chart_to_pdf",
+    "render_fill_in_blank_to_image",
+    "render_fill_in_blank_to_pdf",
+    "render_word_sort_to_image",
+    "render_word_sort_to_pdf",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Labeled Diagram renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import LabeledDiagramWorksheet
+except ImportError:
+    from worksheets import LabeledDiagramWorksheet  # type: ignore
+
+
+def _render_labeled_diagram_image(worksheet: LabeledDiagramWorksheet) -> Image.Image:
+    """Render a LabeledDiagramWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    num_font = _load_font(20, bold=True)
+    answer_font = _load_font(22)
+    wb_label_font = _load_font(22, bold=True)
+    wb_font = _load_font(20)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    answer_lh = _line_height(answer_font, extra=4)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    diagram_h = 320
+    diagram_w = content_width
+
+    wb_label_lh = _line_height(wb_label_font, extra=4)
+    wb_section_h = (wb_label_lh + _line_height(wb_font, extra=4) + 20) if worksheet.word_bank else 0
+
+    n = len(worksheet.labels)
+    rows = math.ceil(n / 2)
+    blanks_h = rows * (answer_lh + 8) + 20
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 16
+        + diagram_h
+        + 20
+        + wb_section_h
+        + blanks_h
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 16
+
+    diag_x, diag_y = margin, y
+
+    if worksheet.image_path and os.path.exists(worksheet.image_path):
+        try:
+            img = Image.open(worksheet.image_path).convert("RGBA")
+            bg = Image.new("RGBA", img.size, "WHITE")
+            bg.alpha_composite(img)
+            bg = bg.convert("RGB")
+            bg.thumbnail((diagram_w, diagram_h), Image.Resampling.LANCZOS)
+            image.paste(bg, (diag_x + (diagram_w - bg.width) // 2, int(diag_y)))
+        except Exception:
+            pass
+
+    # Placeholder box
+    draw.rectangle(
+        (diag_x, diag_y, diag_x + diagram_w, diag_y + diagram_h),
+        fill=(248, 248, 255),
+        outline=(160, 160, 160),
+        width=2,
+    )
+    place_label = "[ Diagram ]"
+    pw = _text_width(instruction_font, place_label)
+    draw.text(
+        (diag_x + (diagram_w - pw) // 2, diag_y + diagram_h // 2 - 12),
+        place_label,
+        font=instruction_font,
+        fill=(180, 180, 180),
+    )
+
+    # Numbered callout circles spread across diagram
+    n_labels = len(worksheet.labels)
+    for idx, lbl in enumerate(worksheet.labels):
+        frac = (idx + 0.5) / max(n_labels, 1)
+        cx = int(diag_x + frac * diagram_w)
+        cy = int(diag_y + diagram_h * 0.35 + (idx % 2) * diagram_h * 0.3)
+        r = 14
+        draw.ellipse(
+            (cx - r, cy - r, cx + r, cy + r), fill=(100, 149, 237), outline=(60, 100, 200), width=2
+        )
+        num_str = str(lbl.number)
+        nw = _text_width(num_font, num_str)
+        nh = _line_height(num_font, extra=0)
+        draw.text((cx - nw // 2, cy - nh // 2), num_str, font=num_font, fill="white")
+
+    y = diag_y + diagram_h + 20
+
+    if worksheet.word_bank:
+        words = [lbl.answer for lbl in worksheet.labels]
+        shuffled = words[:]
+        random.shuffle(shuffled)
+        draw.text((margin, y), "Word Bank:", font=wb_label_font, fill="black")
+        y += wb_label_lh
+        draw.text((margin, y), "   ".join(shuffled), font=wb_font, fill=(50, 50, 130))
+        y += _line_height(wb_font, extra=4) + 20
+
+    col_w = content_width // 2
+    for idx, lbl in enumerate(worksheet.labels):
+        col = idx % 2
+        row = idx // 2
+        bx = margin + col * col_w
+        by = y + row * (answer_lh + 8)
+        num_str = f"{lbl.number}. "
+        draw.text((bx, by), num_str, font=answer_font, fill="black")
+        nw = _text_width(answer_font, num_str)
+        if worksheet.show_answers:
+            draw.text((bx + nw, by), lbl.answer, font=answer_font, fill=(60, 60, 180))
+        else:
+            line_y = by + answer_lh - 4
+            draw.line([(bx + nw, line_y), (bx + col_w - 20, line_y)], fill="black", width=2)
+
+    return image
+
+
+def render_labeled_diagram_to_image(worksheet: LabeledDiagramWorksheet, output_path: str) -> str:
+    """Render labeled diagram worksheet to a PNG image."""
+    image = _render_labeled_diagram_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_labeled_diagram_to_pdf(worksheet: LabeledDiagramWorksheet, output_path: str) -> str:
+    """Render labeled diagram worksheet to a PDF."""
+    image = _render_labeled_diagram_image(worksheet).convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PDF")
+    return str(out)
