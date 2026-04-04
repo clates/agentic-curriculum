@@ -9,23 +9,41 @@ from .base import BaseWorksheet
 
 
 @dataclass(frozen=True)
+class OddOneOutItem:
+    """An item in an odd-one-out row (text and/or image)."""
+
+    text: str | None = None
+    image_path: str | None = None
+
+    @classmethod
+    def from_mapping(cls, payload: str | dict) -> "OddOneOutItem":
+        if isinstance(payload, str):
+            return cls(text=payload)
+        return cls(
+            text=payload.get("text"),
+            image_path=payload.get("image_path"),
+        )
+
+
+@dataclass(frozen=True)
 class OddOneOutRow:
     """A row of items with one odd item and optional explanation."""
 
-    items: List[str]
+    items: List[OddOneOutItem]
     odd_item: str | None = None  # The correct answer (for answer key)
     explanation: str | None = None  # Why this item is the odd one
 
     @classmethod
     def from_mapping(cls, payload: dict) -> "OddOneOutRow":
-        items = payload.get("items")
-        if not items:
+        items_raw = payload.get("items")
+        if not items_raw:
             raise ValueError("OddOneOutRow requires an items list")
-        if not isinstance(items, list) or len(items) < 3:
+        if not isinstance(items_raw, list) or len(items_raw) < 3:
             raise ValueError("OddOneOutRow requires at least 3 items")
+        items = [OddOneOutItem.from_mapping(i) for i in items_raw]
         odd_item = payload.get("odd_item")
         explanation = payload.get("explanation")
-        return cls(items=list(items), odd_item=odd_item, explanation=explanation)
+        return cls(items=items, odd_item=odd_item, explanation=explanation)
 
 
 @dataclass
@@ -49,7 +67,7 @@ class OddOneOutWorksheet(BaseWorksheet):
         ]
 
         for idx, row in enumerate(self.rows, start=1):
-            items_str = "   ".join(row.items)
+            items_str = "   ".join(item.text or "[Image]" for item in row.items)
             lines.append(f"{idx}. {items_str}")
 
             if self.show_answers and row.odd_item:
