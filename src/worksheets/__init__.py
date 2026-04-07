@@ -118,6 +118,13 @@ from .story_map import (
     generate_story_map_worksheet,
 )
 
+# Labeled diagram worksheet components
+from .labeled_diagram import (
+    DiagramLabel,
+    LabeledDiagramWorksheet,
+    generate_labeled_diagram_worksheet,
+)
+
 # Frayer model worksheet components
 from .frayer_model import (
     FrayerModelEntry,
@@ -194,6 +201,10 @@ __all__ = [
     "StoryMapField",
     "StoryMapWorksheet",
     "generate_story_map_worksheet",
+    # Labeled diagram
+    "DiagramLabel",
+    "LabeledDiagramWorksheet",
+    "generate_labeled_diagram_worksheet",
     # Frayer model
     "FrayerModelEntry",
     "FrayerModelWorksheet",

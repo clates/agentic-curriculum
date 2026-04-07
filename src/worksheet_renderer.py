@@ -2626,6 +2626,178 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
+# Labeled Diagram renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import LabeledDiagramWorksheet
+except ImportError:
+    from worksheets import LabeledDiagramWorksheet  # type: ignore
+
+
+def _render_labeled_diagram_image(worksheet: LabeledDiagramWorksheet) -> Image.Image:
+    """Render a LabeledDiagramWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    num_font = _load_font(20, bold=True)
+    answer_font = _load_font(22)
+    wb_label_font = _load_font(22, bold=True)
+    wb_font = _load_font(20)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    answer_lh = _line_height(answer_font, extra=4)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    diagram_h = 320
+    diagram_w = content_width
+
+    wb_label_lh = _line_height(wb_label_font, extra=4)
+    wb_section_h = (wb_label_lh + _line_height(wb_font, extra=4) + 20) if worksheet.word_bank else 0
+
+    n = len(worksheet.labels)
+    rows = math.ceil(n / 2)
+    blanks_h = rows * (answer_lh + 8) + 20
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 16
+        + diagram_h
+        + 20
+        + wb_section_h
+        + blanks_h
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 16
+
+    diag_x, diag_y = margin, y
+
+    if worksheet.image_path and os.path.exists(worksheet.image_path):
+        try:
+            img = Image.open(worksheet.image_path).convert("RGBA")
+            bg = Image.new("RGBA", img.size, "WHITE")
+            bg.alpha_composite(img)
+            bg = bg.convert("RGB")
+            bg.thumbnail((diagram_w, diagram_h), Image.Resampling.LANCZOS)
+            image.paste(bg, (diag_x + (diagram_w - bg.width) // 2, int(diag_y)))
+        except Exception:
+            pass
+
+    # Placeholder box
+    draw.rectangle(
+        (diag_x, diag_y, diag_x + diagram_w, diag_y + diagram_h),
+        fill=(248, 248, 255),
+        outline=(160, 160, 160),
+        width=2,
+    )
+    place_label = "[ Diagram ]"
+    pw = _text_width(instruction_font, place_label)
+    draw.text(
+        (diag_x + (diagram_w - pw) // 2, diag_y + diagram_h // 2 - 12),
+        place_label,
+        font=instruction_font,
+        fill=(180, 180, 180),
+    )
+
+    # Numbered callout circles spread across diagram
+    n_labels = len(worksheet.labels)
+    for idx, lbl in enumerate(worksheet.labels):
+        frac = (idx + 0.5) / max(n_labels, 1)
+        cx = int(diag_x + frac * diagram_w)
+        cy = int(diag_y + diagram_h * 0.35 + (idx % 2) * diagram_h * 0.3)
+        r = 14
+        draw.ellipse(
+            (cx - r, cy - r, cx + r, cy + r), fill=(100, 149, 237), outline=(60, 100, 200), width=2
+        )
+        num_str = str(lbl.number)
+        nw = _text_width(num_font, num_str)
+        nh = _line_height(num_font, extra=0)
+        draw.text((cx - nw // 2, cy - nh // 2), num_str, font=num_font, fill="white")
+
+    y = diag_y + diagram_h + 20
+
+    if worksheet.word_bank:
+        words = [lbl.answer for lbl in worksheet.labels]
+        shuffled = words[:]
+        random.shuffle(shuffled)
+        draw.text((margin, y), "Word Bank:", font=wb_label_font, fill="black")
+        y += wb_label_lh
+        draw.text((margin, y), "   ".join(shuffled), font=wb_font, fill=(50, 50, 130))
+        y += _line_height(wb_font, extra=4) + 20
+
+    col_w = content_width // 2
+    for idx, lbl in enumerate(worksheet.labels):
+        col = idx % 2
+        row = idx // 2
+        bx = margin + col * col_w
+        by = y + row * (answer_lh + 8)
+        num_str = f"{lbl.number}. "
+        draw.text((bx, by), num_str, font=answer_font, fill="black")
+        nw = _text_width(answer_font, num_str)
+        if worksheet.show_answers:
+            draw.text((bx + nw, by), lbl.answer, font=answer_font, fill=(60, 60, 180))
+        else:
+            line_y = by + answer_lh - 4
+            draw.line([(bx + nw, line_y), (bx + col_w - 20, line_y)], fill="black", width=2)
+
+    return image
+
+
+def render_labeled_diagram_to_image(worksheet: LabeledDiagramWorksheet, output_path: str) -> str:
+    """Render labeled diagram worksheet to a PNG image."""
+    image = _render_labeled_diagram_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_labeled_diagram_to_pdf(worksheet: LabeledDiagramWorksheet, output_path: str) -> str:
+    """Render labeled diagram worksheet to a PDF."""
+    image = _render_labeled_diagram_image(worksheet).convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PDF")
+    return str(out)
+
+
+# ---------------------------------------------------------------------------
 # Frayer Model renderer
 # ---------------------------------------------------------------------------
 
