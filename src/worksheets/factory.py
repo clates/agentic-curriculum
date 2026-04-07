@@ -69,6 +69,10 @@ from .labeled_diagram import (
     LabeledDiagramWorksheet,
     generate_labeled_diagram_worksheet,
 )
+from .frayer_model import (
+    FrayerModelWorksheet,
+    generate_frayer_model_worksheet,
+)
 
 
 def _create_two_operand(payload: dict[str, Any]) -> MathWorksheet:
@@ -302,6 +306,20 @@ def _create_labeled_diagram(payload: dict[str, Any]) -> LabeledDiagramWorksheet:
     )
 
 
+def _create_frayer_model(payload: dict[str, Any]) -> FrayerModelWorksheet:
+    """Create a Frayer model worksheet from payload."""
+    return generate_frayer_model_worksheet(
+        title=payload.get("title", "Frayer Model"),
+        instructions=payload.get(
+            "instructions", "Fill in each section to show what you know about the word."
+        ),
+        entries=payload.get("entries", []),
+        show_answers=payload.get("show_answers", False),
+        quadrant_labels=payload.get("quadrant_labels"),
+        metadata=payload.get("metadata"),
+    )
+
+
 class WorksheetFactory:
     """Factory class for dispatching JSON requests to the correct worksheet renderer."""
 
@@ -321,6 +339,7 @@ class WorksheetFactory:
         "fill_in_the_blank": _create_fill_in_the_blank,
         "word_sort": _create_word_sort,
         "labeled_diagram": _create_labeled_diagram,
+        "frayer_model": _create_frayer_model,
     }
 
     @classmethod

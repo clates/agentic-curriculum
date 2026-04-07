@@ -125,6 +125,13 @@ from .labeled_diagram import (
     generate_labeled_diagram_worksheet,
 )
 
+# Frayer model worksheet components
+from .frayer_model import (
+    FrayerModelEntry,
+    FrayerModelWorksheet,
+    generate_frayer_model_worksheet,
+)
+
 # Factory for creating worksheets from JSON payloads
 from .factory import WorksheetFactory
 
@@ -198,6 +205,10 @@ __all__ = [
     "DiagramLabel",
     "LabeledDiagramWorksheet",
     "generate_labeled_diagram_worksheet",
+    # Frayer model
+    "FrayerModelEntry",
+    "FrayerModelWorksheet",
+    "generate_frayer_model_worksheet",
     # Factory
     "WorksheetFactory",
 ]

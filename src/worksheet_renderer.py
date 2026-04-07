@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import math
-import os
 import random
+import os
 import sys
 from pathlib import Path
 from typing import cast
@@ -2791,6 +2791,203 @@ def render_labeled_diagram_to_image(worksheet: LabeledDiagramWorksheet, output_p
 def render_labeled_diagram_to_pdf(worksheet: LabeledDiagramWorksheet, output_path: str) -> str:
     """Render labeled diagram worksheet to a PDF."""
     image = _render_labeled_diagram_image(worksheet).convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PDF")
+    return str(out)
+
+
+# ---------------------------------------------------------------------------
+# Frayer Model renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import FrayerModelWorksheet
+except ImportError:
+    from worksheets import FrayerModelWorksheet  # type: ignore
+
+
+def _render_frayer_model_image(worksheet: FrayerModelWorksheet) -> Image.Image:
+    """Render a FrayerModelWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    q_label_font = _load_font(18, bold=True)
+    concept_font = _load_font(26, bold=True)
+    content_font = _load_font(18)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    content_lh = _line_height(content_font, extra=4)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    n_entries = len(worksheet.entries)
+    # single entry: large diagram; multiple: two-per-row
+    if n_entries <= 1:
+        diagram_size = min(content_width, 800)
+        cols = 1
+    else:
+        diagram_size = (content_width - 20) // 2
+        cols = 2
+
+    rows = math.ceil(n_entries / cols)
+    diagrams_h = rows * (diagram_size + 20)
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 16
+        + diagrams_h
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 16
+
+    ql = worksheet.quadrant_labels
+    q_colors = [
+        (173, 216, 230),  # top-left: light blue
+        (255, 218, 185),  # top-right: peach
+        (144, 238, 144),  # bottom-left: light green
+        (255, 255, 153),  # bottom-right: light yellow
+    ]
+
+    for entry_idx, entry in enumerate(worksheet.entries):
+        col = entry_idx % cols
+        row = entry_idx // cols
+        if cols == 1:
+            dx = margin + (content_width - diagram_size) // 2
+        else:
+            dx = margin + col * (diagram_size + 20)
+        dy = y + row * (diagram_size + 20)
+        ds = diagram_size
+
+        half = ds // 2
+        cx = dx + half
+        cy = dy + half
+
+        # Draw 4 quadrants
+        quadrants = [
+            (dx, dy, dx + half, dy + half, 0),  # top-left
+            (dx + half, dy, dx + ds, dy + half, 1),  # top-right
+            (dx, dy + half, dx + half, dy + ds, 2),  # bottom-left
+            (dx + half, dy + half, dx + ds, dy + ds, 3),  # bottom-right
+        ]
+
+        for qx1, qy1, qx2, qy2, qi in quadrants:
+            draw.rectangle(
+                (qx1, qy1, qx2, qy2), fill=q_colors[qi], outline=(100, 100, 100), width=2
+            )
+            # Quadrant label
+            ql_text = ql[qi]
+            lw = _text_width(q_label_font, ql_text)
+            lx = qx1 + (qx2 - qx1 - lw) // 2
+            draw.text((lx, qy1 + 6), ql_text, font=q_label_font, fill=(60, 60, 60))
+
+            # Content
+            inner_y = qy1 + _line_height(q_label_font, extra=4) + 8
+            inner_w = qx2 - qx1 - 20
+            show = worksheet.show_answers
+
+            if qi == 0:
+                text = entry.definition
+            elif qi == 1:
+                text = (
+                    "\n".join(f"• {c}" for c in entry.characteristics)
+                    if entry.characteristics
+                    else None
+                )
+            elif qi == 2:
+                text = "\n".join(f"• {e}" for e in entry.examples) if entry.examples else None
+            else:
+                text = (
+                    "\n".join(f"• {ne}" for ne in entry.non_examples)
+                    if entry.non_examples
+                    else None
+                )
+
+            if show and text:
+                for text_line in text.split("\n"):
+                    wrapped = _wrap_text(text_line, content_font, inner_w)
+                    for wl in wrapped:
+                        if inner_y + content_lh < qy2 - 4:
+                            draw.text((qx1 + 10, inner_y), wl, font=content_font, fill="black")
+                            inner_y += content_lh
+            else:
+                # Blank lines
+                for _ in range(3):
+                    line_y = inner_y + 20
+                    if line_y < qy2 - 8:
+                        draw.line(
+                            [(qx1 + 10, line_y), (qx2 - 10, line_y)], fill=(180, 180, 180), width=1
+                        )
+                        inner_y += 28
+
+        # Outer border
+        draw.rectangle((dx, dy, dx + ds, dy + ds), outline=(80, 80, 80), width=3)
+        # Cross lines
+        draw.line([(cx, dy), (cx, dy + ds)], fill=(80, 80, 80), width=3)
+        draw.line([(dx, cy), (dx + ds, cy)], fill=(80, 80, 80), width=3)
+
+        # Center oval with concept
+        oval_rx, oval_ry = 90, 40
+        draw.ellipse(
+            (cx - oval_rx, cy - oval_ry, cx + oval_rx, cy + oval_ry),
+            fill="white",
+            outline=(60, 60, 60),
+            width=3,
+        )
+        cw = _text_width(concept_font, entry.concept)
+        ch = _line_height(concept_font, extra=0)
+        draw.text((cx - cw // 2, cy - ch // 2), entry.concept, font=concept_font, fill="black")
+
+    return image
+
+
+def render_frayer_model_to_image(worksheet: FrayerModelWorksheet, output_path: str) -> str:
+    """Render Frayer model worksheet to a PNG image."""
+    image = _render_frayer_model_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_frayer_model_to_pdf(worksheet: FrayerModelWorksheet, output_path: str) -> str:
+    """Render Frayer model worksheet to a PDF."""
+    image = _render_frayer_model_image(worksheet).convert("RGB")
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     image.save(out, format="PDF")
