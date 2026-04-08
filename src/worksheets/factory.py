@@ -65,6 +65,10 @@ from .story_map import (
     StoryMapWorksheet,
     generate_story_map_worksheet,
 )
+from .cause_effect import (
+    CauseEffectWorksheet,
+    generate_cause_effect_worksheet,
+)
 from .number_line import (
     NumberLineWorksheet,
     generate_number_line_worksheet,
@@ -301,6 +305,21 @@ def _create_story_map(payload: dict[str, Any]) -> StoryMapWorksheet:
     )
 
 
+def _create_cause_effect(payload: dict[str, Any]) -> CauseEffectWorksheet:
+    """Create a cause-and-effect worksheet from payload."""
+    return generate_cause_effect_worksheet(
+        title=payload.get("title", "Cause and Effect"),
+        instructions=payload.get(
+            "instructions",
+            "Read each cause. Write what you think will happen (the effect).",
+        ),
+        pairs=payload.get("pairs", []),
+        layout=payload.get("layout", "horizontal"),
+        show_answers=payload.get("show_answers", False),
+        metadata=payload.get("metadata"),
+    )
+
+
 def _create_number_line(payload: dict[str, Any]) -> NumberLineWorksheet:
     """Create a number line worksheet from payload."""
     return generate_number_line_worksheet(
@@ -375,6 +394,7 @@ class WorksheetFactory:
         "t_chart": _create_t_chart,
         "fill_in_the_blank": _create_fill_in_the_blank,
         "word_sort": _create_word_sort,
+        "cause_effect": _create_cause_effect,
         "number_line": _create_number_line,
         "writing_scaffold": _create_writing_scaffold,
         "labeled_diagram": _create_labeled_diagram,

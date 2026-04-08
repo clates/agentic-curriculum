@@ -2626,6 +2626,168 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
+# Cause and Effect renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import CauseEffectWorksheet
+except ImportError:
+    from worksheets import CauseEffectWorksheet  # type: ignore
+
+
+def _render_cause_effect_image(worksheet: CauseEffectWorksheet) -> Image.Image:
+    """Render a CauseEffectWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    box_label_font = _load_font(18, bold=True)
+    content_font = _load_font(20)
+    row_label_font = _load_font(20, bold=True)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    content_width = width - 2 * margin
+
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    is_horizontal = worksheet.layout != "vertical"
+
+    # box dimensions
+    arrow_w = 60
+    if is_horizontal:
+        box_w = (content_width - arrow_w) // 2
+        box_h = 130
+        pair_h = box_h + 20
+    else:
+        box_w = content_width
+        box_h = 110
+        pair_h = box_h * 2 + 50 + 20  # two boxes + arrow gap
+
+    header_h = margin + title_lh + meta_lh * 2 + 10 + len(instruction_lines) * instruction_lh + 20
+    total_height = header_h + len(worksheet.pairs) * pair_h + margin
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 20
+
+    def draw_box(bx, by, bw, bh, box_label, text_val, show):
+        draw.rectangle(
+            (bx, by, bx + bw, by + bh), fill=(245, 245, 255), outline=(80, 80, 180), width=2
+        )
+        # small label in top-left
+        draw.text((bx + 6, by + 4), box_label, font=box_label_font, fill=(80, 80, 180))
+        inner_y = by + _line_height(box_label_font, extra=0) + 8
+        if show and text_val:
+            wrapped = _wrap_text(text_val, content_font, bw - 16)
+            for wl in wrapped:
+                draw.text((bx + 8, inner_y), wl, font=content_font, fill="black")
+                inner_y += _line_height(content_font, extra=2)
+        else:
+            # blank lines
+            inner_w = bw - 20
+            for _ in range(3):
+                lny = inner_y + 22
+                draw.line([(bx + 10, lny), (bx + 10 + inner_w, lny)], fill=(180, 180, 180), width=1)
+                inner_y += 28
+
+    def draw_arrow_h(ax, ay, ah):
+        """Draw horizontal → arrow."""
+        mid_y = ay + ah // 2
+        ax2 = ax + arrow_w
+        draw.line([(ax, mid_y), (ax2 - 14, mid_y)], fill=(80, 80, 80), width=3)
+        # arrowhead
+        draw.polygon(
+            [(ax2 - 14, mid_y - 8), (ax2, mid_y), (ax2 - 14, mid_y + 8)],
+            fill=(80, 80, 80),
+        )
+
+    def draw_arrow_v(ax, ay, aw):
+        """Draw vertical ↓ arrow."""
+        mid_x = ax + aw // 2
+        ay2 = ay + 40
+        draw.line([(mid_x, ay), (mid_x, ay2 - 12)], fill=(80, 80, 80), width=3)
+        draw.polygon(
+            [(mid_x - 8, ay2 - 12), (mid_x, ay2), (mid_x + 8, ay2 - 12)],
+            fill=(80, 80, 80),
+        )
+
+    for pair in worksheet.pairs:
+        if is_horizontal:
+            draw_box(margin, y, box_w, box_h, "CAUSE", pair.cause, pair.cause is not None)
+            draw_arrow_h(margin + box_w, y, box_h)
+            draw_box(
+                margin + box_w + arrow_w,
+                y,
+                box_w,
+                box_h,
+                "EFFECT",
+                pair.effect,
+                pair.effect is not None,
+            )
+            if pair.label:
+                draw.text((margin, y - 24), pair.label, font=row_label_font, fill="black")
+            y += pair_h
+        else:
+            draw_box(margin, y, box_w, box_h, "CAUSE", pair.cause, pair.cause is not None)
+            y += box_h
+            draw_arrow_v(margin, y, box_w)
+            y += 50
+            draw_box(margin, y, box_w, box_h, "EFFECT", pair.effect, pair.effect is not None)
+            if pair.label:
+                draw.text(
+                    (margin, y - box_h - 50 - 24), pair.label, font=row_label_font, fill="black"
+                )
+            y += box_h + 20
+
+    return image
+
+
+def render_cause_effect_to_image(worksheet: CauseEffectWorksheet, output_path: str) -> str:
+    """Render cause-and-effect worksheet to a PNG image."""
+    image = _render_cause_effect_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_cause_effect_to_pdf(worksheet: CauseEffectWorksheet, output_path: str) -> str:
+    """Render cause-and-effect worksheet to a PDF."""
+    image = _render_cause_effect_image(worksheet)
+    rgb = image.convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rgb.save(out, format="PDF")
+    return str(out)
+
+
+# ---------------------------------------------------------------------------
 # Number Line renderer
 # ---------------------------------------------------------------------------
 

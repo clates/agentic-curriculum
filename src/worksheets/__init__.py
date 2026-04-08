@@ -118,6 +118,13 @@ from .story_map import (
     generate_story_map_worksheet,
 )
 
+# Cause and effect worksheet components
+from .cause_effect import (
+    CauseEffectPair,
+    CauseEffectWorksheet,
+    generate_cause_effect_worksheet,
+)
+
 # Number line worksheet components
 from .number_line import (
     NumberLineTask,
@@ -215,6 +222,10 @@ __all__ = [
     "StoryMapField",
     "StoryMapWorksheet",
     "generate_story_map_worksheet",
+    # Cause and effect
+    "CauseEffectPair",
+    "CauseEffectWorksheet",
+    "generate_cause_effect_worksheet",
     # Number line
     "NumberLineTask",
     "NumberLineWorksheet",
