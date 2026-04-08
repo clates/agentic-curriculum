@@ -125,6 +125,13 @@ from .number_line import (
     generate_number_line_worksheet,
 )
 
+# Writing scaffold worksheet components
+from .writing_scaffold import (
+    ScaffoldSection,
+    WritingScaffoldWorksheet,
+    generate_writing_scaffold_worksheet,
+)
+
 # Labeled diagram worksheet components
 from .labeled_diagram import (
     DiagramLabel,
@@ -212,6 +219,10 @@ __all__ = [
     "NumberLineTask",
     "NumberLineWorksheet",
     "generate_number_line_worksheet",
+    # Writing scaffold
+    "ScaffoldSection",
+    "WritingScaffoldWorksheet",
+    "generate_writing_scaffold_worksheet",
     # Labeled diagram
     "DiagramLabel",
     "LabeledDiagramWorksheet",

@@ -69,6 +69,10 @@ from .number_line import (
     NumberLineWorksheet,
     generate_number_line_worksheet,
 )
+from .writing_scaffold import (
+    WritingScaffoldWorksheet,
+    generate_writing_scaffold_worksheet,
+)
 from .labeled_diagram import (
     LabeledDiagramWorksheet,
     generate_labeled_diagram_worksheet,
@@ -310,6 +314,22 @@ def _create_number_line(payload: dict[str, Any]) -> NumberLineWorksheet:
     )
 
 
+def _create_writing_scaffold(payload: dict[str, Any]) -> WritingScaffoldWorksheet:
+    """Create a writing scaffold worksheet from payload."""
+    return generate_writing_scaffold_worksheet(
+        title=payload.get("title", "Writing Scaffold"),
+        instructions=payload.get(
+            "instructions", "Use the sentence starters below to write your paragraph."
+        ),
+        frame_type=payload.get("frame_type", "custom"),
+        topic=payload.get("topic"),
+        sections=payload.get("sections", []),
+        show_example=payload.get("show_example", False),
+        example_texts=payload.get("example_texts"),
+        metadata=payload.get("metadata"),
+    )
+
+
 def _create_labeled_diagram(payload: dict[str, Any]) -> LabeledDiagramWorksheet:
     """Create a labeled diagram worksheet from payload."""
     return generate_labeled_diagram_worksheet(
@@ -356,6 +376,7 @@ class WorksheetFactory:
         "fill_in_the_blank": _create_fill_in_the_blank,
         "word_sort": _create_word_sort,
         "number_line": _create_number_line,
+        "writing_scaffold": _create_writing_scaffold,
         "labeled_diagram": _create_labeled_diagram,
         "frayer_model": _create_frayer_model,
     }
