@@ -118,6 +118,27 @@ from .story_map import (
     generate_story_map_worksheet,
 )
 
+# Cause and effect worksheet components
+from .cause_effect import (
+    CauseEffectPair,
+    CauseEffectWorksheet,
+    generate_cause_effect_worksheet,
+)
+
+# Number line worksheet components
+from .number_line import (
+    NumberLineTask,
+    NumberLineWorksheet,
+    generate_number_line_worksheet,
+)
+
+# Writing scaffold worksheet components
+from .writing_scaffold import (
+    ScaffoldSection,
+    WritingScaffoldWorksheet,
+    generate_writing_scaffold_worksheet,
+)
+
 # Labeled diagram worksheet components
 from .labeled_diagram import (
     DiagramLabel,
@@ -202,6 +223,18 @@ __all__ = [
     "StoryMapField",
     "StoryMapWorksheet",
     "generate_story_map_worksheet",
+    # Cause and effect
+    "CauseEffectPair",
+    "CauseEffectWorksheet",
+    "generate_cause_effect_worksheet",
+    # Number line
+    "NumberLineTask",
+    "NumberLineWorksheet",
+    "generate_number_line_worksheet",
+    # Writing scaffold
+    "ScaffoldSection",
+    "WritingScaffoldWorksheet",
+    "generate_writing_scaffold_worksheet",
     # Labeled diagram
     "DiagramLabel",
     "LabeledDiagramWorksheet",
