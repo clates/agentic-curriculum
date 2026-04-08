@@ -2626,6 +2626,162 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
+# Number Line renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import NumberLineWorksheet
+except ImportError:
+    from worksheets import NumberLineWorksheet  # type: ignore
+
+
+def _render_number_line_image(worksheet: NumberLineWorksheet) -> Image.Image:
+    """Render a NumberLineWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    prompt_font = _load_font(20, italic=True)
+    tick_font = _load_font(18)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    prompt_lh = _line_height(prompt_font, extra=4)
+    tick_lh = _line_height(tick_font, extra=2)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    task_h = 110  # height per task (prompt + line + ticks)
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 20
+        + len(worksheet.tasks) * task_h
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 20
+
+    for task_idx, task in enumerate(worksheet.tasks):
+        # Task number + prompt
+        prompt_str = f"{task_idx + 1}. {task.prompt or ''}"
+        draw.text((margin, y), prompt_str, font=prompt_font, fill="black")
+        y += prompt_lh + 4
+
+        # Build tick positions
+        positions: list[float] = []
+        val = task.start
+        while val <= task.end + task.step * 0.001:
+            positions.append(round(val, 10))
+            val += task.step
+
+        n_ticks = len(positions)
+        if n_ticks < 2:
+            y += task_h - prompt_lh - 4
+            continue
+
+        line_x1 = margin + 20
+        line_x2 = width - margin - 20
+        line_y = y + 24
+        tick_spacing = (line_x2 - line_x1) / (n_ticks - 1)
+
+        # Main horizontal line with arrows
+        draw.line([(line_x1 - 10, line_y), (line_x2 + 10, line_y)], fill="black", width=3)
+        # Arrow tips
+        draw.polygon(
+            [(line_x2 + 10, line_y), (line_x2 + 2, line_y - 6), (line_x2 + 2, line_y + 6)],
+            fill="black",
+        )
+        draw.polygon(
+            [(line_x1 - 10, line_y), (line_x1 - 2, line_y - 6), (line_x1 - 2, line_y + 6)],
+            fill="black",
+        )
+
+        for i, pos in enumerate(positions):
+            tx = int(line_x1 + i * tick_spacing)
+            # Tick mark
+            draw.line([(tx, line_y - 8), (tx, line_y + 8)], fill="black", width=2)
+
+            is_hidden = any(abs(pos - h) < 0.001 for h in task.hidden_positions)
+            is_marked = any(abs(pos - m) < 0.001 for m in task.mark_positions)
+
+            # Mark dot above the line
+            if is_marked:
+                draw.ellipse((tx - 6, line_y - 22, tx + 6, line_y - 10), fill=(220, 50, 50))
+
+            # Label below tick
+            label_y = line_y + 12
+            if is_hidden and not worksheet.show_answers:
+                # Draw blank box
+                box_w = 28
+                draw.rectangle(
+                    (tx - box_w // 2, label_y, tx + box_w // 2, label_y + tick_lh + 2),
+                    outline=(100, 100, 100),
+                    width=1,
+                )
+            else:
+                # Show number
+                p_int = int(pos) if pos == int(pos) else pos
+                label = str(p_int)
+                lw = _text_width(tick_font, label)
+                draw.text((tx - lw // 2, label_y), label, font=tick_font, fill="black")
+
+        y += task_h - prompt_lh - 4
+
+    return image
+
+
+def render_number_line_to_image(worksheet: NumberLineWorksheet, output_path: str) -> str:
+    """Render number line worksheet to a PNG image."""
+    image = _render_number_line_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_number_line_to_pdf(worksheet: NumberLineWorksheet, output_path: str) -> str:
+    """Render number line worksheet to a PDF."""
+    image = _render_number_line_image(worksheet).convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PDF")
+    return str(out)
+
+
+# ---------------------------------------------------------------------------
 # Writing Scaffold renderer
 # ---------------------------------------------------------------------------
 

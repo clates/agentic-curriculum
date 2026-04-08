@@ -65,6 +65,10 @@ from .story_map import (
     StoryMapWorksheet,
     generate_story_map_worksheet,
 )
+from .number_line import (
+    NumberLineWorksheet,
+    generate_number_line_worksheet,
+)
 from .writing_scaffold import (
     WritingScaffoldWorksheet,
     generate_writing_scaffold_worksheet,
@@ -297,6 +301,19 @@ def _create_story_map(payload: dict[str, Any]) -> StoryMapWorksheet:
     )
 
 
+def _create_number_line(payload: dict[str, Any]) -> NumberLineWorksheet:
+    """Create a number line worksheet from payload."""
+    return generate_number_line_worksheet(
+        title=payload.get("title", "Number Line"),
+        instructions=payload.get(
+            "instructions", "Fill in the missing numbers on each number line."
+        ),
+        tasks=payload.get("tasks", []),
+        show_answers=payload.get("show_answers", False),
+        metadata=payload.get("metadata"),
+    )
+
+
 def _create_writing_scaffold(payload: dict[str, Any]) -> WritingScaffoldWorksheet:
     """Create a writing scaffold worksheet from payload."""
     return generate_writing_scaffold_worksheet(
@@ -358,6 +375,7 @@ class WorksheetFactory:
         "t_chart": _create_t_chart,
         "fill_in_the_blank": _create_fill_in_the_blank,
         "word_sort": _create_word_sort,
+        "number_line": _create_number_line,
         "writing_scaffold": _create_writing_scaffold,
         "labeled_diagram": _create_labeled_diagram,
         "frayer_model": _create_frayer_model,

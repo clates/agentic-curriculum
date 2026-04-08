@@ -118,6 +118,13 @@ from .story_map import (
     generate_story_map_worksheet,
 )
 
+# Number line worksheet components
+from .number_line import (
+    NumberLineTask,
+    NumberLineWorksheet,
+    generate_number_line_worksheet,
+)
+
 # Writing scaffold worksheet components
 from .writing_scaffold import (
     ScaffoldSection,
@@ -208,6 +215,10 @@ __all__ = [
     "StoryMapField",
     "StoryMapWorksheet",
     "generate_story_map_worksheet",
+    # Number line
+    "NumberLineTask",
+    "NumberLineWorksheet",
+    "generate_number_line_worksheet",
     # Writing scaffold
     "ScaffoldSection",
     "WritingScaffoldWorksheet",
