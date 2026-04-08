@@ -118,6 +118,13 @@ from .story_map import (
     generate_story_map_worksheet,
 )
 
+# Writing scaffold worksheet components
+from .writing_scaffold import (
+    ScaffoldSection,
+    WritingScaffoldWorksheet,
+    generate_writing_scaffold_worksheet,
+)
+
 # Labeled diagram worksheet components
 from .labeled_diagram import (
     DiagramLabel,
@@ -201,6 +208,10 @@ __all__ = [
     "StoryMapField",
     "StoryMapWorksheet",
     "generate_story_map_worksheet",
+    # Writing scaffold
+    "ScaffoldSection",
+    "WritingScaffoldWorksheet",
+    "generate_writing_scaffold_worksheet",
     # Labeled diagram
     "DiagramLabel",
     "LabeledDiagramWorksheet",

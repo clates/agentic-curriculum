@@ -2626,6 +2626,170 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
+# Writing Scaffold renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import WritingScaffoldWorksheet
+except ImportError:
+    from worksheets import WritingScaffoldWorksheet  # type: ignore
+
+_SCAFFOLD_COLORS = [
+    (173, 216, 230),  # light blue
+    (144, 238, 144),  # light green
+    (255, 218, 185),  # peach
+    (221, 160, 221),  # plum
+    (255, 255, 153),  # light yellow
+]
+
+
+def _render_writing_scaffold_image(worksheet: WritingScaffoldWorksheet) -> Image.Image:
+    """Render a WritingScaffoldWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    topic_font = _load_font(22, bold=True)
+    label_font = _load_font(24, bold=True)
+    starter_font = _load_font(20, italic=True)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    label_lh = _line_height(label_font, extra=8)
+    starter_lh = _line_height(starter_font, extra=4)
+    topic_lh = _line_height(topic_font, extra=4)
+    line_spacing = 34  # height per ruled writing line
+
+    content_width = width - 2 * margin
+
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    def section_height(sec) -> int:
+        h = label_lh
+        if sec.starter:
+            wrapped = _wrap_text(sec.starter, starter_font, content_width - 20)
+            h += len(wrapped) * starter_lh + 4
+        h += sec.lines * line_spacing + 10
+        return h
+
+    topic_h = (topic_lh + 16) if worksheet.topic else 0
+    sections_height = sum(section_height(s) + 10 for s in worksheet.sections)
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 16
+        + topic_h
+        + sections_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 16
+
+    if worksheet.topic:
+        draw.rectangle(
+            (margin, y, margin + content_width, y + topic_lh + 12),
+            fill=(255, 250, 220),
+            outline=(200, 180, 0),
+            width=2,
+        )
+        topic_text = f"Topic: {worksheet.topic}"
+        draw.text((margin + 10, y + 6), topic_text, font=topic_font, fill="black")
+        y += topic_lh + 16 + 10
+
+    for i, sec in enumerate(worksheet.sections):
+        color = _SCAFFOLD_COLORS[i % len(_SCAFFOLD_COLORS)]
+        sh = section_height(sec)
+        # Box outline
+        draw.rectangle(
+            (margin, y, margin + content_width, y + sh),
+            outline=(120, 120, 120),
+            width=2,
+        )
+        # Header band
+        draw.rectangle(
+            (margin, y, margin + content_width, y + label_lh),
+            fill=color,
+            outline=(120, 120, 120),
+            width=2,
+        )
+        lw = _text_width(label_font, sec.label)
+        draw.text(
+            (margin + (content_width - lw) // 2, y + 4), sec.label, font=label_font, fill="black"
+        )
+        inner_y = y + label_lh + 4
+
+        if sec.starter:
+            starter_lines = _wrap_text(sec.starter, starter_font, content_width - 20)
+            for sl in starter_lines:
+                draw.text((margin + 10, inner_y), sl, font=starter_font, fill=(80, 80, 80))
+                inner_y += starter_lh
+            inner_y += 4
+
+        for _ in range(sec.lines):
+            line_y = inner_y + line_spacing - 6
+            draw.line(
+                [(margin + 10, line_y), (margin + content_width - 10, line_y)],
+                fill=(180, 180, 180),
+                width=1,
+            )
+            inner_y += line_spacing
+
+        y += sh + 10
+
+    return image
+
+
+def render_writing_scaffold_to_image(worksheet: WritingScaffoldWorksheet, output_path: str) -> str:
+    """Render writing scaffold worksheet to a PNG image."""
+    image = _render_writing_scaffold_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_writing_scaffold_to_pdf(worksheet: WritingScaffoldWorksheet, output_path: str) -> str:
+    """Render writing scaffold worksheet to a PDF."""
+    image = _render_writing_scaffold_image(worksheet)
+    rgb = image.convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rgb.save(out, format="PDF")
+    return str(out)
+
+
+# ---------------------------------------------------------------------------
 # Labeled Diagram renderer
 # ---------------------------------------------------------------------------
 
