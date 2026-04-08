@@ -2626,6 +2626,172 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
+# Story Map renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import StoryMapWorksheet
+except ImportError:
+    from worksheets import StoryMapWorksheet  # type: ignore
+
+_STORY_MAP_COLORS = [
+    (173, 216, 230),  # light blue
+    (144, 238, 144),  # light green
+    (255, 218, 185),  # peach
+    (221, 160, 221),  # plum
+    (255, 255, 153),  # light yellow
+]
+
+
+def _render_story_map_image(worksheet: StoryMapWorksheet) -> Image.Image:
+    """Render a StoryMapWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    label_font = _load_font(24, bold=True)
+    prompt_font = _load_font(18, italic=True)
+    story_title_font = _load_font(22)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    label_lh = _line_height(label_font, extra=8)
+    prompt_lh = _line_height(prompt_font, extra=4)
+    line_spacing = 32  # height per blank writing line
+
+    content_width = width - 2 * margin
+
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    # Calculate field heights
+    def field_height(f) -> int:
+        h = label_lh
+        if f.prompt:
+            prompt_wrapped = _wrap_text(f.prompt, prompt_font, content_width - 20)
+            h += len(prompt_wrapped) * prompt_lh
+        h += f.lines * line_spacing + 16
+        return h
+
+    story_title_h = 44 if worksheet.story_title_field else 0
+    fields_height = sum(field_height(f) + 12 for f in worksheet.fields)
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 16
+        + story_title_h
+        + fields_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 16
+
+    if worksheet.story_title_field:
+        draw.text((margin, y), "Story Title: ", font=story_title_font, fill="black")
+        prefix_w = _text_width(story_title_font, "Story Title: ")
+        line_x1 = margin + prefix_w
+        line_x2 = width - margin
+        line_y = y + _line_height(story_title_font, extra=0) - 4
+        draw.line([(line_x1, line_y), (line_x2, line_y)], fill="black", width=2)
+        y += story_title_h
+
+    for i, f in enumerate(worksheet.fields):
+        color = _STORY_MAP_COLORS[i % len(_STORY_MAP_COLORS)]
+        fh = field_height(f)
+        # Draw box
+        draw.rectangle(
+            (margin, y, margin + content_width, y + fh),
+            outline=(100, 100, 100),
+            width=2,
+        )
+        # Header band
+        draw.rectangle(
+            (margin, y, margin + content_width, y + label_lh),
+            fill=color,
+            outline=(100, 100, 100),
+            width=2,
+        )
+        label_x = margin + (content_width - _text_width(label_font, f.label)) // 2
+        draw.text((label_x, y + 4), f.label, font=label_font, fill="black")
+        inner_y = y + label_lh + 4
+
+        if f.prompt:
+            prompt_lines = _wrap_text(f.prompt, prompt_font, content_width - 20)
+            for pl in prompt_lines:
+                draw.text((margin + 10, inner_y), pl, font=prompt_font, fill=(80, 80, 80))
+                inner_y += prompt_lh
+
+        # Blank lines or answer text
+        if worksheet.show_answers and f.value:
+            answer_lines = _wrap_text(f.value, prompt_font, content_width - 20)
+            for al in answer_lines:
+                draw.text((margin + 10, inner_y), al, font=prompt_font, fill=(60, 60, 180))
+                inner_y += prompt_lh
+        else:
+            for _ in range(f.lines):
+                line_y = inner_y + line_spacing - 6
+                draw.line(
+                    [(margin + 10, line_y), (margin + content_width - 10, line_y)],
+                    fill=(180, 180, 180),
+                    width=1,
+                )
+                inner_y += line_spacing
+
+        y += fh + 12
+
+    return image
+
+
+def render_story_map_to_image(worksheet: StoryMapWorksheet, output_path: str) -> str:
+    """Render story map worksheet to a PNG image."""
+    image = _render_story_map_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_story_map_to_pdf(worksheet: StoryMapWorksheet, output_path: str) -> str:
+    """Render story map worksheet to a PDF."""
+    image = _render_story_map_image(worksheet)
+    rgb = image.convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rgb.save(out, format="PDF")
+    return str(out)
+
+
+# ---------------------------------------------------------------------------
 # Cause and Effect renderer
 # ---------------------------------------------------------------------------
 

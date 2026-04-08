@@ -394,6 +394,7 @@ class WorksheetFactory:
         "t_chart": _create_t_chart,
         "fill_in_the_blank": _create_fill_in_the_blank,
         "word_sort": _create_word_sort,
+        "story_map": _create_story_map,
         "cause_effect": _create_cause_effect,
         "number_line": _create_number_line,
         "writing_scaffold": _create_writing_scaffold,
