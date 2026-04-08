@@ -69,6 +69,14 @@ from .writing_scaffold import (
     WritingScaffoldWorksheet,
     generate_writing_scaffold_worksheet,
 )
+from .labeled_diagram import (
+    LabeledDiagramWorksheet,
+    generate_labeled_diagram_worksheet,
+)
+from .frayer_model import (
+    FrayerModelWorksheet,
+    generate_frayer_model_worksheet,
+)
 
 
 def _create_two_operand(payload: dict[str, Any]) -> MathWorksheet:
@@ -305,6 +313,33 @@ def _create_writing_scaffold(payload: dict[str, Any]) -> WritingScaffoldWorkshee
     )
 
 
+def _create_labeled_diagram(payload: dict[str, Any]) -> LabeledDiagramWorksheet:
+    """Create a labeled diagram worksheet from payload."""
+    return generate_labeled_diagram_worksheet(
+        title=payload.get("title", "Labeled Diagram"),
+        instructions=payload.get("instructions", "Label each part of the diagram."),
+        image_path=payload.get("image_path"),
+        labels=payload.get("labels", []),
+        show_answers=payload.get("show_answers", False),
+        word_bank=payload.get("word_bank", True),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_frayer_model(payload: dict[str, Any]) -> FrayerModelWorksheet:
+    """Create a Frayer model worksheet from payload."""
+    return generate_frayer_model_worksheet(
+        title=payload.get("title", "Frayer Model"),
+        instructions=payload.get(
+            "instructions", "Fill in each section to show what you know about the word."
+        ),
+        entries=payload.get("entries", []),
+        show_answers=payload.get("show_answers", False),
+        quadrant_labels=payload.get("quadrant_labels"),
+        metadata=payload.get("metadata"),
+    )
+
+
 class WorksheetFactory:
     """Factory class for dispatching JSON requests to the correct worksheet renderer."""
 
@@ -324,6 +359,8 @@ class WorksheetFactory:
         "fill_in_the_blank": _create_fill_in_the_blank,
         "word_sort": _create_word_sort,
         "writing_scaffold": _create_writing_scaffold,
+        "labeled_diagram": _create_labeled_diagram,
+        "frayer_model": _create_frayer_model,
     }
 
     @classmethod
