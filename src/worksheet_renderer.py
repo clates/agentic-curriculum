@@ -2649,7 +2649,6 @@ def _render_cause_effect_image(worksheet: CauseEffectWorksheet) -> Image.Image:
 
     title_lh = _line_height(title_font, extra=4)
     meta_lh = _line_height(meta_font, extra=2)
-    instruction_lh = _load_font(20, italic=True)
     instruction_lh = _line_height(instruction_font, extra=4)
     content_width = width - 2 * margin
 
@@ -2767,6 +2766,345 @@ def _render_cause_effect_image(worksheet: CauseEffectWorksheet) -> Image.Image:
             y += box_h + 20
 
     return image
+
+
+def render_cause_effect_to_image(worksheet: CauseEffectWorksheet, output_path: str) -> str:
+    """Render cause-and-effect worksheet to a PNG image."""
+    image = _render_cause_effect_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_cause_effect_to_pdf(worksheet: CauseEffectWorksheet, output_path: str) -> str:
+    """Render cause-and-effect worksheet to a PDF."""
+    image = _render_cause_effect_image(worksheet)
+    rgb = image.convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rgb.save(out, format="PDF")
+    return str(out)
+
+
+# ---------------------------------------------------------------------------
+# Number Line renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import NumberLineWorksheet
+except ImportError:
+    from worksheets import NumberLineWorksheet  # type: ignore
+
+
+def _render_number_line_image(worksheet: NumberLineWorksheet) -> Image.Image:
+    """Render a NumberLineWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    prompt_font = _load_font(20, italic=True)
+    tick_font = _load_font(18)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    prompt_lh = _line_height(prompt_font, extra=4)
+    tick_lh = _line_height(tick_font, extra=2)
+
+    content_width = width - 2 * margin
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    task_h = 110  # height per task (prompt + line + ticks)
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 20
+        + len(worksheet.tasks) * task_h
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 20
+
+    for task_idx, task in enumerate(worksheet.tasks):
+        # Task number + prompt
+        prompt_str = f"{task_idx + 1}. {task.prompt or ''}"
+        draw.text((margin, y), prompt_str, font=prompt_font, fill="black")
+        y += prompt_lh + 4
+
+        # Build tick positions
+        positions: list[float] = []
+        val = task.start
+        while val <= task.end + task.step * 0.001:
+            positions.append(round(val, 10))
+            val += task.step
+
+        n_ticks = len(positions)
+        if n_ticks < 2:
+            y += task_h - prompt_lh - 4
+            continue
+
+        line_x1 = margin + 20
+        line_x2 = width - margin - 20
+        line_y = y + 24
+        tick_spacing = (line_x2 - line_x1) / (n_ticks - 1)
+
+        # Main horizontal line with arrows
+        draw.line([(line_x1 - 10, line_y), (line_x2 + 10, line_y)], fill="black", width=3)
+        # Arrow tips
+        draw.polygon(
+            [(line_x2 + 10, line_y), (line_x2 + 2, line_y - 6), (line_x2 + 2, line_y + 6)],
+            fill="black",
+        )
+        draw.polygon(
+            [(line_x1 - 10, line_y), (line_x1 - 2, line_y - 6), (line_x1 - 2, line_y + 6)],
+            fill="black",
+        )
+
+        for i, pos in enumerate(positions):
+            tx = int(line_x1 + i * tick_spacing)
+            # Tick mark
+            draw.line([(tx, line_y - 8), (tx, line_y + 8)], fill="black", width=2)
+
+            is_hidden = any(abs(pos - h) < 0.001 for h in task.hidden_positions)
+            is_marked = any(abs(pos - m) < 0.001 for m in task.mark_positions)
+
+            # Mark dot above the line
+            if is_marked:
+                draw.ellipse((tx - 6, line_y - 22, tx + 6, line_y - 10), fill=(220, 50, 50))
+
+            # Label below tick
+            label_y = line_y + 12
+            if is_hidden and not worksheet.show_answers:
+                # Draw blank box
+                box_w = 28
+                draw.rectangle(
+                    (tx - box_w // 2, label_y, tx + box_w // 2, label_y + tick_lh + 2),
+                    outline=(100, 100, 100),
+                    width=1,
+                )
+            else:
+                # Show number
+                p_int = int(pos) if pos == int(pos) else pos
+                label = str(p_int)
+                lw = _text_width(tick_font, label)
+                draw.text((tx - lw // 2, label_y), label, font=tick_font, fill="black")
+
+        y += task_h - prompt_lh - 4
+
+    return image
+
+
+def render_number_line_to_image(worksheet: NumberLineWorksheet, output_path: str) -> str:
+    """Render number line worksheet to a PNG image."""
+    image = _render_number_line_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_number_line_to_pdf(worksheet: NumberLineWorksheet, output_path: str) -> str:
+    """Render number line worksheet to a PDF."""
+    image = _render_number_line_image(worksheet).convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PDF")
+    return str(out)
+
+
+# ---------------------------------------------------------------------------
+# Writing Scaffold renderer
+# ---------------------------------------------------------------------------
+
+try:
+    from .worksheets import WritingScaffoldWorksheet
+except ImportError:
+    from worksheets import WritingScaffoldWorksheet  # type: ignore
+
+_SCAFFOLD_COLORS = [
+    (173, 216, 230),  # light blue
+    (144, 238, 144),  # light green
+    (255, 218, 185),  # peach
+    (221, 160, 221),  # plum
+    (255, 255, 153),  # light yellow
+]
+
+
+def _render_writing_scaffold_image(worksheet: WritingScaffoldWorksheet) -> Image.Image:
+    """Render a WritingScaffoldWorksheet to a PIL Image."""
+    width: int = 1050
+    margin: int = 60
+
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(22)
+    instruction_font = _load_font(20, italic=True)
+    topic_font = _load_font(22, bold=True)
+    label_font = _load_font(24, bold=True)
+    starter_font = _load_font(20, italic=True)
+
+    title_lh = _line_height(title_font, extra=4)
+    meta_lh = _line_height(meta_font, extra=2)
+    instruction_lh = _line_height(instruction_font, extra=4)
+    label_lh = _line_height(label_font, extra=8)
+    starter_lh = _line_height(starter_font, extra=4)
+    topic_lh = _line_height(topic_font, extra=4)
+    line_spacing = 34  # height per ruled writing line
+
+    content_width = width - 2 * margin
+
+    instruction_lines = _wrap_text(worksheet.instructions, instruction_font, content_width)
+
+    def section_height(sec) -> int:
+        h = label_lh
+        if sec.starter:
+            wrapped = _wrap_text(sec.starter, starter_font, content_width - 20)
+            h += len(wrapped) * starter_lh + 4
+        h += sec.lines * line_spacing + 10
+        return h
+
+    topic_h = (topic_lh + 16) if worksheet.topic else 0
+    sections_height = sum(section_height(s) + 10 for s in worksheet.sections)
+
+    total_height = (
+        margin
+        + title_lh
+        + meta_lh * 2
+        + 10
+        + len(instruction_lines) * instruction_lh
+        + 16
+        + topic_h
+        + sections_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_height)), color="white")
+    draw = ImageDraw.Draw(image)
+
+    y = margin
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    name_text = "Name: ____________"
+    date_text = "Date: ____________"
+    draw.text(
+        (width - margin - _text_width(meta_font, name_text), y),
+        name_text,
+        font=meta_font,
+        fill="black",
+    )
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y + meta_lh),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += title_lh + 10
+
+    for line in instruction_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instruction_lh
+    y += 16
+
+    if worksheet.topic:
+        draw.rectangle(
+            (margin, y, margin + content_width, y + topic_lh + 12),
+            fill=(255, 250, 220),
+            outline=(200, 180, 0),
+            width=2,
+        )
+        topic_text = f"Topic: {worksheet.topic}"
+        draw.text((margin + 10, y + 6), topic_text, font=topic_font, fill="black")
+        y += topic_lh + 16 + 10
+
+    for i, sec in enumerate(worksheet.sections):
+        color = _SCAFFOLD_COLORS[i % len(_SCAFFOLD_COLORS)]
+        sh = section_height(sec)
+        # Box outline
+        draw.rectangle(
+            (margin, y, margin + content_width, y + sh),
+            outline=(120, 120, 120),
+            width=2,
+        )
+        # Header band
+        draw.rectangle(
+            (margin, y, margin + content_width, y + label_lh),
+            fill=color,
+            outline=(120, 120, 120),
+            width=2,
+        )
+        lw = _text_width(label_font, sec.label)
+        draw.text(
+            (margin + (content_width - lw) // 2, y + 4), sec.label, font=label_font, fill="black"
+        )
+        inner_y = y + label_lh + 4
+
+        if sec.starter:
+            starter_lines = _wrap_text(sec.starter, starter_font, content_width - 20)
+            for sl in starter_lines:
+                draw.text((margin + 10, inner_y), sl, font=starter_font, fill=(80, 80, 80))
+                inner_y += starter_lh
+            inner_y += 4
+
+        for _ in range(sec.lines):
+            line_y = inner_y + line_spacing - 6
+            draw.line(
+                [(margin + 10, line_y), (margin + content_width - 10, line_y)],
+                fill=(180, 180, 180),
+                width=1,
+            )
+            inner_y += line_spacing
+
+        y += sh + 10
+
+    return image
+
+
+def render_writing_scaffold_to_image(worksheet: WritingScaffoldWorksheet, output_path: str) -> str:
+    """Render writing scaffold worksheet to a PNG image."""
+    image = _render_writing_scaffold_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_writing_scaffold_to_pdf(worksheet: WritingScaffoldWorksheet, output_path: str) -> str:
+    """Render writing scaffold worksheet to a PDF."""
+    image = _render_writing_scaffold_image(worksheet)
+    rgb = image.convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rgb.save(out, format="PDF")
+    return str(out)
 
 
 # ---------------------------------------------------------------------------
@@ -2921,25 +3259,6 @@ def _render_labeled_diagram_image(worksheet: LabeledDiagramWorksheet) -> Image.I
             draw.line([(bx + nw, line_y), (bx + col_w - 20, line_y)], fill="black", width=2)
 
     return image
-
-
-def render_cause_effect_to_image(worksheet: CauseEffectWorksheet, output_path: str) -> str:
-    """Render cause-and-effect worksheet to a PNG image."""
-    image = _render_cause_effect_image(worksheet)
-    out = Path(output_path)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    image.save(out, format="PNG")
-    return str(out)
-
-
-def render_cause_effect_to_pdf(worksheet: CauseEffectWorksheet, output_path: str) -> str:
-    """Render cause-and-effect worksheet to a PDF."""
-    image = _render_cause_effect_image(worksheet)
-    rgb = image.convert("RGB")
-    out = Path(output_path)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    rgb.save(out, format="PDF")
-    return str(out)
 
 
 def render_labeled_diagram_to_image(worksheet: LabeledDiagramWorksheet, output_path: str) -> str:
