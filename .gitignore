@@ -19,3 +19,23 @@ artifacts/
 
 # Build artifacts
 *.egg-info/
+
+# Local environment and tooling
+.env
+.claude/
+
+# Generated worksheet series output (produced by scripts/generate_*.py)
+*_series/
+*_series_v*/
+
+# Generated curriculum graph exports
+*_graph*.json
+
+# Generated map output
+us_map/
+
+# Test integration output
+test_integration_output/
+
+# Personal scratch directory for one-off scripts and experiments
+scratch/

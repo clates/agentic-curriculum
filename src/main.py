@@ -5,7 +5,7 @@ FastAPI application for serving student data from curriculum.db
 """
 
 from __future__ import annotations
-from src.packet_store import (
+from packet_store import (
     get_artifact_for_student,
     get_packet_feedback,
     get_weekly_packet,
@@ -13,25 +13,25 @@ from src.packet_store import (
     list_weekly_packets,
     save_packet_feedback,
 )
-from src.agent import generate_weekly_plan
-from src.db_utils import (
+from agent import generate_weekly_plan
+from db_utils import (
     create_student,
     delete_student,
     get_student_profile,
+    list_students,
     update_student,
-    list_all_students,
 )
-from src.constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
-from src.feedback_processor import (
+from constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet_types
+from feedback_processor import (
     process_mastery_feedback,
     process_quantity_feedback,
     validate_mastery_feedback,
     validate_quantity_feedback,
 )
-from src.feedback_models import FeedbackResponse, SubmitFeedbackRequest
+from feedback_models import FeedbackResponse, SubmitFeedbackRequest
+from curriculum_graph import load_from_db
 
 import json
-from contextlib import asynccontextmanager
 import logging
 import os
 import sys
@@ -43,7 +43,6 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Query, Response
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -55,24 +54,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Ensure database is initialized on startup
-    from src.db_utils import ensure_database_initialized
-
-    ensure_database_initialized()
-    yield
-
-
-app = FastAPI(lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI()
 
 
 def _project_root_path() -> Path:
@@ -197,6 +179,7 @@ class UpdateStudentRequest(BaseModel):
 
     metadata: StudentMetadataPatch | None = None
     plan_rules: dict[str, Any] | None = None
+    progress: dict[str, Any] | None = None
 
 
 class StudentResponse(BaseModel):
@@ -273,19 +256,14 @@ def read_student(student_id: str):
 
 
 @app.get("/students", response_model=list[StudentResponse])
-def list_students_endpoint():
+def get_students():
     """
     List all student profiles.
 
     Returns:
-        A list of all student profile data
+        A list of student profile data.
     """
-    try:
-        students = list_all_students()
-        return students
-    except Exception as e:
-        logger.error(f"Error listing students: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
+    return list_students()
 
 
 @app.post("/students", response_model=StudentResponse, status_code=201)
@@ -333,6 +311,7 @@ def update_student_endpoint(student_id: str, request: UpdateStudentRequest):
         student_id=student_id,
         metadata=metadata_dict,
         plan_rules=request.plan_rules,
+        progress=request.progress,
     )
 
     if student is None:
@@ -672,3 +651,28 @@ def get_packet_feedback_endpoint(student_id: str, packet_id: str):
         raise HTTPException(status_code=404, detail="Feedback not found for this packet")
 
     return FeedbackResponse(**feedback)
+
+
+@app.get("/curriculum/graph/{subject}")
+def get_curriculum_graph(subject: str, prune: bool = False):
+    """
+    Retrieve the full structural dependency graph for a subject.
+    """
+    graph = load_from_db(str(PROJECT_ROOT / "curriculum.db"), subject)
+    return graph.export_for_visualization(prune=prune)
+
+
+@app.get("/students/{student_id}/progress-map/{subject}")
+def get_student_progress_map(student_id: str, subject: str, prune: bool = True):
+    """
+    Retrieve the curriculum graph with student mastery data overlay.
+    """
+    profile = get_student_profile(student_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    progress = json.loads(profile["progress_blob"])
+    mastered = progress.get("mastered_standards", [])
+
+    graph = load_from_db(str(PROJECT_ROOT / "curriculum.db"), subject)
+    return graph.export_for_visualization(mastered, prune=prune)

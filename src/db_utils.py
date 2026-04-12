@@ -80,7 +80,7 @@ def get_student_profile(student_id: str) -> dict | None:
         conn.close()
 
 
-def list_all_students() -> list[dict]:
+def list_students() -> list[dict]:
     """
     Query all student profiles from the database.
 
