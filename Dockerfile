@@ -68,7 +68,7 @@ COPY --chown=appuser:appuser <<'EOF' /app/start.sh
 set -e
 
 # Start backend in background
-uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+uvicorn src.main:app --host 0.0.0.0 --port 8181 &
 
 # Start frontend (production mode)
 cd /app/frontend

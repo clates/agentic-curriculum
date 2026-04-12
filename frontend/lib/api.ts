@@ -221,3 +221,45 @@ export const plansApi = {
     return data;
   },
 };
+
+// Curriculum Graph API
+export interface GraphNode {
+  id: string;
+  data: {
+    label: string;
+    fullStatement: string;
+    state: 'mastered' | 'ready' | 'locked';
+    educationLevel: string;
+  };
+  type: string;
+  position?: { x: number; y: number };
+}
+
+export interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: string;
+}
+
+export interface CurriculumGraph {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+export const curriculumApi = {
+  getGraph: async (subject: string, prune: boolean = false): Promise<CurriculumGraph> => {
+    const { data } = await apiClient.get(`/curriculum/graph/${subject}`, { params: { prune } });
+    return data;
+  },
+  getProgressMap: async (
+    studentId: string,
+    subject: string,
+    prune: boolean = true
+  ): Promise<CurriculumGraph> => {
+    const { data } = await apiClient.get(`/students/${studentId}/progress-map/${subject}`, {
+      params: { prune },
+    });
+    return data;
+  },
+};

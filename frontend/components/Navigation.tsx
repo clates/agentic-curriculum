@@ -51,6 +51,16 @@ export function Navigation() {
               >
                 Plans
               </a>
+              <a
+                href="/progress"
+                className={`${
+                  isActive('/progress')
+                    ? 'text-foreground font-medium'
+                    : 'hover:text-foreground text-neutral-500'
+                } transition-colors`}
+              >
+                Progress Map
+              </a>
               <a href="#" className="hover:text-foreground text-neutral-500 transition-colors">
                 Settings
               </a>

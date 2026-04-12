@@ -1,15 +1,47 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { studentsApi, systemApi, plansApi, parseMetadata, WeeklyPacketSummary } from '@/lib/api';
+import {
+  studentsApi,
+  systemApi,
+  plansApi,
+  curriculumApi,
+  parseMetadata,
+  WeeklyPacketSummary,
+} from '@/lib/api';
 
-export interface EnrichedStudent {
-  id: string;
-  name: string;
-  grade: string;
-  subject: string;
-  masteredCount: number;
-  totalStandards: number;
-  avatarUrl?: string;
+// ... (skipping some lines)
+
+// Generate weekly plan mutation
+export function useGenerateWeeklyPlan() {
+  const queryClient = useQueryClient();
+
+  const onSuccess = useCallback(() => {
+    // Invalidate cached packet lists so they refresh
+    queryClient.invalidateQueries({ queryKey: ['all-weekly-packets'] });
+    queryClient.invalidateQueries({ queryKey: ['weekly-packets-stats'] });
+  }, [queryClient]);
+
+  return useMutation({
+    mutationFn: plansApi.generateWeeklyPlan,
+    onSuccess,
+  });
+}
+
+// Curriculum Graph hooks
+export function useCurriculumGraph(subject: string, prune: boolean = false) {
+  return useQuery({
+    queryKey: ['curriculum-graph', subject, prune],
+    queryFn: () => curriculumApi.getGraph(subject, prune),
+    enabled: !!subject,
+  });
+}
+
+export function useStudentProgressMap(studentId: string, subject: string, prune: boolean = true) {
+  return useQuery({
+    queryKey: ['student-progress-map', studentId, subject, prune],
+    queryFn: () => curriculumApi.getProgressMap(studentId, subject, prune),
+    enabled: !!studentId && !!subject,
+  });
 }
 
 export interface WeeklyPacketWithStudent extends WeeklyPacketSummary {
@@ -134,21 +166,5 @@ export function useSystemOptions() {
     queryKey: ['system-options'],
     queryFn: systemApi.getOptions,
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
-  });
-}
-
-// Generate weekly plan mutation
-export function useGenerateWeeklyPlan() {
-  const queryClient = useQueryClient();
-
-  const onSuccess = useCallback(() => {
-    // Invalidate cached packet lists so they refresh
-    queryClient.invalidateQueries({ queryKey: ['all-weekly-packets'] });
-    queryClient.invalidateQueries({ queryKey: ['weekly-packets-stats'] });
-  }, [queryClient]);
-
-  return useMutation({
-    mutationFn: plansApi.generateWeeklyPlan,
-    onSuccess,
   });
 }

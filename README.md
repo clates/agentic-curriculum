@@ -65,6 +65,63 @@ curl -X POST "http://127.0.0.1:8000/generate_weekly_plan" \
 
 ---
 
+## 🖥️ Frontend
+
+The project includes a modern Next.js-based web interface for managing students and curriculum.
+
+### Setup
+
+1.  Navigate to the `frontend` directory:
+    ```bash
+    cd frontend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the development server:
+    ```bash
+    npm run dev
+    ```
+4.  Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Key Features
+- **Dashboard**: High-level overview of active students and plan generation stats.
+- **Student Profiles**: Detailed view of student metadata and standard mastery progress.
+- **Plan Generation UI**: Intuitive modals to trigger new AI-generated weekly plans.
+- **Progress Tracking**: Visual indicators for standard mastery and educational milestones.
+
+---
+
+## 🏗️ Worksheet Ecosystem
+
+The system features a robust, extensible worksheet engine designed to generate high-quality, printable educational resources. Each worksheet is structured as a data model that can be rendered to multiple formats (Markdown, PDF, HTML).
+
+### Core Capabilities
+- **Pedagogical Structure**: Every worksheet includes clear titles, instructions, and logically grouped problems.
+- **Automatic Formatting**: Math problems are vertically aligned for column-based arithmetic; reading passages are wrapped for readability.
+- **Serialization**: Worksheets are stored as JSON in the database, allowing for easy retrieval and re-rendering.
+- **Feedback Loop**: Generated worksheets are linked to specific standards, enabling automated progress tracking when completed.
+
+### Available Worksheet Types
+- **🧮 Math Practice**: Vertical arithmetic problems (addition, subtraction, multiplication) with operand validation.
+- **📖 Reading Comprehension**: Passages paired with open-response questions and vocabulary builders.
+- **⭕ Venn Diagrams**: Visual comparison structures for identifying similarities and differences between two concepts.
+- **📊 Feature Matrices**: Grids for classifying items against multiple attributes (ideal for science and social studies).
+- **🔎 Odd One Out**: Logical reasoning rows where students identify the item that doesn't fit the pattern.
+- **🌳 Tree Maps**: Hierarchical classification tools for sorting information into categories.
+
+---
+
+## 📝 Feedback & Adaptive Learning
+
+The system adapts to each student through a structured feedback loop. When a weekly packet is completed, feedback is submitted to the API to update the student's profile.
+
+- **Mastery Feedback**: Mark specific standards as `mastered` or `developing`. The logic engine uses this to decide whether to introduce new concepts or provide remediation.
+- **Quantity Feedback**: Adjust the "dosage" of activities. If a student is overwhelmed or finishing too quickly, the system adjusts the number of tasks in subsequent weeks.
+
+---
+
 ## 🧹 Code Style & Linting
 
 All Python files are auto-formatted with [Black](https://github.com/psf/black) and linted with [Ruff](https://docs.astral.sh/ruff/), enforced automatically via [pre-commit](https://pre-commit.com/) hooks.
@@ -78,442 +135,54 @@ pre-commit install
 
 `pre-commit install` adds a git `pre-commit` hook that runs Ruff (lint/fix) and then Black on staged Python files. Commits will fail until formatting or lint issues are resolved, ensuring a consistent style and catching mistakes like unused imports before they land.
 
-### Linting/formatting the entire repo
-
-```bash
-pre-commit run --all-files
-```
-
-Or run the tools directly:
-
-```bash
-ruff check --fix .
-black .
-```
-
-Run this after updating formatting rules to clean the entire codebase in a single commit.
-
-You'll receive a complete 5-day lesson plan with objectives, materials, and procedures!
-
 ---
 
 ## 🐳 Run with Docker
 
-The application uses a multi-stage build with both frontend (Next.js) and backend (FastAPI). All API requests are proxied through Next.js, eliminating CORS issues and allowing single-port deployment.
+Prefer containers? The repo ships with a `Dockerfile` that bakes in dependencies, ingests standards, and starts Uvicorn automatically.
 
 ```bash
 # Build the image (run from repo root)
 docker build -t agentic-curriculum .
 
-# Run the application (exposes port 3000 only)
-docker run --rm -p 3000:3000 \
+# Run the API (exposes port 8000 by default)
+docker run --rm -p 8000:8000 \
   -e OPENAI_API_KEY="your-api-key" \
   agentic-curriculum
 ```
 
-**Access the application:**
-- Frontend: `http://localhost:3000`
-- API (proxied through Next.js): `http://localhost:3000/api/*`
-
 Notes:
 
-- **Port 3000 only**: The frontend runs on port 3000 and proxies all `/api/*` requests to the backend (port 8000 internal only)
-- **No CORS issues**: All requests are same-origin through the Next.js proxy
-- `OPENAI_API_KEY` must be provided at runtime (and any other optional env vars such as `OPENAI_BASE_URL` or `OPENAI_MODEL`)
-- `BACKEND_URL` can optionally be set if the backend runs on a different internal URL (defaults to `http://localhost:8000`)
-- The image executes `python src/ingest_standards.py` during build so `curriculum.db` is ready before the server boots
-- Container logs include the structured request logs written to `/app/logs` inside the image
-
-
-
-## Configuration
-
-### Environment Variables
-
-The system uses environment variables for configuration:
-
-| Variable          | Required | Default         | Description                                                  |
-| ----------------- | -------- | --------------- | ------------------------------------------------------------ |
-| `OPENAI_API_KEY`  | **Yes**  | None            | Your OpenAI API key for generating lesson plans              |
-| `OPENAI_BASE_URL` | No       | None            | Custom API base URL (e.g., for Azure OpenAI or local models) |
-| `OPENAI_MODEL`    | No       | `gpt-3.5-turbo` | The OpenAI model to use for generation                       |
-| `BACKEND_URL`     | No       | `http://localhost:8000` | Backend URL for Next.js API proxy (server-side only)  |
-
-**Setting environment variables:**
-
-```bash
-# Linux/macOS
-export OPENAI_API_KEY="sk-your-key-here"
-export OPENAI_BASE_URL="https://custom.api.endpoint"  # Optional
-export OPENAI_MODEL="gpt-4"  # Optional
-
-# Windows (Command Prompt)
-set OPENAI_API_KEY=sk-your-key-here
-set OPENAI_BASE_URL=https://custom.api.endpoint
-set OPENAI_MODEL=gpt-4
-
-# Windows (PowerShell)
-$env:OPENAI_API_KEY="sk-your-key-here"
-$env:OPENAI_BASE_URL="https://custom.api.endpoint"
-$env:OPENAI_MODEL="gpt-4"
-```
-
-**Using Azure OpenAI:**
-
-```bash
-export OPENAI_API_KEY="your-azure-api-key"
-export OPENAI_BASE_URL="https://your-resource.openai.azure.com"
-export OPENAI_MODEL="gpt-4"  # or your deployment name
-```
+- `OPENAI_API_KEY` must be provided at runtime (and any other optional env vars such as `OPENAI_BASE_URL` or `OPENAI_MODEL`).
+- The image executes `python src/ingest_standards.py` during build so `curriculum.db` is ready before the server boots.
+- Container logs include the structured request logs written to `/app/logs` inside the image.
 
 ---
 
-## API Endpoints
+## API Reference
 
 The FastAPI server exposes the following endpoints:
 
-### `GET /`
+### Student Management
+- `GET /student/{student_id}`: Retrieve a student's profile.
+- `POST /students`: Create a new student profile.
+- `PUT /student/{student_id}`: Update student metadata or learning rules.
+- `DELETE /student/{student_id}`: Remove a student profile.
 
-Health check endpoint.
+### Lesson Planning
+- `POST /generate_weekly_plan`: Generate a 5-day AI lesson plan tailored to student progress.
+- `GET /students/{id}/weekly-packets`: List history of generated packets.
+- `GET /students/{id}/weekly-packets/{id}`: Retrieve full JSON payload for a specific packet.
 
-**Response:**
-
-```json
-{
-  "message": "Hello World"
-}
-```
-
-### `GET /student/{student_id}`
-
-Retrieve a student's profile including their progress and learning rules.
-
-**Parameters:**
-
-- `student_id` (path): Unique identifier for the student
-
-**Response:**
-
-```json
-{
-  "student_id": "student_01",
-  "progress_blob": "{\"mastered_standards\": [], \"developing_standards\": []}",
-  "plan_rules_blob": "{\"allowed_materials\": [\"Crayons\", \"Paper\"], ...}"
-}
-```
-
-**Error Responses:**
-
-- `404`: Student not found
-
-### `POST /generate_weekly_plan`
-
-Generate a complete weekly lesson plan for a student using AI.
-
-**Request Body:**
-
-```json
-{
-  "student_id": "string",
-  "grade_level": 0,
-  "subject": "string"
-}
-```
-
-**Request Model (PlanRequest):**
-
-- `student_id` (string, required): Unique identifier for the student
-- `grade_level` (integer, required): Grade level (0 = Kindergarten, 1 = 1st grade, etc.)
-- `subject` (string, required): Subject area (may be overridden by student's theme rules)
-
-**Response Model (WeeklyPlan):**
-
-```json
-{
-  "plan_id": "plan_student_01_2025-01-15",
-  "student_id": "student_01",
-  "week_of": "2025-01-15",
-  "weekly_overview": "Brief description of the week's learning progression",
-  "daily_plan": [
-    {
-      "day": "Monday",
-      "lesson_plan": {
-        "objective": "Learning objective for the day",
-        "materials_needed": ["Crayons", "Paper"],
-        "procedure": [
-          "Step 1: Introduction",
-          "Step 2: Practice",
-          "Step 3: Review"
-        ]
-      },
-      "standard": {
-        "standard_id": "VA.MATH.K.1a",
-        "source": "VA",
-        "subject": "Math",
-        "grade_level": 0,
-        "description": "The student will count forward to 10.",
-        "json_blob": "..."
-      },
-      "standards": [...],
-      "focus": "Day-specific learning focus",
-      "resources": {
-        "mathWorksheet": {
-          "title": "Repeated Addition Warm-Up",
-          "problems": [
-            {"operand_one": 3, "operand_two": 3, "operator": "+"}
-          ],
-          "artifacts": [
-            {
-              "type": "png",
-              "path": "artifacts/plan_student_01_2025-01-15/monday/repeated_addition_math.png"
-            },
-            {
-              "type": "pdf",
-              "path": "artifacts/plan_student_01_2025-01-15/monday/repeated_addition_math.pdf"
-            }
-          ]
-        }
-      },
-      "worksheet_plans": [
-        {
-          "kind": "mathWorksheet",
-          "filename_hint": "repeated_addition_math",
-          "metadata": {"artifact_label": "warmup"}
-        }
-      ]
-    }
-    // ... Tuesday through Friday
-  ]
-}
-```
-
-Worksheet artifacts are rendered under `artifacts/{plan_id}/{day_slug}/`. The API response references those files via repo-relative paths so clients can download and present them immediately after the weekly plan is generated.
-
-**Error Responses:**
-
-- `400`: Invalid request or error generating plan
-- `500`: Server error
-
-**Example Request:**
-
-```bash
-curl -X POST "http://127.0.0.1:8000/generate_weekly_plan" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "student_id": "student_01",
-    "grade_level": 0,
-    "subject": "Math"
-  }'
-```
+### Resources & Feedback
+- `GET /students/{id}/weekly-packets/{id}/worksheets`: Get a manifest of all worksheet artifacts for a packet.
+- `GET /students/{id}/worksheet-artifacts/{id}`: Download a rendered PDF/PNG worksheet.
+- `POST /students/{id}/weekly-packets/{id}/feedback`: Submit mastery and quantity feedback.
+- `GET /system/options`: Retrieve valid subjects, grades, and worksheet types.
 
 ---
 
-## Overview
-
-This project provides tools to:
-
-- Initialize and manage a SQLite database for educational standards
-- Ingest curriculum standards from JSON files
-- Track student profiles and learning progress
-- Generate AI-powered weekly lesson plans tailored to each student
-
-## Detailed Setup Instructions
-
-### Installing Dependencies
-
-Install the required Python packages using pip:
-
-```bash
-pip install -r requirements.txt
-```
-
-This will install:
-
-- FastAPI and Uvicorn for the web API
-- OpenAI Python client for LLM integration
-- Requests for API testing
-- Pydantic for data validation
-
-### Ingesting Standards
-
-Run the ingestion script to create the database and populate it with standards:
-
-```bash
-python3 src/ingest_standards.py
-```
-
-This script will:
-
-- Create `curriculum.db` SQLite database
-- Create two tables: `standards` and `student_profiles`
-- Read JSON files from `standards_data/` directory
-- Insert standards data into the database
-- Add a dummy student profile for testing
-
-## Database Schema
-
-### `standards` Table
-
-Stores educational standards and curriculum information.
-
-| Column        | Type    | Description                                       |
-| ------------- | ------- | ------------------------------------------------- |
-| `standard_id` | TEXT    | Primary key, unique identifier for the standard   |
-| `source`      | TEXT    | Source of the standard (e.g., "VA", "CommonCore") |
-| `subject`     | TEXT    | Subject area (e.g., "Math", "Art")                |
-| `grade_level` | INTEGER | Grade level (0 = Kindergarten)                    |
-| `description` | TEXT    | Description of the standard                       |
-| `json_blob`   | TEXT    | Original JSON object as string                    |
-
-### `student_profiles` Table
-
-Stores student information and learning progress.
-
-| Column            | Type | Description                                          |
-| ----------------- | ---- | ---------------------------------------------------- |
-| `student_id`      | TEXT | Primary key, unique identifier for the student       |
-| `progress_blob`   | TEXT | JSON blob tracking mastered and developing standards |
-| `plan_rules_blob` | TEXT | JSON blob with parent rules and learning preferences |
-
-## JSON Format for Standards
-
-Place JSON files in the `standards_data/` directory with the following format:
-
-```json
-[
-  {
-    "id": "VA.MATH.K.1a",
-    "source": "VA",
-    "subject": "Math",
-    "grade": 0,
-    "description": "The student will count forward to 10."
-  }
-]
-```
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**"OPENAI_API_KEY environment variable not set"**
-
-- Make sure you've exported the API key before starting the server
-- Run: `export OPENAI_API_KEY="your-key-here"`
-
-**"Could not connect to server"**
-
-- Ensure the server is running with: `cd src && uvicorn main:app --reload`
-- Check that the server is running on the expected port (default: 8000)
-
-**"Student not found" (404 error)**
-
-- Run the ingestion script to create the dummy student: `python3 src/ingest_standards.py`
-- Use the correct student ID: `student_01`
-
-**"No standards found for student"**
-
-- Ensure the database has been populated: `python3 src/ingest_standards.py`
-- Check that standards exist for the requested grade level and subject
-
-**Connection refused or API errors**
-
-- Verify your OpenAI API key is valid
-- Check your internet connection
-- If using a custom BASE_URL, ensure it's correct
-
----
-
-## Advanced Usage
-
-### Worksheet Utilities (Experimental)
-
-Early worksheets can be generated entirely in Python for K–1 math practice before involving the LLM. Use `src/worksheets.py` to build a worksheet definition and render it to Markdown (or adapt it to PDF/HTML later):
-
-```python
-from src.worksheets import Operator, generate_two_operand_math_worksheet
-
-worksheet = generate_two_operand_math_worksheet(
-  [
-    {"operand_one": 5, "operand_two": 3, "operator": Operator.PLUS},
-    {"operand_one": 9, "operand_two": 4, "operator": Operator.MINUS},
-  ],
-  title="Two-Operand Practice",
-)
-
-print(worksheet.to_markdown())
-```
-
-The helper normalizes either dicts or `TwoOperandProblem` instances, validates operators, and automatically formats each problem vertically so ones/tens/hundreds columns line up. The resulting `Worksheet` object keeps just the metadata and problem definitions—no answer key is generated yet so a parent/teacher can work through the solutions with the learner—and the same structure can be reused for other worksheet styles (reading comprehension, vocabulary, etc.).
-
-Need a literacy activity instead? Use the companion generator to build reading comprehension sets that include a passage, open-response questions, and vocabulary prompts:
-
-```python
-from src.worksheets import generate_reading_comprehension_worksheet
-from src.worksheet_renderer import render_reading_worksheet_to_pdf
-
-worksheet = generate_reading_comprehension_worksheet(
-  passage_title="The Busy Garden",
-  passage="""
-Lina peeked outside and saw tiny sprouts covering the garden. Each day she watered them gently
-while her grandfather told stories about patience. By the weekend, the sprouts stretched their leaves
-toward the sun, and Lina noticed a small ladybug resting on one stem.
-""",
-  questions=[
-    {"prompt": "Why did Lina water the sprouts every day?", "response_lines": 3},
-    {"prompt": "What new detail shows the garden is changing?", "response_lines": 2},
-  ],
-  vocabulary=[
-    {"term": "sprout"},
-    {"term": "patience", "definition": "Waiting calmly for something important."},
-  ],
-)
-
-render_reading_worksheet_to_pdf(worksheet, "artifacts/reading_example.pdf")
-```
-
-The reading template wraps passages up to a full page, numbers each question with configurable response lines, and lists vocabulary terms with either supplied definitions or blank lines for learners to fill in.
-
-### Adding Custom Standards
-
-To add your own educational standards:
-
-1. Create a JSON file in the `standards_data/` directory
-2. Format your standards according to the schema below
-3. Run `python3 src/ingest_standards.py` to import them
-
-### Creating Student Profiles
-
-Students are stored in the `student_profiles` table with:
-
-- **Progress tracking**: Lists of mastered and developing standards
-- **Learning rules**: Parent preferences for materials, themes, and review schedules
-
-Example student profile:
-
-```json
-{
-  "student_id": "student_02",
-  "progress_blob": {
-    "mastered_standards": ["VA.MATH.K.1a"],
-    "developing_standards": ["VA.MATH.K.2a"]
-  },
-  "plan_rules_blob": {
-    "allowed_materials": ["Blocks", "Pencils", "Paper"],
-    "parent_notes": "Student learns best with visual aids",
-    "theme_rules": {
-      "force_weekly_theme": true,
-      "theme_subjects": ["Science", "Math"]
-    },
-    "review_rules": {
-      "no_review_mastered_for_weeks": 3
-    }
-  }
-}
-```
-
-### Running Tests
+## 🧪 Running Tests
 
 Validate each component of the system:
 
@@ -530,5 +199,3 @@ python3 tests/validate_chunk3.py
 # Test API endpoints (requires server running)
 python3 tests/validate_chunk4.py
 ```
-
----
