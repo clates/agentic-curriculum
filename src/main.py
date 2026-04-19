@@ -461,6 +461,8 @@ def _media_type(file_format: str | None) -> str:
         return "application/pdf"
     if normalized in {"png", "image/png"}:
         return "image/png"
+    if normalized in {"html", "text/html"}:
+        return "text/html"
     return "application/octet-stream"
 
 
@@ -546,7 +548,11 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
         raise HTTPException(status_code=410, detail="Artifact unavailable")
 
     headers = _artifact_headers(artifact)
-    headers["Content-Disposition"] = f'attachment; filename="{file_path.name}"'
+    fmt = (artifact.get("file_format") or "").lower()
+    if fmt in {"html", "text/html"}:
+        headers["Content-Disposition"] = f'inline; filename="{file_path.name}"'
+    else:
+        headers["Content-Disposition"] = f'attachment; filename="{file_path.name}"'
 
     logger.info(
         "worksheet_artifact_download",
@@ -581,36 +587,29 @@ def print_weekly_packet(student_id: str, packet_id: str):
     if packet is None:
         raise HTTPException(status_code=404, detail="Packet not found")
 
-    daily_plan = packet.get("daily_plan", [])
+    artifacts = list_packet_artifacts(student_id, packet_id)
+    if artifacts is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+
+    import re as _re
+
     pages: list[tuple[str, str]] = []
-
-    for day in daily_plan:
-        day_label = day.get("day", "")
-        resources = day.get("resources") or {}
-
-        for _kind, payload in resources.items():
-            if not isinstance(payload, dict):
-                continue
-            artifacts = payload.get("artifacts", [])
-            # Find the HTML artifact path for this worksheet
-            html_artifact = next((a for a in artifacts if a.get("type") == "html"), None)
-            if html_artifact:
-                artifact_path = _resolve_artifact_path(html_artifact.get("path", ""))
-                if artifact_path.exists():
-                    try:
-                        fragment = artifact_path.read_text(encoding="utf-8")
-                        # Strip the outer html/head/body wrapper if present so we
-                        # can embed the fragment directly into the print document.
-                        import re as _re
-
-                        body_match = _re.search(
-                            r"<body[^>]*>(.*)</body>", fragment, _re.DOTALL | _re.IGNORECASE
-                        )
-                        if body_match:
-                            fragment = body_match.group(1)
-                        pages.append((day_label, fragment))
-                    except OSError:
-                        pass
+    for artifact in artifacts:
+        if (artifact.get("file_format") or "").lower() != "html":
+            continue
+        artifact_path = _resolve_artifact_path(artifact["file_path"])
+        if not artifact_path.exists():
+            continue
+        try:
+            fragment = artifact_path.read_text(encoding="utf-8")
+            body_match = _re.search(
+                r"<body[^>]*>(.*)</body>", fragment, _re.DOTALL | _re.IGNORECASE
+            )
+            if body_match:
+                fragment = body_match.group(1)
+            pages.append((artifact.get("day_label", ""), fragment))
+        except OSError:
+            pass
 
     if not pages:
         raise HTTPException(
