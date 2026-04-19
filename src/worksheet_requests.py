@@ -5,13 +5,12 @@ from __future__ import annotations
 import os
 import sys
 from dataclasses import dataclass
-from typing import List
+from typing import Any, List
 
 from pydantic import ValidationError
 
 try:  # Package-relative imports when available
     from .worksheets import (
-        generate_reading_comprehension_worksheet,
         generate_two_operand_math_worksheet,
         ReadingWorksheet,
         Worksheet,
@@ -26,7 +25,6 @@ except ImportError:  # Fallback for execution without package context
     if CURRENT_DIR not in sys.path:
         sys.path.insert(0, CURRENT_DIR)
     from worksheets import (  # type: ignore
-        generate_reading_comprehension_worksheet,
         generate_two_operand_math_worksheet,
         ReadingWorksheet,
         Worksheet,
@@ -43,9 +41,12 @@ class WorksheetArtifactPlan:
     """Represents a worksheet ready for rendering plus metadata."""
 
     kind: str
-    worksheet: Worksheet | ReadingWorksheet
     filename_hint: str
     metadata: dict
+    # Set for Pillow-rendered types (mathWorksheet, readingWorksheet fallback)
+    worksheet: Worksheet | ReadingWorksheet | None = None
+    # Set for HTML-rendered types; passed directly to worksheet_html_renderer
+    html_data: dict | None = None
 
 
 class WorksheetRequestError(Exception):
@@ -78,43 +79,75 @@ def _build_math_worksheet(request: MathWorksheetRequest) -> WorksheetArtifactPla
 
 
 def _build_reading_worksheet(request: ReadingWorksheetRequest) -> WorksheetArtifactPlan:
-    worksheet = generate_reading_comprehension_worksheet(
-        passage_title=request.passage_title,
-        passage=request.passage,
-        questions=[question.model_dump() for question in request.questions],
-        vocabulary=[entry.model_dump() for entry in request.vocabulary],
-        instructions=request.instructions
-        or "Read the passage carefully, then answer the questions and review the vocabulary.",
-        title=request.title or "Reading Comprehension",
-        metadata=request.metadata or {},
-    )
+    """Reading uses the HTML renderer; the Pillow worksheet object is not built."""
+    data = request.model_dump()
     return WorksheetArtifactPlan(
         kind="readingWorksheet",
-        worksheet=worksheet,
+        worksheet=None,
+        html_data=data,
         filename_hint=_derive_filename("reading", request.metadata),
         metadata=request.metadata or {},
     )
 
 
+def _build_html_plan(kind: str, request: Any) -> WorksheetArtifactPlan:
+    """Generic builder for any HTML-rendered worksheet type."""
+    data = request.model_dump()
+    metadata = data.get("metadata") or {}
+    short_name = kind.replace("Worksheet", "").lower()
+    return WorksheetArtifactPlan(
+        kind=kind,
+        worksheet=None,
+        html_data=data,
+        filename_hint=_derive_filename(short_name, metadata),
+        metadata=metadata,
+    )
+
+
+# Map resource field name → builder function
+_HTML_BUILDERS = {
+    "featureMatrixWorksheet": _build_html_plan,
+    "treeMapWorksheet": _build_html_plan,
+    "oddOneOutWorksheet": _build_html_plan,
+    "matchingWorksheet": _build_html_plan,
+    "causeEffectWorksheet": _build_html_plan,
+    "frayerModelWorksheet": _build_html_plan,
+    "wordSortWorksheet": _build_html_plan,
+    "writingScaffoldWorksheet": _build_html_plan,
+    "tChartWorksheet": _build_html_plan,
+}
+
+
 def build_worksheets_from_requests(
     resources: ResourceRequests,
 ) -> tuple[List[WorksheetArtifactPlan], List[WorksheetRequestError]]:
-    """Generate worksheet objects for the provided ResourceRequests."""
+    """Generate worksheet artifact plans for the provided ResourceRequests."""
 
     plans: List[WorksheetArtifactPlan] = []
     errors: List[WorksheetRequestError] = []
 
+    # Pillow-rendered
     if resources.mathWorksheet:
         try:
             plans.append(_build_math_worksheet(resources.mathWorksheet))
         except (ValidationError, ValueError) as exc:
             errors.append(WorksheetRequestError("mathWorksheet", str(exc)))
 
+    # HTML-rendered: reading
     if resources.readingWorksheet:
         try:
             plans.append(_build_reading_worksheet(resources.readingWorksheet))
         except (ValidationError, ValueError) as exc:
             errors.append(WorksheetRequestError("readingWorksheet", str(exc)))
+
+    # HTML-rendered: all other types
+    for field_name, builder in _HTML_BUILDERS.items():
+        request = getattr(resources, field_name, None)
+        if request is not None:
+            try:
+                plans.append(builder(field_name, request))
+            except (ValidationError, ValueError) as exc:
+                errors.append(WorksheetRequestError(field_name, str(exc)))
 
     return plans, errors
 

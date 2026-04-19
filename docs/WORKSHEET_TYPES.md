@@ -873,6 +873,194 @@ render_tree_map_to_pdf(tree, "output/tree.pdf")
 
 ---
 
+## HTML Render Functions (Geography/Early-Childhood Series)
+
+The `scratch/generate_geography_html.py` script introduces five HTML-native render functions
+that bypass the Python worksheet objects entirely and produce HTML strings directly.
+These are designed for **early-childhood use** (age 3–5) with OpenDyslexic font, large
+touch-friendly elements, and simplified layouts. They follow the same pattern as
+`scratch/generate_biomes_html.py`.
+
+Each function accepts a `data: dict` and an `accent: str` (CSS gradient string for the
+colored day-header banner) and returns an HTML string suitable for wrapping in a `<div class="page">`.
+
+---
+
+### `render_feature_matrix_page(data, accent)`
+
+A table of items (rows) × properties (columns) with large Unicode checkbox cells (☐).
+Designed for 3-year-olds with a parent reading column names aloud.
+
+**`data` keys:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `title` | `str` | Worksheet title |
+| `instructions` | `str` | Instructions text (italic) |
+| `day_label` | `str` | Day label shown in accent header (e.g. `"Monday · Land & Water"`) |
+| `items` | `List[str]` | Row labels — the things being classified |
+| `properties` | `List[str]` | Column headers — the properties to check (emoji encouraged) |
+
+**Example:**
+```python
+render_feature_matrix_page({
+    "day_label": "Monday · Land & Water",
+    "title": "Monday: Land or Water?",
+    "instructions": "Put an X in the box if it is true.",
+    "items": ["Africa 🌍", "Pacific Ocean 🌊", "Antarctica ❄️"],
+    "properties": ["Has Land 🏔️", "Has Water 🌊", "Animals Live Here 🐘"],
+}, accent="linear-gradient(130deg, #2a72c8, #1a52a8)")
+```
+
+---
+
+### `render_tree_map_page(data, accent)`
+
+A root node at top center branching into N boxes arranged in a CSS grid.
+Each branch can have pre-filled slots and blank slots for the child to complete.
+Best for 5–8 branches; use `columns` to control the grid layout.
+
+**`data` keys:**
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `title` | `str` | `"Tree Map"` | Worksheet title |
+| `instructions` | `str` | — | Instructions text |
+| `day_label` | `str` | `""` | Day label for accent header |
+| `root_label` | `str` | `"Root"` | Text in the top root box |
+| `columns` | `int` | `4` | Grid columns (branches per row) |
+| `branches` | `List[dict]` | `[]` | Branch definitions (see below) |
+
+**Branch dict keys:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `name` | `str` | Branch label (bold, centered) |
+| `prefilled` | `List[str]` | Pre-filled slot text (shown in gray) |
+| `blank_count` | `int` | Number of blank slots to add |
+
+**Example:**
+```python
+render_tree_map_page({
+    "title": "The 7 Continents Tree Map",
+    "root_label": "7 Continents of the World",
+    "columns": 4,
+    "branches": [
+        {"name": "🌎 North America", "prefilled": ["🦅 Eagle"], "blank_count": 1},
+        {"name": "🌍 Africa",        "prefilled": ["🦁 Lion"],  "blank_count": 1},
+    ],
+}, accent="linear-gradient(130deg, #3a9050, #297538)")
+```
+
+---
+
+### `render_capstone_tree_map_page(data, accent)`
+
+A 2-branch tree map (2-column layout) where each branch has blank slots and a shared
+word bank at the bottom. Intended as a summative sorting activity (e.g., sort all
+continents and oceans into their respective branches).
+
+**`data` keys:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `title` | `str` | Worksheet title |
+| `instructions` | `str` | Instructions text |
+| `day_label` | `str` | Day label for accent header |
+| `root_label` | `str` | Text in the root box |
+| `branches` | `List[dict]` | Each dict: `{"name": str, "slot_count": int}` |
+| `word_bank` | `List[str]` | Words the child sorts into branches |
+
+**Example:**
+```python
+render_capstone_tree_map_page({
+    "title": "Our Earth — Sort It All Out!",
+    "root_label": "🌍 Our Earth",
+    "branches": [
+        {"name": "🌎 Continents (7)", "slot_count": 7},
+        {"name": "🌊 Oceans (5)",     "slot_count": 5},
+    ],
+    "word_bank": ["Africa", "Asia", "Pacific Ocean", "Atlantic Ocean", ...],
+}, accent="linear-gradient(130deg, #d47c1c, #b05e08)")
+```
+
+---
+
+### `render_odd_one_out_page(data, accent)`
+
+Rows of 3 items each in large bordered boxes. The child circles the item that doesn't
+belong and dictates a reason to the parent. Limit 3 items per row for age 3–4 (reduces
+cognitive load vs. 4 items used in older-grade formats).
+
+**`data` keys:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `title` | `str` | Worksheet title |
+| `instructions` | `str` | Instructions text |
+| `day_label` | `str` | Day label for accent header |
+| `rows` | `List[dict]` | Each dict: `{"items": List[str]}` — exactly 3 items |
+
+**Example:**
+```python
+render_odd_one_out_page({
+    "title": "Odd One Out — Continent or Not?",
+    "instructions": "Circle the one that does NOT belong.",
+    "rows": [
+        {"items": ["Africa", "Europe", "Dog 🐕"]},
+        {"items": ["Pacific Ocean 🌊", "Asia", "South America"]},
+    ],
+}, accent="linear-gradient(130deg, #3a9050, #297538)")
+```
+
+---
+
+### `render_tracing_page(data, accent)`
+
+Each word is rendered in large (34pt) light-gray OpenDyslexic text for the child to
+trace over with a dark crayon, followed by two blank copy lines. Fits 4–5 words per
+letter-size page at this size. Ideal for pre-writing / letter-recognition at ages 3–5.
+
+**`data` keys:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `title` | `str` | Worksheet title |
+| `instructions` | `str` | Instructions text |
+| `day_label` | `str` | Day label for accent header |
+| `words` | `List[str]` | Words to trace (4–5 per page recommended) |
+
+**Example:**
+```python
+render_tracing_page({
+    "title": "Trace the Continents (Part 1)",
+    "instructions": "Trace the gray letters. Then copy the word below!",
+    "words": ["North America", "South America", "Europe", "Africa"],
+}, accent="linear-gradient(130deg, #7a50b2, #5c3892)")
+```
+
+---
+
+### Using `save_html` with these renderers
+
+All render functions return an HTML string. Pass multiple strings to `save_html` to
+produce a multi-page printable file:
+
+```python
+save_html(
+    "01_monday.html",
+    "Monday: Land & Water",
+    render_reading_page(mon_reading, MON),
+    render_feature_matrix_page(mon_feature_matrix, MON),
+)
+```
+
+The `save_html` function wraps each string in `<div class="page">` with
+`page-break-after: always`, producing a single HTML file where each page
+prints as one letter-size sheet.
+
+---
+
 ## Error Handling
 
 All generators perform validation and raise appropriate exceptions:

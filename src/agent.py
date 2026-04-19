@@ -32,6 +32,7 @@ try:  # Prefer package-relative imports when available
         render_reading_worksheet_to_image,
         render_reading_worksheet_to_pdf,
     )
+    from .worksheet_html_renderer import render_worksheet_html, HTML_SUPPORTED_KINDS
 except ImportError:  # Fallback for direct script execution
     sys.path.insert(0, os.path.dirname(__file__))
     from db_utils import get_student_profile  # type: ignore
@@ -45,6 +46,7 @@ except ImportError:  # Fallback for direct script execution
         render_reading_worksheet_to_image,
         render_reading_worksheet_to_pdf,
     )
+    from worksheet_html_renderer import render_worksheet_html, HTML_SUPPORTED_KINDS  # type: ignore
     from packet_store import save_weekly_packet  # type: ignore
 
 
@@ -59,19 +61,64 @@ ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 
 RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
 
-Supported worksheet payloads (summarized from docs/WORKSHEET_TYPES.md):
-1. `mathWorksheet` (two-operand vertical math): requires `problems` (each item has `operand_one`, `operand_two`, `operator:+|-`). Optional `title`, `instructions`, `metadata`.
-    Example: "mathWorksheet": {"title": "Repeated Addition", "problems": [{"operand_one": 3, "operand_two": 3, "operator": "+"}]}
-2. `readingWorksheet` (reading comprehension passage): requires `passage_title`, `passage`, and `questions` (each question has `prompt` + optional `response_lines`). Optional `vocabulary`, `instructions`, `title`, `metadata`.
-    Example: "readingWorksheet": {"passage_title": "Garden Story", "passage": "...", "questions": [{"prompt": "What happened first?", "response_lines": 2}]}
-3. `vennDiagramWorksheet` (compare/contrast two sets): requires `left_label` and `right_label`. Optional `both_label`, `word_bank` entries, and pre-filled `left_items`/`right_items`/`both_items` arrays.
-    Example: "vennDiagramWorksheet": {"left_label": "Mammals", "right_label": "Reptiles", "word_bank": ["cat", "snake"]}
-4. `featureMatrixWorksheet` (items vs. properties grid): requires `items` and `properties`. Optional `show_answers`, `metadata`, and per-item `checked_properties` to pre-mark cells.
-    Example: "featureMatrixWorksheet": {"items": ["Dog", "Fish"], "properties": ["Has Fur", "Lives in Water"]}
-5. `oddOneOutWorksheet` (identify the item that doesn't belong): requires `rows` where each row has at least 3 `items`. Optional `odd_item`, `explanation`, `show_answers`, `reasoning_lines`.
-    Example: "oddOneOutWorksheet": {"rows": [{"items": ["dog", "cat", "car", "bird"]}], "reasoning_lines": 2}
-6. `treeMapWorksheet` (root + branches classification map): requires `root_label` and `branches`. Each branch supplies a `label` plus either explicit `slots` or a `slot_count`. Optional `word_bank`, `metadata`.
-    Example: "treeMapWorksheet": {"root_label": "Food Groups", "branches": [{"label": "Fruits", "slot_count": 3}]}
+Choose the type that best reinforces the lesson objective. Only one or two worksheets per day.
+
+MATH (rendered as print-ready PDF via Pillow):
+1. `mathWorksheet` — vertical two-operand math drill.
+   Requires: `problems` list (each: `operand_one`, `operand_two`, `operator`: "+" or "-").
+   Optional: `title`, `instructions`.
+   Example: {"title": "Addition Practice", "problems": [{"operand_one": 4, "operand_two": 3, "operator": "+"}]}
+
+HIGH-FIDELITY HTML WORKSHEETS (preferred for all other types):
+2. `readingWorksheet` — reading passage with comprehension questions and vocabulary.
+   Requires: `passage_title`, `passage`, `questions` (each: `prompt`, optional `response_lines`).
+   Optional: `vocabulary` (each: `term`, `definition`), `title`, `instructions`.
+   Example: {"passage_title": "The Water Cycle", "passage": "Water falls as rain...", "questions": [{"prompt": "Where does rain go?", "response_lines": 2}]}
+
+3. `featureMatrixWorksheet` — grid comparing items against properties (checkboxes).
+   Requires: `items` (row labels), `properties` (column headers).
+   Optional: `title`, `instructions`.
+   Example: {"title": "Animal Traits", "items": ["Dog", "Fish", "Eagle"], "properties": ["Has Fur", "Can Fly", "Lives in Water"]}
+
+4. `treeMapWorksheet` — root concept with labelled branches for classification.
+   Requires: `root_label`, `branches` (each: `name`, optional `prefilled` list, optional `blank_count`).
+   Optional: `title`, `instructions`, `columns` (branches per row), `word_bank`.
+   Example: {"root_label": "Weather Types", "branches": [{"name": "Rain", "blank_count": 2}, {"name": "Snow", "blank_count": 2}]}
+
+5. `oddOneOutWorksheet` — circle the item that doesn't belong.
+   Requires: `rows` (each: `items` list with 3+ entries, optional `reasoning_lines`).
+   Optional: `title`, `instructions`.
+   Example: {"rows": [{"items": ["cat", "dog", "car", "bird"], "reasoning_lines": 1}]}
+
+6. `matchingWorksheet` — draw a line from left column to matching right column.
+   Requires: `left_items`, `right_items` (same length, right side pre-shuffled).
+   Optional: `title`, `instructions`.
+   Example: {"left_items": ["Sun", "Moon"], "right_items": ["reflects light", "produces light"]}
+
+7. `causeEffectWorksheet` — cause → effect organizer.
+   Requires: `pairs` (each: `cause` str; optional `effect` str or omit for student to fill).
+   Optional: `title`, `instructions`, per-pair `effect_lines`.
+   Example: {"pairs": [{"cause": "It rained all day.", "effect_lines": 2}]}
+
+8. `frayerModelWorksheet` — 4-quadrant vocabulary organizer.
+   Requires: `entries` (each: `word`, optional `quadrants` dict mapping label → content or list).
+   Optional: `title`, `instructions`, `quadrant_labels` (default: Definition/Characteristics/Examples/Non-Examples).
+   Example: {"entries": [{"word": "Photosynthesis", "quadrants": {"Definition": "Plants making food from sunlight"}}]}
+
+9. `wordSortWorksheet` — sort word tiles into labelled category boxes.
+   Requires: `categories` (each: `label`), `tiles` (list of word strings).
+   Optional: `title`, `instructions`, `columns`.
+   Example: {"categories": [{"label": "Living"}, {"label": "Non-Living"}], "tiles": ["rock", "tree", "water", "dog"]}
+
+10. `writingScaffoldWorksheet` — structured writing organizer with labelled sections.
+    Requires: `sections` (each: `label`, optional `starter` sentence, optional `lines`).
+    Optional: `title`, `instructions`, `topic`.
+    Example: {"topic": "My Favourite Animal", "sections": [{"label": "Introduction", "starter": "My favourite animal is...", "lines": 3}]}
+
+11. `tChartWorksheet` — two (or more) column comparison table with write-in rows.
+    Requires: (uses defaults if omitted) `columns` list of header strings, `row_count`.
+    Optional: `title`, `instructions`, `word_bank`.
+    Example: {"title": "Land vs. Water", "columns": ["Land", "Water"], "row_count": 6}
 
 Only emit the worksheet fields you need. Omit the `resources` key entirely when no worksheet is needed.
 """
@@ -394,6 +441,36 @@ def _render_worksheet_artifacts(
     day_dir.mkdir(parents=True, exist_ok=True)
 
     for plan in plans:
+        # ── HTML-first rendering ───────────────────────────────────────────
+        if plan.kind in HTML_SUPPORTED_KINDS and plan.html_data is not None:
+            html_content = render_worksheet_html(plan.kind, plan.html_data, day_label)
+            if html_content is not None:
+                output_path = _unique_artifact_path(
+                    day_dir, plan.filename_hint or plan.kind, "html"
+                )
+                try:
+                    output_path.write_text(html_content, encoding="utf-8")
+                except Exception as exc:
+                    message = str(exc)
+                    artifact_errors.append(
+                        {"kind": plan.kind, "format": "html", "message": message}
+                    )
+                    if generation_logger:
+                        generation_logger.log_daily_error(day_label, "artifact_render", message)
+                    continue
+
+                size_bytes, checksum = _artifact_file_metadata(output_path)
+                artifacts_by_kind.setdefault(plan.kind, []).append(
+                    {
+                        "type": "html",
+                        "path": _relative_artifact_path(output_path),
+                        "size_bytes": size_bytes,
+                        "sha256": checksum,
+                    }
+                )
+                continue
+
+        # ── Pillow fallback rendering ──────────────────────────────────────
         render_jobs: list[tuple[str, Callable[[Path], Path]]] = []
         if plan.kind == "mathWorksheet":
             worksheet = cast(Worksheet, plan.worksheet)
@@ -411,7 +488,7 @@ def _render_worksheet_artifacts(
                     ),
                 ),
             ]
-        elif plan.kind == "readingWorksheet":
+        elif plan.kind == "readingWorksheet" and plan.worksheet is not None:
             worksheet = cast(ReadingWorksheet, plan.worksheet)
             render_jobs = [
                 (
@@ -428,7 +505,7 @@ def _render_worksheet_artifacts(
                 ),
             ]
         else:
-            message = f"Unsupported worksheet kind '{plan.kind}'"
+            message = f"No renderer available for worksheet kind '{plan.kind}'"
             artifact_errors.append({"kind": plan.kind, "message": message})
             if generation_logger:
                 generation_logger.log_daily_error(day_label, "artifact_render", message)

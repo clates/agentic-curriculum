@@ -30,6 +30,7 @@ from feedback_processor import (
 )
 from feedback_models import FeedbackResponse, SubmitFeedbackRequest
 from curriculum_graph import load_from_db
+from worksheet_html_renderer import build_print_packet_html
 
 import json
 import logging
@@ -43,7 +44,7 @@ from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Query, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 # Add src directory to path for imports
@@ -563,6 +564,64 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
         filename=file_path.name,
         headers=headers,
     )
+
+
+@app.get(
+    "/students/{student_id}/weekly-packets/{packet_id}/print",
+    response_class=HTMLResponse,
+    name="print_weekly_packet",
+)
+def print_weekly_packet(student_id: str, packet_id: str):
+    """
+    Return a single printable HTML document containing all HTML worksheets for
+    the packet, ordered Mon–Fri.  Opening this URL in a browser and hitting
+    Ctrl+P (or the auto-triggered print dialog) produces a single PDF printout.
+    """
+    packet = get_weekly_packet(student_id, packet_id)
+    if packet is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+
+    daily_plan = packet.get("daily_plan", [])
+    pages: list[tuple[str, str]] = []
+
+    for day in daily_plan:
+        day_label = day.get("day", "")
+        resources = day.get("resources") or {}
+
+        for _kind, payload in resources.items():
+            if not isinstance(payload, dict):
+                continue
+            artifacts = payload.get("artifacts", [])
+            # Find the HTML artifact path for this worksheet
+            html_artifact = next((a for a in artifacts if a.get("type") == "html"), None)
+            if html_artifact:
+                artifact_path = _resolve_artifact_path(html_artifact.get("path", ""))
+                if artifact_path.exists():
+                    try:
+                        fragment = artifact_path.read_text(encoding="utf-8")
+                        # Strip the outer html/head/body wrapper if present so we
+                        # can embed the fragment directly into the print document.
+                        import re as _re
+
+                        body_match = _re.search(
+                            r"<body[^>]*>(.*)</body>", fragment, _re.DOTALL | _re.IGNORECASE
+                        )
+                        if body_match:
+                            fragment = body_match.group(1)
+                        pages.append((day_label, fragment))
+                    except OSError:
+                        pass
+
+    if not pages:
+        raise HTTPException(
+            status_code=404,
+            detail="No HTML worksheets found for this packet. Re-generate the plan to produce HTML worksheets.",
+        )
+
+    subject = packet.get("subject", "")
+    week_of = packet.get("week_of", "")
+    title = f"{subject} — Week of {week_of}" if subject and week_of else packet_id
+    return HTMLResponse(content=build_print_packet_html(pages, title))
 
 
 @app.post("/students/{student_id}/weekly-packets/{packet_id}/feedback", status_code=204)
