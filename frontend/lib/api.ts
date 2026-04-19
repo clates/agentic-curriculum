@@ -138,17 +138,18 @@ export const parseProgress = (progressBlob: string | null): ProgressBlob => {
 };
 
 // Weekly packet detail types
-export interface LessonPlan {
-  title: string;
-  pdf_path: string;
-  [key: string]: unknown;
+export interface DailyLessonPlan {
+  objective: string;
+  materials_needed: string[];
+  procedure: string[];
 }
 
-export interface Worksheet {
-  title: string;
-  type: string;
-  pdf_path: string;
-  [key: string]: unknown;
+export interface DailyPlan {
+  day: string;
+  focus: string;
+  lesson_plan: DailyLessonPlan;
+  standard?: { standard_id: string; description: string };
+  resource_errors?: string[];
 }
 
 export interface WeeklyPacketDetail {
@@ -158,9 +159,8 @@ export interface WeeklyPacketDetail {
   subject: string;
   grade_level: number;
   status: string;
-  lesson_plan?: LessonPlan;
-  worksheets?: Worksheet[];
-  [key: string]: unknown;
+  weekly_overview?: string;
+  daily_plan: DailyPlan[];
 }
 
 export interface WorksheetArtifact {
