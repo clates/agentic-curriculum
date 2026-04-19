@@ -273,13 +273,13 @@ export default function PlansPage() {
                           <div>
                             <span className="text-neutral-600">Days:</span>
                             <span className="text-foreground ml-2 font-medium">
-                              {packet.resource_days}
+                              {packet.daily_count}
                             </span>
                           </div>
                           <div>
-                            <span className="text-neutral-600">Activities:</span>
+                            <span className="text-neutral-600">Worksheets:</span>
                             <span className="text-foreground ml-2 font-medium">
-                              {packet.daily_count} per day
+                              {packet.artifact_count}
                             </span>
                           </div>
                         </div>
@@ -436,57 +436,64 @@ export default function PlansPage() {
               </div>
             ) : planDetail ? (
               <div className="space-y-4">
-                {/* Lesson Plan */}
-                {planDetail.lesson_plan && (
-                  <div className="rounded-lg border border-neutral-200 p-4">
-                    <h4 className="mb-2 font-medium">Lesson Plan</h4>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-neutral-600">
-                        {planDetail.lesson_plan.title}
-                      </span>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleDownloadArtifact(planDetail.lesson_plan!.pdf_path)}
-                      >
-                        View PDF
-                      </Button>
-                    </div>
+                {/* Weekly Overview */}
+                {planDetail.weekly_overview && (
+                  <div className="rounded-lg bg-neutral-50 p-4 text-sm text-neutral-700">
+                    {planDetail.weekly_overview}
                   </div>
                 )}
 
-                {/* Worksheets */}
-                {worksheetData?.items && worksheetData.items.length > 0 && (
-                  <div>
-                    <h4 className="mb-2 font-medium">Worksheets</h4>
-                    <div className="space-y-2">
-                      {worksheetData.items.map((item) =>
-                        item.artifacts.map((artifact) => (
-                          <div
-                            key={artifact.artifact_id}
-                            className="flex items-center justify-between rounded-lg border border-neutral-200 p-3"
-                          >
-                            <div>
-                              <p className="text-sm font-medium">
-                                {item.resource_kind.replace('Worksheet', '')} - {item.day_label}
-                              </p>
-                              <p className="text-xs text-neutral-500">
-                                {artifact.format.toUpperCase()}
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDownloadArtifact(artifact.download_url)}
-                            >
-                              Download
-                            </Button>
-                          </div>
-                        ))
+                {/* Daily Plans */}
+                {planDetail.daily_plan?.map((day) => {
+                  const dayWorksheets = worksheetData?.items?.filter(
+                    (w) => w.day_label === day.day
+                  );
+                  return (
+                    <div key={day.day} className="rounded-lg border border-neutral-200 p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <h4 className="font-semibold">{day.day}</h4>
+                        {day.resource_errors && day.resource_errors.length > 0 && (
+                          <span className="text-xs text-red-500">
+                            {day.resource_errors.length} worksheet error(s)
+                          </span>
+                        )}
+                      </div>
+                      <p className="mb-2 text-sm text-neutral-600">{day.focus}</p>
+                      {day.lesson_plan && (
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">{day.lesson_plan.objective}</p>
+                          {day.lesson_plan.procedure?.length > 0 && (
+                            <ol className="ml-4 list-decimal space-y-1">
+                              {day.lesson_plan.procedure.map((step, i) => (
+                                <li key={i} className="text-xs text-neutral-600">
+                                  {step}
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </div>
+                      )}
+                      {dayWorksheets && dayWorksheets.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {dayWorksheets.map((item) =>
+                            item.artifacts.map((artifact) => (
+                              <Button
+                                key={artifact.artifact_id}
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownloadArtifact(artifact.download_url)}
+                                className="text-xs"
+                              >
+                                {item.resource_kind.replace('Worksheet', '')}{' '}
+                                {artifact.format.toUpperCase()} ↓
+                              </Button>
+                            ))
+                          )}
+                        </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-neutral-500">No details available.</p>
