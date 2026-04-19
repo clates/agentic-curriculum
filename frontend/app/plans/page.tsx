@@ -509,6 +509,19 @@ export default function PlansPage() {
               >
                 Close
               </Button>
+              {selectedPacketIds && (
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    window.open(
+                      `/api/students/${selectedPacketIds.studentId}/weekly-packets/${selectedPacketIds.packetId}/print`,
+                      '_blank'
+                    )
+                  }
+                >
+                  Print All
+                </Button>
+              )}
               {selectedPacket.status === 'ready' && (
                 <Button
                   className="bg-primary-600 hover:bg-primary-700"

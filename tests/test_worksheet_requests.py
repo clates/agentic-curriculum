@@ -1,6 +1,5 @@
 from src.resource_models import ResourceRequests
 from src.worksheet_requests import build_worksheets_from_requests
-from src.worksheets import ReadingWorksheet
 
 
 def test_build_math_only():
@@ -20,6 +19,7 @@ def test_build_math_only():
 
 
 def test_build_reading_only():
+    """Reading worksheets are now HTML-rendered: worksheet is None, html_data holds the payload."""
     resources = ResourceRequests.model_validate(
         {
             "readingWorksheet": {
@@ -33,8 +33,9 @@ def test_build_reading_only():
     assert not errors
     assert len(plans) == 1
     assert plans[0].kind == "readingWorksheet"
-    assert isinstance(plans[0].worksheet, ReadingWorksheet)
-    assert plans[0].worksheet.passage_title == "Morning Garden"
+    assert plans[0].worksheet is None
+    assert plans[0].html_data is not None
+    assert plans[0].html_data["passage_title"] == "Morning Garden"
 
 
 def test_build_both_resources():
