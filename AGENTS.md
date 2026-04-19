@@ -55,3 +55,19 @@ Always run generation scripts within the project's virtual environment:
 venv/bin/python3 generate_[theme]_series.py
 ```
 Outputs are consistently routed to a `[theme]_series/` directory in both **PNG** (for quick viewing) and **PDF** (for printing) formats.
+
+---
+
+## 6. Git Workflow Rules
+
+**Before pushing any commit, always verify the current branch has not been merged:**
+```bash
+git fetch origin
+git log origin/main --oneline -5
+```
+If your current branch tip appears in `origin/main`, it has been merged. **Do not push to it.** Instead:
+1. Create a new branch from `origin/main`: `git checkout origin/main -b <new-branch-name>`
+2. Cherry-pick only the commits that are not yet on main
+3. Push the new branch and open a fresh PR
+
+**Never accumulate multiple unrelated fixes on one branch.** Each PR should be focused on a single concern so it can be merged independently without blocking other work.
