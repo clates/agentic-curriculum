@@ -61,7 +61,7 @@ ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 
 RESOURCE_GUIDANCE = """If a printable worksheet would measurably help the lesson, include a `resources` object.
 
-Choose the type that best reinforces the lesson objective. Only one or two worksheets per day.
+Choose the type that best reinforces the lesson objective. Scale the number of worksheets to the lesson — a focused single-concept lesson may need only one, while a multi-topic or longer session can support several. Avoid adding worksheets that don't directly serve the day's learning goal.
 
 MATH (rendered as print-ready PDF via Pillow):
 1. `mathWorksheet` — vertical two-operand math drill.
