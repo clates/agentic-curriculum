@@ -48,11 +48,8 @@ COPY README.md ./README.md
 # Copy frontend build from builder stage
 COPY --from=frontend-builder /app/frontend ./frontend
 
-# Create a non-root user (ownership updated after DB ingestion)
+# Create a non-root user
 RUN useradd -m -u 1000 appuser
-
-# Ingest standards data
-RUN python src/ingest_standards.py
 
 # Ensure application files are owned by the non-root user
 RUN chown -R appuser:appuser /app
@@ -66,6 +63,15 @@ USER appuser
 COPY --chown=appuser:appuser <<'EOF' /app/start.sh
 #!/bin/bash
 set -e
+
+# Seed the database only if it doesn't exist yet
+DB_PATH="${CURRICULUM_DB_PATH:-/app/curriculum.db}"
+if [ ! -f "$DB_PATH" ]; then
+  echo "Database not found at $DB_PATH — seeding..."
+  python src/ingest_standards.py
+else
+  echo "Database found at $DB_PATH — skipping seed."
+fi
 
 # Start backend in background
 uvicorn src.main:app --host 0.0.0.0 --port 8000 &
