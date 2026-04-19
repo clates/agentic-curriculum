@@ -102,13 +102,15 @@ export function useWeeklyPacketsStats() {
 function useWeeklyPacketsBase() {
   const { data: students } = useStudents();
 
+  const studentIds = useMemo(() => students?.map((s) => s.student_id) ?? [], [students]);
+
   return useQuery({
-    queryKey: ['all-weekly-packets'],
+    queryKey: ['all-weekly-packets', studentIds],
     queryFn: async () => {
-      if (!students || students.length === 0) return [];
+      if (studentIds.length === 0) return [];
 
       const allPackets = await Promise.all(
-        students.map(async (student) => {
+        students!.map(async (student) => {
           try {
             const response = await studentsApi.listWeeklyPackets(student.student_id, {
               page_size: 50,
@@ -125,8 +127,7 @@ function useWeeklyPacketsBase() {
 
       return allPackets.flat();
     },
-    // Always enabled to prevent toggling, but returns empty if no students
-    enabled: true,
+    enabled: studentIds.length > 0,
     staleTime: Infinity,
   });
 }
