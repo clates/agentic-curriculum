@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, Button, Badge, Modal } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
@@ -20,6 +20,23 @@ const QUANTITY_RATING_MAP: Record<string, number> = {
   JUST_RIGHT: 0,
   TOO_MUCH: -2,
 };
+
+// Reverse map: backend integer to UI rating label
+function quantityToRating(qty: number): string {
+  if (qty > 0) return 'TOO_LITTLE';
+  if (qty < 0) return 'TOO_MUCH';
+  return 'JUST_RIGHT';
+}
+
+const FEEDBACK_LOCK_WEEKS = 3;
+
+function isFeedbackLocked(feedbackCompletedAt: string | null): boolean {
+  if (!feedbackCompletedAt) return false;
+  const submitted = new Date(feedbackCompletedAt);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - FEEDBACK_LOCK_WEEKS * 7);
+  return submitted < cutoff;
+}
 
 export default function PlansPage() {
   const { data: students } = useStudents();
@@ -41,6 +58,40 @@ export default function PlansPage() {
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
+
+  // Helper to find the selected packet from lists
+  const selectedPacket = useMemo(() => {
+    if (!selectedPacketIds) return null;
+    const allPackets = [...pendingPackets, ...completedPackets];
+    return allPackets.find(
+      (p) =>
+        p.student_id === selectedPacketIds.studentId && p.packet_id === selectedPacketIds.packetId
+    );
+  }, [selectedPacketIds, pendingPackets, completedPackets]);
+
+  // Fetch existing feedback when the feedback modal is open for a packet that has feedback
+  const { data: existingFeedback } = useQuery({
+    queryKey: ['packet-feedback', selectedPacketIds?.studentId, selectedPacketIds?.packetId],
+    queryFn: async () => {
+      if (!selectedPacketIds) return null;
+      return await plansApi.getFeedback(selectedPacketIds.studentId, selectedPacketIds.packetId);
+    },
+    enabled: !!selectedPacketIds && feedbackModalOpen && !!selectedPacket?.has_feedback,
+  });
+
+  // Pre-populate feedback modal with existing values when editing
+  useEffect(() => {
+    if (existingFeedback && feedbackModalOpen && masteryRating === null) {
+      const mastery = existingFeedback.mastery_feedback?.overall ?? null;
+      setMasteryRating(mastery);
+      if (
+        existingFeedback.quantity_feedback !== null &&
+        existingFeedback.quantity_feedback !== undefined
+      ) {
+        setQuantityRating(quantityToRating(existingFeedback.quantity_feedback));
+      }
+    }
+  }, [existingFeedback, feedbackModalOpen, masteryRating]);
 
   // Fetch plan detail when packet is selected
   const { data: planDetail, isLoading: planDetailLoading } = useQuery({
@@ -98,16 +149,6 @@ export default function PlansPage() {
   });
 
   const { mutate: submitFeedback } = feedbackMutation;
-
-  // Helper to find the selected packet from lists
-  const selectedPacket = useMemo(() => {
-    if (!selectedPacketIds) return null;
-    const allPackets = [...pendingPackets, ...completedPackets];
-    return allPackets.find(
-      (p) =>
-        p.student_id === selectedPacketIds.studentId && p.packet_id === selectedPacketIds.packetId
-    );
-  }, [selectedPacketIds, pendingPackets, completedPackets]);
 
   const handleViewPlan = useCallback((packet: WeeklyPacketWithStudent) => {
     setSelectedPacketIds({
@@ -522,14 +563,19 @@ export default function PlansPage() {
                   Print All
                 </Button>
               )}
-              {selectedPacket.status === 'ready' && (
-                <Button
-                  className="bg-primary-600 hover:bg-primary-700"
-                  onClick={handleProvideFeedback}
-                >
-                  Provide Feedback
-                </Button>
-              )}
+              {selectedPacket.status === 'ready' &&
+                (isFeedbackLocked(selectedPacket.feedback_completed_at) ? (
+                  <Button variant="ghost" disabled className="cursor-default opacity-60">
+                    Feedback Submitted
+                  </Button>
+                ) : (
+                  <Button
+                    className="bg-primary-600 hover:bg-primary-700"
+                    onClick={handleProvideFeedback}
+                  >
+                    {selectedPacket.has_feedback ? 'Edit Feedback' : 'Provide Feedback'}
+                  </Button>
+                ))}
             </div>
           </div>
         </Modal>
@@ -543,12 +589,13 @@ export default function PlansPage() {
             setMasteryRating(null);
             setQuantityRating(null);
           }}
-          title="Provide Feedback"
+          title={selectedPacket.has_feedback ? 'Edit Feedback' : 'Provide Feedback'}
         >
           <div className="space-y-6">
             <p className="text-neutral-600">
-              Help the AI understand how {selectedPacket.studentName} did with this week&apos;s
-              plan.
+              {selectedPacket.has_feedback
+                ? `Update how ${selectedPacket.studentName} did with this week’s plan.`
+                : `Help the AI understand how ${selectedPacket.studentName} did with this week’s plan.`}
             </p>
 
             {/* Mastery Rating */}
@@ -630,7 +677,11 @@ export default function PlansPage() {
                 onClick={handleSubmitFeedback}
                 disabled={!masteryRating || !quantityRating || feedbackMutation.isPending}
               >
-                {feedbackMutation.isPending ? 'Submitting...' : 'Submit Feedback'}
+                {feedbackMutation.isPending
+                  ? 'Submitting...'
+                  : selectedPacket.has_feedback
+                    ? 'Update Feedback'
+                    : 'Submit Feedback'}
               </Button>
             </div>
           </div>
