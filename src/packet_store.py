@@ -338,15 +338,17 @@ def list_weekly_packets(
     ensure_schema()
     limit = max(1, limit)
     query = [
-        "SELECT packet_id, student_id, grade_level, subject, week_of, status, summary_json, updated_at",
-        "FROM weekly_packets",
-        "WHERE student_id = ?",
+        "SELECT wp.packet_id, wp.student_id, wp.grade_level, wp.subject, wp.week_of, wp.status, wp.summary_json, wp.updated_at,",
+        "    pf.completed_at AS feedback_completed_at",
+        "FROM weekly_packets wp",
+        "LEFT JOIN packet_feedback pf ON pf.packet_id = wp.packet_id AND pf.student_id = wp.student_id",
+        "WHERE wp.student_id = ?",
     ]
     params: list[Any] = [student_id]
     if week_of:
-        query.append("AND week_of = ?")
+        query.append("AND wp.week_of = ?")
         params.append(week_of)
-    query.append("ORDER BY week_of DESC, updated_at DESC")
+    query.append("ORDER BY wp.week_of DESC, wp.updated_at DESC")
     query.append("LIMIT ? OFFSET ?")
     params.extend([limit + 1, offset])
 
@@ -363,6 +365,7 @@ def list_weekly_packets(
     summaries: list[dict[str, Any]] = []
     for row in rows_to_use:
         summary = _deserialize_summary(row["summary_json"])
+        feedback_completed_at = row["feedback_completed_at"]
         summaries.append(
             {
                 "packet_id": row["packet_id"],
@@ -376,6 +379,8 @@ def list_weekly_packets(
                 "artifact_count": summary.get("artifact_count", 0),
                 "resource_days": summary.get("resource_days", 0),
                 "daily_count": summary.get("daily_count", 0),
+                "has_feedback": feedback_completed_at is not None,
+                "feedback_completed_at": feedback_completed_at,
             }
         )
 
@@ -522,29 +527,36 @@ def save_packet_feedback(
         if not _packet_exists(conn, student_id, packet_id):
             raise ValueError(f"Packet {packet_id} not found for student {student_id}")
 
-        # Check if feedback already exists
         existing = conn.execute(
             "SELECT feedback_id FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
             (packet_id, student_id),
         ).fetchone()
 
-        if existing:
-            raise ValueError(f"Feedback already exists for packet {packet_id}")
-
-        # Insert feedback
         mastery_blob = _json(mastery_feedback) if mastery_feedback else None
-        conn.execute(
-            """
-            INSERT INTO packet_feedback (
-                packet_id,
-                student_id,
-                completed_at,
-                mastery_feedback_blob,
-                quantity_feedback
-            ) VALUES (?, ?, ?, ?, ?)
-            """,
-            (packet_id, student_id, _utc_now(), mastery_blob, quantity_feedback),
-        )
+        if existing:
+            conn.execute(
+                """
+                UPDATE packet_feedback SET
+                    completed_at = ?,
+                    mastery_feedback_blob = ?,
+                    quantity_feedback = ?
+                WHERE packet_id = ? AND student_id = ?
+                """,
+                (_utc_now(), mastery_blob, quantity_feedback, packet_id, student_id),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO packet_feedback (
+                    packet_id,
+                    student_id,
+                    completed_at,
+                    mastery_feedback_blob,
+                    quantity_feedback
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (packet_id, student_id, _utc_now(), mastery_blob, quantity_feedback),
+            )
         conn.commit()
     finally:
         conn.close()

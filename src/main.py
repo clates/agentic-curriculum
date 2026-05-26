@@ -25,6 +25,7 @@ from constants import EVALUATION_STATUSES, GRADE_LEVELS, SUBJECTS, get_worksheet
 from feedback_processor import (
     process_mastery_feedback,
     process_quantity_feedback,
+    reverse_quantity_feedback,
     validate_mastery_feedback,
     validate_quantity_feedback,
 )
@@ -653,6 +654,9 @@ def submit_packet_feedback(student_id: str, packet_id: str, request: SubmitFeedb
     if not profile:
         raise HTTPException(status_code=404, detail="Student not found")
 
+    # Check for existing feedback to handle update case
+    existing_feedback = get_packet_feedback(student_id, packet_id)
+
     # Process feedback and update blobs
     feedback_date = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
@@ -660,6 +664,12 @@ def submit_packet_feedback(student_id: str, packet_id: str, request: SubmitFeedb
         {"mastered_standards": [], "developing_standards": []}
     )
     plan_rules_blob = profile["plan_rules_blob"] or json.dumps({})
+
+    # When updating, reverse the old quantity effect before applying the new one
+    if existing_feedback and existing_feedback.get("quantity_feedback") is not None:
+        plan_rules_blob = reverse_quantity_feedback(
+            plan_rules_blob, existing_feedback["quantity_feedback"]
+        )
 
     if mastery_feedback:
         progress_blob = process_mastery_feedback(progress_blob, mastery_feedback, feedback_date)

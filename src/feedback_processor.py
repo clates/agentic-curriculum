@@ -174,6 +174,43 @@ def process_quantity_feedback(
     return json.dumps(plan_rules)
 
 
+def reverse_quantity_feedback(plan_rules_blob: str, old_quantity_feedback: int) -> str:
+    """
+    Reverse a previously applied quantity feedback from plan_rules_blob.
+
+    Used when updating existing feedback to undo the old effect before applying the new one.
+
+    Args:
+        plan_rules_blob: JSON string of current plan rules
+        old_quantity_feedback: The previously submitted quantity feedback integer to reverse
+
+    Returns:
+        Updated plan_rules_blob with old feedback effect removed
+    """
+    plan_rules = json.loads(plan_rules_blob)
+
+    if "quantity_preferences" not in plan_rules:
+        return plan_rules_blob
+
+    prefs = plan_rules["quantity_preferences"]
+    current_bias = prefs.get("activity_bias", 0.0)
+
+    if old_quantity_feedback == -2:
+        current_bias += 0.3
+    elif old_quantity_feedback == -1:
+        current_bias += 0.15
+    elif old_quantity_feedback == 0:
+        # Reverse the *0.9 decay by dividing; safe because bias could be 0
+        current_bias = current_bias / 0.9 if current_bias != 0 else 0.0
+    elif old_quantity_feedback == 1:
+        current_bias -= 0.15
+    elif old_quantity_feedback == 2:
+        current_bias -= 0.3
+
+    prefs["activity_bias"] = max(-ACTIVITY_BIAS_CLAMP, min(current_bias, ACTIVITY_BIAS_CLAMP))
+    return json.dumps(plan_rules)
+
+
 def is_standard_eligible(standard_metadata: dict[str, Any], reference_date: str = None) -> bool:
     """
     Check if a standard is eligible to appear in a lesson based on cooldown.

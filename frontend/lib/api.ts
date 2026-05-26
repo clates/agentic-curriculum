@@ -44,6 +44,14 @@ export interface WeeklyPacketSummary {
   resource_days: number;
   daily_count: number;
   updated_at: string;
+  has_feedback: boolean;
+  feedback_completed_at: string | null;
+}
+
+export interface FeedbackData {
+  mastery_feedback: Record<string, string> | null;
+  quantity_feedback: number | null;
+  completed_at: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -194,6 +202,17 @@ export const plansApi = {
       `/students/${studentId}/weekly-packets/${packetId}/worksheets`
     );
     return data;
+  },
+
+  getFeedback: async (studentId: string, packetId: string): Promise<FeedbackData | null> => {
+    try {
+      const { data } = await apiClient.get(
+        `/students/${studentId}/weekly-packets/${packetId}/feedback`
+      );
+      return data;
+    } catch {
+      return null;
+    }
   },
 
   submitFeedback: async (
