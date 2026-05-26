@@ -79,6 +79,7 @@ _CSS = """\
   @media print {
     body { background: white; padding: 0; }
     .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 
   /* Day header bar */
