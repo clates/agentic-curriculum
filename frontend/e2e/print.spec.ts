@@ -15,7 +15,7 @@ test.describe('Worksheet print view — route smoke tests', () => {
     await createStudent(request, STUDENT_ID, {
       name: 'Print Smoke Student',
       birthday: '2018-10-01',
-    });
+    }).catch(() => {});
     await createPacket(request, STUDENT_ID, PACKET_ID);
   });
 
