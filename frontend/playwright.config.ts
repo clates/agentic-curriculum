@@ -11,7 +11,7 @@ export default defineConfig({
   globalTeardown: require.resolve('./global-teardown'),
 
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3002',
     trace: 'on-first-retry',
   },
 
@@ -23,8 +23,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'BACKEND_URL=http://localhost:8182 npm run dev',
-    url: 'http://localhost:3000',
+    command: 'PORT=3002 BACKEND_URL=http://localhost:8182 npm run dev',
+    url: 'http://localhost:3002',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },
