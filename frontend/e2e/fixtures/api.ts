@@ -1,16 +1,25 @@
 import { APIRequestContext } from '@playwright/test';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { resolve } from 'path';
 
-const BACKEND = 'http://localhost:8182';
+const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:8182';
 const DB_FILE = process.env.PLAYWRIGHT_DB_FILE ?? '/tmp/playwright-test.db';
 const PROJECT_ROOT = resolve(__dirname, '../../..');
 
-function seedScript(args: string): void {
-  execSync(
-    `CURRICULUM_DB_PATH="${DB_FILE}" "${PROJECT_ROOT}/venv/bin/python" "${PROJECT_ROOT}/scripts/e2e_seed.py" ${args}`,
-    { stdio: 'inherit' }
-  );
+function seedScript(cmd: string, ...args: string[]): void {
+  try {
+    execFileSync(
+      `${PROJECT_ROOT}/venv/bin/python`,
+      [`${PROJECT_ROOT}/scripts/e2e_seed.py`, cmd, ...args],
+      {
+        stdio: 'pipe',
+        env: { ...process.env, CURRICULUM_DB_PATH: DB_FILE },
+      }
+    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`seedScript "${cmd}" failed: ${msg}`);
+  }
 }
 
 export async function createStudent(
@@ -34,7 +43,9 @@ export async function createPacket(
   studentId: string,
   packetId: string
 ): Promise<{ packet_id: string }> {
-  seedScript(`create_packet "${studentId}" "${packetId}"`);
+  // Packet creation requires DB-level seeding because the HTTP endpoint
+  // does not accept pre-formed packet IDs; use e2e_seed.py directly.
+  seedScript('create_packet', studentId, packetId);
   return { packet_id: packetId };
 }
 
@@ -59,5 +70,5 @@ export async function submitFeedback(
 }
 
 export function backdateFeedback(packetId: string, isoTimestamp: string): void {
-  seedScript(`backdate_feedback "${packetId}" "${isoTimestamp}"`);
+  seedScript('backdate_feedback', packetId, isoTimestamp);
 }
