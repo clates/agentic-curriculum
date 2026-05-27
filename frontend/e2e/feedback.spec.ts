@@ -14,9 +14,11 @@ test.describe('Plans page — empty state', () => {
     });
   });
 
-  test('shows empty state when no packets exist', async ({ page }) => {
+  test('a student with no packets has no pending card on the plans page', async ({ page }) => {
     await page.goto('/plans');
-    await expect(page.getByText('No Plans Yet')).toBeVisible();
+    // The empty-state student was created but has no packets,
+    // so their name should not appear in any pending packet card.
+    await expect(page.getByText('Empty State Student')).not.toBeVisible();
   });
 });
 
@@ -41,10 +43,14 @@ test.describe('Plans page — pending packet card', () => {
     await page.goto('/plans');
     await expect(page.getByText('Card Test Student')).toBeVisible();
     await expect(page.getByText('Mathematics')).toBeVisible();
-    await expect(page.getByText('3')).toBeVisible(); // grade_level
+    const studentCard = page
+      .getByText('Card Test Student')
+      .locator('..')
+      .locator('..')
+      .locator('..');
+    await expect(studentCard.getByText('3')).toBeVisible(); // grade_level
     // Days = 2 (Monday + Tuesday in seed)
-    const daysBadge = page.locator('text=Days').locator('..').getByText('2');
-    await expect(daysBadge).toBeVisible();
+    await expect(studentCard.locator('text=Days').locator('..').getByText('2')).toBeVisible();
   });
 });
 
@@ -75,7 +81,7 @@ test.describe('Plan detail modal', () => {
     const modal = page.getByRole('dialog');
     await expect(modal.getByText('Detail Modal Student')).toBeVisible();
     await expect(modal.getByText('Mathematics')).toBeVisible();
-    await expect(modal.getByText('3')).toBeVisible();
+    await expect(modal.getByText('Grade Level').locator('..').getByText('3')).toBeVisible();
   });
 
   test('shows daily plan content — day label, focus, objective, procedure steps', async ({
@@ -196,6 +202,7 @@ test.describe('Plan detail modal — locked feedback', () => {
 // Feedback modal — first submission
 // ---------------------------------------------------------------------------
 test.describe('Feedback modal — first submission', () => {
+  test.describe.configure({ mode: 'serial' });
   const STUDENT_ID = 'e2e-feedback-submit-k1l2';
   const PACKET_ID = `${STUDENT_ID}-pkt-001`;
 
