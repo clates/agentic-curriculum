@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { createStudent } from './fixtures/api';
+
+const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:8182';
 
 // ---------------------------------------------------------------------------
 // Student management — empty state
 // ---------------------------------------------------------------------------
 test.describe('Student management — empty state', () => {
-  test('shows "No Students Yet" and an "Add Student" button', async ({ page }) => {
+  test('"Add Student" button is always present on the students page', async ({ page }) => {
     await page.goto('/students');
     // The page may have students from other describe blocks — just verify
     // the "Add Student" header button is always present.
@@ -89,36 +92,34 @@ test.describe('Student management — editing a student', () => {
   const STUDENT_NAME = 'Edit Target Student';
 
   test.beforeAll(async ({ request }) => {
-    // Create via API directly so we control the student ID
-    const res = await request.post('http://localhost:8182/students', {
-      data: {
-        student_id: STUDENT_ID,
-        metadata: { name: STUDENT_NAME, birthday: '2018-08-01' },
-      },
+    // Create if doesn't exist (400 = already exists, that's fine)
+    await createStudent(request, STUDENT_ID, {
+      name: STUDENT_NAME,
+      birthday: '2018-08-01',
+    }).catch(() => {});
+    // Unconditionally restore name (handles re-run where a previous test renamed it)
+    await request.put(`${BACKEND}/student/${STUDENT_ID}`, {
+      data: { metadata: { name: STUDENT_NAME, birthday: '2018-08-01' } },
     });
-    // 400 means already exists from a previous run — that's fine
-    if (!res.ok() && res.status() !== 400) {
-      throw new Error(`Failed to create student: ${res.status()} ${await res.text()}`);
-    }
   });
 
   test('"Edit" button opens the modal titled "Edit Student"', async ({ page }) => {
     await page.goto('/students');
-    const row = page.locator('div').filter({ hasText: STUDENT_NAME }).first();
+    const row = page.getByRole('heading', { name: STUDENT_NAME }).locator('../../..');
     await row.getByRole('button', { name: 'Edit' }).click();
     await expect(page.getByRole('dialog').getByText('Edit Student')).toBeVisible();
   });
 
   test('Student ID field is disabled (cannot be changed)', async ({ page }) => {
     await page.goto('/students');
-    const row = page.locator('div').filter({ hasText: STUDENT_NAME }).first();
+    const row = page.getByRole('heading', { name: STUDENT_NAME }).locator('../../..');
     await row.getByRole('button', { name: 'Edit' }).click();
     await expect(page.getByLabel('Student ID')).toBeDisabled();
   });
 
   test('pre-populates all editable fields from existing data', async ({ page }) => {
     await page.goto('/students');
-    const row = page.locator('div').filter({ hasText: STUDENT_NAME }).first();
+    const row = page.getByRole('heading', { name: STUDENT_NAME }).locator('../../..');
     await row.getByRole('button', { name: 'Edit' }).click();
     await expect(page.getByLabel('Full Name')).toHaveValue(STUDENT_NAME);
     await expect(page.getByLabel('Birthday')).toHaveValue('2018-08-01');
@@ -126,7 +127,7 @@ test.describe('Student management — editing a student', () => {
 
   test("saving updates the student's name in the list", async ({ page }) => {
     await page.goto('/students');
-    const row = page.locator('div').filter({ hasText: STUDENT_NAME }).first();
+    const row = page.getByRole('heading', { name: STUDENT_NAME }).locator('../../..');
     await row.getByRole('button', { name: 'Edit' }).click();
     await page.getByLabel('Full Name').fill('Renamed Student');
     await page.getByRole('button', { name: 'Update Student' }).click();
@@ -144,27 +145,22 @@ test.describe('Student management — deleting a student', () => {
   const STUDENT_NAME = 'Delete Target Student';
 
   test.beforeAll(async ({ request }) => {
-    const res = await request.post('http://localhost:8182/students', {
-      data: {
-        student_id: STUDENT_ID,
-        metadata: { name: STUDENT_NAME, birthday: '2018-09-01' },
-      },
-    });
-    if (!res.ok() && res.status() !== 400) {
-      throw new Error(`Failed to create student: ${res.status()} ${await res.text()}`);
-    }
+    await createStudent(request, STUDENT_ID, {
+      name: STUDENT_NAME,
+      birthday: '2018-09-01',
+    }).catch(() => {});
   });
 
   test('"Delete" button opens the confirmation modal', async ({ page }) => {
     await page.goto('/students');
-    const row = page.locator('div').filter({ hasText: STUDENT_NAME }).first();
+    const row = page.getByRole('heading', { name: STUDENT_NAME }).locator('../../..');
     await row.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByRole('dialog').getByText('Delete Student')).toBeVisible();
   });
 
   test('Cancel button closes confirmation without deleting', async ({ page }) => {
     await page.goto('/students');
-    const row = page.locator('div').filter({ hasText: STUDENT_NAME }).first();
+    const row = page.getByRole('heading', { name: STUDENT_NAME }).locator('../../..');
     await row.getByRole('button', { name: 'Delete' }).click();
     await page.getByRole('button', { name: 'Cancel' }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -173,7 +169,7 @@ test.describe('Student management — deleting a student', () => {
 
   test('confirming delete removes the student from the list', async ({ page }) => {
     await page.goto('/students');
-    const row = page.locator('div').filter({ hasText: STUDENT_NAME }).first();
+    const row = page.getByRole('heading', { name: STUDENT_NAME }).locator('../../..');
     await row.getByRole('button', { name: 'Delete' }).click();
     await page.getByRole('button', { name: 'Delete Student' }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
