@@ -41,13 +41,13 @@ test.describe('Plans page — pending packet card', () => {
     page,
   }) => {
     await page.goto('/plans');
-    await expect(page.getByText('Card Test Student')).toBeVisible();
-    await expect(page.getByText('Mathematics')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Card Test Student' })).toBeVisible();
     const studentCard = page
-      .getByText('Card Test Student')
+      .getByRole('heading', { name: 'Card Test Student' })
       .locator('..')
       .locator('..')
       .locator('..');
+    await expect(studentCard.getByText('Mathematics')).toBeVisible();
     await expect(studentCard.getByText('3')).toBeVisible(); // grade_level
     // Days = 2 (Monday + Tuesday in seed)
     await expect(studentCard.locator('text=Days').locator('..').getByText('2')).toBeVisible();
@@ -58,6 +58,7 @@ test.describe('Plans page — pending packet card', () => {
 // Plan detail modal
 // ---------------------------------------------------------------------------
 test.describe('Plan detail modal', () => {
+  test.describe.configure({ mode: 'serial' });
   const STUDENT_ID = 'e2e-feedback-modal-e5f6';
   const PACKET_ID = `${STUDENT_ID}-pkt-001`;
 
@@ -71,13 +72,13 @@ test.describe('Plan detail modal', () => {
 
   test('clicking a pending packet card opens the plan detail modal', async ({ page }) => {
     await page.goto('/plans');
-    await page.getByText('Detail Modal Student').click();
+    await page.getByRole('heading', { name: 'Detail Modal Student' }).click();
     await expect(page.getByText('Plan Details')).toBeVisible();
   });
 
   test('shows student name, week, subject, grade', async ({ page }) => {
     await page.goto('/plans');
-    await page.getByText('Detail Modal Student').click();
+    await page.getByRole('heading', { name: 'Detail Modal Student' }).click();
     const modal = page.getByRole('dialog');
     await expect(modal.getByText('Detail Modal Student')).toBeVisible();
     await expect(modal.getByText('Mathematics')).toBeVisible();
@@ -88,25 +89,25 @@ test.describe('Plan detail modal', () => {
     page,
   }) => {
     await page.goto('/plans');
-    await page.getByText('Detail Modal Student').click();
+    await page.getByRole('heading', { name: 'Detail Modal Student' }).click();
     const modal = page.getByRole('dialog');
     await expect(modal.getByText('Monday')).toBeVisible();
-    await expect(modal.getByText('Introduction')).toBeVisible();
+    await expect(modal.getByText('Introduction', { exact: true })).toBeVisible();
     await expect(modal.getByText('Understand fractions')).toBeVisible();
     await expect(modal.getByText('Read introduction')).toBeVisible();
   });
 
   test('Close button dismisses the modal', async ({ page }) => {
     await page.goto('/plans');
-    await page.getByText('Detail Modal Student').click();
+    await page.getByRole('heading', { name: 'Detail Modal Student' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await page.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
   });
 
   test('clicking the backdrop dismisses the modal', async ({ page }) => {
     await page.goto('/plans');
-    await page.getByText('Detail Modal Student').click();
+    await page.getByRole('heading', { name: 'Detail Modal Student' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     // Click outside the modal panel (top-left corner of viewport)
     await page.mouse.click(10, 10);
@@ -115,7 +116,7 @@ test.describe('Plan detail modal', () => {
 
   test('Escape key dismisses the modal', async ({ page }) => {
     await page.goto('/plans');
-    await page.getByText('Detail Modal Student').click();
+    await page.getByRole('heading', { name: 'Detail Modal Student' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -123,7 +124,7 @@ test.describe('Plan detail modal', () => {
 
   test('Print All button opens the print URL in a new tab', async ({ page }) => {
     await page.goto('/plans');
-    await page.getByText('Detail Modal Student').click();
+    await page.getByRole('heading', { name: 'Detail Modal Student' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
@@ -134,7 +135,7 @@ test.describe('Plan detail modal', () => {
 
   test('shows "Provide Feedback" for a ready packet with no feedback', async ({ page }) => {
     await page.goto('/plans');
-    await page.getByText('Detail Modal Student').click();
+    await page.getByRole('heading', { name: 'Detail Modal Student' }).click();
     await expect(page.getByRole('button', { name: 'Provide Feedback' })).toBeVisible();
   });
 });
@@ -162,7 +163,7 @@ test.describe('Plan detail modal — existing feedback', () => {
     page,
   }) => {
     await page.goto('/plans');
-    await page.getByText('Edit Feedback Student').click();
+    await page.getByRole('heading', { name: 'Edit Feedback Student' }).click();
     await expect(page.getByRole('button', { name: 'Edit Feedback' })).toBeVisible();
   });
 });
@@ -191,7 +192,7 @@ test.describe('Plan detail modal — locked feedback', () => {
     page,
   }) => {
     await page.goto('/plans');
-    await page.getByText('Locked Feedback Student').click();
+    await page.getByRole('heading', { name: 'Locked Feedback Student' }).click();
     const btn = page.getByRole('button', { name: 'Feedback Submitted' });
     await expect(btn).toBeVisible();
     await expect(btn).toBeDisabled();
@@ -216,7 +217,7 @@ test.describe('Feedback modal — first submission', () => {
 
   async function openFeedbackModal(page: import('@playwright/test').Page) {
     await page.goto('/plans');
-    await page.getByText('Submit Feedback Student').click();
+    await page.getByRole('heading', { name: 'Submit Feedback Student', exact: true }).click();
     await page.getByRole('button', { name: 'Provide Feedback' }).click();
   }
 
@@ -278,7 +279,7 @@ test.describe('Feedback modal — first submission', () => {
     await page.getByRole('button', { name: 'Submit Feedback' }).click();
 
     // Modal closes and plan list refreshes — now the packet shows Edit Feedback
-    await page.getByText('Submit Feedback Student').click();
+    await page.getByRole('heading', { name: 'Submit Feedback Student', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Edit Feedback' })).toBeVisible();
   });
 });
@@ -287,6 +288,7 @@ test.describe('Feedback modal — first submission', () => {
 // Feedback modal — editing existing feedback
 // ---------------------------------------------------------------------------
 test.describe('Feedback modal — editing existing feedback', () => {
+  test.describe.configure({ mode: 'serial' });
   const STUDENT_ID = 'e2e-feedback-resubmit-m3n4';
   const PACKET_ID = `${STUDENT_ID}-pkt-001`;
 
@@ -297,14 +299,14 @@ test.describe('Feedback modal — editing existing feedback', () => {
     });
     await createPacket(request, STUDENT_ID, PACKET_ID);
     await submitFeedback(request, STUDENT_ID, PACKET_ID, {
-      mastery: 'STRUGGLING',
+      mastery: 'DEVELOPING',
       quantity: 2,
     });
   });
 
   async function openEditModal(page: import('@playwright/test').Page) {
     await page.goto('/plans');
-    await page.getByText('Resubmit Feedback Student').click();
+    await page.getByRole('heading', { name: 'Resubmit Feedback Student' }).click();
     await page.getByRole('button', { name: 'Edit Feedback' }).click();
   }
 
@@ -317,8 +319,8 @@ test.describe('Feedback modal — editing existing feedback', () => {
     page,
   }) => {
     await openEditModal(page);
-    // mastery was STRUGGLING
-    await expect(page.getByRole('button', { name: 'Struggling' })).toHaveClass(/ring-2/);
+    // mastery was DEVELOPING
+    await expect(page.getByRole('button', { name: 'Developing' })).toHaveClass(/ring-2/);
     // quantity was 2 → TOO_LITTLE
     await expect(page.getByRole('button', { name: 'Too Little' })).toHaveClass(/ring-2/);
   });

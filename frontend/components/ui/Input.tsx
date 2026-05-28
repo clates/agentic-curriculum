@@ -7,14 +7,19 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className = '', ...props }, ref) => {
+  ({ label, error, helperText, className = '', id, name, ...props }, ref) => {
+    const inputId = id ?? (name ? `field-${name}` : undefined);
     return (
       <div className="w-full">
         {label && (
-          <label className="mb-2 block text-sm font-medium text-neutral-700">{label}</label>
+          <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-neutral-700">
+            {label}
+          </label>
         )}
         <input
           ref={ref}
+          id={inputId}
+          name={name}
           className={`text-foreground focus:border-primary-500 focus:ring-primary-100 w-full rounded-sm border-2 border-neutral-300 bg-white px-4 py-3 text-base focus:ring-3 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-50 ${
             error ? 'border-danger-500 focus:border-danger-500 focus:ring-danger-100' : ''
           } ${className} `}

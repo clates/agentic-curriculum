@@ -1,4 +1,5 @@
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -7,6 +8,25 @@ const DB_FILE = process.env.PLAYWRIGHT_DB_FILE ?? '/tmp/playwright-test.db';
 const BACKEND_PORT = 8182;
 const POLL_INTERVAL_MS = 500;
 const MAX_WAIT_MS = 30_000;
+
+function killExistingBackend(): void {
+  try {
+    const pids = execSync(`lsof -ti:${BACKEND_PORT}`, { encoding: 'utf8' }).trim();
+    if (pids) {
+      pids.split('\n').forEach((pid) => {
+        try {
+          execSync(`kill ${pid.trim()}`);
+        } catch {
+          /* already gone */
+        }
+      });
+      // Wait briefly for port to free up
+      execSync(`sleep 1`);
+    }
+  } catch {
+    // No process on port, nothing to kill
+  }
+}
 
 async function waitForBackend(getSpawnError: () => Error | null): Promise<void> {
   const deadline = Date.now() + MAX_WAIT_MS;
@@ -26,11 +46,20 @@ async function waitForBackend(getSpawnError: () => Error | null): Promise<void> 
 
 export default async function globalSetup(): Promise<void> {
   const projectRoot = resolve(__dirname, '..');
+
+  killExistingBackend();
+
+  execFileSync(
+    `${projectRoot}/venv/bin/python`,
+    [`${projectRoot}/scripts/e2e_seed.py`, 'init_db'],
+    { stdio: 'pipe', env: { ...process.env, CURRICULUM_DB_PATH: DB_FILE } }
+  );
+
   const uvicorn = spawn(
     `${projectRoot}/venv/bin/uvicorn`,
-    ['src.main:app', '--port', String(BACKEND_PORT)],
+    ['main:app', '--port', String(BACKEND_PORT)],
     {
-      cwd: projectRoot,
+      cwd: `${projectRoot}/src`,
       env: { ...process.env, CURRICULUM_DB_PATH: DB_FILE },
       detached: true,
       stdio: 'ignore',

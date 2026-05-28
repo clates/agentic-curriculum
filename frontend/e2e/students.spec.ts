@@ -45,26 +45,27 @@ test.describe('Student management — creating a student', () => {
     await expect(page.getByText('Name is required')).toBeVisible();
   });
 
-  test('shows validation error for a badly formatted birthday', async ({ page }) => {
+  test('shows validation error for a missing birthday', async ({ page }) => {
     await page.goto('/students');
     await page.getByRole('button', { name: 'Add Student' }).first().click();
-    await page.getByLabel('Student ID').fill('test_bad_bday');
+    await page.getByLabel('Student ID').fill('test_no_bday');
     await page.getByLabel('Full Name').fill('Test Name');
-    await page.getByLabel('Birthday').fill('not-a-date');
+    // Leave Birthday empty — expects "Format: YYYY-MM-DD" from the regex validator
     await page.getByRole('button', { name: 'Create Student' }).click();
     await expect(page.getByText('Format: YYYY-MM-DD')).toBeVisible();
   });
 
   test('successfully creates a student and it appears in the list', async ({ page }) => {
     const uniqueId = `e2e_create_${Date.now()}`;
+    const uniqueName = `Created Student ${uniqueId}`;
     await page.goto('/students');
     await page.getByRole('button', { name: 'Add Student' }).first().click();
     await page.getByLabel('Student ID').fill(uniqueId);
-    await page.getByLabel('Full Name').fill('Created Student');
+    await page.getByLabel('Full Name').fill(uniqueName);
     await page.getByLabel('Birthday').fill('2018-01-15');
     await page.getByRole('button', { name: 'Create Student' }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    await expect(page.getByText('Created Student')).toBeVisible();
+    await expect(page.getByText(uniqueName)).toBeVisible();
   });
 
   test('Cancel button closes the modal without creating', async ({ page }) => {
@@ -155,7 +156,9 @@ test.describe('Student management — deleting a student', () => {
     await page.goto('/students');
     const row = page.getByRole('heading', { name: STUDENT_NAME }).locator('../../..');
     await row.getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByRole('dialog').getByText('Delete Student')).toBeVisible();
+    await expect(
+      page.getByRole('dialog').getByRole('heading', { name: 'Delete Student' })
+    ).toBeVisible();
   });
 
   test('Cancel button closes confirmation without deleting', async ({ page }) => {

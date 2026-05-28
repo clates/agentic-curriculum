@@ -19,6 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from packet_store import save_weekly_packet  # noqa: E402
+from ingest_standards import create_database  # noqa: E402
 
 
 def _db_path() -> str:
@@ -89,6 +90,18 @@ def create_packet(student_id: str, packet_id: str) -> None:
     print(f"created packet {packet_id} for student {student_id}")
 
 
+def init_db() -> None:
+    """Reset the test DB to a clean state (delete file and recreate schema)."""
+    db = _db_path()
+    if os.path.exists(db):
+        os.remove(db)
+    create_database()
+    from packet_store import ensure_schema  # noqa: E402
+
+    ensure_schema()
+    print(f"initialized DB at {db}")
+
+
 def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
     """Set completed_at on a packet's feedback row to iso_timestamp."""
     db = _db_path()
@@ -111,7 +124,10 @@ if __name__ == "__main__":
 
     cmd = sys.argv[1]
 
-    if cmd == "create_packet":
+    if cmd == "init_db":
+        init_db()
+
+    elif cmd == "create_packet":
         if len(sys.argv) != 4:
             print("Usage: e2e_seed.py create_packet <student_id> <packet_id>")
             sys.exit(1)

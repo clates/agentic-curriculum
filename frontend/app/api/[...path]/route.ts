@@ -77,6 +77,11 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
       responseHeaders['ETag'] = etag;
     }
 
+    // 204 No Content must not carry a body
+    if (backendResponse.status === 204) {
+      return new NextResponse(null, { status: 204, headers: responseHeaders });
+    }
+
     // Get the response body as ArrayBuffer to ensure binary data is preserved
     const data = await backendResponse.arrayBuffer();
 
