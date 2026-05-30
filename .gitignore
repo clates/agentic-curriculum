@@ -46,3 +46,7 @@ test_integration_output/
 
 # Personal scratch directory for one-off scripts and experiments
 scratch/
+
+# Playwright
+playwright-report/
+test-results/

@@ -38,12 +38,17 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
           className="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-lg"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-foreground text-2xl font-semibold">{title}</h2>
+            <h2 id="modal-title" className="text-foreground text-2xl font-semibold">
+              {title}
+            </h2>
             <button
               onClick={onClose}
               className="hover:text-foreground text-neutral-500 transition-colors"

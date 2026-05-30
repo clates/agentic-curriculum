@@ -115,6 +115,8 @@ class WeeklyPacketSummary(BaseModel):
     resource_days: int = 0
     daily_count: int = 0
     updated_at: str
+    has_feedback: bool = False
+    feedback_completed_at: str | None = None
 
 
 class WeeklyPacketListResponse(BaseModel):
