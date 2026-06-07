@@ -97,3 +97,19 @@ def test_runs_trio_for_each_student(tmp_path):
         safety_net_generate.run(str(db))
 
     assert set(trio_calls) == {"s1", "s2"}
+
+
+def test_skips_student_with_no_feedback(tmp_path):
+    """Student with a packet but no feedback row is excluded."""
+    db_path = str(tmp_path / "test.db")
+    conn = sqlite3.connect(db_path)
+    conn.execute("CREATE TABLE weekly_packets (id TEXT, student_id TEXT, created_at TEXT)")
+    conn.execute(
+        "CREATE TABLE packet_feedback (id TEXT, student_id TEXT, packet_id TEXT, completed_at TEXT)"
+    )
+    # Insert a packet but NO feedback row
+    conn.execute("INSERT INTO weekly_packets VALUES ('p1', 's1', '2026-06-01T10:00:00')")
+    conn.commit()
+    conn.close()
+    result = safety_net_generate.find_students_needing_plans(db_path)
+    assert result == []

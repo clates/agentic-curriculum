@@ -24,6 +24,8 @@ def find_students_needing_plans(db_path: str) -> list[str]:
     try:
         rows = conn.execute(
             """
+            -- A row in packet_feedback is equivalent to has_feedback=true in the API layer
+            -- (has_feedback is a computed field derived from the existence of a packet_feedback row)
             SELECT DISTINCT pf.student_id
             FROM packet_feedback pf
             WHERE NOT EXISTS (
