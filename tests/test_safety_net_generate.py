@@ -101,15 +101,39 @@ def test_runs_trio_for_each_student(tmp_path):
 
 def test_skips_student_with_no_feedback(tmp_path):
     """Student with a packet but no feedback row is excluded."""
-    db_path = str(tmp_path / "test.db")
-    conn = sqlite3.connect(db_path)
-    conn.execute("CREATE TABLE weekly_packets (id TEXT, student_id TEXT, created_at TEXT)")
-    conn.execute(
-        "CREATE TABLE packet_feedback (id TEXT, student_id TEXT, packet_id TEXT, completed_at TEXT)"
-    )
+    db = _make_db(tmp_path)
+    conn = sqlite3.connect(db)
     # Insert a packet but NO feedback row
-    conn.execute("INSERT INTO weekly_packets VALUES ('p1', 's1', '2026-06-01T10:00:00')")
+    conn.execute(
+        "INSERT INTO weekly_packets VALUES ('p1', 's1', 2, 'Math', '2026-06-01', 'active', '{}', '{}', '2026-06-01T10:00:00Z', '2026-06-01T10:00:00Z')"
+    )
     conn.commit()
     conn.close()
-    result = safety_net_generate.find_students_needing_plans(db_path)
+    result = safety_net_generate.find_students_needing_plans(str(db))
     assert result == []
+
+
+def test_error_in_one_student_does_not_block_others(tmp_path):
+    """A RuntimeError for one student should not prevent processing of others."""
+    db = _make_db(tmp_path)
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "INSERT INTO packet_feedback VALUES (1, 'pkt1', 's1', NULL, NULL, '2026-06-06T20:00:00Z')"
+    )
+    conn.execute(
+        "INSERT INTO packet_feedback VALUES (2, 'pkt2', 's2', NULL, NULL, '2026-06-06T20:00:00Z')"
+    )
+    conn.commit()
+    conn.close()
+
+    calls = []
+
+    def side_effect(student_id):
+        if student_id == "s1":
+            raise RuntimeError("s1 failed")
+        calls.append(student_id)
+
+    with patch("safety_net_generate.generate_trio_for_student", side_effect=side_effect):
+        safety_net_generate.run(str(db))  # must not raise
+
+    assert calls == ["s2"]
