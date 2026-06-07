@@ -1,6 +1,7 @@
 # tests/test_generate_phonics_blends.py
 import os
 import subprocess
+import sys
 import pytest
 
 OUTPUT_DIR = "output/phonics_blends"
@@ -15,7 +16,7 @@ EXPECTED_FILES = [
 @pytest.fixture(scope="module", autouse=True)
 def run_script():
     result = subprocess.run(
-        ["python", "scripts/generate_phonics_blends_series.py"],
+        [sys.executable, "scripts/generate_phonics_blends_series.py"],
         capture_output=True,
         text=True,
     )
