@@ -14,6 +14,7 @@ from packet_store import (
     save_packet_feedback,
 )
 from agent import generate_weekly_plan
+from trio_generator import generate_trio_for_student
 from db_utils import (
     create_student,
     delete_student,
@@ -44,7 +45,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Response
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -627,7 +628,12 @@ def print_weekly_packet(student_id: str, packet_id: str):
 
 
 @app.post("/students/{student_id}/weekly-packets/{packet_id}/feedback", status_code=204)
-def submit_packet_feedback(student_id: str, packet_id: str, request: SubmitFeedbackRequest):
+def submit_packet_feedback(
+    student_id: str,
+    packet_id: str,
+    request: SubmitFeedbackRequest,
+    background_tasks: BackgroundTasks,
+):
     """
     Submit feedback for a completed weekly packet.
 
@@ -693,6 +699,7 @@ def submit_packet_feedback(student_id: str, packet_id: str, request: SubmitFeedb
             progress=progress_payload,
         )
         save_packet_feedback(student_id, packet_id, mastery_feedback, quantity_feedback)
+        background_tasks.add_task(generate_trio_for_student, student_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 

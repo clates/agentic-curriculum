@@ -90,6 +90,7 @@ def feedback_client(tmp_path: Path, monkeypatch):
 
     monkeypatch.setattr(main_module, "save_packet_feedback", fake_save)
     monkeypatch.setattr(main_module, "get_packet_feedback", fake_get)
+    monkeypatch.setattr(main_module, "generate_trio_for_student", lambda student_id: None)
 
     client = TestClient(main_module.app)
     return client, packet_feedback_calls, stored_feedback, db_path
