@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DB = str(PROJECT_ROOT / "src" / "curriculum.db")
+DEFAULT_DB = str(PROJECT_ROOT / "curriculum.db")
 
 
 def find_students_needing_plans(db_path: str) -> list[str]:
