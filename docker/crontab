@@ -1,0 +1,8 @@
+SHELL=/bin/bash
+PYTHONPATH=/app/src
+
+# Weekly curriculum reminder — Friday 7pm
+0 19 * * 5 appuser /usr/local/bin/python /app/scripts/send_weekly_reminder.py >> /proc/1/fd/1 2>&1
+
+# Safety-net plan generation — Saturday 9am
+0 9 * * 6 appuser /usr/local/bin/python /app/scripts/safety_net_generate.py >> /proc/1/fd/1 2>&1
