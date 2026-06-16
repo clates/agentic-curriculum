@@ -252,9 +252,13 @@ def delete_student(student_id: str) -> bool:
         True if the student was deleted, False if not found
     """
     conn = sqlite3.connect(DB_FILE)
+    conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
     try:
+        # Delete packets first — their FK cascade removes daily_lessons,
+        # worksheet_artifacts, and packet_feedback automatically.
+        cursor.execute("DELETE FROM weekly_packets WHERE student_id = ?", (student_id,))
         cursor.execute(
             "DELETE FROM student_profiles WHERE student_id = ?",
             (student_id,),

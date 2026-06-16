@@ -748,7 +748,7 @@ def get_student_progress_map(student_id: str, subject: str, prune: bool = True):
     if not profile:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    progress = json.loads(profile["progress_blob"])
+    progress = json.loads(profile["progress_blob"] or "{}")
     mastered = progress.get("mastered_standards", [])
 
     graph = load_from_db(str(PROJECT_ROOT / "curriculum.db"), subject)
