@@ -261,8 +261,9 @@ def delete_student(student_id: str) -> bool:
         # weekly_packets may not exist in minimal test DBs, so ignore if absent.
         try:
             cursor.execute("DELETE FROM weekly_packets WHERE student_id = ?", (student_id,))
-        except sqlite3.OperationalError:
-            pass
+        except sqlite3.OperationalError as e:
+            if "no such table" not in str(e):
+                raise
         cursor.execute(
             "DELETE FROM student_profiles WHERE student_id = ?",
             (student_id,),
