@@ -7,11 +7,19 @@ This document outlines the architecture, constraints, and "Instructional Pair" s
 ## 1. Core Architecture
 The system is built on a modular Python framework:
 *   **`src/worksheets/`**: Logic for specific data structures (e.g., `MatchingWorksheet`, `ReadingWorksheet`).
-*   **`src/worksheets/factory.py`**: A unified entry point to create worksheet objects from dictionary payloads.
-*   **`src/worksheet_renderer.py`**: The visual engine using Pillow. It handles:
-    *   **High-Contrast Layouts**: Wide gutters (~400px) and tight bullet anchors for toddlers.
-    *   **Advanced Scaling**: `NEAREST` filtering for Minecraft/pixel art; `LANCZOS` for high-res icons.
-    *   **Dynamic Formatting**: Text wrapping, font management (DejaVu Sans), and multi-page rendering.
+*   **`src/worksheets/factory.py`**: A unified entry point to create worksheet objects from dictionary payloads. Required for PIL rendering; **not needed** for HTML rendering.
+*   **`src/worksheet_renderer.py`**: The visual (PIL/Pillow) engine. Use for image-heavy types (handwriting, pixel copy, alphabet) or when PNG/PDF output is explicitly needed. Render functions follow the pattern `render_X_to_image(ws, path)` / `render_X_to_pdf(ws, path)`.
+*   **`src/worksheet_html_renderer.py`**: The preferred engine for printable worksheet packets. Produces clean, browser-printable HTML with day-colour theming. Two key functions:
+    *   `render_worksheet_html(kind, data, day_label) -> str | None` — renders one worksheet to an HTML fragment. `kind` uses **camelCase** strings (e.g. `"readingWorksheet"`, `"featureMatrixWorksheet"`). `data` is a plain dict — **do not pass a WorksheetFactory object**.
+    *   `build_print_packet_html(pages, packet_title) -> str` — assembles a list of `(day_label, fragment)` tuples into a single printable HTML document that auto-opens the browser print dialog on load.
+
+### Choosing a renderer
+| Situation | Use |
+|-----------|-----|
+| Single printable packet for a student | **HTML** (`render_worksheet_html` + `build_print_packet_html`) |
+| Pixel art, handwriting, or alphabet sheets | PIL (`worksheet_renderer.py`) |
+| PNG/PDF files needed for individual download | PIL |
+| Embedding in the API weekly-plan flow | HTML (agent.py already uses this) |
 
 ---
 
@@ -27,38 +35,102 @@ Stick strictly to **CVC** (Cat, Pig), **CCVC** (Snow, Frog), and **CVCC** (Raft,
 ---
 
 ## 3. Supported Worksheet Types
-*   **`matching`**: Image-to-word or Shadow-to-image.
-*   **`handwriting`**: Traceable words with sub-labels for context.
-*   **`reading_comprehension`**: Passages + Questions + Vocabulary banks.
-*   **`venn_diagram`**: Overlapping circles with word banks for comparison.
-*   **`feature_matrix`**: Grid-based classification (e.g., "Home Rule" vs. "Community Law").
-*   **`tree_map`**: Hierarchical categorization.
-*   **`odd_one_out`**: Logic-based exclusion with reasoning lines.
+
+20 types are registered in `WorksheetFactory`. The table below shows the factory key (snake_case), the HTML renderer kind (camelCase, for `render_worksheet_html`), and which renderer supports each type.
+
+| Factory key | HTML kind | HTML | PIL |
+|-------------|-----------|------|-----|
+| `reading_comprehension` | `readingWorksheet` | ✓ | ✓ |
+| `feature_matrix` | `featureMatrixWorksheet` | ✓ | ✓ |
+| `tree_map` | `treeMapWorksheet` | ✓ | ✓ |
+| `odd_one_out` | `oddOneOutWorksheet` | ✓ | ✓ |
+| `matching` | `matchingWorksheet` | ✓ | ✓ |
+| `cause_effect` | `causeEffectWorksheet` | ✓ | ✓ |
+| `frayer_model` | `frayerModelWorksheet` | ✓ | ✓ |
+| `word_sort` | `wordSortWorksheet` | ✓ | ✓ |
+| `writing_scaffold` | `writingScaffoldWorksheet` | ✓ | ✓ |
+| `t_chart` | `tChartWorksheet` | ✓ | ✓ |
+| `handwriting` | — | — | ✓ |
+| `pixel_copy` | — | — | ✓ |
+| `alphabet` | — | — | ✓ |
+| `fill_in_the_blank` | — | — | ✓ |
+| `sequencing` | — | — | ✓ |
+| `venn_diagram` | — | — | ✓ |
+| `story_map` | — | — | ✓ |
+| `number_line` | — | — | ✓ |
+| `labeled_diagram` | — | — | ✓ |
+| `two_operand` | — | — | ✓ |
+
+### Critical data-format difference: `feature_matrix`
+The **HTML renderer** expects `items` as a **list of plain strings** (row labels). The **PIL factory** expects `items` as a list of dicts with `name` and `checked_properties` keys. Mixing these up produces broken output with no error.
+
+```python
+# HTML path — items are strings
+add("featureMatrixWorksheet", {
+    "items": ["Dog", "Fish", "Tree"],
+    "properties": ["Needs Food", "Needs Water"],
+})
+
+# PIL path — items are dicts
+WorksheetFactory.create("feature_matrix", {
+    "items": [{"name": "Dog", "checked_properties": ["Needs Food"]}],
+    "properties": ["Needs Food", "Needs Water"],
+    "show_answers": False,
+})
+```
 
 ---
 
-## 4. The "Great Worksheet" Prompt Template
+## 4. Pedagogical Best Practices
+
+### "Let's Discuss" Discussion Question
+Add one oral-discussion question at the **end** of every student-facing `reading_comprehension` worksheet. Use `response_lines: 0` so no write-in lines are rendered — this is a spoken activity led by the parent/teacher. The prompt should pose a tricky or surprising real-world case that applies the day's concept.
+
+```python
+{"prompt": "LET'S DISCUSS: Finn found a seed. Is it alive? What about a dead leaf?", "response_lines": 0}
+```
+
+### Word Bank / Vocabulary Shuffling
+Always shuffle word banks so the display order does not match the answer key or the passage order. This applies to:
+- `word_bank` lists in `tree_map` and `word_sort` worksheets
+- Answer-order lists in `fill_in_the_blank`
+- `vocabulary` term order in `reading_comprehension`
+
+### Outdoor / Hands-On Activity Integration
+For science or nature topics, include a brief teacher-led outdoor observation activity in the `instructions` field of each reading worksheet. Frame it as a before/during/after activity tied to that day's concept (e.g., "Before reading: go outside and find 3 living things and 3 nonliving things").
+
+### Character Hook (Consistent Narrator)
+For multi-day series, a recurring character grounding each passage improves engagement and continuity. Introduce the character explicitly on Day 1 with a "meet X" sentence before the science content begins. The character should be a living thing themselves when the topic is biology (e.g., Finn the Frog for a "What Is Life?" unit). See `generate_biomes_week_series.py` (Minecraft Steve) and `generate_life_week_series.py` (Finn the Frog) as examples.
+
+---
+
+## 5. The "Great Worksheet" Prompt Template
 When requesting new worksheets, providing this context ensures the best results:
 
 > **Topic**: [e.g., Ancient Egypt, Planets, Multiplication]  
-> **Target Audience**: [Age & Reading Level, e.g., 6-year-old, advanced reader]  
+> **Target Audience**: [Age & Reading Level, e.g., 6-year-old, 2nd-grade reading level]  
 > **Set Structure**: [e.g., Instructional Pair: Reading + Feature Matrix]  
 > **Constraint**: [e.g., Only use CVC words / Include the Three Laws of Motion]  
-> **Aesthetic**: [e.g., Disney API art, OpenMoji icons, Pixel Art]  
+> **Aesthetic**: [e.g., Character hook: Finn the Frog / Pixel Art]  
+> **Output Format**: [e.g., Single printable HTML packet / Individual PNG+PDF files]  
 > **Educational Goal**: [e.g., Identify the difference between a planet and a star]
 
 ---
 
-## 5. Technical Deployment
-Always run generation scripts within the project's virtual environment:
+## 6. Technical Deployment
+Run generation scripts from the project root:
 ```bash
-venv/bin/python3 generate_[theme]_series.py
+python3 scripts/generate_[theme]_series.py
 ```
-Outputs are consistently routed to a `[theme]_series/` directory in both **PNG** (for quick viewing) and **PDF** (for printing) formats.
+(If a `venv/` exists: `venv/bin/python3 scripts/generate_[theme]_series.py`)
+
+**HTML path** (preferred for printable packets): outputs a single `[theme]_series/[theme].html`. Open in any browser — the print dialog opens automatically.
+
+**PIL path** (image-heavy or standalone files): outputs to `[theme]_series/` as both `.png` (screen preview) and `.pdf` (print-ready), one file per worksheet.
 
 ---
 
-## 6. Git Workflow Rules
+## 7. Git Workflow Rules
 
 **Before pushing any commit, always verify the current branch has not been merged:**
 ```bash
