@@ -60,6 +60,11 @@ def test_get_grade_level_from_most_recent_packet():
         assert trio_generator._get_grade_level("s1") == 3
 
 
-def test_get_grade_level_defaults_to_zero_when_no_packets():
+def test_get_grade_level_defaults_to_one_when_no_packets():
     with patch("trio_generator.list_weekly_packets", return_value=([], False)):
-        assert trio_generator._get_grade_level("s1") == 0
+        assert trio_generator._get_grade_level("s1") == 1
+
+
+def test_get_grade_level_uses_metadata_fallback_when_no_packets():
+    with patch("trio_generator.list_weekly_packets", return_value=([], False)):
+        assert trio_generator._get_grade_level("s1", metadata_fallback={"grade_level": 4}) == 4

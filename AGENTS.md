@@ -132,6 +132,15 @@ python3 scripts/generate_[theme]_series.py
 
 ## 7. Git Workflow Rules
 
+**Never commit directly to `main`.** All changes must go through a pull request, regardless of size or urgency. This applies to agents, automated fixes, and humans alike.
+
+The correct workflow for any change:
+1. Create a branch from `origin/main`: `git checkout -b <branch-name> origin/main`
+2. Make commits on that branch
+3. Push the branch: `git push -u origin <branch-name>`
+4. Open a PR: `gh pr create ...`
+5. Do **not** push to `main` directly
+
 **Before pushing any commit, always verify the current branch has not been merged:**
 ```bash
 git fetch origin
@@ -143,3 +152,16 @@ If your current branch tip appears in `origin/main`, it has been merged. **Do no
 3. Push the new branch and open a fresh PR
 
 **Never accumulate multiple unrelated fixes on one branch.** Each PR should be focused on a single concern so it can be merged independently without blocking other work.
+
+---
+
+## 7. Automated Analysis & Fix Workflow
+
+When an agent performs a codebase audit and creates GitHub issues, the following pattern must be followed:
+
+1. **Analysis**: Spawn a read-only agent to identify bugs/deficiencies. Each finding must include a reproduction scenario and justification before an issue is filed.
+2. **Issue creation**: File GitHub issues with the `Claude-identified` label. One issue per distinct bug.
+3. **Fix branch**: Create a single branch (`fix/claude-identified-bugs` or similar) from `origin/main` **before** making any changes.
+4. **Fix & commit**: Apply fixes on the branch and commit. Do not touch `main`.
+5. **PR**: Push the branch and open a PR referencing the issues (e.g., `Closes #77, #78`). Do not close issues manually — let the PR merge close them via GitHub keywords.
+6. **No direct-to-main commits**: Even if the fix seems trivial, it must go through a PR so the owner can review before merging.

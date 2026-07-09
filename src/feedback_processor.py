@@ -168,8 +168,10 @@ def process_quantity_feedback(
     elif quantity_feedback == 2:
         current_bias += 0.3
 
-    # Clamp to [-1.0, 1.0]
-    prefs["activity_bias"] = max(-ACTIVITY_BIAS_CLAMP, min(current_bias, ACTIVITY_BIAS_CLAMP))
+    # Clamp to [-1.0, 1.0] and round to avoid floating-point drift
+    prefs["activity_bias"] = round(
+        max(-ACTIVITY_BIAS_CLAMP, min(current_bias, ACTIVITY_BIAS_CLAMP)), 6
+    )
 
     return json.dumps(plan_rules)
 
@@ -200,14 +202,15 @@ def reverse_quantity_feedback(plan_rules_blob: str, old_quantity_feedback: int) 
     elif old_quantity_feedback == -1:
         current_bias += 0.15
     elif old_quantity_feedback == 0:
-        # Reverse the *0.9 decay by dividing; safe because bias could be 0
-        current_bias = current_bias / 0.9 if current_bias != 0 else 0.0
+        current_bias = round(current_bias / 0.9, 6) if current_bias != 0 else 0.0
     elif old_quantity_feedback == 1:
         current_bias -= 0.15
     elif old_quantity_feedback == 2:
         current_bias -= 0.3
 
-    prefs["activity_bias"] = max(-ACTIVITY_BIAS_CLAMP, min(current_bias, ACTIVITY_BIAS_CLAMP))
+    prefs["activity_bias"] = round(
+        max(-ACTIVITY_BIAS_CLAMP, min(current_bias, ACTIVITY_BIAS_CLAMP)), 6
+    )
     return json.dumps(plan_rules)
 
 

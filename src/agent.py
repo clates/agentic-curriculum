@@ -724,7 +724,7 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
         raise ValueError(f"Student with id '{student_id}' not found")
 
     # Parse plan_rules_blob to get rules
-    rules = json.loads(student_profile["plan_rules_blob"])
+    rules = json.loads(student_profile["plan_rules_blob"] or "{}")
 
     # Get standards for the student. We request more than 5 to have flexibility
     # in how they're distributed across the week. Some complex standards may need
@@ -763,7 +763,7 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
 
     generation_logger = GenerationLogger(student_id, grade_level, subject)
 
-    today = datetime.now()
+    today = datetime.now(UTC)
     monday = today - timedelta(days=today.weekday())
     week_of = monday.strftime("%Y-%m-%d")
     plan_id = f"plan_{student_id}_{week_of}"

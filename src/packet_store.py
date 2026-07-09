@@ -160,10 +160,6 @@ def _build_summary(weekly_plan: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _delete_existing_packet(conn: sqlite3.Connection, packet_id: str) -> None:
-    conn.execute("DELETE FROM weekly_packets WHERE packet_id = ?", (packet_id,))
-
-
 def _insert_weekly_packet(
     conn: sqlite3.Connection,
     weekly_plan: Mapping[str, Any],
@@ -176,7 +172,7 @@ def _insert_weekly_packet(
 
     conn.execute(
         """
-        INSERT INTO weekly_packets (
+        INSERT OR REPLACE INTO weekly_packets (
             packet_id,
             student_id,
             grade_level,
@@ -305,7 +301,6 @@ def save_weekly_packet(
         raise ValueError("weekly_plan must include plan_id")
 
     with _get_connection() as conn:
-        _delete_existing_packet(conn, packet_id)
         _insert_weekly_packet(conn, weekly_plan, status)
         _persist_daily_lessons(conn, packet_id, weekly_plan.get("daily_plan", []))
 

@@ -62,8 +62,8 @@ def get_filtered_standards(
         raise ValueError(f"Student with id '{student_id}' not found")
 
     # Step c: Parse the JSON blobs
-    progress_blob = json.loads(student_profile["progress_blob"])
-    plan_rules_blob = json.loads(student_profile["plan_rules_blob"])
+    progress_blob = json.loads(student_profile["progress_blob"] or "{}")
+    plan_rules_blob = json.loads(student_profile["plan_rules_blob"] or "{}")
 
     # Step d: Extract mastered standards
     mastered_standards = progress_blob.get("mastered_standards", [])

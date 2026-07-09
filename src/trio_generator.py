@@ -15,12 +15,17 @@ from subject_picker import pick_subjects
 logger = logging.getLogger(__name__)
 
 
-def _get_grade_level(student_id: str) -> int:
-    """Return grade_level from the student's most recent weekly packet, or 0."""
+def _get_grade_level(student_id: str, metadata_fallback: dict | None = None) -> int:
+    """Return grade_level from the student's most recent weekly packet.
+
+    Falls back to metadata_fallback["grade_level"] if no packets exist, then to 1.
+    """
     packets, _ = list_weekly_packets(student_id, limit=1, offset=0)
     if packets:
         return packets[0].get("grade_level", 0)
-    return 0
+    if metadata_fallback:
+        return int(metadata_fallback.get("grade_level", 1))
+    return 1
 
 
 def generate_trio_for_student(student_id: str) -> None:
@@ -30,7 +35,7 @@ def generate_trio_for_student(student_id: str) -> None:
     name = metadata.get("name", student_id)
 
     try:
-        grade_level = _get_grade_level(student_id)
+        grade_level = _get_grade_level(student_id, metadata_fallback=metadata)
         subjects = pick_subjects(student_id)
 
         with ThreadPoolExecutor(max_workers=3) as executor:
