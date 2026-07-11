@@ -29,9 +29,23 @@ supports an optional `columns` layout key; `matchingWorksheet` items may be stri
 ## 1. Inputs
 
 - **Theme** (required) — e.g. "weather", "ancient Egypt".
-- Optional: age/grade, subject, standards. Default to the established audience (Christopher,
-  age 6, grade K–1) if unspecified. If asked to align to standards, look them up in
-  `standards_data/` or `curriculum.db`.
+- Optional: age/grade, subject. Default to the established audience (Christopher, age 6,
+  grade K–1) if unspecified.
+- **Standards — always align, and always look them up** (unless the user supplies them).
+  Query `curriculum.db` for the audience's grade band and subject and pick the standards the
+  theme genuinely serves:
+
+  ```bash
+  venv/bin/python -c "
+  import sqlite3
+  for r in sqlite3.connect('curriculum.db').execute(
+      \"SELECT standard_id, description FROM standards WHERE subject='Science' AND grade_level IN (0,1)\"):
+      print(*r)"
+  ```
+
+  Grade K is `grade_level = 0` (IDs like `VA.SCIENCE.K.k.6`); the same data lives in
+  `standards_data/<subject>.json`. Do **not** cite standards from memory — verify every ID and
+  description you annotate, and write content that actually teaches them, not name-drops them.
 
 ## 2. Design the week (before writing code)
 
@@ -44,7 +58,9 @@ supports an optional `columns` layout key; `matchingWorksheet` items may be stri
 - Friday: a capstone that synthesizes the whole arc.
 - Final page: a **Parent Feedback & Teaching Notes** page (a `readingWorksheet` whose questions ask
   the parent about comprehension, curiosity, and topics to revisit).
-- Annotate each day with standards IDs in the docstring when standards were given.
+- Annotate each day with its verified standards IDs in the script docstring (see §1 — not
+  optional), and size the week for roughly 90 minutes of work per day including the
+  hands-on/outdoor activities.
 
 ## 3. Write the script
 
