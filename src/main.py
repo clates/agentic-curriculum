@@ -218,6 +218,12 @@ def read_root():
     return {"message": "Hello World"}
 
 
+@app.get("/health")
+def health_check():
+    """Health check endpoint for container healthchecks and backend readiness polling."""
+    return {"status": "ok"}
+
+
 @app.get("/system/options", response_model=SystemOptionsResponse)
 def get_system_options():
     """
