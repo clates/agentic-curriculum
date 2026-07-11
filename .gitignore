@@ -29,7 +29,10 @@ artifacts/
 
 # Local environment and tooling
 .env
-.claude/
+.claude/settings.local.json
+
+# Ad-hoc bespoke generator scripts kept locally as reference material (not canonical)
+scripts/reference/
 
 # Generated worksheet series output (produced by scripts/generate_*.py)
 *_series/
