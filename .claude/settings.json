@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(venv/bin/python -m pytest:*)",
+      "Bash(venv/bin/python scripts/:*)",
+      "Bash(venv/bin/python src/ingest_standards.py)",
+      "Bash(venv/bin/pip install -r requirements.txt)",
+      "Bash(venv/bin/uvicorn:*)",
+      "Bash(uv venv:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm run format:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(npx playwright install chromium)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr list:*)"
+    ]
+  }
+}
