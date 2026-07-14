@@ -134,6 +134,71 @@ def test_list_packet_artifacts_enforces_ownership(tmp_path):
     assert unauthorized is None
 
 
+def test_resave_preserves_packet_feedback(tmp_path):
+    """Regression: re-saving a packet must not cascade-delete packet_feedback."""
+    db_path = tmp_path / "packets.db"
+    packet_store = _reload_modules(db_path)
+
+    plan = build_weekly_plan(plan_id="plan_feedback_test")
+    packet_store.save_weekly_packet(plan)
+
+    # Save feedback for the packet
+    packet_store.save_packet_feedback(
+        "student-123",
+        "plan_feedback_test",
+        {"Monday": "great"},
+        5,
+    )
+
+    # Verify feedback was saved
+    feedback_before = packet_store.get_packet_feedback("student-123", "plan_feedback_test")
+    assert feedback_before is not None
+    assert feedback_before["quantity_feedback"] == 5
+
+    # Re-save the same packet (simulating the background re-generation after feedback)
+    packet_store.save_weekly_packet(plan)
+
+    # Feedback must still be present after the re-save
+    feedback_after = packet_store.get_packet_feedback("student-123", "plan_feedback_test")
+    assert feedback_after is not None, "packet_feedback was deleted by re-save (cascade bug)"
+    assert feedback_after["quantity_feedback"] == 5
+    assert feedback_after["mastery_feedback"] == {"Monday": "great"}
+
+
+def test_resave_does_not_overwrite_created_at(tmp_path):
+    """Regression: re-saving a packet must not overwrite the original created_at."""
+    db_path = tmp_path / "packets.db"
+    packet_store = _reload_modules(db_path)
+
+    plan = build_weekly_plan(plan_id="plan_created_at_test")
+    packet_store.save_weekly_packet(plan)
+
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    original_created_at = conn.execute(
+        "SELECT created_at FROM weekly_packets WHERE packet_id = ?",
+        ("plan_created_at_test",),
+    ).fetchone()["created_at"]
+    conn.close()
+
+    # Re-save the same packet
+    packet_store.save_weekly_packet(plan)
+
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    row_after = conn.execute(
+        "SELECT created_at, updated_at FROM weekly_packets WHERE packet_id = ?",
+        ("plan_created_at_test",),
+    ).fetchone()
+    conn.close()
+
+    assert row_after["created_at"] == original_created_at, (
+        "created_at was overwritten on re-save"
+    )
+    # updated_at may be the same if re-save is fast, but created_at must not change
+    assert row_after["updated_at"] is not None
+
+
 def test_get_artifact_for_student_returns_none_when_mismatch(tmp_path):
     db_path = tmp_path / "packets.db"
     packet_store = _reload_modules(db_path)
