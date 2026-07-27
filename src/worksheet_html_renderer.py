@@ -282,6 +282,45 @@ _CSS = """\
   table.t-chart th:first-child { border-right: 2px solid white; }
   table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
   table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
 </style>"""
 
 _HTML_WRAPPER = """\
@@ -317,6 +356,23 @@ def _name_date() -> str:
 def _answer_lines(n: int) -> str:
     lines = "".join('<div class="answer-line"></div>' for _ in range(n))
     return f'<div class="answer-lines">{lines}</div>'
+
+
+def _graph_questions(questions: list) -> str:
+    """Render a numbered question block (with answer lines) below a graph."""
+    if not questions:
+        return ""
+    q_html = ""
+    for i, q in enumerate(questions, 1):
+        lines = q.get("response_lines", 1) if isinstance(q, dict) else 1
+        prompt = q.get("prompt", "") if isinstance(q, dict) else str(q)
+        q_html += (
+            f'<div class="question">'
+            f'<div class="question-prompt">{i}. {_h(prompt)}</div>'
+            f"{_answer_lines(lines)}"
+            f"</div>"
+        )
+    return f'<div class="graph-questions"><h3>Read the Graph</h3>{q_html}</div>'
 
 
 def _passage_html(text: str) -> str:
@@ -786,6 +842,160 @@ def _render_t_chart(data: dict, primary: str, light: str) -> str:
 """
 
 
+def _render_bar_graph(data: dict, primary: str, light: str) -> str:
+    """Render a bar graph.
+
+    Two modes, chosen by whether ``values`` is supplied:
+      * ``values`` omitted / None  -> a blank grid the student fills in (colours the bars).
+      * ``values`` given           -> pre-filled coloured bars for the student to *read*.
+
+    Data keys: title, instructions, categories (list[str]), values (list[int|float]|None),
+    y_max, y_step, x_label, y_label, height_in, show_values (bool), questions (list).
+    """
+    title = data.get("title", "Bar Graph")
+    day_label = data.get("day_label", "")
+    categories = data.get("categories", [])
+    values = data.get("values")
+    y_max = data.get("y_max", 10) or 10
+    y_step = data.get("y_step", 1) or 1
+    x_label = data.get("x_label", "")
+    y_label = data.get("y_label", "")
+    height_in = data.get("height_in", 2.5)
+    show_values = data.get("show_values", False)
+    questions = data.get("questions", [])
+
+    dh = _day_header(day_label, title, primary) if day_label else ""
+
+    steps = max(1, round(y_max / y_step))
+
+    # Horizontal gridlines + y-axis tick labels, aligned by percentage from the top.
+    gridlines_html = ""
+    ticks_html = ""
+    for i in range(steps + 1):
+        value = round(i * y_step, 4)
+        value_label = int(value) if float(value).is_integer() else value
+        top_pct = (1 - (value / y_max)) * 100
+        gridlines_html += f'<div class="bg-gridline" style="top:{top_pct:.4f}%;"></div>'
+        ticks_html += f'<div class="bg-tick" style="top:{top_pct:.4f}%;">{value_label}</div>'
+
+    # Bars, one lane per category.
+    lanes_html = ""
+    for idx in range(len(categories)):
+        bar = ""
+        if values is not None and idx < len(values) and values[idx] is not None:
+            v = values[idx]
+            h_pct = max(0.0, min(100.0, (v / y_max) * 100))
+            v_disp = int(v) if float(v).is_integer() else v
+            val_lbl = f'<span class="bg-bar-val">{_h(v_disp)}</span>' if show_values else ""
+            bar = (
+                f'<div class="bg-bar" style="height:{h_pct:.4f}%;'
+                f'background:{light};border-color:{primary};">{val_lbl}</div>'
+            )
+        lanes_html += f'<div class="bg-lane">{bar}</div>'
+
+    xlabels_html = "".join(f'<div class="bg-xlabel">{_h(c)}</div>' for c in categories)
+
+    ytitle_html = f'<div class="bg-ytitle">{_h(y_label)}</div>'
+    xtitle_html = (
+        f'<div class="bg-xrow"><div class="bg-xspacer"></div>'
+        f'<div class="bg-xtitle">{_h(x_label)}</div></div>'
+        if x_label
+        else ""
+    )
+
+    default_instr = (
+        "Read the bars to answer the questions."
+        if values is not None
+        else "Colour in a bar for each group to show how many you counted."
+    )
+    instructions = _h(data.get("instructions", default_instr))
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+<div class="bg-wrap">
+  <div class="bg-flex">
+    {ytitle_html}
+    <div class="bg-ticks">{ticks_html}</div>
+    <div class="bg-plot" style="height:{height_in}in;">
+      {gridlines_html}
+      <div class="bg-lanes">{lanes_html}</div>
+    </div>
+  </div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xlabels">{xlabels_html}</div></div>
+  {xtitle_html}
+</div>
+{_graph_questions(questions)}
+"""
+
+
+def _render_pictograph(data: dict, primary: str, light: str) -> str:
+    """Render a pictograph (picture graph).
+
+    Two modes per row, chosen by whether ``symbols`` is supplied:
+      * blank -> a strip of empty cells for the student to draw symbols in.
+      * given -> that many symbol icons drawn for the student to *read*.
+
+    Data keys: title, instructions, symbol (emoji/char), per_symbol (int), unit_label,
+    rows (list of {label, symbols}), blank (bool, force all rows blank), max_symbols (int
+    width of blank strips), questions (list).
+    """
+    title = data.get("title", "Pictograph")
+    day_label = data.get("day_label", "")
+    symbol = data.get("symbol", "⭐")
+    per_symbol = data.get("per_symbol", 1)
+    unit_label = data.get("unit_label", "")
+    rows = data.get("rows", [])
+    blank = data.get("blank", False)
+    max_symbols = data.get("max_symbols", 10)
+    questions = data.get("questions", [])
+
+    dh = _day_header(day_label, title, primary) if day_label else ""
+
+    per_disp = int(per_symbol) if float(per_symbol).is_integer() else per_symbol
+    key_text = f"Key:  each {symbol} = {per_disp}"
+    if unit_label:
+        key_text += f" {unit_label}"
+    key_html = (
+        f'<div class="pg-key" style="background:{light};color:{primary};">{_h(key_text)}</div>'
+    )
+
+    rows_html = ""
+    for row in rows:
+        label = row.get("label", "") if isinstance(row, dict) else str(row)
+        count = row.get("symbols") if isinstance(row, dict) else None
+        if blank or count is None:
+            cells = "".join('<span class="pg-cell"></span>' for _ in range(max_symbols))
+            symbols_html = cells
+        else:
+            symbols_html = "".join(_h(symbol) for _ in range(int(count)))
+        rows_html += (
+            f'<div class="pg-row">'
+            f'<div class="pg-label">{_h(label)}</div>'
+            f'<div class="pg-symbols">{symbols_html}</div>'
+            f"</div>"
+        )
+
+    default_instr = (
+        "Draw the right number of pictures in each row to match the key."
+        if blank
+        else "Count the pictures in each row. Remember the key!"
+    )
+    instructions = _h(data.get("instructions", default_instr))
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{key_html}
+<div class="pg-table">{rows_html}</div>
+{_graph_questions(questions)}
+"""
+
+
 # ── Dispatch table ─────────────────────────────────────────────────────────
 
 _RENDERERS = {
@@ -799,6 +1009,8 @@ _RENDERERS = {
     "wordSortWorksheet": _render_word_sort,
     "writingScaffoldWorksheet": _render_writing_scaffold,
     "tChartWorksheet": _render_t_chart,
+    "barGraphWorksheet": _render_bar_graph,
+    "pictographWorksheet": _render_pictograph,
 }
 
 #: Worksheet kinds that have an HTML renderer.
