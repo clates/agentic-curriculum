@@ -141,6 +141,15 @@ The correct workflow for any change:
 4. Open a PR: `gh pr create ...`
 5. Do **not** push to `main` directly
 
+**Never commit directly to `main`.** All changes must go through a pull request, regardless of size or urgency. This applies to agents, automated fixes, and humans alike.
+
+The correct workflow for any change:
+1. Create a branch from `origin/main`: `git checkout -b <branch-name> origin/main`
+2. Make commits on that branch
+3. Push the branch: `git push -u origin <branch-name>`
+4. Open a PR: `gh pr create ...`
+5. Do **not** push to `main` directly
+
 **Before pushing any commit, always verify the current branch has not been merged:**
 ```bash
 git fetch origin
