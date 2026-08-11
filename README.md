@@ -190,12 +190,22 @@ Each is a tracked script you can run today, or hand to Claude as a starting poin
 |---|---|---|---|
 | `generate_weather_week_series.py` | K–1 | Science | Printable packet + teacher guide |
 | `generate_data_week_series.py` | 1–2 | Science + Data & Graphing | Printable packet + teacher guide |
+| `generate_matter_week_series.py` | K–1 | Science | Printable packet + teacher guide |
+| `generate_sky_week_series.py` | K–1 | Science | Printable packet + teacher guide |
+| `generate_money_week_series.py` | K–1 | Math + Social Studies | Printable packet + teacher guide |
+| `generate_game_theory_week_series.py` | 1–2 | Games, Logic & Math | Printable packet + teacher guide |
+| `generate_test_taking_strategies_series.py` | K–1 | Study Skills | Printable packet + teacher guide (2-day unit) |
 | `generate_biomes_week_series.py` | 1 | Science | PNG/PDF worksheets |
 | `generate_math_week_series.py` | K–1 | Mathematics | PNG/PDF worksheets |
 | `generate_motion_week_series.py` | K–1 | Science | PNG/PDF worksheets |
 
-Run any of them with `venv/bin/python scripts/<name>`. The first two are the current format;
-the others predate it and emit individual image files instead of a single packet.
+Run any of them with `venv/bin/python scripts/<name>`. The first seven are the current format —
+all are readable in [`examples/`](examples/) without running anything. The last three predate it
+and emit individual image files instead of a single packet.
+
+Two are worth a look for showing the range of what a "week" can be: **Game Theory** builds each day
+around a game the family plays together, and **Test-Taking Strategies** is a two-day mini-unit
+rather than a full week.
 
 `scripts/` also holds earlier themed sets (Minecraft, Star Wars, phonics, farm animals, and more)
 from before the generator skill existed. They still run — they just don't follow the current

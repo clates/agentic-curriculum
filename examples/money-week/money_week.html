@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Money Week — Math &amp; Social Studies for Christopher</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: What Is Money?</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: What Is Money?</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Before reading: Look around your home for a few coins or ask a grown-up to show you some. Hold them in your hand. How do they feel? Are they the same size? Bring them back to your desk and set them aside — you will need them later this week!</div>
+<div class="passage-title">Meet Penny — and Why Money Matters!</div>
+<div class="passage"><p>Meet Penny the Piggy Bank! Penny is a shiny pink piggy bank with a big smile and a slot on her back just wide enough for a coin. She sits on Christopher&#x27;s bookshelf and every day she says, &#x27;Put a little money in me and watch it grow!&#x27;</p><p>But what exactly IS money? Money is anything that people agree to use to buy and sell things. Long ago, people traded things they had for things they needed — a farmer might trade a bag of apples for a pair of shoes. That is called bartering. But bartering was tricky! What if the shoemaker did not want apples that day? People needed something that everyone agreed was valuable — so coins and paper bills were invented.</p><p>Today we use money to buy goods and services. A good is something you can hold and take home — like a toy, a book, an apple, or a pair of shoes. A service is something someone does for you — like a haircut, a doctor&#x27;s visit, or a teacher teaching a lesson. When you pay for a good or service, you give money, and the other person gives you what you asked for.</p><p>&#x27;Every coin in my belly once helped someone buy something important,&#x27; Penny oinked happily. &#x27;Money makes trading much easier for everyone!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Why did people invent money? What problem did it solve?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is the difference between a good and a service? Give one example of each.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. What is bartering? Can you think of a time you traded something with a friend?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: If you had a bag of apples and needed new shoes, how would you use bartering to get them? What problems might come up?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">money:</span> <span class="vocab-def">Coins and bills that people agree to use to buy and sell things.</span></div><div class="vocab-item"><span class="vocab-term">bartering:</span> <span class="vocab-def">Trading one thing for another without using money — like swapping apples for shoes.</span></div><div class="vocab-item"><span class="vocab-term">goods:</span> <span class="vocab-def">Things you can hold and take home that you buy with money, like food, toys, or clothes.</span></div><div class="vocab-item"><span class="vocab-term">services:</span> <span class="vocab-def">Things people do for you that you pay for, like a haircut or a doctor&#x27;s visit.</span></div><div class="vocab-item"><span class="vocab-term">trade:</span> <span class="vocab-def">Giving something to get something else in return — buying is a kind of trade.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: Goods and Services — T-Chart</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: Goods and Services — T-Chart</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read each item in the word bank. Is it a good (something you hold and take home) or a service (something someone does for you)? Write each item in the correct column.</div>
+<div class="t-chart-word-bank"><div class="t-chart-word-bank-label">Word Bank:</div><div class="ws-tiles" style="margin-top:4px;"><span class="ws-tile">Haircut</span><span class="ws-tile">Apple</span><span class="ws-tile">Library book</span><span class="ws-tile">Doctor visit</span><span class="ws-tile">Soccer ball</span><span class="ws-tile">Pizza delivery</span><span class="ws-tile">Toy car</span><span class="ws-tile">Piano lesson</span><span class="ws-tile">Backpack</span><span class="ws-tile">Lawn mowing</span></div></div>
+<table class="t-chart">
+  <thead><tr><th style="background:#1d4ed8;">Goods</th><th style="background:#1d4ed8;">Services</th></tr></thead>
+  <tbody><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody>
+</table>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Coins and Their Values</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Coins and Their Values</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about each coin with Penny. If you have real coins, pick them up as Penny introduces each one and look carefully at both sides.
+
+Hands-on activity: Sort your coins into four piles — pennies, nickels, dimes, and quarters. Which pile has the most coins? Which single coin is worth the most?</div>
+<div class="passage-title">Penny Introduces Her Coin Friends</div>
+<div class="passage"><p>Penny shook herself and four coins tumbled out onto the table. &#x27;Let me introduce you to my four best friends!&#x27; she said proudly.</p><p>&#x27;First, meet the PENNY. A penny is a small copper-colored coin worth ONE cent. That means it takes 100 pennies to make one dollar! On the front is Abraham Lincoln, the 16th president of the United States. On the back is the Lincoln Memorial. Pennies are worth 1 cent — we write that as 1¢.&#x27;</p><p>&#x27;Next is the NICKEL. A nickel is a bigger, silver-colored coin worth FIVE cents. One nickel equals five pennies — you would need five pennies to match one nickel! Thomas Jefferson is on the front, and Monticello (his home) is on the back. &#x27;5¢.&#x27;</p><p>&#x27;Now meet the DIME. The dime is the SMALLEST coin, but do not let its size fool you — it is worth TEN cents! One dime equals two nickels, or ten pennies. Franklin Roosevelt is on the front, and a torch with an olive branch is on the back. &#x27;10¢.&#x27;</p><p>&#x27;Finally, the QUARTER. A quarter is a large, silver coin worth TWENTY-FIVE cents. It takes four quarters to make one dollar. George Washington is on the front. &#x27;25¢.&#x27;</p><p>Penny smiled. &#x27;Now you know all four of my coin friends. Remember: penny = 1¢, nickel = 5¢, dime = 10¢, quarter = 25¢. Say it with me!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. List all four coins from least to greatest value. Write the name and the value (in cents) for each.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. How many pennies equal one nickel? How many pennies equal one dime?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. The dime is the smallest coin but it is worth more than a penny or a nickel. Does size tell us the value of a coin? Explain.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: Why do you think coins have pictures of famous people on them? What person would YOU put on a coin and why?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">cent (¢):</span> <span class="vocab-def">The smallest unit of money in the United States. 100 cents = 1 dollar.</span></div><div class="vocab-item"><span class="vocab-term">penny:</span> <span class="vocab-def">A copper-colored coin worth 1 cent. 100 pennies = $1.</span></div><div class="vocab-item"><span class="vocab-term">nickel:</span> <span class="vocab-def">A silver coin worth 5 cents. 5 pennies = 1 nickel.</span></div><div class="vocab-item"><span class="vocab-term">dime:</span> <span class="vocab-def">The smallest coin, worth 10 cents. 10 pennies or 2 nickels = 1 dime.</span></div><div class="vocab-item"><span class="vocab-term">quarter:</span> <span class="vocab-def">A large silver coin worth 25 cents. 4 quarters = $1 (one dollar).</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Coin Comparison — Feature Matrix</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Coin Comparison — Feature Matrix</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Put a check mark in every box that describes each coin. Use your reading card to find the clues — look carefully!</div>
+<div class="feature-matrix-wrapper">
+<table class="feature-matrix">
+  <thead><tr><th class="fm-item-col" style="background:#15803d;">Name</th><th style="background:#15803d;">Copper color</th><th style="background:#15803d;">Silver color</th><th style="background:#15803d;">Worth less than 10¢</th><th style="background:#15803d;">Worth 10¢ or more</th><th style="background:#15803d;">Smallest coin by size</th><th style="background:#15803d;">Has a president on the front</th><th style="background:#15803d;">Worth exactly 5 pennies</th><th style="background:#15803d;">Takes 4 to make a dollar</th></tr></thead>
+  <tbody><tr><td class="fm-item-cell">Penny</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Nickel</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Dime</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Quarter</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr></tbody>
+</table>
+</div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Counting Coins</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Counting Coins</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about counting coins with Penny. Then practice with real coins if you have them.
+
+Hands-on activity: Ask a grown-up to make three coin piles for you — one pile of only pennies, one pile of only nickels, one pile of only dimes. Count each pile and find the total value. Which pile is worth the most?</div>
+<div class="passage-title">How to Count a Pile of Coins</div>
+<div class="passage"><p>Penny had a very important lesson. &#x27;Knowing what each coin is worth is great,&#x27; she said, &#x27;but what about when you have a BUNCH of coins? How do you count them?&#x27;</p><p>The key is to start with the coin that is worth the MOST, and count down. But today, Penny wants to practice counting piles of the SAME coin — that is the first step before mixing coins together.</p><p>COUNTING PENNIES: Each penny is 1¢. Count them one by one: 1¢, 2¢, 3¢... If you have 7 pennies, you have 7¢. Easy!</p><p>COUNTING NICKELS: Each nickel is 5¢. Count by FIVES: 5¢, 10¢, 15¢, 20¢... If you have 4 nickels, count: 5, 10, 15, 20 — you have 20¢!</p><p>COUNTING DIMES: Each dime is 10¢. Count by TENS: 10¢, 20¢, 30¢, 40¢... If you have 6 dimes, count: 10, 20, 30, 40, 50, 60 — you have 60¢!</p><p>COUNTING QUARTERS: Each quarter is 25¢. Count by TWENTY-FIVES: 25¢, 50¢, 75¢, 100¢. 100¢ is the same as ONE DOLLAR, written as $1.00!</p><p>&#x27;The trick,&#x27; said Penny with a wink, &#x27;is to know your skip-counting! Count by 1s for pennies, 5s for nickels, 10s for dimes, and 25s for quarters.&#x27; Christopher practiced counting and found he had exactly 35¢ in his nickel pile. &#x27;Seven nickels!&#x27; he shouted. Penny rattled happily.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. You have 5 nickels. Count by fives to find the total. How many cents is that?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. You have 8 dimes. Count by tens to find the total. How many cents is that?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. You have 4 quarters. Count by twenty-fives. How many cents is that? What is another word for that amount?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. If you have 9 pennies and your friend has 2 nickels, who has more money? How do you know?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: Why is it smart to count the highest-value coins first when you have a mixed pile? What might happen if you counted the pennies first?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">value:</span> <span class="vocab-def">How much a coin is worth — the number of cents.</span></div><div class="vocab-item"><span class="vocab-term">count by fives:</span> <span class="vocab-def">Saying numbers in jumps of five: 5, 10, 15, 20 ... Used to count nickels.</span></div><div class="vocab-item"><span class="vocab-term">count by tens:</span> <span class="vocab-def">Saying numbers in jumps of ten: 10, 20, 30, 40 ... Used to count dimes.</span></div><div class="vocab-item"><span class="vocab-term">dollar ($1.00):</span> <span class="vocab-def">One hundred cents. Four quarters, ten dimes, twenty nickels, or 100 pennies all equal one dollar.</span></div><div class="vocab-item"><span class="vocab-term">total:</span> <span class="vocab-def">The final amount you get when you add all the coins together.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Coin Counting — What&#x27;s the Total?</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Coin Counting — What&#x27;s the Total?</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Each cause shows a pile of coins. Write the effect — what is the total value? Count by the right skip-counting rule for each coin type. Show your work!</div>
+<div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You have 6 pennies. Count by 1s.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You have 3 nickels. Count by 5s: 5¢, ___, ___</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You have 7 dimes. Count by 10s: 10¢, 20¢, ___, ___, ___, ___, ___</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You have 2 quarters. Count by 25s: 25¢, ___</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You save 10 dimes. How many cents is that? Is it enough for a $1.00 snack?</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Earning and Saving Money</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Earning and Saving Money</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about earning and saving with Penny. Then answer the questions below.
+
+Real-life activity: With a grown-up, talk about three jobs or chores you could do at home to earn coins. Write them on a sticky note and put it on your desk as a reminder — you are now officially in the earning business!</div>
+<div class="passage-title">How Does Money Get Into Penny?</div>
+<div class="passage"><p>Penny sighed happily as Christopher dropped three coins into her slot — clink, clink, CLINK! &#x27;Where did you get those?&#x27; she asked. &#x27;I helped my mom fold laundry,&#x27; said Christopher proudly. &#x27;She gave me 15 cents!&#x27; Penny grinned. &#x27;That is EARNING!&#x27;</p><p>Earning money means doing a job or chore and receiving money as payment. People earn money in many ways — parents go to work, kids do chores, and sometimes people sell things they have made or grown. The money you earn is called your income.</p><p>But what do you DO with money once you earn it? You have two choices: spend it now, or save it for later. Saving means keeping money so you can use it in the future — usually for something bigger. When you put money in a piggy bank, that is saving!</p><p>&#x27;I love it when people save,&#x27; said Penny. &#x27;A little bit every day adds up fast. If you save just 5 pennies a day, after 10 days you will have 50 pennies — that is 50 cents! After 20 days, 100 pennies — that is a whole dollar!&#x27;</p><p>Christopher added up his savings in his head. He had 12 cents on Monday, earned 15 cents on Thursday, and was going to earn 10 more cents this weekend. &#x27;How much will I have total?&#x27; he asked. Penny rattled with excitement. &#x27;Let us figure it out together: 12 + 15 = 27, and 27 + 10 = 37. Thirty-seven cents!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What does it mean to earn money? Give two examples of ways a child can earn money.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is the difference between spending and saving? Which one fills up Penny?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Christopher saves 5 pennies every day. How much will he have after 6 days? Show your counting.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. If Christopher has 12 cents and earns 8 more cents for setting the table, how much money does he have now?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: If you had 20 cents, would you spend it right away on a small treat, or save it for something bigger? What would you save up for?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">earning:</span> <span class="vocab-def">Getting money by doing a job or chore — working in exchange for payment.</span></div><div class="vocab-item"><span class="vocab-term">income:</span> <span class="vocab-def">The money you earn from doing a job or providing a service.</span></div><div class="vocab-item"><span class="vocab-term">saving:</span> <span class="vocab-def">Keeping money set aside to use later, instead of spending it right away.</span></div><div class="vocab-item"><span class="vocab-term">spending:</span> <span class="vocab-def">Using money to buy something right now.</span></div><div class="vocab-item"><span class="vocab-term">piggy bank:</span> <span class="vocab-def">A container — often shaped like a pig — used to save coins at home.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Money Words — Matching</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Money Words — Matching</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Draw a line from each money word on the left to its correct meaning on the right.</div>
+<div class="matching-row"><div class="matching-number">1.</div><div class="matching-left">Earning</div><div class="matching-line"></div><div class="matching-right">Doing a job and receiving money as payment</div></div><div class="matching-row"><div class="matching-number">2.</div><div class="matching-left">Saving</div><div class="matching-line"></div><div class="matching-right">Keeping money to use in the future</div></div><div class="matching-row"><div class="matching-number">3.</div><div class="matching-left">Spending</div><div class="matching-line"></div><div class="matching-right">Using money to buy something now</div></div><div class="matching-row"><div class="matching-number">4.</div><div class="matching-left">Income</div><div class="matching-line"></div><div class="matching-right">The money you receive from doing a job</div></div><div class="matching-row"><div class="matching-number">5.</div><div class="matching-left">Bartering</div><div class="matching-line"></div><div class="matching-right">Trading one thing for another without money</div></div><div class="matching-row"><div class="matching-number">6.</div><div class="matching-left">Goods</div><div class="matching-line"></div><div class="matching-right">Things you can hold and take home that you buy</div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Needs vs. Wants — Making Smart Choices</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Needs vs. Wants — Making Smart Choices</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read the capstone passage with Penny. Then answer the questions.
+
+Capstone activity: Before starting, look around the room and name three things you NEED and three things you WANT. After the lesson, check your list — did you get them right? Would you change any answers now?</div>
+<div class="passage-title">How Does Penny Help Christopher Decide What to Buy?</div>
+<div class="passage"><p>It was Friday and Christopher had 75 cents saved in Penny the Piggy Bank. &#x27;I want to spend some of it!&#x27; he said. Penny gave him a knowing look. &#x27;Before you spend,&#x27; she said wisely, &#x27;let me teach you the most important money lesson of all: the difference between NEEDS and WANTS.&#x27;</p><p>A NEED is something you must have to live a safe and healthy life. Food, water, clothing, shelter (a home to live in), and healthcare are all needs. Without these things, you could not survive or stay healthy. Families always pay for needs first.</p><p>A WANT is something you would LIKE to have but do not absolutely need to survive. Toys, video games, candy, and fancy sneakers are wants. Wants are not bad — it is wonderful to enjoy nice things — but they come AFTER needs.</p><p>&#x27;Here is the tricky part,&#x27; said Penny. &#x27;Money is limited. You cannot have everything, so you must CHOOSE. Every time you decide to buy one thing, you give up buying something else. That is called a trade-off.&#x27;</p><p>Christopher looked at his 75 cents. He wanted to buy a toy car (50¢), a bag of apple slices (25¢), and a sticker book (40¢). He only had 75¢. &#x27;The apple slices are food — that is a need,&#x27; he said slowly. &#x27;I will buy those first. Then I have 50¢ left, just enough for the toy car. I will save up more for the sticker book another week!&#x27; Penny rattled with pride. &#x27;Now THAT is a smart money choice!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is the difference between a need and a want? Give two examples of each.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is a trade-off? Give an example using money.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Christopher had 75¢. He spent 25¢ on apple slices and 50¢ on a toy car. How much does he have left? Show your work.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Why should needs always come before wants when spending money?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. This week you learned: what money is, coin values, counting coins, earning and saving, and needs vs. wants. Which lesson was your favorite and why?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">6. LET&#x27;S DISCUSS: If your family had exactly $10 left this week, what would you spend it on — and what would you leave off the list? How did you decide?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">need:</span> <span class="vocab-def">Something you must have to stay safe and healthy — food, water, clothing, shelter, healthcare.</span></div><div class="vocab-item"><span class="vocab-term">want:</span> <span class="vocab-def">Something you would like to have but do not need to survive — toys, candy, extra clothes.</span></div><div class="vocab-item"><span class="vocab-term">limited:</span> <span class="vocab-def">Not having an unlimited amount — money is limited, so you must choose how to use it.</span></div><div class="vocab-item"><span class="vocab-term">trade-off:</span> <span class="vocab-def">When you choose one thing and give up something else because you cannot have both.</span></div><div class="vocab-item"><span class="vocab-term">choice:</span> <span class="vocab-def">Deciding between two or more options — good money choices put needs before wants.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Needs and Wants — Capstone Word Sort</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Needs and Wants — Capstone Word Sort</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read each item in the word bank. Is it a NEED (must have to survive) or a WANT (nice to have, but not necessary)? Write each item in the correct box. Some might surprise you!</div>
+<div class="word-sort-categories" style="grid-template-columns:repeat(2,1fr);">
+<div class="ws-category" style="border-color:#0f766e;"><div class="ws-category-label" style="color:#0f766e;">Needs</div></div><div class="ws-category" style="border-color:#0f766e;"><div class="ws-category-label" style="color:#0f766e;">Wants</div></div>
+</div>
+<div class="ws-tile-bank">
+  <div class="ws-tile-bank-label">Word Bank — write each word in the correct box above:</div>
+  <div class="ws-tiles"><span class="ws-tile">Vegetables</span><span class="ws-tile">Video game</span><span class="ws-tile">Clean water</span><span class="ws-tile">Stuffed animal</span><span class="ws-tile">Winter coat</span><span class="ws-tile">Candy bar</span><span class="ws-tile">Doctor visit</span><span class="ws-tile">Fancy shoes</span><span class="ws-tile">A safe home</span><span class="ws-tile">New bicycle</span><span class="ws-tile">Bread</span><span class="ws-tile">Movie ticket</span></div>
+</div>
+</div>
+<div class="page last-page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">End-of-Week Parent Feedback — Money Week</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">End-of-Week Parent Feedback — Money Week</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Please complete this feedback sheet after the week wraps up. Your notes help shape next week&#x27;s lessons.</div>
+<div class="passage-title">Week Summary &amp; Teaching Notes for the Parent</div>
+<div class="passage"><p>This week followed a causal arc through the fundamentals of money. Monday introduced what money IS — solving the problem of bartering — and established the difference between goods and services. Tuesday focused on the four US coins (penny, nickel, dime, quarter), their values, and key equivalencies. Wednesday built on coin knowledge with counting collections of like coins using skip-counting strategies. Thursday introduced earning and saving, and practiced single-step addition within 20 using money story problems. Friday brought everything together with the needs vs. wants framework and real-world decision-making under a budget constraint.</p><p>Penny the Piggy Bank served as the narrator throughout, experiencing each concept from the perspective of a cheerful coin-collector who models good saving and spending habits.</p><p>Key concepts to check for genuine understanding — not just recall:
+1) Why money was invented (bartering problems) — not just &#x27;people use money to buy things.&#x27;
+2) The DIME is the smallest coin but worth more than a penny or nickel.
+3) Skip-counting rules (x1 for pennies, x5 for nickels, x10 for dimes, x25 for quarters).
+4) The difference between earning (doing work) and saving (keeping for later).
+5) Needs MUST come before wants when money is limited — and that trade-offs are real.</p><p>Common misconceptions to watch for:
+• &#x27;Bigger coin = more valuable&#x27; — the dime disproves this; value and size are unrelated.
+• &#x27;Wants are bad&#x27; — they are not! The point is priority, not prohibition.
+• &#x27;Saving means hiding money&#x27; — saving is intentional and purposeful, not just setting aside.</p><p>Suggested follow-on activities: keep a simple weekly savings log; visit a grocery store and practice identifying needs vs. wants in the aisles; let Christopher earn and save toward a specific goal, tracking progress on a chart.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Overall comfort with money concepts — how well did Christopher grasp the week&#x27;s ideas? (1 = struggled throughout, 5 = strong grasp of all concepts)</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which day&#x27;s lesson generated the most curiosity or questions?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. By Friday, could Christopher correctly count a small pile of like coins using skip-counting?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Did Christopher show understanding of needs vs. wants in a real-life moment during the week (e.g., at a store, or when asking for something)?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. Topics or vocabulary to revisit next week:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Key Misconception to Watch:</span> <span class="vocab-def">A bigger coin does NOT mean more value — the dime (smallest) is worth more than the penny and nickel.</span></div><div class="vocab-item"><span class="vocab-term">Strongest Concept This Week:</span> <span class="vocab-def">(Fill in after the week — which idea did Christopher grasp best?)</span></div><div class="vocab-item"><span class="vocab-term">Next Week&#x27;s Hook:</span> <span class="vocab-def">Counting mixed coins — what happens when you have a quarter AND some dimes AND nickels in one pile?</span></div></div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>
