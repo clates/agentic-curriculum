@@ -2,6 +2,10 @@
 .env
 .env.*
 
+# Personal student profile (copy student_profile.example.json to create it).
+# Contains details about a real child — never commit it.
+student_profile.json
+
 # Generated output series
 output/
 
@@ -34,7 +38,9 @@ artifacts/
 # Ad-hoc bespoke generator scripts kept locally as reference material (not canonical)
 scripts/reference/
 
-# Generated worksheet series output (produced by scripts/generate_*.py)
+# Generated worksheet series output (produced by scripts/generate_*.py).
+# These are private, per-run generations. Curated shareable output lives in examples/
+# (hyphenated dir names, e.g. examples/weather-week/) and is intentionally tracked.
 *_series/
 *_series_v*/
 

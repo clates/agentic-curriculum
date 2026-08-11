@@ -55,8 +55,18 @@ and a frontend test server on port 3002 — it never touches `curriculum.db` or 
   the repo root — `<theme>_week.html` (student packet) and `<theme>_week_teacher_guide.html`
   (teacher guide), both emitted by the generator script. Output dirs are gitignored: the script is
   the only tracked artifact and must fully reproduce the week.
+- **`examples/` is the one exception**: curated, shareable output lives in `examples/<theme>-week/`
+  and is intentionally tracked. Use hyphens — the `*_series/` ignore pattern would swallow an
+  underscored name. Only add output fit for a stranger to read, and only when its generator script
+  is committed too.
+- **`student_profile.json` is gitignored and describes a real child.** Never commit it, echo it into
+  a PR body, or paste it into an issue. `student_profile.example.json` is the tracked template;
+  `/generate-week` bootstraps the real file by asking the user when it's missing.
 - `scripts/reference/` (gitignored, may be absent) holds bespoke one-off generator scripts kept as
   local reference — not canonical patterns.
+- Audience docs split by reader: `README.md` for non-technical users (printing and authoring weeks),
+  `CONTRIBUTING.md` for developers (setup, tests, Docker, PR workflow), `AGENTS.md` for worksheet
+  and pedagogy internals. Keep dev detail out of `README.md`.
 
 ## Skills
 
