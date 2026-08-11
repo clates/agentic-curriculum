@@ -1,0 +1,17 @@
+{
+  "_comment": "Copy this file to student_profile.json and edit it for your student. student_profile.json is gitignored — it never leaves your machine. Claude Code reads it to size and aim every week it writes.",
+
+  "name": "Alex",
+  "age": 6,
+  "grade_label": "1st grade",
+  "grade_level": 1,
+
+  "reading_level": "Reads simple sentences independently; still sounds out longer words.",
+  "writing_level": "Writes short sentences; gets tired after about three lines of writing.",
+
+  "interests": ["dinosaurs", "building things", "animals", "space"],
+
+  "subjects_in_focus": ["Science", "Mathematics"],
+
+  "notes": "Loves hands-on and outdoor activities. Gets frustrated by long blocks of text — break reading into short chunks. Strong at counting and patterns; still shaky on subtraction."
+}

@@ -29,8 +29,19 @@ supports an optional `columns` layout key; `matchingWorksheet` items may be stri
 ## 1. Inputs
 
 - **Theme** (required) — e.g. "weather", "ancient Egypt".
-- Optional: age/grade, subject. Default to the established audience (Christopher, age 6,
-  grade K–1) if unspecified.
+- **Audience — read `student_profile.json` at the repo root.** It holds the student's age, grade,
+  reading/writing level, interests, and notes; use it to size the week, pitch the vocabulary, and
+  pick a narrator the student will care about.
+
+  **If `student_profile.json` does not exist**, create it before writing any content: read
+  `student_profile.example.json` for the shape, then ask the user for their student's name, age,
+  grade, reading and writing level, and interests. Write their answers to `student_profile.json`
+  (gitignored — it holds details about a real child, so never commit it or echo it into a PR).
+  Confirm the saved profile back to the user in one line, then continue.
+
+  Anything the user states in the prompt ("for a 4th grader", "she hates writing") **overrides the
+  profile for this week only** — do not rewrite the file to match a one-off request.
+- Optional: subject. Infer from the theme and the profile's `subjects_in_focus` if unspecified.
 - **Standards — always align, and always look them up** (unless the user supplies them).
   Query `curriculum.db` for the audience's grade band and subject and pick the standards the
   theme genuinely serves:

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Detectives Week — Science &amp; Graphing for Grades 1-2</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: Data Detectives</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: Data Detectives</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Before reading: Go outside or look out a window for two minutes. Count how many birds, cars, or clouds you see. Come back and tell someone your number!</div>
+<div class="passage-title">Meet Dot the Ladybug!</div>
+<div class="passage"><p>Meet Dot! Dot is a little red ladybug with six black spots. Dot loves to count. First she counts her own spots: one, two, three, four, five, six! Then she counts everything else she sees.</p><p>Dot says, &#x27;A scientist is a data detective.&#x27; What is data? Data is facts you collect by watching and counting. When you count how many red cars drive by, that number is data!</p><p>Dot has a smart trick for counting. She uses tally marks. Each thing she counts gets one little line: | . When she gets to five, she draws a line across the group, like this: ||||. Tally marks help her count fast without losing her place.</p><p>Dot writes her tally marks in a table. A table has rows and boxes to keep data neat and tidy. When Dot&#x27;s table is full, she can look at it and see what she found out. &#x27;Good scientists write it down,&#x27; says Dot. &#x27;If you do not record your data, you might forget it!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is data? Give one example.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Why does Dot use tally marks when she counts?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Why does a good scientist write down (record) their data?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: If Dot counted 20 bugs but did not write it down, and then took a nap, what might happen? Why is recording data so important?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">tally mark:</span> <span class="vocab-def">A little line ( | ) you draw to count one thing. Five is drawn as ||||.</span></div><div class="vocab-item"><span class="vocab-term">data:</span> <span class="vocab-def">Facts you collect by watching and counting.</span></div><div class="vocab-item"><span class="vocab-term">scientist:</span> <span class="vocab-def">A person who observes, counts, and finds out how things work.</span></div><div class="vocab-item"><span class="vocab-term">table:</span> <span class="vocab-def">Rows and boxes that keep your data neat and easy to read.</span></div><div class="vocab-item"><span class="vocab-term">record:</span> <span class="vocab-def">To write your data down so you do not forget it.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: My Counting Experiment</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: My Counting Experiment</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Be a data detective like Dot! Pick ONE thing from the word bank to hunt for around your home or yard. Write what you counted on the left. On the right, make a tally mark ( | ) for each one you find. Then write the total number. Fill in as many rows as you can!</div>
+<div class="t-chart-word-bank"><div class="t-chart-word-bank-label">Word Bank:</div><div class="ws-tiles" style="margin-top:4px;"><span class="ws-tile">Windows</span><span class="ws-tile">Doors</span><span class="ws-tile">Red things</span><span class="ws-tile">Round things</span><span class="ws-tile">Chairs</span><span class="ws-tile">Books</span><span class="ws-tile">Spoons</span><span class="ws-tile">Shoes</span></div></div>
+<table class="t-chart">
+  <thead><tr><th style="background:#1d4ed8;">What I Counted</th><th style="background:#1d4ed8;">Tally Marks and Total</th></tr></thead>
+  <tbody><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody>
+</table>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Picture Graphs</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Picture Graphs</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read with Dot. Then get ready to read and make picture graphs on the next two pages.</div>
+<div class="passage-title">Dot Draws Her Data</div>
+<div class="passage"><p>Dot counted lots of data. Now she wants to SHOW it so everyone can see it fast. So Dot made a pictograph. A pictograph is a graph that uses pictures to show data.</p><p>In Dot&#x27;s pictograph, each little picture stands for a number. Every pictograph has a key at the top. The key tells you what one picture is worth. Dot&#x27;s key says: each ladybug picture = 1 ladybug. So if a row has 5 ladybug pictures, that means 5 ladybugs!</p><p>Pictographs are easy to read. The row with the MOST pictures is the biggest group. The row with the FEWEST pictures is the smallest group. You can even count how many MORE one row has than another by looking at the extra pictures.</p><p>Sometimes a scientist has BIG numbers. Then each picture can stand for 2, or 5, or 10! Always read the key first. The key is the secret code for the whole graph. &#x27;Read the key, then you can read me,&#x27; sings Dot.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What does a pictograph use to show data?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Why should you always read the key first?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. In a pictograph, how can you tell which group is the biggest?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: Dot&#x27;s key says each picture = 2 bugs. A row has 4 pictures. How many bugs is that? What if the key changed to each picture = 5?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">pictograph:</span> <span class="vocab-def">A graph that uses pictures to show data. Also called a picture graph.</span></div><div class="vocab-item"><span class="vocab-term">key:</span> <span class="vocab-def">The part of a graph that tells you what one picture is worth.</span></div><div class="vocab-item"><span class="vocab-term">most:</span> <span class="vocab-def">The biggest group — the row with the most pictures.</span></div><div class="vocab-item"><span class="vocab-term">fewest:</span> <span class="vocab-def">The smallest group — the row with the fewest pictures.</span></div><div class="vocab-item"><span class="vocab-term">row:</span> <span class="vocab-def">A line of pictures that goes across, one for each group.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Read Dot&#x27;s Ladybug Graph</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Read Dot&#x27;s Ladybug Graph</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Dot counted the ladybugs she saw each day. Read her pictograph, then answer the questions. Read the key first!</div>
+<div class="pg-key" style="background:#dcfce7;color:#15803d;">Key:  each 🐞 = 1 ladybugs</div>
+<div class="pg-table"><div class="pg-row"><div class="pg-label">Monday</div><div class="pg-symbols">🐞🐞🐞🐞🐞</div></div><div class="pg-row"><div class="pg-label">Tuesday</div><div class="pg-symbols">🐞🐞🐞</div></div><div class="pg-row"><div class="pg-label">Wednesday</div><div class="pg-symbols">🐞🐞🐞🐞🐞🐞</div></div><div class="pg-row"><div class="pg-label">Thursday</div><div class="pg-symbols">🐞🐞</div></div><div class="pg-row"><div class="pg-label">Friday</div><div class="pg-symbols">🐞🐞🐞🐞</div></div></div>
+<div class="graph-questions"><h3>Read the Graph</h3><div class="question"><div class="question-prompt">1. Which day did Dot see the MOST ladybugs?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which day did Dot see the FEWEST ladybugs?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. How many MORE ladybugs did Dot see on Wednesday than on Thursday?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. How many ladybugs did Dot see on Monday and Tuesday put together?</div><div class="answer-lines"><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Make Your Own Pictograph</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Make Your Own Pictograph</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Dot counted the flowers in her garden: 4 Roses, 6 Tulips, and 3 Daisies. Show her data! Draw one 🌸 in the row for each flower she counted. The key tells you each 🌸 = 1 flower.</div>
+<div class="pg-key" style="background:#dcfce7;color:#15803d;">Key:  each 🌸 = 1 flower</div>
+<div class="pg-table"><div class="pg-row"><div class="pg-label">Roses (4)</div><div class="pg-symbols"><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span></div></div><div class="pg-row"><div class="pg-label">Tulips (6)</div><div class="pg-symbols"><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span></div></div><div class="pg-row"><div class="pg-label">Daisies (3)</div><div class="pg-symbols"><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span><span class="pg-cell"></span></div></div></div>
+<div class="graph-questions"><h3>Read the Graph</h3><div class="question"><div class="question-prompt">1. After you draw it: which flower has the LONGEST row? What does that mean?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Bar Graphs</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Bar Graphs</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read with Dot. Then do the Ramp Race experiment and turn your data into a bar graph!</div>
+<div class="passage-title">Dot Builds Bars</div>
+<div class="passage"><p>Dot learned a new way to show data: a bar graph. A bar graph uses bars instead of pictures. A bar is a tall rectangle you color in. The taller the bar, the bigger the number!</p><p>A bar graph has two sides called axes. The bottom axis tells you the groups you are counting, like Low, Medium, and High. The side axis has numbers that go up: 1, 2, 3, and more. To read a bar, you look at how high it reaches on the number side.</p><p>Every good graph also has a title at the top. The title tells you what the graph is about. Without a title, you would not know what all the bars mean!</p><p>Dot loves bar graphs because you can see the answer with your eyes. The tallest bar jumps right out at you. &#x27;One quick look,&#x27; says Dot, &#x27;and I know which group won!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. In a bar graph, what does a taller bar mean?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What do the two axes tell you? (bottom axis and side axis)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Why does every graph need a title?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: Dot says a bar graph lets you &#x27;see the answer with your eyes.&#x27; Is a bar graph or a big list of numbers easier to read quickly? Why?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">bar graph:</span> <span class="vocab-def">A graph that uses tall bars to show data. Taller bars mean bigger numbers.</span></div><div class="vocab-item"><span class="vocab-term">bar:</span> <span class="vocab-def">A rectangle you color in. Its height shows how many.</span></div><div class="vocab-item"><span class="vocab-term">axis:</span> <span class="vocab-def">A side of the graph. The bottom shows the groups; the side shows the numbers.</span></div><div class="vocab-item"><span class="vocab-term">title:</span> <span class="vocab-def">The name at the top of a graph that tells what it is about.</span></div><div class="vocab-item"><span class="vocab-term">tallest:</span> <span class="vocab-def">The highest bar — it shows the biggest number.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Ramp Race — Collect Your Data</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Ramp Race — Collect Your Data</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">EXPERIMENT: Prop a book or board to make a ramp. Roll a toy car (or ball) down it. Do it three times: a LOW ramp (1 book), a MEDIUM ramp (2 books), and a HIGH ramp (3 books). Each time, count how many BIG STEPS the car rolls. Write your steps here. Keep everything else the same so it is a fair test!</div>
+<div class="t-chart-word-bank"><div class="t-chart-word-bank-label">Word Bank:</div><div class="ws-tiles" style="margin-top:4px;"><span class="ws-tile">Low ramp</span><span class="ws-tile">Medium ramp</span><span class="ws-tile">High ramp</span></div></div>
+<table class="t-chart">
+  <thead><tr><th style="background:#7c3aed;">Ramp Height</th><th style="background:#7c3aed;">How Far It Rolled (big steps)</th></tr></thead>
+  <tbody><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody>
+</table>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Ramp Race — Make a Bar Graph</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Ramp Race — Make a Bar Graph</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Now show your Ramp Race data! Color one bar for each ramp. Make each bar as tall as the number of steps the car rolled. Count the lines on the side to get it just right.</div>
+<div class="bg-wrap">
+  <div class="bg-flex">
+    <div class="bg-ytitle">How far it rolled (steps)</div>
+    <div class="bg-ticks"><div class="bg-tick" style="top:100.0000%;">0</div><div class="bg-tick" style="top:90.0000%;">1</div><div class="bg-tick" style="top:80.0000%;">2</div><div class="bg-tick" style="top:70.0000%;">3</div><div class="bg-tick" style="top:60.0000%;">4</div><div class="bg-tick" style="top:50.0000%;">5</div><div class="bg-tick" style="top:40.0000%;">6</div><div class="bg-tick" style="top:30.0000%;">7</div><div class="bg-tick" style="top:20.0000%;">8</div><div class="bg-tick" style="top:10.0000%;">9</div><div class="bg-tick" style="top:0.0000%;">10</div></div>
+    <div class="bg-plot" style="height:2.6in;">
+      <div class="bg-gridline" style="top:100.0000%;"></div><div class="bg-gridline" style="top:90.0000%;"></div><div class="bg-gridline" style="top:80.0000%;"></div><div class="bg-gridline" style="top:70.0000%;"></div><div class="bg-gridline" style="top:60.0000%;"></div><div class="bg-gridline" style="top:50.0000%;"></div><div class="bg-gridline" style="top:40.0000%;"></div><div class="bg-gridline" style="top:30.0000%;"></div><div class="bg-gridline" style="top:20.0000%;"></div><div class="bg-gridline" style="top:10.0000%;"></div><div class="bg-gridline" style="top:0.0000%;"></div>
+      <div class="bg-lanes"><div class="bg-lane"></div><div class="bg-lane"></div><div class="bg-lane"></div></div>
+    </div>
+  </div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xlabels"><div class="bg-xlabel">Low ramp</div><div class="bg-xlabel">Medium ramp</div><div class="bg-xlabel">High ramp</div></div></div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xtitle">Ramp Height</div></div>
+</div>
+<div class="graph-questions"><h3>Read the Graph</h3><div class="question"><div class="question-prompt">1. Which ramp made the car roll the FARTHEST? Circle its bar.</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What happened to the car&#x27;s distance as the ramp got higher?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Reading Graphs Like a Scientist</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Reading Graphs Like a Scientist</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read with Dot. Then read a bar graph and a pictograph on the next two pages and answer the questions.</div>
+<div class="passage-title">What Is the Graph Telling You?</div>
+<div class="passage"><p>Making a graph is only half the job. A data detective must also READ the graph to find out what it means. Dot asks herself four questions every time.</p><p>First: Which group is the MOST? That is the tallest bar or the longest row. Second: Which group is the LEAST? That is the shortest bar or the shortest row.</p><p>Third: How many MORE does one group have than another? To find out, Dot finds each number and subtracts the smaller from the bigger. If one bar is 8 and another is 5, then 8 take away 5 is 3 more.</p><p>Fourth: How many ALTOGETHER? Dot adds up all the groups to get the total. When you can answer these four questions, you truly understand your data. &#x27;A graph is a story,&#x27; says Dot. &#x27;Reading it tells you what happened!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What are the four questions Dot asks when she reads a graph?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. To find how many MORE one bar has than another, what do you do?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. LET&#x27;S DISCUSS: Dot says &#x27;a graph is a story.&#x27; What story might a graph of your bedtime each night tell? What would the tallest bar mean?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">compare:</span> <span class="vocab-def">To look at two groups and see how they are different — more or less.</span></div><div class="vocab-item"><span class="vocab-term">how many more:</span> <span class="vocab-def">The difference between two groups. Subtract the smaller from the bigger.</span></div><div class="vocab-item"><span class="vocab-term">altogether:</span> <span class="vocab-def">The total when you add all the groups up.</span></div><div class="vocab-item"><span class="vocab-term">least:</span> <span class="vocab-def">The smallest group — the shortest bar or row.</span></div><div class="vocab-item"><span class="vocab-term">difference:</span> <span class="vocab-def">How far apart two numbers are. You find it by subtracting.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Read the Seed Graph</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Read the Seed Graph</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Dot planted the same seeds in three spots. This bar graph shows how many seeds sprouted in each spot. Read the bars, then answer the questions.</div>
+<div class="bg-wrap">
+  <div class="bg-flex">
+    <div class="bg-ytitle">Seeds that sprouted</div>
+    <div class="bg-ticks"><div class="bg-tick" style="top:100.0000%;">0</div><div class="bg-tick" style="top:90.0000%;">1</div><div class="bg-tick" style="top:80.0000%;">2</div><div class="bg-tick" style="top:70.0000%;">3</div><div class="bg-tick" style="top:60.0000%;">4</div><div class="bg-tick" style="top:50.0000%;">5</div><div class="bg-tick" style="top:40.0000%;">6</div><div class="bg-tick" style="top:30.0000%;">7</div><div class="bg-tick" style="top:20.0000%;">8</div><div class="bg-tick" style="top:10.0000%;">9</div><div class="bg-tick" style="top:0.0000%;">10</div></div>
+    <div class="bg-plot" style="height:2.6in;">
+      <div class="bg-gridline" style="top:100.0000%;"></div><div class="bg-gridline" style="top:90.0000%;"></div><div class="bg-gridline" style="top:80.0000%;"></div><div class="bg-gridline" style="top:70.0000%;"></div><div class="bg-gridline" style="top:60.0000%;"></div><div class="bg-gridline" style="top:50.0000%;"></div><div class="bg-gridline" style="top:40.0000%;"></div><div class="bg-gridline" style="top:30.0000%;"></div><div class="bg-gridline" style="top:20.0000%;"></div><div class="bg-gridline" style="top:10.0000%;"></div><div class="bg-gridline" style="top:0.0000%;"></div>
+      <div class="bg-lanes"><div class="bg-lane"><div class="bg-bar" style="height:20.0000%;background:#ffedd5;border-color:#c2410c;"></div></div><div class="bg-lane"><div class="bg-bar" style="height:50.0000%;background:#ffedd5;border-color:#c2410c;"></div></div><div class="bg-lane"><div class="bg-bar" style="height:80.0000%;background:#ffedd5;border-color:#c2410c;"></div></div></div>
+    </div>
+  </div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xlabels"><div class="bg-xlabel">Shade</div><div class="bg-xlabel">Some sun</div><div class="bg-xlabel">Full sun</div></div></div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xtitle">Where the seeds grew</div></div>
+</div>
+<div class="graph-questions"><h3>Read the Graph</h3><div class="question"><div class="question-prompt">1. Which spot had the MOST seeds sprout?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which spot had the FEWEST seeds sprout?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. How many MORE seeds sprouted in Full sun than in Shade?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. How many seeds sprouted ALTOGETHER in all three spots?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. What does this graph tell you that plants need to grow well?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Read the Garden Bug Graph</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Read the Garden Bug Graph</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Dot counted the bugs in the garden. Careful — this key is tricky! Each 🐛 stands for 2 bugs. Read the key, then answer the questions.</div>
+<div class="pg-key" style="background:#ffedd5;color:#c2410c;">Key:  each 🐛 = 2 bugs</div>
+<div class="pg-table"><div class="pg-row"><div class="pg-label">Ants</div><div class="pg-symbols">🐛🐛🐛🐛</div></div><div class="pg-row"><div class="pg-label">Bees</div><div class="pg-symbols">🐛🐛</div></div><div class="pg-row"><div class="pg-label">Worms</div><div class="pg-symbols">🐛🐛🐛</div></div></div>
+<div class="graph-questions"><h3>Read the Graph</h3><div class="question"><div class="question-prompt">1. How many ANTS did Dot find? (each picture = 2!)</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. How many BEES did Dot find?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. How many MORE ants were there than bees?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. How many bugs did Dot find ALTOGETHER?</div><div class="answer-lines"><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Be a Data Scientist!</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Be a Data Scientist!</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read with Dot. Then do the Paper Airplane Contest, record your data, graph it, and read your own graph. You are a real data detective now!</div>
+<div class="passage-title">Dot&#x27;s Big Experiment</div>
+<div class="passage"><p>This week Dot learned every step a data detective takes. Today she does them ALL. Dot follows five steps.</p><p>Step 1: ASK a question. Dot asks, &#x27;Which paper airplane flies the farthest?&#x27;
+Step 2: DO an experiment. Dot folds three planes and flies each one.
+Step 3: RECORD the data. Dot writes down how far each plane flew in a table.</p><p>Step 4: GRAPH the data. Dot makes a bar graph so she can see it fast.
+Step 5: READ the graph. Dot finds the tallest bar and answers her question!</p><p>&#x27;Ask, do, record, graph, read,&#x27; says Dot. &#x27;That is how a scientist finds an answer.&#x27; Now it is your turn to fly some planes and graph what happens. Ready, data detective?</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What are Dot&#x27;s five steps? (Ask, Do, Record, Graph, Read)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What question is Dot trying to answer today?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. LET&#x27;S DISCUSS: To make it a FAIR test, what should stay the same each time you throw a plane? (Think: who throws it, from where, how hard.)</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">experiment:</span> <span class="vocab-def">A test you do to find out the answer to a question.</span></div><div class="vocab-item"><span class="vocab-term">question:</span> <span class="vocab-def">What you want to find out. Every experiment starts with one.</span></div><div class="vocab-item"><span class="vocab-term">fair test:</span> <span class="vocab-def">Keeping everything the same except the one thing you are testing.</span></div><div class="vocab-item"><span class="vocab-term">graph:</span> <span class="vocab-def">A picture of your data that makes it easy to read.</span></div><div class="vocab-item"><span class="vocab-term">results:</span> <span class="vocab-def">What you found out after your experiment — your data.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Paper Airplane Contest — Record Your Data</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Paper Airplane Contest — Record Your Data</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">EXPERIMENT: Fold three paper airplanes — a Dart, a Glider, and a Wide-wing. Throw each one from the same spot. Count how many BIG STEPS each plane flew. Throw each plane one time and write your data here. Remember: keep it a fair test!</div>
+<div class="t-chart-word-bank"><div class="t-chart-word-bank-label">Word Bank:</div><div class="ws-tiles" style="margin-top:4px;"><span class="ws-tile">Dart</span><span class="ws-tile">Glider</span><span class="ws-tile">Wide-wing</span></div></div>
+<table class="t-chart">
+  <thead><tr><th style="background:#0f766e;">Airplane</th><th style="background:#0f766e;">How Far It Flew (big steps)</th></tr></thead>
+  <tbody><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody>
+</table>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Paper Airplane Contest — Graph and Read It</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Paper Airplane Contest — Graph and Read It</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Show your airplane data! Color one bar for each plane, as tall as the number of steps it flew. Then read YOUR OWN graph to answer the questions below.</div>
+<div class="bg-wrap">
+  <div class="bg-flex">
+    <div class="bg-ytitle">How far it flew (steps)</div>
+    <div class="bg-ticks"><div class="bg-tick" style="top:100.0000%;">0</div><div class="bg-tick" style="top:83.3333%;">2</div><div class="bg-tick" style="top:66.6667%;">4</div><div class="bg-tick" style="top:50.0000%;">6</div><div class="bg-tick" style="top:33.3333%;">8</div><div class="bg-tick" style="top:16.6667%;">10</div><div class="bg-tick" style="top:0.0000%;">12</div></div>
+    <div class="bg-plot" style="height:2.6in;">
+      <div class="bg-gridline" style="top:100.0000%;"></div><div class="bg-gridline" style="top:83.3333%;"></div><div class="bg-gridline" style="top:66.6667%;"></div><div class="bg-gridline" style="top:50.0000%;"></div><div class="bg-gridline" style="top:33.3333%;"></div><div class="bg-gridline" style="top:16.6667%;"></div><div class="bg-gridline" style="top:0.0000%;"></div>
+      <div class="bg-lanes"><div class="bg-lane"></div><div class="bg-lane"></div><div class="bg-lane"></div></div>
+    </div>
+  </div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xlabels"><div class="bg-xlabel">Dart</div><div class="bg-xlabel">Glider</div><div class="bg-xlabel">Wide-wing</div></div></div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xtitle">Paper Airplane</div></div>
+</div>
+<div class="graph-questions"><h3>Read the Graph</h3><div class="question"><div class="question-prompt">1. Which airplane flew the FARTHEST? Circle its bar.</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which airplane flew the SHORTEST distance?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. How many MORE steps did your farthest plane fly than your shortest plane?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Look at your graph. What is the ANSWER to Dot&#x27;s question?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page last-page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">End-of-Week Parent Feedback — Data Detectives Week</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">End-of-Week Parent Feedback — Data Detectives Week</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Please complete this after the week wraps up. Your notes help shape next week&#x27;s lessons.</div>
+<div class="passage-title">Week Summary &amp; Teaching Notes for the Parent</div>
+<div class="passage"><p>This week built the full data cycle for a 1st-2nd grade scientist, one step per day. Monday introduced observing, counting with tally marks, and recording data in a table. Tuesday taught pictographs — reading a graph with a simple key, then drawing one. Wednesday introduced bar graphs, axes, and titles, paired with the hands-on Ramp Race experiment. Thursday focused on READING graphs: most, least, how many more (subtract), and how many altogether (add), using both a bar graph and a trickier pictograph where each picture stood for 2. Friday tied it together — the child ran a full Paper Airplane experiment, recorded data, built a bar graph, and interpreted their own results.</p><p>Dot the Ladybug narrated the week as a friendly &#x27;data detective,&#x27; repeating the mantra &#x27;Ask, do, record, graph, read.&#x27;</p><p>Key skills to check for real understanding — not just recall:
+1) A graph needs a title and (for pictographs) a key.
+2) Taller bar / longer row = bigger number.
+3) &#x27;How many more&#x27; is a subtraction; &#x27;altogether&#x27; is addition.
+4) On a scaled pictograph (each picture = 2), you must multiply, not just count pictures.
+5) A fair test keeps everything the same except the one thing being tested.</p><p>Common bumps to watch for:
+- Counting pictures instead of using the key when each picture = 2.
+- Making bars different widths, or not starting bars at the bottom line (zero).
+- Forgetting to title the graph or label what each bar/row is.</p><p>Follow-on ideas: graph the weather for five days; graph how many minutes of reading each night; re-run the Ramp Race changing only the surface (carpet vs. floor).</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Overall, how well did the child grasp making and reading graphs? (1 = struggled, 5 = strong)</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which experiment (Ramp Race or Paper Airplanes) created the most excitement?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Could the child answer &#x27;how many more?&#x27; by subtracting, and &#x27;altogether?&#x27; by adding?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Was the scaled pictograph (each picture = 2) tricky? How did it go?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. Skills or vocabulary to revisit next week:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Key Skill to Confirm:</span> <span class="vocab-def">On a pictograph where each picture = 2, the child multiplies (does not just count pictures).</span></div><div class="vocab-item"><span class="vocab-term">Strongest Skill This Week:</span> <span class="vocab-def">(Fill in after the week — which step did the child grasp best: count, record, make, or read?)</span></div><div class="vocab-item"><span class="vocab-term">Next Week&#x27;s Hook:</span> <span class="vocab-def">Measurement — using rulers and units so the data we graph is even more exact.</span></div></div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>

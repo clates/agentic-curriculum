@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather Week — Science for Christopher</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: The Sun Heats Our World</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: The Sun Heats Our World</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Before reading: Go outside for two minutes. Stand in the sun, then in the shade. Feel the difference! Come back inside and share what you noticed.</div>
+<div class="passage-title">Meet Zara — and Why the Sun Matters!</div>
+<div class="passage"><p>Meet Zara the Zebra Finch! Zara is a small speckled bird with an orange beak and a striped tail. Every morning, Zara wakes up on her branch and checks the sky before she flies out to find seeds. &#x27;What will the weather be like today?&#x27; she chirps.</p><p>Zara knows that everything about weather starts with the Sun. The Sun is a giant ball of burning gas far away in space, and it sends energy all the way to Earth as light and heat. When sunlight reaches Earth, it warms the ground, the water, and the air above it. The more directly the Sun shines on a spot, the warmer it gets.</p><p>On a sunny day, Zara feels warm and cozy in the sunlight. The air around her is warmer too, which means the air temperature is high. Temperature tells us how warm or cold the air feels. We measure temperature with a thermometer. When there are no clouds and the Sun shines all day, we call that a clear or sunny day.</p><p>But the Sun&#x27;s energy does more than just warm us up — it also drives everything else about weather. Without the Sun, there would be no wind, no rain, and no clouds. Every storm, every rainbow, and every gentle breeze on Earth starts with the energy our Sun provides. &#x27;It all begins with the Sun,&#x27; Zara tweets to herself as she spreads her wings and soars into the bright blue sky.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Where does all of Earth&#x27;s weather energy come from?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is temperature, and what tool do we use to measure it?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. What did you notice when you stood in the sun vs. the shade before the lesson?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: If the Sun suddenly turned off, what do you think would happen to the weather on Earth? Explain your thinking!</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">weather:</span> <span class="vocab-def">What the air outside is like right now — sunny, cloudy, rainy, windy, or snowy.</span></div><div class="vocab-item"><span class="vocab-term">temperature:</span> <span class="vocab-def">How warm or cold the air is. We measure temperature with a thermometer.</span></div><div class="vocab-item"><span class="vocab-term">thermometer:</span> <span class="vocab-def">A tool that shows how warm or cold the air is.</span></div><div class="vocab-item"><span class="vocab-term">energy:</span> <span class="vocab-def">The power the Sun sends to Earth as light and heat.</span></div><div class="vocab-item"><span class="vocab-term">sunny:</span> <span class="vocab-def">A day with no clouds blocking the Sun, so the sky looks bright blue and clear.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: Sunny Days and Cloudy Days — Word Sort</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: Sunny Days and Cloudy Days — Word Sort</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Look at each weather word in the word bank. Write it in the correct box — does it go with Sunny Weather or Cloudy / Rainy Weather?</div>
+<div class="word-sort-categories" style="grid-template-columns:repeat(2,1fr);">
+<div class="ws-category" style="border-color:#1d4ed8;"><div class="ws-category-label" style="color:#1d4ed8;">Sunny Weather</div></div><div class="ws-category" style="border-color:#1d4ed8;"><div class="ws-category-label" style="color:#1d4ed8;">Cloudy / Rainy Weather</div></div>
+</div>
+<div class="ws-tile-bank">
+  <div class="ws-tile-bank-label">Word Bank — write each word in the correct box above:</div>
+  <div class="ws-tiles"><span class="ws-tile">Bright sky</span><span class="ws-tile">Rain puddles</span><span class="ws-tile">Warm air</span><span class="ws-tile">Gray clouds</span><span class="ws-tile">Clear sky</span><span class="ws-tile">Thunderstorm</span><span class="ws-tile">Rainbows</span><span class="ws-tile">Cool shade</span><span class="ws-tile">Hot sidewalk</span><span class="ws-tile">Wet grass</span></div>
+</div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Clouds and Precipitation</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Clouds and Precipitation</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about clouds with Zara. Then answer the questions below.
+
+Outdoor observation: Look up at the sky today. Are there clouds? Are they fluffy and white, thin and wispy, or flat and gray? Remember what you saw for the feature matrix activity.</div>
+<div class="passage-title">What Are Clouds Made Of?</div>
+<div class="passage"><p>Zara was zooming through the sky when she flew right through a low, soft cloud. &#x27;It feels like flying through a cold, wet fog!&#x27; she chirped in surprise. That is exactly what clouds are — millions of tiny water droplets or ice crystals floating together in the air. Clouds form when warm, wet air rises and cools down. As the air cools, the water vapor in it turns into tiny droplets — that is called condensation. Those droplets clump together to make a cloud.</p><p>Not all clouds look the same! Cumulus clouds are the big, puffy, white clouds that look like cotton balls piled up in the sky. They usually mean fair, sunny weather. Stratus clouds are flat, gray sheets that spread out low across the sky like a blanket. They often bring light rain or drizzle. Cirrus clouds are thin, wispy streaks high up in the sky, made of ice crystals. They look like feathers or horse tails.</p><p>When clouds hold too much water, the water falls back to Earth as precipitation. Precipitation is any form of water that falls from clouds. It can be rain (liquid), snow (frozen flakes), sleet (frozen rain drops), or hail (balls of ice). Zara loves flying after a rain shower — the air smells fresh and clean, and sometimes a beautiful rainbow appears when sunlight shines through the raindrops!</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What are clouds made of? How do they form?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Describe the three cloud types from the passage. Which one usually means good weather?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Name four types of precipitation. How are rain and snow different?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: If you see dark, flat stratus clouds rolling in, what do you think the weather will be like soon? Would you change any plans because of it?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">cloud:</span> <span class="vocab-def">Millions of tiny water droplets or ice crystals floating together in the air.</span></div><div class="vocab-item"><span class="vocab-term">condensation:</span> <span class="vocab-def">When water vapor in warm air cools down and turns into tiny droplets — how clouds form.</span></div><div class="vocab-item"><span class="vocab-term">precipitation:</span> <span class="vocab-def">Any water that falls from clouds to the ground — rain, snow, sleet, or hail.</span></div><div class="vocab-item"><span class="vocab-term">cumulus:</span> <span class="vocab-def">Puffy, white, cotton-ball clouds — usually mean fair weather.</span></div><div class="vocab-item"><span class="vocab-term">stratus:</span> <span class="vocab-def">Flat, gray, blanket-like clouds that often bring drizzle or light rain.</span></div><div class="vocab-item"><span class="vocab-term">cirrus:</span> <span class="vocab-def">Thin, wispy, feathery clouds high in the sky, made of ice crystals.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Cloud Types — What Do You Know?</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Cloud Types — What Do You Know?</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Put a check mark in every box that describes each cloud type. Use your reading card to help — look for clues in the passage!</div>
+<div class="feature-matrix-wrapper">
+<table class="feature-matrix">
+  <thead><tr><th class="fm-item-col" style="background:#15803d;">Name</th><th style="background:#15803d;">Puffy and white</th><th style="background:#15803d;">Flat and gray</th><th style="background:#15803d;">Thin and wispy</th><th style="background:#15803d;">High in the sky</th><th style="background:#15803d;">Low in the sky</th><th style="background:#15803d;">Made of ice crystals</th><th style="background:#15803d;">Brings fair weather</th><th style="background:#15803d;">Brings rain or drizzle</th></tr></thead>
+  <tbody><tr><td class="fm-item-cell">Cumulus</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Stratus</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Cirrus</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr></tbody>
+</table>
+</div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: The Water Cycle</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: The Water Cycle</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about the water cycle with Zara. Then answer the questions below.
+
+Hands-on activity: Pour a small puddle of water on the sidewalk in the sun. Check it every 15 minutes. Where does the water go? What happened — was the water cycle at work?</div>
+<div class="passage-title">Water&#x27;s Amazing Journey — Up and Down, Again and Again</div>
+<div class="passage"><p>Zara watched a rain puddle on the sidewalk every morning for a week. &#x27;The puddle was big on Monday,&#x27; she chirped, &#x27;but by Wednesday it was gone! Where did all that water go?&#x27; The answer is the water cycle — one of the most important patterns in all of nature.</p><p>The water cycle has three main steps. Step 1 is EVAPORATION. The Sun heats water in puddles, ponds, lakes, rivers, and oceans. That heat turns liquid water into an invisible gas called water vapor, which floats up into the air. This is what happened to Zara&#x27;s puddle!</p><p>Step 2 is CONDENSATION. As the water vapor floats higher into the sky, the air up there is colder. Cold air cannot hold as much water vapor, so the vapor cools down and turns back into tiny liquid droplets. Those droplets clump together — and they form clouds!</p><p>Step 3 is PRECIPITATION. When clouds collect enough water droplets, the drops get heavy and fall back to Earth as rain, snow, sleet, or hail. The water soaks into the ground, fills rivers and lakes, and then the whole cycle begins again with evaporation. &#x27;So the water in this puddle,&#x27; said Zara with wide eyes, &#x27;might have once been in the ocean, then in a cloud, and now it is back on the ground! And it will do that journey over and over, forever.&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What are the three steps of the water cycle? List them in order.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is evaporation? What causes it?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. What causes condensation to happen up in the sky?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Why do the same water molecules keep going through the cycle over and over?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: Zara says the water in a puddle might once have been in the ocean. Do you think that is really true? Could water from a cloud over your town have started in the Pacific Ocean?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">water cycle:</span> <span class="vocab-def">The never-ending journey of water from Earth&#x27;s surface up into the sky and back down again.</span></div><div class="vocab-item"><span class="vocab-term">evaporation:</span> <span class="vocab-def">When heat turns liquid water into water vapor — an invisible gas that rises into the air.</span></div><div class="vocab-item"><span class="vocab-term">water vapor:</span> <span class="vocab-def">Water in its gas form — invisible, it rises into the sky when liquid water is heated.</span></div><div class="vocab-item"><span class="vocab-term">condensation:</span> <span class="vocab-def">When water vapor cools down and turns back into tiny liquid droplets to form clouds.</span></div><div class="vocab-item"><span class="vocab-term">precipitation:</span> <span class="vocab-def">Water that falls from clouds to the ground — rain, snow, sleet, or hail.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Water Cycle — Cause and Effect</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Water Cycle — Cause and Effect</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Each cause describes something that happens in the water cycle. Write the effect — what happens next? Use your reading card if you need a clue.</div>
+<div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">The Sun heats a puddle of water on the sidewalk.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">Water vapor rises high into the cold upper air.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">A cloud collects enough water droplets to become heavy.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">Rain falls on a mountain and flows into a river.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Wind and Air Pressure</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Wind and Air Pressure</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about wind with Zara. Then answer the questions below.
+
+Outdoor activity: Go outside and lick your finger. Hold it up in the air. The side that feels cooler is the direction the wind is coming FROM. Which direction is the wind blowing today?</div>
+<div class="passage-title">Why Does the Wind Blow?</div>
+<div class="passage"><p>Zara spread her wings and felt a strong gust of wind. It lifted her higher in the sky without her even flapping! &#x27;Wind is so helpful,&#x27; she sang, &#x27;but where does it come from?&#x27; The answer starts with temperature.</p><p>Remember that the Sun does not heat all parts of Earth equally. Land heats up faster than water, and dark surfaces warm faster than light ones. When a patch of ground gets warm, the air above it gets warm too. Warm air is lighter than cool air, so warm air RISES — like a hot-air balloon. As the warm air rises, it leaves behind an area of lower air pressure. Air pressure is the weight of air pressing down on the ground.</p><p>Cool air nearby is heavier and has higher pressure. High-pressure air always moves toward low-pressure areas — it rushes in to fill the space left by the rising warm air. THAT rushing movement of air is the WIND. The bigger the difference in pressure, the stronger the wind blows.</p><p>We measure wind with special tools. An anemometer measures wind SPEED — how fast the wind is blowing, in miles per hour. A weather vane shows wind DIRECTION — the direction the wind is coming FROM. If a weather vane points north, the wind is blowing FROM the north (called a north wind). Zara loved riding the warm thermals — rising columns of warm air — that helped her soar across the sky without tiring her wings!</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What causes wind? Explain in your own words using &#x27;warm air&#x27; and &#x27;pressure&#x27;.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is the difference between an anemometer and a weather vane?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. If the weather vane points south, which direction is the wind blowing FROM?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Why can Zara soar without flapping when she finds a thermal?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: On a hot summer day at the beach, the sand heats up faster than the ocean. Which way do you think the wind blows — from land to sea, or from sea to land? Why?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">wind:</span> <span class="vocab-def">Moving air — caused when high-pressure air rushes into a low-pressure area.</span></div><div class="vocab-item"><span class="vocab-term">air pressure:</span> <span class="vocab-def">The weight of air pressing down on the ground. Warm air has low pressure; cool air has high pressure.</span></div><div class="vocab-item"><span class="vocab-term">anemometer:</span> <span class="vocab-def">A weather tool that measures wind speed — how fast the wind is blowing.</span></div><div class="vocab-item"><span class="vocab-term">weather vane:</span> <span class="vocab-def">A weather tool that spins and points to show the direction the wind is coming from.</span></div><div class="vocab-item"><span class="vocab-term">thermal:</span> <span class="vocab-def">A rising column of warm air — birds like Zara ride thermals to soar without flapping.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Weather Tools and Wind Words — Matching</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Weather Tools and Wind Words — Matching</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Draw a line from each weather word or tool on the left to its correct meaning on the right.</div>
+<div class="matching-row"><div class="matching-number">1.</div><div class="matching-left">Anemometer</div><div class="matching-line"></div><div class="matching-right">Measures how fast the wind is blowing</div></div><div class="matching-row"><div class="matching-number">2.</div><div class="matching-left">Weather vane</div><div class="matching-line"></div><div class="matching-right">Points to show where wind comes FROM</div></div><div class="matching-row"><div class="matching-number">3.</div><div class="matching-left">Air pressure</div><div class="matching-line"></div><div class="matching-right">The weight of air pressing on the ground</div></div><div class="matching-row"><div class="matching-number">4.</div><div class="matching-left">Thermal</div><div class="matching-line"></div><div class="matching-right">A rising column of warm air birds ride</div></div><div class="matching-row"><div class="matching-number">5.</div><div class="matching-left">Wind</div><div class="matching-line"></div><div class="matching-right">Moving air caused by pressure differences</div></div><div class="matching-row"><div class="matching-number">6.</div><div class="matching-left">High pressure</div><div class="matching-line"></div><div class="matching-right">Found where air is cool and heavy</div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Weather Patterns and Forecasting</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Weather Patterns and Forecasting</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read the capstone passage with Zara. Then answer the questions.
+
+Capstone activity: Before starting, write down today&#x27;s weather without looking at a forecast. After the lesson, look up tomorrow&#x27;s forecast online or on TV. What weather tools helped the meteorologist make that prediction?</div>
+<div class="passage-title">How Do Meteorologists Predict the Weather?</div>
+<div class="passage"><p>Zara had been watching the sky all week and she felt like she was getting very good at guessing what the weather would do next. &#x27;I think I am becoming a meteorologist!&#x27; she chirped proudly. A meteorologist is a scientist who studies weather and makes forecasts — predictions about what the weather will be like in the future.</p><p>Meteorologists have learned that weather follows patterns. A weather pattern is when the same kind of weather happens in the same way, over and over. For example, in many parts of the United States, summer afternoons often bring thunderstorms — because the hot ground heats the air, which rises, forms big storm clouds, and then the rain falls. That is the water cycle and wind working together!</p><p>Meteorologists use many special tools to collect data about the weather. A thermometer measures temperature. A rain gauge is a small container that collects and measures how much rain has fallen. An anemometer measures wind speed. A barometer measures air pressure — when pressure drops quickly, a storm is often coming! Weather satellites in space take pictures of clouds over huge areas of Earth, and weather stations on the ground send data to computers every hour.</p><p>All of these measurements are put together into giant computer models that predict how the atmosphere will change over the next few days. That is how meteorologists can tell you whether to bring an umbrella tomorrow. Zara ruffled her feathers and looked at the clouds building in the west. &#x27;I predict rain by evening,&#x27; she tweeted — and she was right!</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is a meteorologist? What is a weather forecast?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Name four weather tools described in the passage. What does each one measure?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. What does it mean for weather to follow a &#x27;pattern&#x27;? Give one example from the passage.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. How do all of this week&#x27;s topics — Sun, clouds, water cycle, and wind — work together to create a thunderstorm? Explain the chain!</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: If a barometer reading drops sharply in the morning, what should you predict for the afternoon — and would you change any outdoor plans?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">meteorologist:</span> <span class="vocab-def">A scientist who studies weather and makes forecasts.</span></div><div class="vocab-item"><span class="vocab-term">forecast:</span> <span class="vocab-def">A prediction about what the weather will be like in the future.</span></div><div class="vocab-item"><span class="vocab-term">weather pattern:</span> <span class="vocab-def">Weather that repeats in a predictable way — like summer afternoon thunderstorms.</span></div><div class="vocab-item"><span class="vocab-term">rain gauge:</span> <span class="vocab-def">A tool that collects and measures how much rain has fallen.</span></div><div class="vocab-item"><span class="vocab-term">barometer:</span> <span class="vocab-def">A tool that measures air pressure — a quick pressure drop often means a storm is coming.</span></div><div class="vocab-item"><span class="vocab-term">data:</span> <span class="vocab-def">Measurements and facts collected by weather tools — meteorologists use data to make forecasts.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Weather Tools — Tree Map Capstone</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Weather Tools — Tree Map Capstone</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Sort each weather word or tool from the word bank into the correct branch. Each item belongs in only one branch — think about what it measures or describes!</div>
+<div class="tm-root-row">
+  <div class="tm-root" style="border-color:#0f766e;color:#0f766e;">Weather Science</div>
+</div>
+<div class="tm-branches-grid" style="grid-template-columns:repeat(3,1fr);">
+<div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">Measuring Tools</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div><div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">Water Cycle Steps</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div><div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">Cloud Types</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div>
+</div>
+<div class="ctm-word-bank" style="margin-top:10px;"><div class="ctm-wb-label">Word Bank — write each word in the correct branch above:</div><div class="ctm-wb-tiles"><span class="ctm-wb-tile">Thermometer</span><span class="ctm-wb-tile">Evaporation</span><span class="ctm-wb-tile">Cumulus</span><span class="ctm-wb-tile">Rain gauge</span><span class="ctm-wb-tile">Condensation</span><span class="ctm-wb-tile">Stratus</span><span class="ctm-wb-tile">Anemometer</span><span class="ctm-wb-tile">Precipitation</span><span class="ctm-wb-tile">Cirrus</span><span class="ctm-wb-tile">Barometer</span></div></div>
+</div>
+<div class="page last-page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">End-of-Week Parent Feedback — Weather Week</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">End-of-Week Parent Feedback — Weather Week</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Please complete this feedback sheet after the week wraps up. Your notes help shape next week&#x27;s lessons.</div>
+<div class="passage-title">Week Summary &amp; Teaching Notes for the Parent</div>
+<div class="passage"><p>This week followed a causal arc through Earth&#x27;s weather. Monday established that all weather energy comes from the Sun, and introduced the idea of temperature. Tuesday explored how clouds form through condensation and the different types of precipitation. Wednesday traced the full water cycle — evaporation, condensation, precipitation — as a continuous loop powered by the Sun. Thursday explained wind as the movement of air from high pressure to low pressure, caused by unequal heating. Friday pulled everything together with weather patterns and forecasting — how meteorologists use tools and data to predict the weather.</p><p>Zara the Zebra Finch appeared throughout the week as a friendly narrator, experiencing the weather from a bird&#x27;s-eye view that gave concrete, relatable examples for each concept.</p><p>Key concepts to check for genuine understanding — not just recall:
+1) The Sun is the ultimate energy source for all weather.
+2) Clouds form through condensation, not just &#x27;water in the sky&#x27;.
+3) The water cycle is continuous — the same water molecules keep cycling.
+4) Wind is caused by pressure differences, not just &#x27;air moving&#x27;.
+5) Meteorologists use multiple tools and look for patterns — forecasting is data-driven.</p><p>Common misconceptions to watch for:
+• &#x27;Rain comes from the ocean&#x27; (partially true, but water vapor can come from any liquid water).
+• &#x27;Clouds are made of steam&#x27; (they are made of tiny liquid droplets or ice, not steam).
+• &#x27;Wind blows toward the warmer area&#x27; (wind blows FROM high pressure INTO low pressure — toward the warmer, less dense air).</p><p>Suggested follow-on activities: keep a five-day weather journal; look up the local barometer reading each morning and see if low pressure really does predict rain; watch a TV weather forecast together and identify all the tools and maps used.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Overall comfort with the week&#x27;s content — how well did Christopher grasp the concepts? (1 = struggled throughout, 5 = strong grasp of all concepts)</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which day&#x27;s lesson generated the most curiosity or questions?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. By Friday, could Christopher explain the full chain: Sun → evaporation → cloud → rain → wind?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Did any weather events happen during the week (a real rain shower, wind, clouds) that you connected to the lessons in real time?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. Topics or vocabulary to revisit next week:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Key Misconception to Watch:</span> <span class="vocab-def">Clouds are NOT made of steam — they are made of tiny liquid water droplets or ice crystals formed through condensation.</span></div><div class="vocab-item"><span class="vocab-term">Strongest Concept This Week:</span> <span class="vocab-def">(Fill in after the week — which idea did Christopher grasp best?)</span></div><div class="vocab-item"><span class="vocab-term">Next Week&#x27;s Hook:</span> <span class="vocab-def">Seasons and climate — why do some places get more sun? How does the Sun&#x27;s angle change throughout the year?</span></div></div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>
