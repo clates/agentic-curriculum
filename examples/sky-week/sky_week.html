@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sky and Space Week — Science for Christopher</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: The Sun — Our Nearest Star</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: The Sun — Our Nearest Star</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Before reading: Go outside and look at the sky. Feel the warmth on your skin. Is it warm in the sun and cooler in the shade? Come inside and share what you felt.</div>
+<div class="passage-title">Meet Luna — and the Great Ball of Fire!</div>
+<div class="passage"><p>Meet Luna the Little Owl! Luna has soft brown feathers, enormous golden eyes, and a tiny curved beak. Every single night — and even during the day — Luna watches the sky. &#x27;The sky is always changing,&#x27; Luna hoots to herself. &#x27;Something up there is always moving or glowing or making a shadow!&#x27;</p><p>The most important object in our sky is the Sun. The Sun is a star — a giant ball of burning gas that glows with incredible light and heat. It is so big that more than one million Earths could fit inside it! But it looks small in our sky because it is very, very far away. Even so, the Sun is the closest star to Earth, which is why it looks so much bigger and brighter than any other star we see.</p><p>The Sun gives Earth two very important things: light and warmth. Sunlight travels from the Sun all the way to Earth in about eight minutes — even though the Sun is so far away! When sunlight reaches Earth, it warms the land, the water, and the air. Without the Sun, our planet would be a frozen, dark ball in space. There would be no plants, no animals, and no people.</p><p>&#x27;I am so grateful for the Sun,&#x27; Luna hooted, blinking her golden eyes in the morning light. &#x27;Even I, a night owl, need the Sun to keep our world alive. Every living thing on Earth depends on it!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is the Sun? Use the word &#x27;star&#x27; in your answer.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Name the two important things the Sun gives to Earth.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. What would happen to Earth if the Sun disappeared? Use evidence from the passage.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: The Sun is a star, but other stars look tiny at night. Why do you think the Sun looks so much bigger and brighter than the other stars in the sky?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Sun:</span> <span class="vocab-def">A star — a giant ball of burning gas — that gives Earth light and warmth.</span></div><div class="vocab-item"><span class="vocab-term">star:</span> <span class="vocab-def">A giant ball of burning gas in space that makes its own light and heat.</span></div><div class="vocab-item"><span class="vocab-term">light:</span> <span class="vocab-def">Energy from the Sun that lets us see during the day and helps plants grow.</span></div><div class="vocab-item"><span class="vocab-term">warmth:</span> <span class="vocab-def">Heat energy from the Sun that warms Earth&#x27;s land, water, and air.</span></div><div class="vocab-item"><span class="vocab-term">energy:</span> <span class="vocab-def">The power that makes things work — the Sun sends light and heat energy to Earth.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: What Does the Sun Do? — Feature Matrix</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: What Does the Sun Do? — Feature Matrix</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Put a check mark in every box that is true for each object. Think carefully — not every box will be checked!</div>
+<div class="feature-matrix-wrapper">
+<table class="feature-matrix">
+  <thead><tr><th class="fm-item-col" style="background:#1d4ed8;">Name</th><th style="background:#1d4ed8;">Makes its own light</th><th style="background:#1d4ed8;">Gives warmth to Earth</th><th style="background:#1d4ed8;">Is a star</th><th style="background:#1d4ed8;">Can be seen in daytime sky</th><th style="background:#1d4ed8;">Needs sunlight to survive</th></tr></thead>
+  <tbody><tr><td class="fm-item-cell">The Sun</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">A Rock</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">A Plant</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">The Moon</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr></tbody>
+</table>
+</div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Shadows and the Sun&#x27;s Journey</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Shadows and the Sun&#x27;s Journey</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Before reading: Go outside in the morning. Stand in the sunshine and look at your shadow. Which direction does it point? If you can, check your shadow again at noon. Is it longer or shorter?</div>
+<div class="passage-title">Why Do Shadows Change? Luna Investigates!</div>
+<div class="passage"><p>Luna was curious about shadows. One morning, she stood on a fence post and noticed her shadow stretching out long behind her. &#x27;Why is my shadow so long now but short at lunchtime?&#x27; she wondered.</p><p>A shadow forms when something blocks the Sun&#x27;s light. When an object — like a tree, a building, or an owl on a fence — stands in sunlight, it blocks some of the light from passing through. The dark area on the other side of the object, where the light cannot reach, is the shadow. The shadow is always on the opposite side of the object from the Sun.</p><p>Here is something fascinating: the Sun does not stay in the same place in the sky! In the morning, the Sun is low in the east. It slowly moves across the sky and is highest at noon — right in the middle of the day. By evening, the Sun is low in the west. Because the Sun changes its position, shadows change too.</p><p>In the morning and evening, when the Sun is low, shadows are LONG. At noon, when the Sun is high overhead, shadows are SHORT — almost straight under your feet! &#x27;So my shadow is like a clock!&#x27; Luna hooted happily. She also noticed something else: objects standing in sunlight feel WARM, but objects in the shadow feel COOLER. Sunlight carries heat energy — shade blocks that energy from reaching the ground.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. How does a shadow form? What must happen for a shadow to appear?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Why are shadows longer in the morning than at noon?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Why is it cooler in a shadow than in direct sunlight?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. If you see a very short shadow under a tree, what time of day do you think it is? Why?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: Luna says her shadow is like a clock. How can you use your own shadow to tell something about the time of day? Try it today!</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">shadow:</span> <span class="vocab-def">A dark area made when an object blocks the Sun&#x27;s light from reaching a surface.</span></div><div class="vocab-item"><span class="vocab-term">blocks:</span> <span class="vocab-def">When an object stops light from passing through, creating a shadow.</span></div><div class="vocab-item"><span class="vocab-term">position:</span> <span class="vocab-def">Where the Sun is in the sky — low in the east in the morning, high at noon, low in the west at night.</span></div><div class="vocab-item"><span class="vocab-term">east:</span> <span class="vocab-def">The direction where the Sun rises each morning.</span></div><div class="vocab-item"><span class="vocab-term">west:</span> <span class="vocab-def">The direction where the Sun sets each evening.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Sun vs. Shade — T-Chart</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Sun vs. Shade — T-Chart</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Write or draw ideas in the correct column. Think about temperature, light, shadows, and plants. Use the word bank below to get started — add your own ideas too!</div>
+<div class="t-chart-word-bank"><div class="t-chart-word-bank-label">Word Bank:</div><div class="ws-tiles" style="margin-top:4px;"><span class="ws-tile">Warm</span><span class="ws-tile">Cool</span><span class="ws-tile">Bright light</span><span class="ws-tile">Dark shadow</span><span class="ws-tile">Long shadow</span><span class="ws-tile">Short shadow</span><span class="ws-tile">Shadow disappears</span><span class="ws-tile">Feels hot to touch</span><span class="ws-tile">Good place to rest</span></div></div>
+<table class="t-chart">
+  <thead><tr><th style="background:#15803d;">In the Sunshine</th><th style="background:#15803d;">In the Shade</th></tr></thead>
+  <tbody><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody>
+</table>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: The Moon — Our Nighttime Neighbor</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: The Moon — Our Nighttime Neighbor</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about the Moon with Luna. Then answer the questions below.
+
+Outdoor activity: Tonight, go outside after dark and look for the Moon. Is it a full circle, a half circle, or just a thin sliver? Draw what you see in the space on your worksheet.</div>
+<div class="passage-title">What Is That Glowing Ball in the Night Sky?</div>
+<div class="passage"><p>Luna loved the Moon more than almost anything. Every night, she would look up at its glowing face and hoot softly. &#x27;You are not a star,&#x27; she said to the Moon, &#x27;but you are so bright! How do you make all that light?&#x27;</p><p>Here is the secret: the Moon makes NO light of its own. The Moon is a big ball of rock — much smaller than Earth — that travels around our planet. The beautiful glow we see is really reflected sunlight. Just like a mirror bounces light across a room, the Moon&#x27;s rocky surface bounces sunlight back to us on Earth. So the Moon is lit up by the Sun, even at night!</p><p>The Moon orbits — travels around — Earth about once every four weeks. As it travels, the part of the Moon that is lit by the Sun looks different from Earth each night. Sometimes we see the whole lit side — a full moon, a big bright circle. Sometimes we see only half — a half moon. Sometimes we see just a thin sliver — a crescent moon. And sometimes the Moon&#x27;s lit side faces away from Earth and we can barely see it at all — a new moon.</p><p>Luna watched the Moon go through all its shapes over many nights. &#x27;The Moon follows a pattern,&#x27; she hooted with delight. &#x27;It always changes from new moon to crescent to half to full and back again. Every month, the same pattern! Patterns in the sky are so wonderful.&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Does the Moon make its own light? Where does moonlight really come from?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Name two moon shapes (phases) described in the passage.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Why does the Moon seem to change shape over the month?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Luna says the Moon follows a pattern. What is that pattern?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: The Moon has no air or water and makes no light of its own — but we can see it clearly at night. Could you see the Moon if the Sun did not exist? Why or why not?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Moon:</span> <span class="vocab-def">A large ball of rock that travels around Earth and reflects sunlight.</span></div><div class="vocab-item"><span class="vocab-term">reflected light:</span> <span class="vocab-def">Light that bounces off a surface — the Moon glows because it reflects sunlight.</span></div><div class="vocab-item"><span class="vocab-term">orbit:</span> <span class="vocab-def">To travel around another object in a curved path — the Moon orbits Earth.</span></div><div class="vocab-item"><span class="vocab-term">phase:</span> <span class="vocab-def">One of the different shapes the Moon appears to have as it orbits Earth.</span></div><div class="vocab-item"><span class="vocab-term">full moon:</span> <span class="vocab-def">When we can see the entire lit side of the Moon — it looks like a bright circle.</span></div><div class="vocab-item"><span class="vocab-term">crescent:</span> <span class="vocab-def">A thin curved sliver shape — the Moon looks like this when only a small part of its lit side faces Earth.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Moon Phases — Matching</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Moon Phases — Matching</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Draw a line from each moon phase name on the left to its correct description on the right.</div>
+<div class="matching-row"><div class="matching-number">1.</div><div class="matching-left">Full Moon</div><div class="matching-line"></div><div class="matching-right">The whole lit side faces Earth — a bright circle</div></div><div class="matching-row"><div class="matching-number">2.</div><div class="matching-left">New Moon</div><div class="matching-line"></div><div class="matching-right">The lit side faces away — barely visible</div></div><div class="matching-row"><div class="matching-number">3.</div><div class="matching-left">Crescent Moon</div><div class="matching-line"></div><div class="matching-right">A thin curved sliver of the Moon is visible</div></div><div class="matching-row"><div class="matching-number">4.</div><div class="matching-left">Half Moon</div><div class="matching-line"></div><div class="matching-right">Half of the lit side faces Earth</div></div><div class="matching-row"><div class="matching-number">5.</div><div class="matching-left">Reflected light</div><div class="matching-line"></div><div class="matching-right">Sunlight bouncing off the Moon&#x27;s rocky surface</div></div><div class="matching-row"><div class="matching-number">6.</div><div class="matching-left">Orbit</div><div class="matching-line"></div><div class="matching-right">The Moon&#x27;s path as it travels around Earth</div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Stars and the Night Sky</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Stars and the Night Sky</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about stars with Luna. Then answer the questions below.
+
+Nighttime activity: On a clear night, go outside after dark with a grown-up. Count how many stars you can see in a small patch of sky. Can you find a group of stars that makes a pattern or picture?</div>
+<div class="passage-title">Thousands of Suns — Luna Looks at the Stars</div>
+<div class="passage"><p>Luna opened her huge golden eyes wide. On a clear, moonless night, the sky above her was absolutely covered with tiny points of light. &#x27;How many stars are there?&#x27; she whispered in awe.</p><p>Stars are giant balls of burning gas — just like our Sun! They look tiny because they are incredibly far away. If you could travel at the speed of light, it would take over four years just to reach the closest star beyond our Sun. Our Sun is a medium-sized, yellow star. Some stars are much bigger and brighter. Some are smaller and dimmer. Stars can look white, yellowish, orange, or even bluish, depending on how hot they are.</p><p>Long ago, people looked at groups of stars and imagined shapes connecting them — like connect-the-dots in the sky. These star pictures are called constellations. Famous constellations include the Big Dipper, which looks like a giant ladle or spoon, and Orion the Hunter, which has three stars in a row that form his belt. People used constellations for navigation — sailors used the stars to find their way across the ocean at night.</p><p>Stars seem to slowly move across the sky through the night, following a pattern just like the Sun and Moon. Luna watched one bright star rise in the east after sunset, arc slowly across the sky, and sink in the west before dawn. &#x27;Everything in the sky follows a pattern,&#x27; she thought with wonder. &#x27;The Sun, the Moon, the stars — they all rise in the east and set in the west.&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What are stars made of? How are they like and different from our Sun?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is a constellation? Give one example from the passage.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. How did sailors long ago use the stars? Why were constellations useful?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. What pattern do stars follow in the night sky — in which direction do they rise and set?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: Stars look tiny but they are actually enormous — some are bigger than our entire solar system. Why do you think they look so small from Earth?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">stars:</span> <span class="vocab-def">Giant balls of burning gas very far away in space — our Sun is a star.</span></div><div class="vocab-item"><span class="vocab-term">constellation:</span> <span class="vocab-def">A group of stars that form a pattern or picture in the night sky.</span></div><div class="vocab-item"><span class="vocab-term">Big Dipper:</span> <span class="vocab-def">A famous constellation that looks like a big ladle or spoon.</span></div><div class="vocab-item"><span class="vocab-term">navigation:</span> <span class="vocab-def">Finding your way from one place to another — sailors used stars to navigate at sea.</span></div><div class="vocab-item"><span class="vocab-term">rise:</span> <span class="vocab-def">When the Sun, Moon, or stars appear to come up in the east part of the sky.</span></div><div class="vocab-item"><span class="vocab-term">set:</span> <span class="vocab-def">When the Sun, Moon, or stars appear to sink down in the west part of the sky.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Sky Objects — Odd One Out</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Sky Objects — Odd One Out</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Look at each row of sky words. Circle the one that does NOT belong with the others. Write or tell a grown-up why!</div>
+<div class="oo-group"><div class="oo-number">Row 1</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">The Sun</div><div class="oo-item" style="border-color:#c2410c;">The Moon</div><div class="oo-item" style="border-color:#c2410c;">A Rock on the Ground</div><div class="oo-item" style="border-color:#c2410c;">A Star</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div><div class="oo-group"><div class="oo-number">Row 2</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Full Moon</div><div class="oo-item" style="border-color:#c2410c;">Crescent Moon</div><div class="oo-item" style="border-color:#c2410c;">Half Moon</div><div class="oo-item" style="border-color:#c2410c;">The Sun</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div><div class="oo-group"><div class="oo-number">Row 3</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Makes its own light</div><div class="oo-item" style="border-color:#c2410c;">Reflects sunlight</div><div class="oo-item" style="border-color:#c2410c;">Is a star</div><div class="oo-item" style="border-color:#c2410c;">Burns gas</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div><div class="oo-group"><div class="oo-number">Row 4</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Big Dipper</div><div class="oo-item" style="border-color:#c2410c;">Orion</div><div class="oo-item" style="border-color:#c2410c;">The Moon</div><div class="oo-item" style="border-color:#c2410c;">Constellation</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div><div class="oo-group"><div class="oo-number">Row 5</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Rises in the east</div><div class="oo-item" style="border-color:#c2410c;">Sets in the west</div><div class="oo-item" style="border-color:#c2410c;">Stays still all day</div><div class="oo-item" style="border-color:#c2410c;">Moves across the sky</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Day and Night — Why Does the Sky Change?</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Day and Night — Why Does the Sky Change?</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read the capstone passage with Luna. Then answer all the questions.
+
+Capstone activity: Use a flashlight and a globe or round ball. Shine the flashlight on one side of the ball — that side is &#x27;day.&#x27; Slowly spin the ball — watch as the lit side (day) and dark side (night) rotate. That is exactly what happens on Earth every 24 hours!</div>
+<div class="passage-title">Luna&#x27;s Big Discovery: Earth Never Stops Spinning!</div>
+<div class="passage"><p>By Friday, Luna had watched the sky all week and she was full of questions. &#x27;The Sun rises every morning and sets every evening. The Moon comes out at night. The stars move across the sky. WHY does everything keep moving?&#x27; she hooted.</p><p>The secret is that EARTH is spinning! Earth rotates — turns like a spinning top — once every 24 hours. That is why a day and a night together last exactly 24 hours. As Earth spins, the side facing the Sun has daytime — bright, warm, and full of light. The side facing away from the Sun has nighttime — dark and cooler. The Sun does not actually move across our sky; it just looks that way because WE are spinning around!</p><p>In the morning, your part of Earth rotates toward the Sun — that is sunrise. The Sun appears in the east, and shadows are long. By noon, your part of Earth faces the Sun directly — the Sun looks highest in the sky and shadows are shortest. In the evening, your part of Earth rotates away — that is sunset. The Sun disappears in the west.</p><p>At night, the Moon and stars come out because the bright Sun is no longer washing out their faint light. The Moon reflects the Sun&#x27;s light across space to light up our night. Stars glow with their own light, millions of miles away.</p><p>Luna ruffled her feathers happily. &#x27;Now I understand! The Sun heats our world. Shadows show where the Sun&#x27;s light is blocked. The Moon glows by reflecting the Sun. Stars are distant suns. And day and night are caused by Earth spinning once every 24 hours. Everything in the sky follows a pattern — and I have watched them all!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What causes day and night on Earth? Use the word &#x27;rotation&#x27; in your answer.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Why does the Sun appear to move across the sky during the day, even though the Sun is not actually moving?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Why can&#x27;t we see stars during the daytime?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Connect the whole week: explain the chain Sun → shadows → Moon → stars → day and night. What ties them all together?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: If Earth stopped spinning, one side would always be day and the other side would always be night. What do you think would happen to the plants and animals on each side?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">rotation:</span> <span class="vocab-def">Earth spinning on its axis — one full rotation takes 24 hours and causes day and night.</span></div><div class="vocab-item"><span class="vocab-term">day:</span> <span class="vocab-def">The time when your part of Earth faces the Sun — bright, warm, and light outside.</span></div><div class="vocab-item"><span class="vocab-term">night:</span> <span class="vocab-def">The time when your part of Earth faces away from the Sun — dark and cooler outside.</span></div><div class="vocab-item"><span class="vocab-term">sunrise:</span> <span class="vocab-def">When Earth rotates so your area turns toward the Sun — the Sun appears in the east.</span></div><div class="vocab-item"><span class="vocab-term">sunset:</span> <span class="vocab-def">When Earth rotates so your area turns away from the Sun — the Sun disappears in the west.</span></div><div class="vocab-item"><span class="vocab-term">pattern:</span> <span class="vocab-def">Something that repeats in a predictable way — day and night follow a 24-hour pattern.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: The Sky — Tree Map Capstone</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: The Sky — Tree Map Capstone</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Sort each sky word from the word bank into the correct branch. Each word belongs in only one branch — think carefully!</div>
+<div class="tm-root-row">
+  <div class="tm-root" style="border-color:#0f766e;color:#0f766e;">Things in the Sky</div>
+</div>
+<div class="tm-branches-grid" style="grid-template-columns:repeat(3,1fr);">
+<div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">The Sun</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div><div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">The Moon</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div><div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">Stars</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div>
+</div>
+<div class="ctm-word-bank" style="margin-top:10px;"><div class="ctm-wb-label">Word Bank — write each word in the correct branch above:</div><div class="ctm-wb-tiles"><span class="ctm-wb-tile">Makes its own light</span><span class="ctm-wb-tile">Reflects sunlight</span><span class="ctm-wb-tile">Giant ball of burning gas</span><span class="ctm-wb-tile">Has phases (shapes)</span><span class="ctm-wb-tile">Our nearest star</span><span class="ctm-wb-tile">Constellations</span><span class="ctm-wb-tile">Orbits Earth</span><span class="ctm-wb-tile">Warms Earth&#x27;s surface</span><span class="ctm-wb-tile">Can only be seen at night</span><span class="ctm-wb-tile">Rises in the east</span><span class="ctm-wb-tile">Used for navigation</span><span class="ctm-wb-tile">Makes shadows on Earth</span></div></div>
+</div>
+<div class="page last-page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">End-of-Week Parent Feedback — Sky and Space Week</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">End-of-Week Parent Feedback — Sky and Space Week</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Please complete this feedback sheet after the week wraps up. Your notes help shape next week&#x27;s lessons.</div>
+<div class="passage-title">Week Summary &amp; Teaching Notes for the Parent</div>
+<div class="passage"><p>This week followed a causal arc through the sky and space. Monday established the Sun as our nearest star and the source of Earth&#x27;s light and warmth. Tuesday explored how the Sun&#x27;s changing position creates shadows of different lengths, and how objects in sunlight are warmer than objects in shade. Wednesday introduced the Moon — a rocky body that reflects sunlight and orbits Earth, showing changing phases over a month. Thursday zoomed out to the wider night sky: stars as distant suns, constellations as patterns people have named, and the shared east-to-west motion of all sky objects. Friday unified everything with Earth&#x27;s rotation — the reason day follows night every 24 hours, shadows change direction, and the Sun appears to move across the sky.</p><p>Luna the Little Owl appeared throughout the week as a curious narrator watching the sky from dusk to dawn, giving Christopher a character who experiences the sky from a unique bird&#x27;s-eye perspective.</p><p>Key concepts to check for genuine understanding — not just recall:
+1) The Sun is a STAR — our nearest one.
+2) The Moon makes NO light of its own; it reflects sunlight.
+3) Shadows change because the Sun&#x27;s position in the sky changes (not because the Sun moves — Earth rotates).
+4) Stars are distant suns — they only look small because they are far away.
+5) Day and night are caused by Earth&#x27;s rotation, not the Sun moving.</p><p>Common misconceptions to watch for:
+- &#x27;The Sun moves across the sky&#x27; — It only appears to move; Earth is spinning.
+- &#x27;The Moon makes its own light&#x27; — It reflects sunlight; no Sun means no visible Moon.
+- &#x27;Stars disappear in the daytime&#x27; — They are still there; sunlight is just too bright to see them.
+- &#x27;The Moon changes shape&#x27; — Its shape doesn&#x27;t change; we see different amounts of its lit side.</p><p>Suggested follow-on activities: track moon phases on a calendar for one month; use a flashlight and globe to model day and night; make a sundial and track shadow movement through the day.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Overall comfort with the week&#x27;s content — how well did Christopher grasp the concepts? (1 = struggled throughout, 5 = strong grasp of all concepts)</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which day&#x27;s activity or concept sparked the most curiosity or questions from Christopher?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. By Friday, could Christopher explain why we have day and night (Earth&#x27;s rotation)? Could he explain why the Moon glows?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Did any real sky events happen during the week (a visible Moon phase, a clear starry night, a long morning shadow) that connected to the lessons?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. Topics or vocabulary to revisit next week:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Key Misconception to Watch:</span> <span class="vocab-def">The Sun does NOT move across the sky — Earth rotates, making the Sun APPEAR to move.</span></div><div class="vocab-item"><span class="vocab-term">Strongest Concept This Week:</span> <span class="vocab-def">(Fill in after the week — which idea did Christopher grasp best?)</span></div><div class="vocab-item"><span class="vocab-term">Next Week&#x27;s Hook:</span> <span class="vocab-def">Seasons — why does the Sun feel hotter in summer? How does Earth&#x27;s tilt change how much sunlight reaches us?</span></div></div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>

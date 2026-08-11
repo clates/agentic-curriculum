@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Matter Week — Science for Christopher</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: What Is Matter?</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: What Is Matter?</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Before reading: Go on a quick &#x27;matter hunt&#x27; outside or around the room. Point to three objects and name them. They are all made of matter! Come back and share what you found before we read about Marco.</div>
+<div class="passage-title">Meet Marco — Everything Is Matter!</div>
+<div class="passage"><p>Meet Marco the Mole! Marco has velvety dark fur, tiny pink paws, and a twitchy nose that can smell things underground. Every day, Marco tunnels through the soil, swims through puddles, and breathes in the fresh air — and this week he is going to teach us something amazing: EVERYTHING around us is made of matter!</p><p>Matter is anything that takes up space and has mass. Mass means it has some weight — you can feel it if you pick it up. Look around the room. The chair you sit on is matter. The water you drink is matter. Even the air you breathe is matter! If you can touch it, feel it, smell it, or measure it, it is matter.</p><p>Scientists sort matter into three groups called states of matter. The three states are: solid, liquid, and gas. Solids have a shape that stays the same unless you break or cut them. Liquids flow and take the shape of whatever container you put them in. Gases spread out to fill all the space they are in.</p><p>Marco knows all three states from his daily adventures. &#x27;The dirt I tunnel through is a solid,&#x27; he says. &#x27;The puddle I splash in is a liquid. And the air I breathe is a gas!&#x27; This week we will explore each state of matter with Marco — and discover how matter can even change from one state to another!</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is matter? Name two things in the room that are made of matter.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What are the three states of matter? List all three.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Marco experiences all three states of matter every day. What solid, liquid, and gas does he encounter?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: Is a shadow made of matter? What about a smell? How can you tell if something is matter or not?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">matter:</span> <span class="vocab-def">Anything that takes up space and has mass — everything around us is made of matter.</span></div><div class="vocab-item"><span class="vocab-term">mass:</span> <span class="vocab-def">How much material is in an object — things with mass have weight when you pick them up.</span></div><div class="vocab-item"><span class="vocab-term">solid:</span> <span class="vocab-def">A state of matter with a shape that stays the same, like a rock or a crayon.</span></div><div class="vocab-item"><span class="vocab-term">liquid:</span> <span class="vocab-def">A state of matter that flows and takes the shape of its container, like water or juice.</span></div><div class="vocab-item"><span class="vocab-term">gas:</span> <span class="vocab-def">A state of matter that spreads out to fill all the space it is in, like air.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: Sorting Matter — Word Sort</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: Sorting Matter — Word Sort</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Look at each word in the word bank. Is it a solid, a liquid, or a gas? Write it in the correct box. Use the definitions from your reading to help!</div>
+<div class="word-sort-categories" style="grid-template-columns:repeat(3,1fr);">
+<div class="ws-category" style="border-color:#1d4ed8;"><div class="ws-category-label" style="color:#1d4ed8;">Solid</div></div><div class="ws-category" style="border-color:#1d4ed8;"><div class="ws-category-label" style="color:#1d4ed8;">Liquid</div></div><div class="ws-category" style="border-color:#1d4ed8;"><div class="ws-category-label" style="color:#1d4ed8;">Gas</div></div>
+</div>
+<div class="ws-tile-bank">
+  <div class="ws-tile-bank-label">Word Bank — write each word in the correct box above:</div>
+  <div class="ws-tiles"><span class="ws-tile">Rock</span><span class="ws-tile">Milk</span><span class="ws-tile">Steam</span><span class="ws-tile">Ice cube</span><span class="ws-tile">Juice</span><span class="ws-tile">Air</span><span class="ws-tile">Pencil</span><span class="ws-tile">Rain water</span><span class="ws-tile">Oxygen</span><span class="ws-tile">Book</span><span class="ws-tile">Honey</span><span class="ws-tile">Smoke</span></div>
+</div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: All About Solids</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: All About Solids</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Before reading: Pick up three small objects (a crayon, an eraser, a coin). Notice their shape, color, and texture. Do they change shape in your hand? Keep thinking about this as you read about solids with Marco.</div>
+<div class="passage-title">Marco Explores the Underground — Solids Have Their Own Shape!</div>
+<div class="passage"><p>Marco was digging his tunnel when he hit something hard. &#x27;A pebble!&#x27; he squeaked. He held it in his paw and noticed it was round, smooth, and gray. He set it down and it kept its shape — it did not spread out or flow away. &#x27;Solids are amazing,&#x27; Marco thought. &#x27;They always keep their own shape!&#x27;</p><p>A solid is a state of matter with a definite shape and a definite size. &#x27;Definite&#x27; means it stays the same. If you pick up a rock and put it in a jar, the rock is still the same shape — the rock does not become jar-shaped. Solids do not flow like water. You cannot pour a crayon into a cup!</p><p>We can describe solids using their physical properties. Physical properties are things you can observe with your senses. Color is a property — the pebble is gray. Shape is a property — the pebble is round. Texture is a property — the pebble is smooth. Size and weight are properties — a pebble is small and light, while a boulder is large and heavy.</p><p>Even though you can change a solid by cutting it or breaking it, most properties stay the same. If you break a gray rock in half, both pieces are still gray! The color did not change. Marco discovered that knowing a solid&#x27;s properties helps him figure out what it is and how to use it in his underground home.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What makes a solid different from a liquid? Use the word &#x27;shape&#x27; in your answer.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Name four physical properties you can use to describe a solid.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. If you break a gray rock in half, what happens to its color? What does this tell us?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: Could you make a solid into a different shape without breaking it? Can you think of any solid that changes shape easily — and is it still a solid?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">solid:</span> <span class="vocab-def">A state of matter with a definite (fixed) shape and size — it does not flow.</span></div><div class="vocab-item"><span class="vocab-term">physical property:</span> <span class="vocab-def">Something you can observe about matter using your senses — color, shape, texture, or size.</span></div><div class="vocab-item"><span class="vocab-term">texture:</span> <span class="vocab-def">How something feels when you touch it — rough, smooth, bumpy, soft, or hard.</span></div><div class="vocab-item"><span class="vocab-term">definite:</span> <span class="vocab-def">Fixed and not changing — a solid has a definite shape that stays the same.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Describing Solids — Feature Matrix</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Describing Solids — Feature Matrix</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Put a check mark in every box that describes each solid. Think carefully about each property! More than one solid can share a property.</div>
+<div class="feature-matrix-wrapper">
+<table class="feature-matrix">
+  <thead><tr><th class="fm-item-col" style="background:#15803d;">Name</th><th style="background:#15803d;">Hard</th><th style="background:#15803d;">Soft</th><th style="background:#15803d;">Smooth</th><th style="background:#15803d;">Rough/bumpy</th><th style="background:#15803d;">Can be held in one hand</th><th style="background:#15803d;">Has a fixed shape</th></tr></thead>
+  <tbody><tr><td class="fm-item-cell">Rock</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Crayon</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Sponge</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Coin</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr><tr><td class="fm-item-cell">Cotton ball</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td><td class="fm-check-cell">&#9744;</td></tr></tbody>
+</table>
+</div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: All About Liquids</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: All About Liquids</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Hands-on activity: Before reading, fill a small cup with water. Pour it into a bowl. What happened? Did the water change shape? Now pour it back into the cup. This is the big idea for today&#x27;s lesson!</div>
+<div class="passage-title">Marco Finds a Puddle — Liquids Flow and Change Shape!</div>
+<div class="passage"><p>One morning, Marco crawled out of his tunnel and found a big rain puddle. He splashed his paw in — the water rippled and moved. He picked up a pawful of water and it dripped right through his claws. &#x27;Liquids do not hold their shape!&#x27; he noticed. &#x27;They flow wherever there is space!&#x27;</p><p>A liquid is a state of matter that flows and takes the shape of whatever container it is in. Water in a round bowl looks round. The same water poured into a tall, thin bottle looks long and thin. The amount of water does not change — but its shape does, because liquids flow. This is very different from a solid, which keeps its shape no matter what container it is in.</p><p>Water is the most important liquid on Earth. Water has many special properties. It is clear and colorless when pure. It has no smell. It can be poured, splashed, and dripped. Water flows downhill — if you spill water on a tilted table, it runs to the lowest point. Water can also be found in many places: in rivers, in the ocean, in puddles, in our bodies, and even in the food we eat!</p><p>&#x27;Water is everywhere,&#x27; Marco said happily, shaking the droplets from his fur. &#x27;And it is always the same water — just in different containers and places.&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. How is a liquid different from a solid? What happens to a liquid&#x27;s shape in different containers?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Name three places you can find water as a liquid.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. What happens to water when it is on a tilted surface? Why?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: If you pour juice into a container shaped like a star, does the juice become star-shaped? Is the juice still the same amount? What does this tell you about liquids?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">liquid:</span> <span class="vocab-def">A state of matter that flows and takes the shape of whatever container it is in.</span></div><div class="vocab-item"><span class="vocab-term">flow:</span> <span class="vocab-def">To move smoothly from place to place — liquids flow; solids do not.</span></div><div class="vocab-item"><span class="vocab-term">container:</span> <span class="vocab-def">An object that holds something inside it — a cup, a bowl, or a bottle.</span></div><div class="vocab-item"><span class="vocab-term">property:</span> <span class="vocab-def">A describing word for matter — like color, smell, texture, or whether something flows.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Liquids — Cause and Effect</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Liquids — Cause and Effect</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Each cause describes something that happens to a liquid. Write the effect — what happens next? Remember what you learned about how liquids behave.</div>
+<div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You pour water from a round cup into a tall, narrow bottle.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You spill water on a tilted table.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You hold a handful of water in your open palm.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div><div class="cause-effect-pair"><div class="ce-cause"><div class="ce-label">Cause</div><div class="ce-text">You pour orange juice into a bowl shaped like a star.</div></div><div class="ce-arrow">&#8594;</div><div class="ce-effect"><div class="ce-label">Effect (write your answer)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: All About Gases</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: All About Gases</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Outdoor activity: Go outside and take a slow, deep breath. Hold a pinwheel or a piece of tissue up — can you see the air moving? Blow gently on your hand. That moving air is a gas! Come back inside and think about this as you read with Marco.</div>
+<div class="passage-title">Marco Breathes Deep — Gases Fill Every Space!</div>
+<div class="passage"><p>Marco climbed up out of the ground and took a big, deep breath. He could not see the air, but he could feel it on his fur and smell the flowers in it. &#x27;Air is a gas,&#x27; he thought. &#x27;And even though I cannot see it, it is definitely matter!&#x27;</p><p>A gas is a state of matter that has no fixed shape and no fixed size. Gases spread out to fill ALL of the space inside any container. If you blow air into a balloon, the air spreads out to fill every corner of the balloon. If you open the balloon, the air spreads out into the whole room! Gases will always fill their container completely.</p><p>Air is the gas we know best. Air is all around us — we cannot see it, but we know it is there because we can feel the wind when it moves, we can blow bubbles in water with it, and we can inflate a ball or a tire with it. Air is actually a mixture of many gases: mostly nitrogen, some oxygen (the part we breathe), and small amounts of other gases.</p><p>Other gases you might know: steam that comes off hot food is water vapor (water as a gas). Carbon dioxide is the gas you breathe OUT. Helium is the gas that makes balloons float. All of these gases are invisible, but they are real matter — they take up space! Marco puffed out his cheeks with a big mouthful of air. &#x27;I have a gas inside me right now,&#x27; he laughed.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What makes a gas different from a solid and a liquid? What does a gas do when put in a container?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Even though you cannot see air, how do you know it is there? Give two pieces of evidence.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Name three gases besides air that are mentioned in the passage.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: If a gas always fills its container completely — what happens to the gas when you open a jar or pop a balloon? Where does the gas go?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">gas:</span> <span class="vocab-def">A state of matter with no fixed shape or size — it spreads out to fill all available space.</span></div><div class="vocab-item"><span class="vocab-term">air:</span> <span class="vocab-def">The mixture of gases all around us — mostly nitrogen and oxygen.</span></div><div class="vocab-item"><span class="vocab-term">water vapor:</span> <span class="vocab-def">Water in its gas form — the invisible steam that rises from hot water.</span></div><div class="vocab-item"><span class="vocab-term">carbon dioxide:</span> <span class="vocab-def">A gas you breathe out after your body uses oxygen.</span></div><div class="vocab-item"><span class="vocab-term">invisible:</span> <span class="vocab-def">Cannot be seen — gases are usually invisible, but they are still real matter.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: States of Matter — Odd One Out</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: States of Matter — Odd One Out</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Look at the four items in each row. Three of them belong to the same group. Circle the one that does NOT belong, and tell a grown-up why!</div>
+<div class="oo-group"><div class="oo-number">Row 1</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Rock</div><div class="oo-item" style="border-color:#c2410c;">Marble</div><div class="oo-item" style="border-color:#c2410c;">Air</div><div class="oo-item" style="border-color:#c2410c;">Wood block</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div><div class="oo-group"><div class="oo-number">Row 2</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Water</div><div class="oo-item" style="border-color:#c2410c;">Milk</div><div class="oo-item" style="border-color:#c2410c;">Juice</div><div class="oo-item" style="border-color:#c2410c;">Pebble</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div><div class="oo-group"><div class="oo-number">Row 3</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Steam</div><div class="oo-item" style="border-color:#c2410c;">Carbon dioxide</div><div class="oo-item" style="border-color:#c2410c;">Honey</div><div class="oo-item" style="border-color:#c2410c;">Oxygen</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div><div class="oo-group"><div class="oo-number">Row 4</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Ice cube</div><div class="oo-item" style="border-color:#c2410c;">Balloon air</div><div class="oo-item" style="border-color:#c2410c;">Helium</div><div class="oo-item" style="border-color:#c2410c;">Water vapor</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div><div class="oo-group"><div class="oo-number">Row 5</div><div class="oo-items-row"><div class="oo-item" style="border-color:#c2410c;">Flows easily</div><div class="oo-item" style="border-color:#c2410c;">Keeps its own shape</div><div class="oo-item" style="border-color:#c2410c;">Can be poured</div><div class="oo-item" style="border-color:#c2410c;">Takes shape of container</div></div><div class="oo-answer-row">Circle the one that does NOT belong.&nbsp; Why?<div class="answer-lines"><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Matter Changes State</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Matter Changes State</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Capstone hands-on: Put an ice cube in a glass. Watch it change over 10 minutes. What state is it at the start? What state does it become? If you could heat it even more, what do you think would happen next? Then read the passage with Marco!</div>
+<div class="passage-title">Marco&#x27;s Big Experiment — Heating and Cooling Change Matter!</div>
+<div class="passage"><p>Marco found an ice cube on the kitchen counter and watched it carefully. First it was a solid — cold and hard with a definite shape. Then, as the room warmed it up, it started to change. &#x27;It is melting!&#x27; Marco squeaked. The solid ice was becoming a liquid puddle!</p><p>Matter can change from one state to another when you add heat or take heat away. When you add heat to a solid, it can MELT and become a liquid. When water is heated even more — to very high temperatures — it can EVAPORATE and become a gas called water vapor. You can see this as steam rising from a hot pot on the stove.</p><p>Cooling does the opposite! When you take heat away from a liquid, it can FREEZE and become a solid. Water in a freezer turns to ice because the freezer takes heat away. When water vapor in the air cools down, it can CONDENSE and become liquid water — this is how morning dew forms on grass!</p><p>The most amazing thing is that the matter is still the same. Water, ice, and steam are all made of the exact same material — just in different states! Only the amount of heat changes which state the water is in. Marco stared at the tiny puddle where the ice cube used to be. &#x27;It did not disappear,&#x27; he said with wonder. &#x27;It just changed state!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What happens when you add heat to a solid? What is this change called?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What happens when you take heat away from a liquid? Give a real-life example.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Ice, water, and steam are all the same material. What is different about them?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Describe the full chain of changes you could make to a single ice cube using only heat: start with ice and end with steam.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: When ice melts in your juice and the juice gets watery, is that the same kind of change? Does the matter disappear, or does it just become something else?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">melt:</span> <span class="vocab-def">When a solid is heated and changes into a liquid — like ice melting into water.</span></div><div class="vocab-item"><span class="vocab-term">freeze:</span> <span class="vocab-def">When a liquid is cooled and changes into a solid — like water turning into ice.</span></div><div class="vocab-item"><span class="vocab-term">evaporate:</span> <span class="vocab-def">When a liquid is heated and changes into a gas — like water turning into steam.</span></div><div class="vocab-item"><span class="vocab-term">condense:</span> <span class="vocab-def">When a gas cools down and changes into a liquid — like steam turning back into water drops.</span></div><div class="vocab-item"><span class="vocab-term">state of matter:</span> <span class="vocab-def">One of the three forms matter can take: solid, liquid, or gas.</span></div><div class="vocab-item"><span class="vocab-term">heat:</span> <span class="vocab-def">Energy that causes matter to warm up — adding or removing heat changes the state of matter.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: States of Matter — Tree Map Capstone</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: States of Matter — Tree Map Capstone</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Sort each word from the word bank into the correct branch. Each word belongs in only one branch — think carefully!</div>
+<div class="tm-root-row">
+  <div class="tm-root" style="border-color:#0f766e;color:#0f766e;">States of Matter</div>
+</div>
+<div class="tm-branches-grid" style="grid-template-columns:repeat(3,1fr);">
+<div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">Solid</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div><div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">Liquid</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div><div class="tm-branch" style="border-color:#0f766e;"><div class="tm-branch-name" style="color:#0f766e;">Gas</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div><div class="tm-slot blank">_______________</div></div>
+</div>
+<div class="ctm-word-bank" style="margin-top:10px;"><div class="ctm-wb-label">Word Bank — write each word in the correct branch above:</div><div class="ctm-wb-tiles"><span class="ctm-wb-tile">Rock</span><span class="ctm-wb-tile">Water</span><span class="ctm-wb-tile">Air</span><span class="ctm-wb-tile">Ice cube</span><span class="ctm-wb-tile">Juice</span><span class="ctm-wb-tile">Steam</span><span class="ctm-wb-tile">Wood</span><span class="ctm-wb-tile">Milk</span><span class="ctm-wb-tile">Oxygen</span><span class="ctm-wb-tile">Crayon</span><span class="ctm-wb-tile">Honey</span><span class="ctm-wb-tile">Carbon dioxide</span></div></div>
+</div>
+<div class="page last-page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">End-of-Week Parent Feedback — Matter Week</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">End-of-Week Parent Feedback — Matter Week</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Please complete this feedback sheet after the week wraps up. Your notes help shape next week&#x27;s lessons.</div>
+<div class="passage-title">Week Summary &amp; Teaching Notes for the Parent</div>
+<div class="passage"><p>This week followed a causal arc through the states of matter. Monday introduced matter itself — the idea that everything has mass and takes up space — and met Marco the Mole, our narrator. Tuesday explored solids and their physical properties (color, shape, texture, size, weight), with the key idea that solids keep a definite shape. Wednesday explored liquids and how they flow to fill any container, using water as the central example. Thursday explored gases — that they are invisible matter that expands to fill all available space, with air as the primary example. Friday pulled everything together with state changes: melting, freezing, evaporation, and condensation show that the same matter can exist in different states depending on temperature.</p><p>Marco the Matter Mole appeared throughout the week, tunneling through solids, splashing in liquids, and breathing gases — giving Christopher a concrete, living-world perspective on abstract science concepts.</p><p>Key concepts to check for genuine understanding — not just recall:
+1) Matter is anything with mass that takes up space — including invisible things like air.
+2) Solids keep their shape; liquids take the shape of their container; gases fill all space.
+3) Physical properties (color, shape, texture, size) let us describe and sort solids.
+4) Water is the same material whether it is ice, liquid water, or steam — only state changes.
+5) Heating adds energy that causes state changes; cooling removes energy.</p><p>Common misconceptions to watch for:
+• &#x27;Gases are not matter&#x27; — air and other gases are real matter; they have mass (blow up a ball and it gets heavier).
+• &#x27;Ice disappears when it melts&#x27; — matter is conserved; the liquid water is still there.
+• &#x27;Steam is visible&#x27; — visible steam is actually tiny liquid droplets; true water vapor is invisible.
+• &#x27;Soft things are not solids&#x27; — sponges and cotton balls are solids; hardness is one property, not the definition of a solid.</p><p>Suggested follow-on activities: explore non-Newtonian fluids (cornstarch + water) — is oobleck a solid or a liquid? Make ice pops and observe all three states of water. Find five solids, five liquids, and five gases around the house together.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Overall comfort with the week&#x27;s content — how well did Christopher grasp the three states of matter? (1 = struggled throughout, 5 = strong grasp of all concepts)</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which day&#x27;s lesson or hands-on activity generated the most curiosity or questions?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. By Friday, could Christopher explain the difference between a solid, a liquid, and a gas — and name a real example of each?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Did Christopher connect the ice-cube observation (or any everyday example) to the lesson on state changes?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. Topics or vocabulary to revisit next week:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Key Misconception to Watch:</span> <span class="vocab-def">Air IS matter — gases have mass even though we cannot see them. A balloon full of air is heavier than a flat balloon.</span></div><div class="vocab-item"><span class="vocab-term">Strongest Concept This Week:</span> <span class="vocab-def">(Fill in after the week — which idea did Christopher grasp best?)</span></div><div class="vocab-item"><span class="vocab-term">Next Week&#x27;s Hook:</span> <span class="vocab-def">Mixtures and materials — what happens when you mix solids together, or mix a solid into a liquid? Can you always separate them?</span></div></div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>

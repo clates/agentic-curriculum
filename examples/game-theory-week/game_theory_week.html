@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Theory Week — Game Night for Christopher</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: How Do You Win?</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: How Do You Win?</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">PLAY FIRST — GAME NIGHT OLYMPICS (about 20 minutes): Play these four quick games with a grown-up, and after EACH one ask, &#x27;How did you win that game?&#x27;  1) TIC-TAC-TOE — draw a 3-by-3 grid; first to get three marks in a row wins.  2) ROCK-PAPER-SCISSORS — best of five; whoever wins the most throws wins.  3) COIN-FLIP CALL-IT — call &#x27;heads&#x27; or &#x27;tails&#x27; before a grown-up flips a coin; guess right to win.  4) RACE TO 20 — take turns rolling one die and adding up your points; first to reach 20 wins.  Then read the passage.</div>
+<div class="passage-title">Meet Ace — and the Game Night Olympics</div>
+<div class="passage"><p>Meet Ace the Fox! Ace has bright orange fur, a big bushy tail, and an even bigger smile. Every game night, all the animals in the forest gather at Ace&#x27;s den to play games together. This week, Ace has a big plan. &#x27;By Friday,&#x27; he says, &#x27;you will be able to look at ANY game, figure out how to win it, and make a smart plan to try. That is what a real game player learns to do!&#x27;</p><p>Ace says every game — even a tiny, quick one — begins with the same big question: how do you win? The way you win a game is called the win condition. A win condition is the goal, the thing you must do to become the winner. In Tic-Tac-Toe, the win condition is getting three of your marks in a row. In Race to 20, it is being the first to reach 20 points. In Coin-Flip Call-It, it is guessing the flip correctly. Every game has its own win condition — and some are easy to win with skill, while others come down to luck!</p><p>Ace says the very first thing a smart player should ask is, &#x27;What is the win condition?&#x27; If you do not know how to win, it is very hard to win! Once you know the goal, you can make good moves that help you reach it. A player who knows the win condition can plan ahead. A player who forgets the goal might waste their turns.</p><p>Sometimes a game ends and nobody reaches the win condition at all. In Tic-Tac-Toe, if every box is full but no one has three in a row, the game is a tie. A tie means the game is over and there is no winner — everybody is even. Ace does not mind a tie. &#x27;A tie just means it was a fair, close game,&#x27; he says. &#x27;We can always play again — and all week long, we will learn the tricks that help you win!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is a &#x27;win condition&#x27;? Explain it in your own words.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is the win condition in Tic-Tac-Toe?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Why does Ace say the first question a smart player asks is &#x27;How do you win?&#x27;</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. What is a tie? Can a game end with no winner?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: Think of a game you love. What is its win condition? Is there a game where you win by NOT doing something (like not laughing, or not moving)?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">goal:</span> <span class="vocab-def">The thing you are trying to do or reach.</span></div><div class="vocab-item"><span class="vocab-term">tie:</span> <span class="vocab-def">When a game ends and nobody wins — everyone is even.</span></div><div class="vocab-item"><span class="vocab-term">win condition:</span> <span class="vocab-def">The way you win a game — the goal you must reach to be the winner.</span></div><div class="vocab-item"><span class="vocab-term">turn:</span> <span class="vocab-def">Your chance to make a move before the next player goes.</span></div><div class="vocab-item"><span class="vocab-term">player:</span> <span class="vocab-def">A person or animal who is playing the game.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Monday: Match the Game to How You Win</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Monday: Match the Game to How You Win</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Every game has a win condition. Draw a line from each game on the left to the correct way to win it on the right. The right side is mixed up — read carefully! (The top four are the games from your Game Night Olympics.)</div>
+<div class="matching-row"><div class="matching-number">1.</div><div class="matching-left">Tic-Tac-Toe</div><div class="matching-line"></div><div class="matching-right">Win the most throws (best of five)</div></div><div class="matching-row"><div class="matching-number">2.</div><div class="matching-left">Rock-Paper-Scissors</div><div class="matching-line"></div><div class="matching-right">Guess the coin flip correctly</div></div><div class="matching-row"><div class="matching-number">3.</div><div class="matching-left">Coin-Flip Call-It</div><div class="matching-line"></div><div class="matching-right">Be the last player sitting in a chair</div></div><div class="matching-row"><div class="matching-number">4.</div><div class="matching-left">Race to 20</div><div class="matching-line"></div><div class="matching-right">Get three of your marks in a row</div></div><div class="matching-row"><div class="matching-number">5.</div><div class="matching-left">Hide-and-Seek</div><div class="matching-line"></div><div class="matching-right">Be the first to reach 20 points</div></div><div class="matching-row"><div class="matching-number">6.</div><div class="matching-left">Musical Chairs</div><div class="matching-line"></div><div class="matching-right">Find all of the players who are hiding</div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Playing With or Playing Against</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Playing With or Playing Against</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">PLAY FIRST (about 20 minutes): Play the Block Tower game two ways with blocks or cups. ROUND 1 — Competition: each player builds their OWN tower; the tallest tower before it falls wins. ROUND 2 — Cooperation: work TOGETHER to build ONE tower as tall as you can before it falls. AFTER you play, talk about how the two rounds felt different. Then read.</div>
+<div class="passage-title">Two Ways to Play</div>
+<div class="passage"><p>On game night, Ace the Fox noticed something interesting. In some games, the animals played against each other. In other games, they worked together. &#x27;These are two different ways to play,&#x27; said Ace.</p><p>When you play against other players and try to beat them, that is competition. In a competition, only one player or one team can win. When you race to build the tallest tower, or try to win at Tic-Tac-Toe, you are competing. Competition can be exciting, and it pushes you to try your very best!</p><p>When you work with other players to reach the same goal, that is cooperation. In a cooperative game, everyone wins together or everyone loses together — you are all on the same team. When the animals build one big tower together, they share ideas and help each other. If the tower stands tall, everybody cheers, because everybody won!</p><p>Ace says both ways of playing are good. Competition helps you try hard and get better. Cooperation helps you make friends and solve problems as a team. The smart thing is to know which kind of game you are playing. In a competition, you keep your best moves to yourself. But in a cooperation, you share your best ideas so the whole team can win. And remember — even when we compete, we can still be kind. A good player is a good sport, whether they win or lose.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is competition? Give an example.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. What is cooperation? How is it different from competition?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. In the Block Tower game, which round was cooperation and which was competition?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Why does Ace say you keep your best moves secret in a competition, but share them in a cooperation?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: Can a game be BOTH? Think of a game where two teams compete, but players on the same team must cooperate to win (like soccer).</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">opponent:</span> <span class="vocab-def">A player you are playing against in a competition.</span></div><div class="vocab-item"><span class="vocab-term">cooperation:</span> <span class="vocab-def">When players work together for the same goal. Everyone wins or loses together.</span></div><div class="vocab-item"><span class="vocab-term">good sport:</span> <span class="vocab-def">A player who is kind and fair whether they win or lose.</span></div><div class="vocab-item"><span class="vocab-term">competition:</span> <span class="vocab-def">When players play against each other and try to win. Only one can win.</span></div><div class="vocab-item"><span class="vocab-term">team:</span> <span class="vocab-def">A group of players who work together toward the same goal.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Tuesday: Working Together or Playing to Win?</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Tuesday: Working Together or Playing to Win?</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read each activity in the Word Bank. Decide: is it about working together (cooperation) or playing to win (competition)? Write each one in the correct column.</div>
+<div class="t-chart-word-bank"><div class="t-chart-word-bank-label">Word Bank:</div><div class="ws-tiles" style="margin-top:4px;"><span class="ws-tile">Playing Tic-Tac-Toe</span><span class="ws-tile">Building one block tower as tall as you can</span><span class="ws-tile">A game of tag</span><span class="ws-tile">Doing a jigsaw puzzle together</span><span class="ws-tile">Racing to the mailbox and back</span><span class="ws-tile">Cleaning up all the toys before the timer beeps</span><span class="ws-tile">A spelling bee</span><span class="ws-tile">A team of ants carrying one big crumb</span><span class="ws-tile">Seeing who can jump the highest</span><span class="ws-tile">Rowing a boat together</span></div></div>
+<table class="t-chart">
+  <thead><tr><th style="background:#15803d;">Working Together</th><th style="background:#15803d;">Playing to Win</th></tr></thead>
+  <tbody><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr><tr><td></td><td></td></tr></tbody>
+</table>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: How Likely Is It?</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: How Likely Is It?</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">PLAY FIRST (about 15 minutes): Put 5 RED, 3 BLUE, and 2 YELLOW objects (blocks, beads, or crayons — 10 total) into a bag you cannot see into. First, GUESS which color you will pull the most. Then take turns: without looking, pull one out, make a tally mark for its color, and put it back. Do this 10 times. KEEP your tally — you will graph it on the next page! Then read the passage.</div>
+<div class="passage-title">The Mystery Bag</div>
+<div class="passage"><p>Ace the Fox reached into his mystery bag and pulled out a red marble. &#x27;I thought I would!&#x27; he laughed. &#x27;There are more red marbles in the bag than any other color, so red is more likely to come out.&#x27;</p><p>Probability is how we talk about how likely something is to happen. Some things are very likely — they will probably happen. Some things are unlikely — they probably will not happen. And some things are impossible — they can never happen at all. If a bag is full of mostly red marbles, pulling a red one is likely. If there is only one blue marble, pulling blue is unlikely.</p><p>Many games use chance, which is another word for luck. When you roll a die, spin a spinner, or pull from a bag, you cannot know for sure what you will get. But you can make a smart guess! If you know what is in the bag, you can predict which color you will probably pull the most. A good player uses what they know to make the best guess they can.</p><p>Ace also knows that luck is not the whole story. Some games are all luck, like flipping a coin. Some games are all skill, like a spelling test. And many games mix both luck and skill — you might get lucky with your dice, but you still have to choose good moves. &#x27;That,&#x27; says Ace, &#x27;is what makes games so much fun. You never know exactly what will happen!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What does &#x27;probability&#x27; mean?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Give one thing that is LIKELY and one thing that is UNLIKELY when you pull from the mystery bag.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Before you played, which color did you guess would come out the most? Were you right?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. What is the difference between a game of all luck and a game of all skill? Name one of each.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: If a bag has 9 red marbles and 1 green marble, and you close your eyes and pull one, which color will you probably get? Could you still pull the green one?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">chance:</span> <span class="vocab-def">Another word for luck — when you cannot know for sure what will happen.</span></div><div class="vocab-item"><span class="vocab-term">unlikely:</span> <span class="vocab-def">Something that probably will NOT happen.</span></div><div class="vocab-item"><span class="vocab-term">probability:</span> <span class="vocab-def">How likely something is to happen.</span></div><div class="vocab-item"><span class="vocab-term">predict:</span> <span class="vocab-def">To make a smart guess about what will happen next.</span></div><div class="vocab-item"><span class="vocab-term">likely:</span> <span class="vocab-def">Something that will probably happen.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Wednesday: Graph Your Mystery Bag</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Wednesday: Graph Your Mystery Bag</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Look at your tally marks from the Mystery Bag game. Color in one square for each time you pulled that color. Then answer the questions to read your graph.</div>
+<div class="bg-wrap">
+  <div class="bg-flex">
+    <div class="bg-ytitle">How many times pulled</div>
+    <div class="bg-ticks"><div class="bg-tick" style="top:100.0000%;">0</div><div class="bg-tick" style="top:90.0000%;">1</div><div class="bg-tick" style="top:80.0000%;">2</div><div class="bg-tick" style="top:70.0000%;">3</div><div class="bg-tick" style="top:60.0000%;">4</div><div class="bg-tick" style="top:50.0000%;">5</div><div class="bg-tick" style="top:40.0000%;">6</div><div class="bg-tick" style="top:30.0000%;">7</div><div class="bg-tick" style="top:20.0000%;">8</div><div class="bg-tick" style="top:10.0000%;">9</div><div class="bg-tick" style="top:0.0000%;">10</div></div>
+    <div class="bg-plot" style="height:2.6in;">
+      <div class="bg-gridline" style="top:100.0000%;"></div><div class="bg-gridline" style="top:90.0000%;"></div><div class="bg-gridline" style="top:80.0000%;"></div><div class="bg-gridline" style="top:70.0000%;"></div><div class="bg-gridline" style="top:60.0000%;"></div><div class="bg-gridline" style="top:50.0000%;"></div><div class="bg-gridline" style="top:40.0000%;"></div><div class="bg-gridline" style="top:30.0000%;"></div><div class="bg-gridline" style="top:20.0000%;"></div><div class="bg-gridline" style="top:10.0000%;"></div><div class="bg-gridline" style="top:0.0000%;"></div>
+      <div class="bg-lanes"><div class="bg-lane"></div><div class="bg-lane"></div><div class="bg-lane"></div></div>
+    </div>
+  </div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xlabels"><div class="bg-xlabel">Red</div><div class="bg-xlabel">Blue</div><div class="bg-xlabel">Yellow</div></div></div>
+  <div class="bg-xrow"><div class="bg-xspacer"></div><div class="bg-xtitle">Marble Color</div></div>
+</div>
+<div class="graph-questions"><h3>Read the Graph</h3><div class="question"><div class="question-prompt">1. Which color did you pull the MOST times?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which color did you pull the FEWEST times?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. The bag had 5 red, 3 blue, and 2 yellow. Does your graph look like what you expected? Why do you think red came up the most?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: What You Can&#x27;t See</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: What You Can&#x27;t See</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">PLAY FIRST (about 15 minutes): Play Go Fish with a grown-up (use a regular deck of cards). Deal 5 to 7 cards to each player. Hold your cards so nobody else can see them! Take turns asking, &#x27;Do you have a ___?&#x27; to collect matching pairs. AFTER you play, notice: you could not see the other player&#x27;s cards. Then read the passage.</div>
+<div class="passage-title">The Secret in Your Hand</div>
+<div class="passage"><p>When Ace the Fox plays Go Fish, he holds his cards up close so nobody can peek. &#x27;These are my cards,&#x27; he says. &#x27;Only I know what I am holding!&#x27; The cards you cannot see are called hidden information.</p><p>Hidden information is anything in a game that you do not get to see or know. In Go Fish, your opponent&#x27;s cards are hidden from you, and your cards are hidden from them. In hide-and-seek, where the players are hiding is hidden information. In a memory game, the cards are turned face-down, so what is on them is hidden until you flip them.</p><p>When there is hidden information, you cannot know everything for sure. So what do good players do? They watch closely, they remember, and they make smart guesses. If Ace asks, &#x27;Do you have any sevens?&#x27; and you say no, Ace remembers that. Later, that little clue helps him guess what you might be holding. Paying attention turns hidden information into good guesses.</p><p>Not every game has hidden information. In Tic-Tac-Toe, you can see the whole board — nothing is hidden at all! Games where you can see everything are called open games. Ace likes both kinds. &#x27;When everything is out in the open, it is a game of pure thinking,&#x27; he says. &#x27;But when some things are hidden, you have to be a detective!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is hidden information? Give one example from a game.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. In Go Fish, whose cards are hidden from you?</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. When there is hidden information, what do good players do to make smart guesses?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. What is an &#x27;open game&#x27;? Name one.</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: Why would it be no fun if you could see your opponent&#x27;s cards in Go Fish? What would happen to the game?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">clue:</span> <span class="vocab-def">A small piece of information that helps you make a smart guess.</span></div><div class="vocab-item"><span class="vocab-term">open game:</span> <span class="vocab-def">A game where you can see everything, with nothing hidden.</span></div><div class="vocab-item"><span class="vocab-term">hidden information:</span> <span class="vocab-def">Something in a game that you cannot see or know.</span></div><div class="vocab-item"><span class="vocab-term">remember:</span> <span class="vocab-def">To keep something in your mind so you can use it later.</span></div><div class="vocab-item"><span class="vocab-term">opponent:</span> <span class="vocab-def">The player you are playing against.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Thursday: Word Detective — Hidden Information</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Thursday: Word Detective — Hidden Information</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Fill in each box about our new word: HIDDEN INFORMATION. Use what you learned from Go Fish and from the reading to help you.</div>
+<div class="frayer-entry"><div class="frayer-word-box" style="background:#ffedd5;border-color:#c2410c;">Hidden Information</div><div class="frayer-grid" style="border-color:#c2410c;"><div class="frayer-cell"><div class="frayer-cell-label">What it means</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="frayer-cell"><div class="frayer-cell-label">Games that have it</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="frayer-cell"><div class="frayer-cell-label">What a smart player does about it</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="frayer-cell"><div class="frayer-cell-label">Draw a picture of it</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: Making a Plan to Win</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: Making a Plan to Win</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">PLAY FIRST (about 15 minutes): Play &#x27;Don&#x27;t Take the Last One.&#x27; Line up 10 small objects (coins, beans, or blocks). Take turns. On your turn, take 1, 2, or 3 objects. Whoever is FORCED to take the very last object LOSES. Play a few rounds and see if you can find a trick to win every time! Then read the capstone passage.</div>
+<div class="passage-title">Ace&#x27;s Biggest Idea: Strategy</div>
+<div class="passage"><p>It was the last game night of the week, and Ace the Fox had one more idea to share. &#x27;Now that you know about win conditions, competition, luck, and hidden information,&#x27; he said, &#x27;you are ready for the biggest idea of all: strategy!&#x27;</p><p>A strategy is a plan you make to reach your win condition. It is like a set of steps you follow to give yourself the best chance to win. A player without a plan just makes random moves. But a player with a strategy thinks ahead: &#x27;If I do this, what will happen next? And then what should I do after that?&#x27;</p><p>Good strategies use everything Ace taught this week. First, know your win condition, so you know what you are aiming for. Next, decide if you should compete or cooperate. Then, think about luck — what might happen by chance, and how you can be ready. Finally, use hidden information wisely: watch for clues, and do not give away your own secrets.</p><p>In the &#x27;Don&#x27;t Take the Last One&#x27; game, a good strategy is to think backward from the end. If you can leave your opponent with just one object, they must take it and lose! Thinking ahead like this is what strategy is all about. &#x27;A game is not just luck,&#x27; said Ace with a wink. &#x27;The player who makes the best plan usually comes out on top. Now — who wants to play again?&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is a strategy?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. How is a player with a strategy different from a player who makes random moves?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. A good strategy uses FOUR big ideas from this week. Write each one. (Hints: How do you ___? Play with or ___? Luck or ___? What can&#x27;t you ___?)</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. In &#x27;Don&#x27;t Take the Last One,&#x27; what is one good strategy? Why does it work?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. LET&#x27;S DISCUSS: Is it possible to have a great strategy and STILL lose? Can luck beat a good plan sometimes? When?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">plan:</span> <span class="vocab-def">A set of steps you decide to follow before you act.</span></div><div class="vocab-item"><span class="vocab-term">think ahead:</span> <span class="vocab-def">To imagine what will happen next before you make your move.</span></div><div class="vocab-item"><span class="vocab-term">strategy:</span> <span class="vocab-def">A plan you make to reach your win condition and get the best chance to win.</span></div><div class="vocab-item"><span class="vocab-term">backward:</span> <span class="vocab-def">Thinking from the END of the game back to the start to find a smart move.</span></div><div class="vocab-item"><span class="vocab-term">random:</span> <span class="vocab-def">Doing something with no plan — just picking any move at all.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Friday: My Game Plan</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Friday: My Game Plan</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">You are the game expert now! Pick a game you love. Fill in each part below to write your very own Game Plan. Use full sentences and the new words you learned this week.</div>
+<div style="font-size:11pt;font-weight:bold;margin-bottom:8px;color:#0f766e;">Topic: My Favorite Game and My Strategy</div>
+<div class="scaffold-section"><div class="scaffold-part-label" style="color:#0f766e;">My Game</div><div class="scaffold-starter">My favorite game to play is...</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="scaffold-section"><div class="scaffold-part-label" style="color:#0f766e;">The Win Condition</div><div class="scaffold-starter">To win this game, you have to...</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="scaffold-section"><div class="scaffold-part-label" style="color:#0f766e;">Luck or Skill?</div><div class="scaffold-starter">This game uses (luck / skill / both) because...</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="scaffold-section"><div class="scaffold-part-label" style="color:#0f766e;">My Strategy</div><div class="scaffold-starter">My plan to win is... First I..., then I...</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="scaffold-section"><div class="scaffold-part-label" style="color:#0f766e;">Being a Good Sport</div><div class="scaffold-starter">If I lose, I will... If I win, I will...</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div>
+</div>
+<div class="page last-page">
+<div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">End-of-Week Parent Feedback — Game Theory Week</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">End-of-Week Parent Feedback — Game Theory Week</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Please complete this feedback sheet after the week wraps up. Your notes help shape next week&#x27;s lessons.</div>
+<div class="passage-title">Week Summary &amp; Teaching Notes for the Parent</div>
+<div class="passage"><p>This week introduced core game-theory ideas through a play-first, discuss-after rhythm. Each day the family played a short game (under 45 minutes to set up and play), then read a passage that pulled one big idea out of that game, then completed an application worksheet.</p><p>Monday established the WIN CONDITION — every game has a goal, and the first thing a smart player asks is &#x27;How do you win?&#x27; (game: Tic-Tac-Toe). Tuesday contrasted COMPETITION and COOPERATION — playing against versus playing with others (game: the two-round Block Tower). Wednesday introduced BASIC PROBABILITY — likely, unlikely, and chance — and had Christopher run a real experiment and graph the results (game: the Mystery Bag). Thursday explored HIDDEN INFORMATION — what you cannot see, and how good players use clues and memory (game: Go Fish). Friday tied everything together with STRATEGY — a plan to reach your win condition, thinking ahead and even thinking backward (game: &#x27;Don&#x27;t Take the Last One&#x27;).</p><p>Ace the Fox narrated the whole week as a friendly game-night host who thinks one move ahead, giving concrete, relatable examples for each concept.</p><p>Key concepts to check for genuine understanding — not just recall:
+1) A win condition is the GOAL of a game; different games have different ones.
+2) Competition = playing against; cooperation = playing with. Many games mix both.
+3) Probability describes how LIKELY something is — some outcomes are more likely.
+4) Hidden information is what you cannot see; smart players use clues and memory.
+5) A strategy is a PLAN (a set of steps) to reach the win condition.</p><p>Common misconceptions to watch for:
+• &#x27;Winning is the only good outcome&#x27; — reinforce ties, good sportsmanship, and that cooperative games mean everyone wins together.
+• &#x27;If it is luck, my choices do not matter&#x27; — many games MIX luck and skill; good moves still matter even when dice are involved.
+• &#x27;A good plan means I will always win&#x27; — luck and an opponent&#x27;s choices can still change the result; a strategy improves your chances, it does not guarantee a win.</p><p>Suggested follow-on activities: on your next real game night, pause before playing and ask Christopher to name the win condition, whether it is cooperative or competitive, and how much is luck versus skill. Try inventing a brand-new game together and writing down its rules and win condition.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Overall comfort with the week&#x27;s content — how well did Christopher grasp the concepts? (1 = struggled throughout, 5 = strong grasp)</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which day&#x27;s game generated the most curiosity or questions?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. By Friday, could Christopher name a game&#x27;s win condition and describe a simple strategy for it?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. How did game night go as a teaching tool? Did the play-first, discuss-after order work well?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. Concepts or vocabulary to revisit next week:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Key Misconception to Watch:</span> <span class="vocab-def">A good strategy improves your CHANCES — it does not guarantee a win. Luck and the opponent still matter.</span></div><div class="vocab-item"><span class="vocab-term">Strongest Concept This Week:</span> <span class="vocab-def">(Fill in after the week — which idea did Christopher grasp best?)</span></div><div class="vocab-item"><span class="vocab-term">Next Week&#x27;s Hook:</span> <span class="vocab-def">Fairness &amp; rules — what makes a game fair? How do we handle it when someone breaks a rule or a game feels unfair?</span></div></div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>

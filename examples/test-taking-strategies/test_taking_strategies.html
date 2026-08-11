@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test-Taking Strategies — A 2-Day Mini-Unit for Christopher</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="day-header" style="background:#374151;"><div class="day-header-label">Day 1</div><div class="day-header-title">Day 1: Meet Ollie and Get Ready to Test</div></div>
+<div class="ws-title" style="color:#374151;border-bottom-color:#374151;">Day 1: Meet Ollie and Get Ready to Test</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about Ollie&#x27;s first detective tricks. Then answer the questions below.</div>
+<div class="passage-title">Meet Ollie the Owl — Your Test-Taking Detective</div>
+<div class="passage"><p>Meet Ollie the Owl! Ollie is a wise old owl with big round glasses and a magnifying glass that never leaves his side. Ollie loves solving mysteries — and today, he has a new case: helping you become a Test-Taking Detective!</p><p>&#x27;A test is not something to be scared of,&#x27; Ollie hoots. &#x27;A test is just a chance to show everyone what you already know. Think of it like a treasure hunt — and I&#x27;m going to teach you the clues that help you find every answer!&#x27;</p><p>Ollie&#x27;s first detective trick is reading the DIRECTIONS. Directions are the sentences at the top of a page that tell you exactly what to do. Before answering anything, Ollie always reads the directions twice and hunts for CLUE WORDS — important words like &#x27;circle,&#x27; &#x27;underline,&#x27; &#x27;choose one,&#x27; or &#x27;choose all that apply.&#x27; Missing a clue word is the most common mistake a test detective can make!</p><p>Ollie&#x27;s second trick is reading the WHOLE question before answering. &#x27;Many detectives get tricked,&#x27; Ollie warns, &#x27;because they stop reading halfway through and guess too soon. Always read every single word, all the way to the question mark!&#x27;</p><p>Ollie&#x27;s third trick is PACING — using your time wisely. Before starting, Ollie glances at how many questions are on the page. If one question feels too tricky, Ollie doesn&#x27;t freeze — he puts a small mark next to it, skips it, and comes back after finishing the easier ones. That way, no time is wasted stuck on just one clue.</p><p>Finally, Ollie always takes one slow, deep breath before he begins. &#x27;A calm detective thinks clearly,&#x27; he says. &#x27;It&#x27;s okay to feel a little nervous — everyone does! Just breathe, remember you&#x27;ve been practicing, and do your very best.&#x27;</p><p>With his glasses polished and his mind calm, Ollie the Owl was ready for any test that came his way. Are you ready to be a detective too?</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What are &#x27;clue words,&#x27; and why does Ollie hunt for them in the directions?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Why does Ollie always read the WHOLE question before answering?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. What does Ollie do when he finds a question that feels too tricky?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: Ollie says feeling a little nervous before a test is normal. What is one thing you could do to feel calmer if you started to feel nervous during a test?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">calm:</span> <span class="vocab-def">Feeling relaxed and ready to think clearly — taking a deep breath helps you feel this way.</span></div><div class="vocab-item"><span class="vocab-term">skip and return:</span> <span class="vocab-def">Marking a hard question, moving on, and coming back to it later instead of getting stuck.</span></div><div class="vocab-item"><span class="vocab-term">clue words:</span> <span class="vocab-def">Important words in directions, like &#x27;circle&#x27; or &#x27;choose all that apply,&#x27; that tell you exactly what to do.</span></div><div class="vocab-item"><span class="vocab-term">pace:</span> <span class="vocab-def">Using your time wisely during a test — not rushing, but not stuck either.</span></div><div class="vocab-item"><span class="vocab-term">directions:</span> <span class="vocab-def">The instructions at the top of a page that explain what you&#x27;re supposed to do.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#374151;"><div class="day-header-label">Day 1</div><div class="day-header-title">Day 1: Smart Test Habits vs. Testing Traps — Word Sort</div></div>
+<div class="ws-title" style="color:#374151;border-bottom-color:#374151;">Day 1: Smart Test Habits vs. Testing Traps — Word Sort</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Look at each card below. Write it in the correct box — is it a Smart Test Habit that helps you, or a Testing Trap that hurts you?</div>
+<div class="word-sort-categories" style="grid-template-columns:repeat(2,1fr);">
+<div class="ws-category" style="border-color:#374151;"><div class="ws-category-label" style="color:#374151;">Smart Test Habits</div></div><div class="ws-category" style="border-color:#374151;"><div class="ws-category-label" style="color:#374151;">Testing Traps</div></div>
+</div>
+<div class="ws-tile-bank">
+  <div class="ws-tile-bank-label">Word Bank — write each word in the correct box above:</div>
+  <div class="ws-tiles"><span class="ws-tile">Skip the directions</span><span class="ws-tile">Read the whole question</span><span class="ws-tile">Rush through without checking</span><span class="ws-tile">Look for clue words</span><span class="ws-tile">Answer only half the question</span><span class="ws-tile">Take a slow breath before starting</span><span class="ws-tile">Guess before reading the question</span><span class="ws-tile">Skip a hard question and come back</span><span class="ws-tile">Stay stuck on one hard question</span><span class="ws-tile">Read the directions twice</span></div>
+</div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#374151;"><div class="day-header-label">Day 2</div><div class="day-header-title">Day 2: Smart Test Moves</div></div>
+<div class="ws-title" style="color:#374151;border-bottom-color:#374151;">Day 2: Smart Test Moves</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Read about Ollie&#x27;s next two detective tricks. Then answer the questions below.</div>
+<div class="passage-title">Ollie&#x27;s Next Case: Elimination, Checking, and Staying Calm</div>
+<div class="passage"><p>Ollie the Owl had one wing wrapped around his magnifying glass, ready for his next detective case. &#x27;Yesterday you learned to read carefully and pace yourself,&#x27; he hooted. &#x27;Today, I&#x27;ll teach you two of my favorite detective tricks — and how to handle those nervous jitters, too!&#x27;</p><p>Ollie&#x27;s first trick today is PROCESS OF ELIMINATION. When a question has several choices and you&#x27;re not sure of the answer, Ollie doesn&#x27;t panic. Instead, he looks at each choice and crosses out any answer he KNOWS is wrong. &#x27;If I can rule out two silly answers,&#x27; Ollie explains, &#x27;I only have to choose between the two that are left — and that makes it much easier to pick the right one!&#x27;</p><p>Ollie&#x27;s second trick is CHECKING YOUR WORK. Right before he turns in a test, Ollie always goes back to the very first page and rereads every question one more time. He makes sure he didn&#x27;t skip any, and he double-checks that his answers actually match the questions being asked. &#x27;Checking is like a detective examining the clues one last time before closing the case,&#x27; Ollie says. &#x27;It catches mistakes I might have rushed past the first time.&#x27;</p><p>Sometimes, even the best detectives feel nervous. Maybe your tummy feels fluttery, or your hands feel a little shaky. Ollie says that&#x27;s completely normal — it just means you care about doing well! When Ollie feels nervous, he pauses, takes three slow breaths, and reminds himself, &#x27;I have practiced. I know a lot. I will do my best, and that is enough.&#x27; Saying kind, calm words to yourself is called POSITIVE SELF-TALK, and it helps quiet those nervous feelings so your brain can think clearly again.</p><p>Ollie closed his notebook with a satisfied nod. &#x27;Elimination narrows the mystery. Checking catches the clues you missed. And a calm mind solves every case. Now you have all my detective secrets — go show everyone what you know!&#x27;</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. What is &#x27;process of elimination,&#x27; and how does it help Ollie pick an answer when he&#x27;s not sure?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Why does Ollie check his work before turning in a test? What is he looking for?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. What does Ollie do when he starts to feel nervous during a test?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. LET&#x27;S DISCUSS: Ollie says feeling nervous just means &#x27;you care about doing well.&#x27; Can you think of a kind, calm thing you could say to yourself before your next test?</div><div class="answer-lines"></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">nervous:</span> <span class="vocab-def">A fluttery or shaky feeling before or during a test — it&#x27;s normal and just means you care about doing well.</span></div><div class="vocab-item"><span class="vocab-term">rule out:</span> <span class="vocab-def">To decide that an answer choice is definitely wrong, so you don&#x27;t pick it.</span></div><div class="vocab-item"><span class="vocab-term">positive self-talk:</span> <span class="vocab-def">Saying kind, calm words to yourself, like &#x27;I have practiced, I will do my best,&#x27; to help you feel less nervous.</span></div><div class="vocab-item"><span class="vocab-term">checking your work:</span> <span class="vocab-def">Going back over your answers before turning in a test to catch mistakes and make sure every question is answered.</span></div><div class="vocab-item"><span class="vocab-term">process of elimination:</span> <span class="vocab-def">Crossing out answer choices you know are wrong so you can focus on the choices that are left.</span></div></div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#374151;"><div class="day-header-label">Day 2</div><div class="day-header-title">Day 2: Detective Tricks — Matching</div></div>
+<div class="ws-title" style="color:#374151;border-bottom-color:#374151;">Day 2: Detective Tricks — Matching</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Draw a line from each detective trick on the left to its meaning on the right. This mixes in tricks from both days!</div>
+<div class="matching-row"><div class="matching-number">1.</div><div class="matching-left">Process of Elimination</div><div class="matching-line"></div><div class="matching-right">Crossing out answers you know are wrong to narrow down your choices</div></div><div class="matching-row"><div class="matching-number">2.</div><div class="matching-left">Checking Your Work</div><div class="matching-line"></div><div class="matching-right">Important words in the directions that tell you exactly what to do</div></div><div class="matching-row"><div class="matching-number">3.</div><div class="matching-left">Positive Self-Talk</div><div class="matching-line"></div><div class="matching-right">Marking a hard question, moving on, and coming back to it later</div></div><div class="matching-row"><div class="matching-number">4.</div><div class="matching-left">Clue Words</div><div class="matching-line"></div><div class="matching-right">Saying kind, calm words to yourself to feel less nervous</div></div><div class="matching-row"><div class="matching-number">5.</div><div class="matching-left">Pacing</div><div class="matching-line"></div><div class="matching-right">Using your time wisely so you don&#x27;t get stuck on one question</div></div><div class="matching-row"><div class="matching-number">6.</div><div class="matching-left">Skip and Return</div><div class="matching-line"></div><div class="matching-right">Going back over your answers before turning in the test</div></div>
+</div>
+<div class="page last-page">
+<div class="day-header" style="background:#374151;"><div class="day-header-label">Day 2</div><div class="day-header-title">End-of-Unit Parent Feedback — Test-Taking Strategies</div></div>
+<div class="ws-title" style="color:#374151;border-bottom-color:#374151;">End-of-Unit Parent Feedback — Test-Taking Strategies</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Please complete this feedback sheet after the two days wrap up. Your notes help shape future study-skills lessons.</div>
+<div class="passage-title">Unit Summary &amp; Teaching Notes for the Parent</div>
+<div class="passage"><p>This short unit covered five core test-taking strategies through Ollie the Owl, a detective narrator. Day 1 established the &#x27;before and during&#x27; habits: reading directions carefully, hunting for clue words, reading the whole question, pacing yourself across the page, and skipping a hard question to return to it later. Day 2 added two active problem-solving tricks — process of elimination and checking your work — plus one emotional-regulation tool: positive self-talk for managing normal pre-test nerves.</p><p>Key concepts to check for genuine understanding — not just recall:
+1) A test is a chance to show what you know, not something to fear.
+2) Directions and clue words matter as much as the questions themselves.
+3) Skipping a hard question and returning to it is a strategy, not giving up.
+4) Process of elimination narrows choices even without knowing the answer outright.
+5) Checking your work is a distinct final step, not the same as answering carefully the first time.</p><p>Common misconceptions to watch for:
+• &#x27;Skipping a question means I failed it&#x27; (it&#x27;s a pacing tool — you come back).
+• &#x27;Feeling nervous means something is wrong&#x27; (it&#x27;s normal; the goal is managing it, not eliminating it).
+• &#x27;Checking work just means rereading my own handwriting&#x27; (it means rereading the question too, to confirm the answer actually matches what was asked).</p><p>Suggested follow-on activities: time a short practice worksheet together and talk through pacing out loud; play a &#x27;rule it out&#x27; game with silly multiple-choice questions; practice one calming phrase together before the next real test or quiz.</p></div>
+<div class="questions-section"><h3>Questions</h3><div class="question"><div class="question-prompt">1. Overall comfort with the strategies — how well did Christopher grasp them? (1 = struggled throughout, 5 = strong grasp of all five)</div><div class="answer-lines"><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">2. Which strategy seemed to click fastest? Which needs more practice?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">3. Could Christopher explain, in his own words, what to do when he doesn&#x27;t know an answer right away?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">4. Did he show any signs of test anxiety during practice? How did he respond?</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div><div class="question"><div class="question-prompt">5. Strategies or vocabulary to revisit before the next real test:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div></div></div>
+<div class="vocab-section"><h3>Words to Know</h3><div class="vocab-grid"><div class="vocab-item"><span class="vocab-term">Strongest Concept:</span> <span class="vocab-def">(Fill in after the unit — which strategy did Christopher grasp best?)</span></div><div class="vocab-item"><span class="vocab-term">Key Misconception to Watch:</span> <span class="vocab-def">Skipping a hard question is a pacing strategy, not a failure — make sure the &#x27;return to it later&#x27; habit actually sticks.</span></div><div class="vocab-item"><span class="vocab-term">Next Step:</span> <span class="vocab-def">Apply these five strategies to a real, low-stakes practice worksheet or quiz within the next week to reinforce the habits.</span></div></div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>
