@@ -2,6 +2,31 @@ import { test, expect } from '@playwright/test';
 import { createStudent, createPacket, submitFeedback, backdateFeedback } from './fixtures/api';
 
 // ---------------------------------------------------------------------------
+// Dashboard — Submit Feedback button
+// ---------------------------------------------------------------------------
+test.describe('Dashboard — Submit Feedback button', () => {
+  const STUDENT_ID = 'e2e-dashboard-feedback-p5q6';
+  const PACKET_ID = `${STUDENT_ID}-pkt-001`;
+
+  test.beforeAll(async ({ request }) => {
+    await createStudent(request, STUDENT_ID, {
+      name: 'Dashboard Feedback Student',
+      birthday: '2018-08-01',
+    });
+    await createPacket(request, STUDENT_ID, PACKET_ID);
+  });
+
+  test('Submit Feedback button on dashboard navigates to /plans', async ({ page }) => {
+    // networkidle ensures both students AND packets have loaded (two-stage async fetch)
+    await page.goto('/dashboard', { waitUntil: 'networkidle' });
+    const btn = page.getByRole('button', { name: 'Submit Feedback' }).first();
+    await expect(btn).toBeVisible();
+    await btn.click();
+    await expect(page).toHaveURL(/\/plans/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Plans page — empty state
 // ---------------------------------------------------------------------------
 test.describe('Plans page — empty state', () => {

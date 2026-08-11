@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, Button, Badge } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
 import { useEnrichedStudents, useWeeklyPacketsStats, usePendingPackets } from '@/lib/hooks';
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const { packets: pendingPackets } = usePendingPackets();
   const { showToast } = useToast();
 
+  const router = useRouter();
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<{
     id: string;
@@ -276,7 +278,12 @@ export default function Dashboard() {
 
                       if (hasPendingPacket) {
                         return (
-                          <Button variant="primary" size="md" className="w-full">
+                          <Button
+                            variant="primary"
+                            size="md"
+                            className="w-full"
+                            onClick={() => router.push('/plans')}
+                          >
                             Submit Feedback
                           </Button>
                         );
