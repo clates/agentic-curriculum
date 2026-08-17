@@ -22,7 +22,17 @@ instantly identify which sheets belong to which day:
 from __future__ import annotations
 
 import html as _html
+import os
+import sys
 from typing import Any
+
+try:
+    from .worksheet_layouts import get_layout
+except ImportError:  # Fallback when executed outside package context
+    CURRENT_DIR = os.path.dirname(__file__)
+    if CURRENT_DIR not in sys.path:
+        sys.path.insert(0, CURRENT_DIR)
+    from worksheet_layouts import get_layout  # type: ignore
 
 # ── Day palette ────────────────────────────────────────────────────────────
 
@@ -320,6 +330,201 @@ _CSS = """\
   .graph-questions h3 {
     font-size: 10pt; font-weight: bold;
     border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+</style>"""
+
+# ── Content-block CSS ──────────────────────────────────────────────────────
+# Blocks are layout-agnostic: they render the same in `classic` and `journal`.
+# Appended to every packet; rules are namespaced so nothing here can affect the
+# historical worksheet types above.
+
+_BLOCK_CSS = """\
+<style>
+  /* Story panel */
+  .fx-story {
+    position: relative; border-radius: 5px; padding: 9px 12px 9px 34px;
+    font-size: 10pt; line-height: 1.6; margin-bottom: 10px;
+    background: #fdfbf6; border: 1.5px solid #e6dcc8; border-left-width: 5px;
+    break-inside: avoid;
+  }
+  .fx-story::before {
+    content: "\\1F43E"; position: absolute; left: 9px; top: 8px;
+    font-size: 13pt; opacity: 0.65;
+  }
+  .fx-story .fx-who {
+    font-weight: bold; font-size: 8.5pt; text-transform: uppercase;
+    letter-spacing: 0.09em; color: #8a7a55; display: block; margin-bottom: 3px;
+  }
+  .fx-story p { margin-bottom: 6px; }
+  .fx-story p:last-child { margin-bottom: 0; }
+
+  /* Hands-on card */
+  .fx-doing {
+    border: 2px dashed #b9b9b9; border-radius: 6px;
+    padding: 8px 11px 8px 34px; position: relative; background: #fafafa;
+    font-size: 9.5pt; margin-bottom: 10px; break-inside: avoid;
+  }
+  .fx-doing::before {
+    content: "\\270B"; position: absolute; left: 10px; top: 7px;
+    font-size: 13pt; opacity: 0.6;
+  }
+  .fx-doing-label {
+    font-size: 8pt; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.09em; color: #666; display: block; margin-bottom: 2px;
+  }
+
+  /* Note / teacher aside */
+  .fx-note {
+    border-left: 4px solid #cbd5e1; background: #f8fafc;
+    padding: 6px 10px; font-size: 9pt; color: #475569;
+    margin-bottom: 9px; border-radius: 0 4px 4px 0;
+  }
+
+  /* Numbered tasks */
+  .fx-task { display: flex; gap: 9px; margin-bottom: 11px; break-inside: avoid; }
+  .fx-badge {
+    flex: 0 0 0.26in; height: 0.26in; border-radius: 50%; color: #fff;
+    font-size: 9.5pt; font-weight: bold; display: flex;
+    align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .fx-task-body { flex: 1; min-width: 0; }
+  .fx-task-prompt { font-size: 10pt; font-weight: bold; margin-bottom: 4px; line-height: 1.35; }
+  .fx-task-detail { font-size: 9.5pt; color: #444; margin-bottom: 4px; }
+
+  /* Warm-up / speed math */
+  .fx-drill { margin-bottom: 11px; break-inside: avoid; }
+  .fx-drill-head {
+    display: flex; align-items: baseline; gap: 8px;
+    border-bottom: 1.5px solid; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .fx-drill-title { font-size: 11pt; font-weight: bold; }
+  .fx-drill-inst { font-size: 8.5pt; color: #666; font-style: italic; flex: 1; }
+  .fx-timer {
+    border: 1.5px solid #999; border-radius: 4px; padding: 1px 8px;
+    font-size: 8pt; color: #555; white-space: nowrap;
+  }
+  .fx-drill-grid { display: grid; gap: 7px 12px; }
+  .fx-drill-item {
+    display: flex; align-items: baseline; gap: 5px;
+    font-size: 10.5pt; padding: 3px 0;
+  }
+  .fx-drill-num { font-size: 8pt; color: #999; flex: 0 0 auto; min-width: 0.15in; }
+  .fx-drill-q { flex: 0 1 auto; white-space: nowrap; }
+  .fx-drill-blank {
+    flex: 1 1 0.45in; min-width: 0.35in; border-bottom: 1.5px solid #777; height: 0.19in;
+  }
+  .fx-drill-box {
+    flex: 0 0 0.42in; height: 0.3in; border: 1.5px solid #777; border-radius: 3px;
+  }
+
+  /* Comparison pairs */
+  .fx-cmp-grid { display: grid; gap: 10px 18px; margin-bottom: 10px; }
+  .fx-cmp {
+    display: flex; align-items: center; gap: 7px;
+    border-bottom: 1px solid #e8e8e8; padding-bottom: 5px;
+  }
+  .fx-cmp-side {
+    flex: 1; text-align: center; font-size: 11.5pt; font-weight: bold;
+  }
+  .fx-cmp-box {
+    flex: 0 0 0.36in; height: 0.28in; border: 1.5px solid #777; border-radius: 3px;
+  }
+
+  /* Fraction strips */
+  .fx-strips { margin-bottom: 10px; }
+  .fx-strip-row { display: flex; align-items: center; gap: 8px; margin-bottom: 0.09in; }
+  .fx-strip-label { font-size: 8.5pt; color: #555; flex: 0 0 0.85in; text-align: right; }
+  .fx-strip { display: flex; border: 1.5px solid #111; break-inside: avoid; }
+  .fx-strip > span {
+    flex: 1 1 0; border-right: 1px dashed #444;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8.5pt; font-weight: bold;
+  }
+  .fx-strip > span:last-child { border-right: none; }
+
+  /* Fraction circles */
+  .fx-circles { display: flex; flex-wrap: wrap; gap: 0.26in; margin-bottom: 8px; }
+  .fx-circle-cell { text-align: center; }
+  .fx-circle { border-radius: 50%; border: 1.75px solid #111; }
+  .fx-caption { font-size: 8.5pt; color: #555; margin-top: 3px; }
+
+  /* Area-model grids */
+  .fx-areas { display: flex; flex-wrap: wrap; gap: 0.18in; margin-bottom: 8px; }
+  .fx-area { display: grid; border: 1.75px solid #111; }
+  .fx-area div { border: 0.5px solid #777; }
+
+  /* Number line */
+  .fx-nl-wrap { margin-bottom: 12px; break-inside: avoid; }
+  .fx-nl-prompt { font-size: 9.5pt; margin-bottom: 14px; }
+  .fx-nl { position: relative; border-top: 2px solid #111; height: 0.42in; display: flex; }
+  .fx-nl-tick { flex: 1 1 0; position: relative; }
+  .fx-nl-tick::before {
+    content: ""; position: absolute; left: 0; top: 0;
+    width: 1.5px; height: 0.15in; background: #111;
+  }
+  .fx-nl-tick:last-child::after {
+    content: ""; position: absolute; right: 0; top: 0;
+    width: 1.5px; height: 0.15in; background: #111;
+  }
+  .fx-nl-lab {
+    position: absolute; top: 0.17in; left: 0; transform: translateX(-50%);
+    font-size: 8.5pt; white-space: nowrap;
+  }
+  .fx-nl-lab.end { left: auto; right: 0; transform: translateX(50%); }
+
+  /* Heart bar */
+  .fx-hearts { display: flex; gap: 0.04in; margin-bottom: 6px; }
+  .fx-heart { flex: 1 1 0; border: 1.5px solid #7f1d1d; display: flex; }
+  .fx-heart span { flex: 1 1 0; border-right: 1px dotted #7f1d1d; }
+  .fx-heart span:last-child { border-right: none; }
+  .fx-heart span.on { background: #fca5a5; }
+
+  /* Colour key */
+  .fx-key { font-size: 9.5pt; line-height: 1.85; }
+  .fx-sw {
+    display: inline-block; width: 11px; height: 11px; border: 1px solid #444;
+    vertical-align: -1px; margin-right: 5px;
+  }
+  .fx-row { display: flex; gap: 0.3in; align-items: center; margin: 6px 0 2px; flex-wrap: wrap; }
+
+  /* Calibration ruler */
+  .fx-ruler { height: 0.42in; border: 1.5px solid #111; display: flex; margin-bottom: 3px; }
+  .fx-ruler div {
+    flex: 1 1 0; border-right: 1px solid #111; font-size: 7.5pt;
+    display: flex; align-items: flex-end; justify-content: flex-end; padding-right: 2px;
+  }
+  .fx-ruler div:last-child { border-right: none; }
+
+  /* Cut-out cards */
+  .fx-cards { display: grid; gap: 6px; margin-bottom: 8px; }
+  .fx-card {
+    border: 1.5px dashed #666; border-radius: 4px; padding: 8px 4px;
+    text-align: center; font-size: 12pt; font-weight: bold; background: #fff;
+  }
+
+  /* Rich text sections (teacher guides, answer keys) */
+  .fx-rt { margin-bottom: 11px; break-inside: avoid; }
+  .fx-rt-head {
+    font-size: 11pt; font-weight: bold; border-bottom: 1.5px solid;
+    padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .fx-rt p { font-size: 9.5pt; line-height: 1.55; margin-bottom: 5px; }
+  .fx-rt ul { margin: 0 0 5px 18px; }
+  .fx-rt li { font-size: 9.5pt; line-height: 1.5; margin-bottom: 2px; }
+  .fx-rt-table { border-collapse: collapse; width: 100%; margin-bottom: 4px; }
+  .fx-rt-table th {
+    text-align: left; vertical-align: top; font-size: 9pt; font-weight: bold;
+    padding: 3px 8px 3px 0; width: 1.5in; border-bottom: 1px solid #e5e5e5;
+  }
+  .fx-rt-table td {
+    font-size: 9.5pt; padding: 3px 0; border-bottom: 1px solid #e5e5e5;
+  }
+
+  /* Cut line */
+  .fx-cutline { border-top: 2px dashed #aaa; margin: 12px 0; position: relative; height: 0; }
+  .fx-cutline::before {
+    content: "\\2702"; position: absolute; left: 0; top: -9px;
+    background: #fff; padding-right: 5px; font-size: 11pt; color: #999;
   }
 </style>"""
 
@@ -996,6 +1201,397 @@ def _render_pictograph(data: dict, primary: str, light: str) -> str:
 """
 
 
+# ── Content blocks (layout-agnostic) ───────────────────────────────────────
+#
+# These are composable page fragments rather than whole worksheets: a journal
+# page is assembled from several of them.  They carry no day header of their
+# own — the layout supplies that.
+
+
+def _render_story_panel(data: dict, primary: str, light: str) -> str:
+    """Narrative panel — the recurring-character beat that opens each day."""
+    who = data.get("who", "")
+    text = data.get("text", "")
+    paras = [p.strip() for p in text.split("\n\n") if p.strip()]
+    who_html = f'<span class="fx-who">{_h(who)}</span>' if who else ""
+    body = "".join(f"<p>{_h(p)}</p>" for p in paras)
+    return f'<div class="fx-story">{who_html}{body}</div>'
+
+
+def _render_doing_card(data: dict, primary: str, light: str) -> str:
+    """Hands-on / outdoor activity, styled so it reads as not-desk-work."""
+    label = data.get("label", "Go and do")
+    text = data.get("text", "")
+    return (
+        f'<div class="fx-doing"><span class="fx-doing-label">{_h(label)}</span>' f"{_h(text)}</div>"
+    )
+
+
+def _render_note_box(data: dict, primary: str, light: str) -> str:
+    return f'<div class="fx-note">{_h(data.get("text", ""))}</div>'
+
+
+def _render_cut_line(data: dict, primary: str, light: str) -> str:
+    return '<div class="fx-cutline"></div>'
+
+
+def _render_task_list(data: dict, primary: str, light: str) -> str:
+    """Numbered tasks. Each task may embed a figure block via ``figure``."""
+    tasks = data.get("tasks", [])
+    start = int(data.get("start_number", 1))
+    out = []
+    for i, task in enumerate(tasks, start):
+        prompt = task.get("prompt", "")
+        detail = task.get("detail", "")
+        detail_html = f'<div class="fx-task-detail">{_h(detail)}</div>' if detail else ""
+
+        fig_html = ""
+        figure = task.get("figure")
+        if figure:
+            fig_html = _render_block(figure.get("kind", ""), figure.get("data", {}), primary, light)
+
+        answer = ""
+        if task.get("response_lines"):
+            answer = _answer_lines(int(task["response_lines"]))
+
+        out.append(
+            f'<div class="fx-task">'
+            f'<div class="fx-badge" style="background:{primary};">{i}</div>'
+            f'<div class="fx-task-body">'
+            f'<div class="fx-task-prompt">{_h(prompt)}</div>'
+            f"{detail_html}{fig_html}{answer}"
+            f"</div></div>"
+        )
+    return "".join(out)
+
+
+def _render_speed_math(data: dict, primary: str, light: str) -> str:
+    """
+    Warm-up / speed drill: a dense grid of short problems with answer slots.
+
+    ``title`` defaults to empty so the block doubles as a bare problem grid inside
+    a numbered task; pass one explicitly for a standalone warm-up.
+    """
+    title = data.get("title", "")
+    instructions = data.get("instructions", "")
+    problems = data.get("problems", [])
+    columns = int(data.get("columns", 4))
+    answer_style = data.get("answer_style", "blank")  # "blank" | "box"
+    timer = data.get("timer", "")
+
+    timer_html = f'<div class="fx-timer">{_h(timer)}</div>' if timer else ""
+    inst_html = f'<div class="fx-drill-inst">{_h(instructions)}</div>' if instructions else ""
+    slot_cls = "fx-drill-box" if answer_style == "box" else "fx-drill-blank"
+
+    # Head is suppressed entirely when unlabelled, so the block can be reused as a
+    # bare problem grid inside a numbered task without printing an empty rule.
+    head_html = ""
+    if title or instructions or timer:
+        head_html = (
+            f'<div class="fx-drill-head" style="border-color:{primary};">'
+            f'<div class="fx-drill-title" style="color:{primary};">{_h(title)}</div>'
+            f"{inst_html}{timer_html}</div>"
+        )
+
+    items = []
+    for i, prob in enumerate(problems, 1):
+        text = prob.get("q", "") if isinstance(prob, dict) else str(prob)
+        items.append(
+            f'<div class="fx-drill-item">'
+            f'<span class="fx-drill-num">{i}.</span>'
+            f'<span class="fx-drill-q">{_h(text)}</span>'
+            f'<span class="{slot_cls}"></span>'
+            f"</div>"
+        )
+
+    return (
+        f'<div class="fx-drill">{head_html}'
+        f'<div class="fx-drill-grid" style="grid-template-columns:repeat({columns},1fr);">'
+        f'{"".join(items)}</div></div>'
+    )
+
+
+def _render_fraction_strips(data: dict, primary: str, light: str) -> str:
+    """
+    Fraction strip kit.  Equal division is done by ``flex: 1 1 0`` so the
+    browser splits the strip exactly — no arithmetic, no rounding drift.
+    """
+    strips = data.get("strips", [])
+    width_in = float(data.get("width_in", 6.0))
+    height_in = float(data.get("height_in", 0.44))
+    show_labels = data.get("show_labels", True)
+
+    rows = []
+    for strip in strips:
+        denom = int(strip.get("denominator", 1))
+        label = strip.get("label", "")
+        shade = set(strip.get("shade", []))
+        color = strip.get("color", "")
+        piece_label = strip.get("piece_label")
+        if piece_label is None:
+            piece_label = f"1/{denom}" if show_labels and denom <= 8 else ""
+
+        cells = []
+        for idx in range(denom):
+            bg = ""
+            if idx in shade and color:
+                bg = f"background:{color};"
+            elif color and strip.get("fill_all"):
+                bg = f"background:{color};"
+            cells.append(f'<span style="{bg}">{_h(piece_label)}</span>')
+
+        label_html = f'<div class="fx-strip-label">{_h(label)}</div>' if label else ""
+        rows.append(
+            f'<div class="fx-strip-row">{label_html}'
+            f'<div class="fx-strip" style="width:{width_in}in;height:{height_in}in;">'
+            f'{"".join(cells)}</div></div>'
+        )
+    return f'<div class="fx-strips">{"".join(rows)}</div>'
+
+
+def _render_fraction_circles(data: dict, primary: str, light: str) -> str:
+    """Circles divided into equal wedges via conic-gradient (360/n degree stops)."""
+    circles = data.get("circles", [])
+    size_in = float(data.get("size_in", 1.5))
+
+    cells = []
+    for circ in circles:
+        parts = max(1, int(circ.get("parts", 1)))
+        caption = circ.get("caption", "")
+        shaded = int(circ.get("shaded", 0))
+        shade_color = circ.get("shade_color", "#dbeafe")
+
+        wedge = 360.0 / parts
+        spokes = f"repeating-conic-gradient(#111 0 0.7deg, transparent 0.7deg {wedge:g}deg)"
+        if shaded > 0:
+            stop = wedge * shaded
+            fill = f"conic-gradient({shade_color} 0 {stop:g}deg, #fff {stop:g}deg 360deg)"
+        else:
+            fill = "conic-gradient(#fff 0 360deg)"
+
+        cap = f'<div class="fx-caption">{_h(caption)}</div>' if caption else ""
+        cells.append(
+            f'<div class="fx-circle-cell">'
+            f'<div class="fx-circle" style="width:{size_in}in;height:{size_in}in;'
+            f'background:{spokes},{fill};"></div>{cap}</div>'
+        )
+    return f'<div class="fx-circles">{"".join(cells)}</div>'
+
+
+def _render_fraction_area(data: dict, primary: str, light: str) -> str:
+    """
+    Area/region models — a square partitioned by CSS grid.
+
+    ``cols``/``rows`` give an equal partition.  ``cols_spec``/``rows_spec`` take a
+    list of relative weights instead (e.g. ``[3, 1, 1, 1]``) to produce a shape cut
+    into the right *number* of parts that are deliberately **not** equal — the
+    distractors needed to test whether a student is checking for equal parts rather
+    than just counting pieces.
+    """
+    grids = data.get("grids", [])
+    size_in = float(data.get("size_in", 1.9))
+
+    cells = []
+    for grid in grids:
+        cols_spec = grid.get("cols_spec")
+        rows_spec = grid.get("rows_spec")
+        cols = max(1, int(grid.get("cols", 2)))
+        rows = max(1, int(grid.get("rows", 2)))
+
+        if cols_spec:
+            col_css = " ".join(f"{float(w):g}fr" for w in cols_spec)
+            cols = len(cols_spec)
+        else:
+            col_css = f"repeat({cols},1fr)"
+        if rows_spec:
+            row_css = " ".join(f"{float(w):g}fr" for w in rows_spec)
+            rows = len(rows_spec)
+        else:
+            row_css = f"repeat({rows},1fr)"
+
+        shaded = set(grid.get("shaded", []))
+        color = grid.get("shade_color", "#ede9fe")
+        caption = grid.get("caption", "")
+
+        squares = "".join(
+            f'<div style="background:{color};"></div>' if i in shaded else "<div></div>"
+            for i in range(cols * rows)
+        )
+        cap = f'<div class="fx-caption">{_h(caption)}</div>' if caption else ""
+        cells.append(
+            f"<div>"
+            f'<div class="fx-area" style="width:{size_in}in;height:{size_in}in;'
+            f"grid-template-columns:{col_css};"
+            f'grid-template-rows:{row_css};">{squares}</div>{cap}</div>'
+        )
+    return f'<div class="fx-areas">{"".join(cells)}</div>'
+
+
+def _render_fraction_number_line(data: dict, primary: str, light: str) -> str:
+    """0-to-1 number lines partitioned into equal fractional steps."""
+    lines = data.get("lines", [])
+    width_in = float(data.get("width_in", 6.0))
+
+    out = []
+    for line in lines:
+        denom = max(1, int(line.get("denominator", 2)))
+        prompt = line.get("prompt", "")
+        show_labels = line.get("show_labels", True)
+        end_label = line.get("end_label", "1")
+        start_label = line.get("start_label", "0")
+
+        ticks = []
+        for i in range(denom):
+            lab = ""
+            if show_labels:
+                text = start_label if i == 0 else f"{i}/{denom}"
+                lab = f'<div class="fx-nl-lab">{_h(text)}</div>'
+            end = ""
+            if i == denom - 1 and show_labels:
+                end = f'<div class="fx-nl-lab end">{_h(end_label)}</div>'
+            ticks.append(f'<div class="fx-nl-tick">{lab}{end}</div>')
+
+        prompt_html = f'<div class="fx-nl-prompt">{_h(prompt)}</div>' if prompt else ""
+        out.append(
+            f'<div class="fx-nl-wrap">{prompt_html}'
+            f'<div class="fx-nl" style="width:{width_in}in;">{"".join(ticks)}</div></div>'
+        )
+    return "".join(out)
+
+
+def _render_heart_bar(data: dict, primary: str, light: str) -> str:
+    """Themed half-unit bar: N hearts, each split in two."""
+    hearts = int(data.get("hearts", 5))
+    filled = int(data.get("filled_halves", 0))
+    width_in = float(data.get("width_in", 5.0))
+    height_in = float(data.get("height_in", 0.4))
+    caption = data.get("caption", "")
+
+    cells = []
+    for i in range(hearts):
+        left = "on" if filled >= i * 2 + 1 else ""
+        right = "on" if filled >= i * 2 + 2 else ""
+        cells.append(
+            f'<div class="fx-heart" style="height:{height_in}in;">'
+            f'<span class="{left}"></span><span class="{right}"></span></div>'
+        )
+    cap = f'<div class="fx-caption">{_h(caption)}</div>' if caption else ""
+    return f'<div class="fx-hearts" style="width:{width_in}in;">{"".join(cells)}</div>{cap}'
+
+
+def _render_color_key(data: dict, primary: str, light: str) -> str:
+    """Colour-by-fraction key: swatch + fraction + colour name."""
+    entries = data.get("entries", [])
+    rows = []
+    for entry in entries:
+        frac = entry.get("fraction", "")
+        name = entry.get("color_name", "")
+        hexv = entry.get("hex", "#ffffff")
+        rows.append(
+            f'<div><span class="fx-sw" style="background:{hexv};"></span>'
+            f"<b>{_h(frac)}</b> &rarr; {_h(name)}</div>"
+        )
+    return f'<div class="fx-key">{"".join(rows)}</div>'
+
+
+def _render_color_task(data: dict, primary: str, light: str) -> str:
+    """A figure plus its colour key, side by side."""
+    figure = data.get("figure", {})
+    fig_html = _render_block(figure.get("kind", ""), figure.get("data", {}), primary, light)
+    key_html = _render_color_key({"entries": data.get("entries", [])}, primary, light)
+    return f'<div class="fx-row">{fig_html}{key_html}</div>'
+
+
+def _render_calibration_ruler(data: dict, primary: str, light: str) -> str:
+    """Printed ruler for verifying the page printed at 100% scale."""
+    inches = int(data.get("inches", 6))
+    note = data.get(
+        "note",
+        "Check this against a real ruler. If it is not exactly "
+        f"{inches} inches long, reprint at 100% (Actual Size) with "
+        '"Fit to page" turned OFF — otherwise the pieces will not match.',
+    )
+    ticks = "".join(f"<div>{i}</div>" for i in range(1, inches + 1))
+    return (
+        f'<div class="fx-ruler" style="width:{inches}in;">{ticks}</div>'
+        f'<div class="fx-note">{_h(note)}</div>'
+    )
+
+
+def _render_compare_pairs(data: dict, primary: str, light: str) -> str:
+    """
+    Grid of ``left [ ] right`` comparison prompts.
+
+    Written as a real grid rather than a run-on text line so the pairs stay
+    visually separate — a string like "3/8 ___ 5/8   2/6 ___ 5/6" collapses its
+    whitespace in HTML and reads as one continuous blob.
+    """
+    pairs = data.get("pairs", [])
+    columns = int(data.get("columns", 3))
+    items = []
+    for pair in pairs:
+        left = pair.get("left", "") if isinstance(pair, dict) else str(pair)
+        right = pair.get("right", "") if isinstance(pair, dict) else ""
+        items.append(
+            f'<div class="fx-cmp">'
+            f'<span class="fx-cmp-side">{_h(left)}</span>'
+            f'<span class="fx-cmp-box"></span>'
+            f'<span class="fx-cmp-side">{_h(right)}</span>'
+            f"</div>"
+        )
+    return (
+        f'<div class="fx-cmp-grid" style="grid-template-columns:repeat({columns},1fr);">'
+        f'{"".join(items)}</div>'
+    )
+
+
+def _render_rich_text(data: dict, primary: str, light: str) -> str:
+    """
+    Headed prose sections with optional bullets and key/value rows — the
+    workhorse block for teacher guides and answer keys.
+    """
+    sections = data.get("sections", [])
+    out = []
+    for sec in sections:
+        heading = sec.get("heading", "")
+        text = sec.get("text", "")
+        bullets = sec.get("bullets", [])
+        rows = sec.get("rows", [])
+
+        head_html = ""
+        if heading:
+            head_html = (
+                f'<div class="fx-rt-head" style="color:{primary};'
+                f'border-color:{primary};">{_h(heading)}</div>'
+            )
+
+        body = ""
+        for para in (p.strip() for p in text.split("\n\n")):
+            if para:
+                body += f"<p>{_h(para)}</p>"
+        if bullets:
+            items = "".join(f"<li>{_h(b)}</li>" for b in bullets)
+            body += f"<ul>{items}</ul>"
+        if rows:
+            trs = "".join(
+                f"<tr><th>{_h(r.get('k', ''))}</th><td>{_h(r.get('v', ''))}</td></tr>" for r in rows
+            )
+            body += f'<table class="fx-rt-table">{trs}</table>'
+
+        out.append(f'<div class="fx-rt">{head_html}{body}</div>')
+    return "".join(out)
+
+
+def _render_cut_cards(data: dict, primary: str, light: str) -> str:
+    """Grid of cut-apart cards (number-line pegs, fraction cards)."""
+    cards = data.get("cards", [])
+    cols = int(data.get("columns", 6))
+    tiles = "".join(f'<div class="fx-card">{_h(c)}</div>' for c in cards)
+    return (
+        f'<div class="fx-cards" style="grid-template-columns:repeat({cols},1fr);">' f"{tiles}</div>"
+    )
+
+
 # ── Dispatch table ─────────────────────────────────────────────────────────
 
 _RENDERERS = {
@@ -1011,10 +1607,36 @@ _RENDERERS = {
     "tChartWorksheet": _render_t_chart,
     "barGraphWorksheet": _render_bar_graph,
     "pictographWorksheet": _render_pictograph,
+    # Composable content blocks (see "Content blocks" above)
+    "storyPanel": _render_story_panel,
+    "doingCard": _render_doing_card,
+    "noteBox": _render_note_box,
+    "cutLine": _render_cut_line,
+    "taskList": _render_task_list,
+    "speedMath": _render_speed_math,
+    "fractionStrips": _render_fraction_strips,
+    "fractionCircles": _render_fraction_circles,
+    "fractionArea": _render_fraction_area,
+    "fractionNumberLine": _render_fraction_number_line,
+    "heartBar": _render_heart_bar,
+    "colorKey": _render_color_key,
+    "colorTask": _render_color_task,
+    "calibrationRuler": _render_calibration_ruler,
+    "cutCards": _render_cut_cards,
+    "richText": _render_rich_text,
+    "comparePairs": _render_compare_pairs,
 }
 
 #: Worksheet kinds that have an HTML renderer.
 HTML_SUPPORTED_KINDS: frozenset[str] = frozenset(_RENDERERS)
+
+
+def _render_block(kind: str, data: dict, primary: str, light: str) -> str:
+    """Render one block by kind, returning '' for unknown kinds."""
+    renderer = _RENDERERS.get(kind)
+    if renderer is None:
+        return ""
+    return renderer(data, primary, light)
 
 
 def render_worksheet_html(kind: str, data: dict, day_label: str = "") -> str | None:
@@ -1028,12 +1650,38 @@ def render_worksheet_html(kind: str, data: dict, day_label: str = "") -> str | N
     return renderer(enriched, primary, light)
 
 
+def render_page(
+    blocks: list[tuple[str, dict]],
+    meta: dict | None = None,
+    layout: str = "classic",
+) -> str:
+    """
+    Render a sequence of ``(kind, data)`` blocks into one page fragment, wrapped
+    in the named layout's chrome.
+
+    ``meta`` carries layout-level page data (title, subtitle, day_index, status);
+    see ``worksheet_layouts`` for the recognised keys.  Unknown block kinds are
+    skipped rather than raising, so a typo degrades to a missing block instead of
+    a failed run.
+    """
+    meta = dict(meta or {})
+    day_label = meta.get("day_label", "")
+    primary, light = get_day_palette(day_label)
+    inner = "".join(_render_block(kind, data, primary, light) for kind, data in blocks)
+    return get_layout(layout).render_page(inner, meta, primary, light)
+
+
 def build_print_packet_html(
     pages: list[tuple[str, str]],
     packet_title: str = "Weekly Worksheets",
+    layout: str = "classic",
 ) -> str:
     """
     Assemble a full printable HTML document from a list of (day_label, html_fragment) tuples.
+
+    ``layout`` selects the page-chrome stylesheet to include alongside the base
+    CSS.  Block CSS is always included; it is namespaced under ``.fx-`` so it
+    cannot affect the historical worksheet types.
 
     Opens the browser print dialog automatically when loaded.
     """
@@ -1047,4 +1695,9 @@ def build_print_packet_html(
     # Auto-trigger print dialog; close tab after printing if opened as popup
     body += '\n<script>window.addEventListener("load", () => window.print());</script>'
 
-    return _HTML_WRAPPER.format(title=_h(packet_title), css=_CSS, body=body)
+    css = _CSS + "\n" + _BLOCK_CSS
+    layout_css = get_layout(layout).css
+    if layout_css:
+        css += "\n" + layout_css
+
+    return _HTML_WRAPPER.format(title=_h(packet_title), css=css, body=body)

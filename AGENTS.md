@@ -81,6 +81,76 @@ WorksheetFactory.create("feature_matrix", {
 
 ---
 
+## 3b. Page Layouts and Content Blocks
+
+Two newer HTML concepts sit alongside the whole-worksheet types above.
+
+### Layouts (`src/worksheet_layouts.py`)
+
+A **layout** owns the page furniture — header, rails, progress pips, name/date — but
+never the content. Content is rendered separately and handed to the layout as an opaque
+HTML string, so the two cannot circularly depend on each other.
+
+| Layout | Look |
+|--------|------|
+| `classic` | The historical style: solid day-colour bar, then the title again, then content. **Default everywhere** — omit the argument and output is unchanged. |
+| `journal` | Vertical day-coloured spine rail, single title with subtitle, five progress pips, optional running status strip. Used by the fractions week. |
+
+```python
+render_page(blocks, meta, layout="journal")            # one page fragment
+build_print_packet_html(pages, title, layout="journal") # includes that layout's CSS
+```
+
+To add a layout: write a `_render_<name>_page(inner, meta, primary, light)`, write its
+CSS, and register a `Layout` in `LAYOUTS`. Unknown names fall back to `classic` rather
+than raising.
+
+`meta` keys: `day_label`, `title`, `subtitle`, `rail_text`, `day_index`, `total_days`,
+`status` (`{label, hearts, filled_halves, reading}`), `show_name_date`.
+
+### Content blocks
+
+Blocks are composable page fragments rather than whole worksheets — a journal page is
+assembled from several. They carry no day header of their own. All are dispatchable
+through `render_worksheet_html` and are CSS-namespaced under `.fx-` so they cannot
+collide with the legacy types.
+
+| Block kind | What it renders |
+|------------|-----------------|
+| `storyPanel` | Narrator beat — cream panel with a paw glyph |
+| `doingCard` | Hands-on/outdoor activity, dashed so it reads as not-desk-work |
+| `noteBox` | Short aside or instruction callout |
+| `taskList` | Numbered tasks with colour badges; each may embed a `figure` block |
+| `speedMath` | Dense warm-up grid with answer slots; head is suppressed when unlabelled |
+| `comparePairs` | Grid of `left [ ] right` prompts — **use this, not a run-on text line**, since HTML collapses the whitespace into one unreadable blob |
+| `fractionStrips` | Strip kit; equal division via `flex: 1 1 0` |
+| `fractionCircles` | Circles divided by `conic-gradient` at 360/n degree stops |
+| `fractionArea` | Region model via CSS grid; `cols_spec`/`rows_spec` give **unequal** parts |
+| `fractionNumberLine` | 0-to-1 line partitioned into fractional steps |
+| `heartBar` | Half-unit bar (themed health bar) |
+| `colorKey` / `colorTask` | Colour-by-fraction key, alone or beside a figure |
+| `calibrationRuler` | Printed ruler for verifying 100% print scale |
+| `cutCards` | Grid of cut-apart cards |
+| `cutLine` | Scissors rule |
+| `richText` | Headed prose with bullets and key/value rows — teacher guides, answer keys |
+
+### Printing manipulatives
+
+Anything the student cuts out and compares **must print at true physical size**:
+
+- Dimension in CSS `in`, not `px`. Let `flex: 1 1 0` or `repeat(n, 1fr)` do the equal
+  division — never compute fractional widths yourself.
+- Make the whole **6 inches**. Six divides evenly by 1, 2, 3, 4, 6 and 12, so most pieces
+  land on clean ruler marks and the student can self-check.
+- Put a `calibrationRuler` on every page with cut-out pieces. Browser "fit to page"
+  silently shrinks output 4–6%, which is invisible on a normal worksheet but means
+  pieces printed on different days will not match.
+- Check pagination after generating. A page whose rendered height exceeds ~10.1in spills
+  onto a second sheet; measure with `scrollHeight` in a headless browser rather than
+  eyeballing it.
+
+---
+
 ## 4. Pedagogical Best Practices
 
 ### "Let's Discuss" Discussion Question
