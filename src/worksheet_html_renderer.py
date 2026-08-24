@@ -380,6 +380,18 @@ _BLOCK_CSS = """\
     margin-bottom: 9px; border-radius: 0 4px 4px 0;
   }
 
+  /* Logo badge — a real vehicle-make logo with a small caption */
+  .fx-logo-badge {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 3px;
+    border: 1.5px solid; border-radius: 6px; padding: 6px 14px; margin-bottom: 10px;
+    background: #fff; break-inside: avoid;
+  }
+  .fx-logo-img { height: 0.55in; width: auto; max-width: 2.2in; object-fit: contain; }
+  .fx-logo-cap {
+    font-size: 7.5pt; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #666;
+  }
+
   /* Numbered tasks */
   .fx-task { display: flex; gap: 9px; margin-bottom: 11px; break-inside: avoid; }
   .fx-badge {
@@ -1231,6 +1243,23 @@ def _render_note_box(data: dict, primary: str, light: str) -> str:
     return f'<div class="fx-note">{_h(data.get("text", ""))}</div>'
 
 
+def _render_logo_badge(data: dict, primary: str, light: str) -> str:
+    """
+    A real vehicle-make logo with a small caption underneath — e.g. "Today's
+    Truck: Peterbilt". ``src`` is expected to be a data URI the caller builds
+    from a locally-embedded asset (never a remote/user-supplied URL).
+    """
+    src = data.get("src", "")
+    alt = data.get("alt", "")
+    caption = data.get("caption", "")
+    cap_html = f'<div class="fx-logo-cap">{_h(caption)}</div>' if caption else ""
+    return (
+        f'<div class="fx-logo-badge" style="border-color:{primary};">'
+        f'<img src="{src}" alt="{_h(alt)}" class="fx-logo-img">'
+        f"{cap_html}</div>"
+    )
+
+
 def _render_cut_line(data: dict, primary: str, light: str) -> str:
     return '<div class="fx-cutline"></div>'
 
@@ -1625,6 +1654,7 @@ _RENDERERS = {
     "cutCards": _render_cut_cards,
     "richText": _render_rich_text,
     "comparePairs": _render_compare_pairs,
+    "logoBadge": _render_logo_badge,
 }
 
 #: Worksheet kinds that have an HTML renderer.
