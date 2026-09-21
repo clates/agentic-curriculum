@@ -321,6 +321,80 @@ _CSS = """\
     font-size: 10pt; font-weight: bold;
     border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
   }
+
+  /* Shape ID (gallery / attributes / sort / mirror-match) */
+  .shid-gallery { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
+  .shid-card {
+    flex: 0 0 auto; border: 2px solid #555; border-radius: 6px;
+    padding: 10px 14px; text-align: center; background: #fafafa;
+  }
+  .shid-blank { border-bottom: 1px solid #888; height: 18px; width: 1.3in; margin-top: 6px; }
+  .shid-pattern-blank {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 84px; min-height: 84px; font-size: 28pt; color: #aaa; border-style: dashed !important;
+  }
+  .shid-label-filled { font-weight: bold; font-size: 11pt; margin-top: 6px; }
+  .shid-attr-row { font-size: 9.5pt; margin-top: 8px; white-space: nowrap; }
+  .shid-bank-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+  .shid-bank-item {
+    border: 1.5px dashed #999; border-radius: 5px; padding: 6px 8px;
+    text-align: center; background: #fff;
+  }
+  .shid-letter { font-weight: bold; font-size: 10pt; margin-top: 3px; color: #555; }
+  .shid-write-line { font-size: 9.5pt; margin-top: 8px; color: #444; }
+  .shid-mirror-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .shid-mirror-ref { border: 2px solid #555; border-radius: 6px; padding: 6px; background: #fafafa; }
+  .shid-mirror-eq { font-size: 16pt; font-weight: bold; color: #666; }
+  .shid-mirror-opts { display: flex; gap: 8px; }
+  .shid-mirror-opt {
+    border: 2px solid #999; border-radius: 6px; padding: 6px; background: #fff; cursor: pointer;
+  }
+
+  /* Picture sequence */
+  .pseq-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+  .pseq-card {
+    flex: 1 1 1.5in; min-width: 1.5in; border: 2px solid #555; border-radius: 6px;
+    padding: 8px; text-align: center; background: #fafafa;
+  }
+  .pseq-number-box {
+    width: 30px; height: 30px; margin: 0 auto 6px; border: 2px solid #333;
+    border-radius: 4px; background: #fff;
+  }
+  .pseq-emoji { font-size: 26pt; line-height: 1; margin-bottom: 4px; }
+  .pseq-text { font-size: 9pt; line-height: 1.25; }
+
+  /* Mirror message */
+  .mm-intro-row { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 6px; margin-bottom: 10px; }
+  .mm-intro-pair { display: flex; align-items: center; gap: 8px; }
+  .mm-intro-normal {
+    font-size: 20pt; font-weight: bold; border: 2px solid #555; border-radius: 5px;
+    padding: 4px 12px; background: #fafafa;
+  }
+  .mm-intro-arrow { font-size: 14pt; color: #666; }
+  .mm-intro-mirrored {
+    display: inline-block; transform: scaleX(-1); font-size: 20pt; font-weight: bold;
+    border: 2px solid; border-radius: 5px; padding: 4px 12px; background: #fafafa;
+  }
+  /* The whole row (not each letter) is mirrored, so BOTH letter order and letter
+     shape flip together -- exactly what a real mirror held to the page undoes. */
+  .mm-trace-row {
+    display: flex; flex-wrap: nowrap; justify-content: center; gap: 6px;
+    margin-top: 8px; align-items: flex-end; transform: scaleX(-1);
+  }
+  .mm-box {
+    width: 44px; height: 54px; border: 2px solid; border-radius: 5px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center; background: #fff;
+  }
+  .mm-space { width: 22px; flex: 0 0 auto; }
+  .mm-letter {
+    display: inline-block;
+    font-size: 26pt; font-weight: bold; font-family: Georgia, 'Times New Roman', serif;
+    color: transparent; -webkit-text-stroke: 1.3px #999; text-stroke: 1.3px #999;
+  }
+  .mm-reveal-note {
+    margin-top: 12px; font-size: 9.5pt; font-style: italic; color: #555;
+    border-top: 1px dashed #bbb; padding-top: 8px;
+  }
 </style>"""
 
 _HTML_WRAPPER = """\
@@ -998,6 +1072,205 @@ def _render_pictograph(data: dict, primary: str, light: str) -> str:
 
 # ── Dispatch table ─────────────────────────────────────────────────────────
 
+
+def _shape_svg(shape_type: str, color: str, size: int = 84, flipped: bool = False) -> str:
+    """Return an inline <svg> drawing one real CSS/SVG-proportioned plane figure."""
+    stroke = 'stroke="#222" stroke-width="4" stroke-linejoin="round"'
+    if shape_type == "circle":
+        inner = f'<circle cx="50" cy="50" r="42" fill="{color}" {stroke}/>'
+    elif shape_type == "square":
+        inner = f'<rect x="10" y="10" width="80" height="80" fill="{color}" {stroke}/>'
+    elif shape_type == "rectangle":
+        inner = f'<rect x="4" y="24" width="92" height="52" fill="{color}" {stroke}/>'
+    elif shape_type == "triangle":
+        inner = f'<polygon points="50,8 92,90 8,90" fill="{color}" {stroke}/>'
+    else:
+        inner = ""
+    tr = ' style="transform:scaleX(-1);"' if flipped else ""
+    return f'<svg viewBox="0 0 100 100" width="{size}" height="{size}"{tr}>{inner}</svg>'
+
+
+def _render_shape_id(data: dict, primary: str, light: str) -> str:
+    """Real CSS/SVG-drawn plane figures: naming gallery, attribute count, attribute
+    sort, or a mirror-image matching puzzle. Data keys: title, instructions, mode
+    ("gallery" | "attributes" | "sort" | "mirror_match"), shapes, word_bank, categories.
+    """
+    title = data.get("title", "Shapes")
+    day_label = data.get("day_label", "")
+    mode = data.get("mode", "gallery")
+    shapes = data.get("shapes", [])
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    instructions = _h(data.get("instructions", "Look at each shape."))
+
+    body = ""
+    if mode == "gallery":
+        cards = ""
+        for sh in shapes:
+            svg = _shape_svg(sh["type"], sh.get("color", light))
+            label = sh.get("label")
+            label_html = (
+                f'<div class="shid-label-filled">{_h(label)}</div>'
+                if label
+                else '<div class="shid-blank"></div>'
+            )
+            cards += (
+                f'<div class="shid-card" style="border-color:{primary};">{svg}{label_html}</div>'
+            )
+        bank_html = ""
+        word_bank = data.get("word_bank")
+        if word_bank:
+            tiles = "".join(f'<div class="ws-tile">{_h(w)}</div>' for w in word_bank)
+            bank_html = (
+                '<div class="ws-tile-bank"><div class="ws-tile-bank-label">Word bank</div>'
+                f'<div class="ws-tiles">{tiles}</div></div>'
+            )
+        body = f'<div class="shid-gallery">{cards}</div>{bank_html}'
+    elif mode == "attributes":
+        cards = ""
+        for sh in shapes:
+            svg = _shape_svg(sh["type"], sh.get("color", light), size=78)
+            cards += (
+                f'<div class="shid-card" style="border-color:{primary};">{svg}'
+                '<div class="shid-attr-row">Sides: ____&nbsp;&nbsp; Corners: ____</div></div>'
+            )
+        body = f'<div class="shid-gallery">{cards}</div>'
+    elif mode == "pattern":
+        cards = ""
+        for sh in shapes:
+            if sh.get("blank"):
+                cards += (
+                    f'<div class="shid-card shid-pattern-blank" style="border-color:{primary};">'
+                    "?</div>"
+                )
+            else:
+                svg = _shape_svg(sh["type"], sh.get("color", light), size=72)
+                cards += f'<div class="shid-card" style="border-color:{primary};">{svg}</div>'
+        body = f'<div class="shid-gallery">{cards}</div>'
+    elif mode == "sort":
+        letters = "ABCDEFGHIJ"
+        bank_items = ""
+        for i, sh in enumerate(shapes):
+            svg = _shape_svg(sh["type"], sh.get("color", light), size=56)
+            bank_items += f'<div class="shid-bank-item">{svg}<div class="shid-letter">{letters[i]}</div></div>'
+        categories = data.get("categories", [])
+        cat_html = ""
+        for c in categories:
+            cat_html += (
+                f'<div class="ws-category" style="border-color:{primary};">'
+                f'<div class="ws-category-label">{_h(c)}</div>'
+                '<div class="shid-write-line">Letters: ______________</div>'
+                "</div>"
+            )
+        n_cols = max(1, len(categories))
+        body = (
+            f'<div class="shid-bank-row">{bank_items}</div>'
+            f'<div class="word-sort-categories" style="grid-template-columns:repeat({n_cols},1fr);">'
+            f"{cat_html}</div>"
+        )
+    elif mode == "mirror_match":
+        rows_html = ""
+        for row in shapes:
+            ref = _shape_svg(row["type"], row.get("color", light), size=60)
+            opts = ""
+            for opt in row.get("options", []):
+                opt_svg = _shape_svg(
+                    opt["type"],
+                    opt.get("color", row.get("color", light)),
+                    size=60,
+                    flipped=opt.get("flipped", False),
+                )
+                opts += f'<div class="shid-mirror-opt">{opt_svg}</div>'
+            rows_html += (
+                f'<div class="shid-mirror-row"><div class="shid-mirror-ref">{ref}</div>'
+                f'<div class="shid-mirror-eq">=</div><div class="shid-mirror-opts">{opts}</div></div>'
+            )
+        body = rows_html
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{body}
+"""
+
+
+def _render_picture_sequence(data: dict, primary: str, light: str) -> str:
+    """Ordered-step cards with a blank number box for the student to fill in.
+    Data keys: title, instructions, steps (list of {emoji, text}, pre-shuffled by the caller).
+    """
+    title = data.get("title", "Put It In Order")
+    day_label = data.get("day_label", "")
+    steps = data.get("steps", [])
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    instructions = _h(
+        data.get("instructions", "Write 1, 2, 3... in the boxes to put these in order.")
+    )
+
+    cards = ""
+    for st in steps:
+        cards += (
+            f'<div class="pseq-card" style="border-color:{primary};">'
+            '<div class="pseq-number-box"></div>'
+            f'<div class="pseq-emoji">{_h(st.get("emoji", ""))}</div>'
+            f'<div class="pseq-text">{_h(st.get("text", ""))}</div>'
+            "</div>"
+        )
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+<div class="pseq-row">{cards}</div>
+"""
+
+
+def _render_mirror_message(data: dict, primary: str, light: str) -> str:
+    """A CSS-mirrored ('transform: scaleX(-1)') letter activity. Data keys: title,
+    instructions, mode ("intro" | "trace"), letters (intro mode), phrase + reveal_note (trace mode).
+    """
+    title = data.get("title", "Mirror Message")
+    day_label = data.get("day_label", "")
+    mode = data.get("mode", "trace")
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    instructions = _h(data.get("instructions", ""))
+
+    if mode == "intro":
+        items = ""
+        for ch in data.get("letters", []):
+            items += (
+                '<div class="mm-intro-pair">'
+                f'<div class="mm-intro-normal">{_h(ch)}</div>'
+                '<div class="mm-intro-arrow">&rarr;</div>'
+                f'<div class="mm-intro-mirrored" style="border-color:{primary};color:{primary};">'
+                f"{_h(ch)}</div></div>"
+            )
+        body = f'<div class="mm-intro-row">{items}</div>'
+    else:
+        boxes = ""
+        for ch in data.get("phrase", ""):
+            if ch == " ":
+                boxes += '<div class="mm-space"></div>'
+            else:
+                boxes += (
+                    f'<div class="mm-box" style="border-color:{primary};">'
+                    f'<span class="mm-letter">{_h(ch)}</span></div>'
+                )
+        body = f'<div class="mm-trace-row">{boxes}</div>'
+        reveal = data.get("reveal_note")
+        if reveal:
+            body += f'<div class="mm-reveal-note">{_h(reveal)}</div>'
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{body}
+"""
+
+
 _RENDERERS = {
     "readingWorksheet": _render_reading,
     "featureMatrixWorksheet": _render_feature_matrix,
@@ -1011,6 +1284,9 @@ _RENDERERS = {
     "tChartWorksheet": _render_t_chart,
     "barGraphWorksheet": _render_bar_graph,
     "pictographWorksheet": _render_pictograph,
+    "shapeIdWorksheet": _render_shape_id,
+    "pictureSequenceWorksheet": _render_picture_sequence,
+    "mirrorMessageWorksheet": _render_mirror_message,
 }
 
 #: Worksheet kinds that have an HTML renderer.
