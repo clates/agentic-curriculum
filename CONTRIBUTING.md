@@ -87,7 +87,7 @@ Full rules: [`AGENTS.md` §7](AGENTS.md#7-git-workflow-rules).
 | `src/feedback_processor.py` | Applies mastery/quantity feedback to a student's stored blobs |
 | `src/worksheet_html_renderer.py` | HTML print-packet engine (preferred for printables) |
 | `src/worksheet_renderer.py` | PIL engine (PNG/PDF, image-heavy types) |
-| `src/worksheets/` | 20 worksheet types; `factory.py` is the unified entry point |
+| `src/worksheets/` | 21 worksheet types; `factory.py` is the unified entry point |
 | `scripts/` | Offline week generators — one tracked script per week |
 | `tests/` | pytest; fixtures in `conftest.py`, builders in `factories.py` (temp DBs only) |
 | `frontend/e2e/` | Playwright specs; seeding helpers in `fixtures/api.ts` |

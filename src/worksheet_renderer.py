@@ -26,6 +26,7 @@ try:
         TChartWorksheet,
         FillBlankWorksheet,
         WordSortWorksheet,
+        ErrorAuditWorksheet,
     )
 except ImportError:  # Fallback when executed outside package context
     CURRENT_DIR = os.path.dirname(__file__)
@@ -45,6 +46,7 @@ except ImportError:  # Fallback when executed outside package context
         TChartWorksheet,
         FillBlankWorksheet,
         WordSortWorksheet,
+        ErrorAuditWorksheet,
     )  # type: ignore
 
 _FONT_CANDIDATES = (
@@ -3636,6 +3638,356 @@ def render_frayer_model_to_image(worksheet: FrayerModelWorksheet, output_path: s
 def render_frayer_model_to_pdf(worksheet: FrayerModelWorksheet, output_path: str) -> str:
     """Render Frayer model worksheet to a PDF."""
     image = _render_frayer_model_image(worksheet).convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PDF")
+    return str(out)
+
+
+def _draw_clock_face(
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    cy: int,
+    r: int,
+    hour: float,
+    minute: int,
+    missing: str | None,
+    num_font,
+) -> None:
+    """Draw an analog clock face: ticks, 12/3/6/9, two hands."""
+    import math
+
+    draw.ellipse((cx - r, cy - r, cx + r, cy + r), outline="black", width=3)
+    for n in range(12):
+        a = math.radians(n * 30)
+        long = n % 3 == 0
+        r1 = r - (16 if long else 8)
+        x1, y1 = cx + r1 * math.sin(a), cy - r1 * math.cos(a)
+        x2, y2 = cx + r * math.sin(a), cy - r * math.cos(a)
+        draw.line((x1, y1, x2, y2), fill="black", width=3 if long else 1)
+    for label, n in (("12", 0), ("3", 3), ("6", 6), ("9", 9)):
+        a = math.radians(n * 30)
+        tx, ty = cx + (r - 34) * math.sin(a), cy - (r - 34) * math.cos(a)
+        w = _text_width(num_font, label)
+        draw.text((tx - w / 2, ty - 12), label, font=num_font, fill="black")
+
+    def hand(angle_deg: float, length: float, width: int) -> None:
+        a = math.radians(angle_deg)
+        draw.line(
+            (cx, cy, cx + length * math.sin(a), cy - length * math.cos(a)),
+            fill="black",
+            width=width,
+        )
+
+    if missing != "minute":
+        hand((minute % 60) / 60 * 360, r - 24, 4)
+    if missing != "hour":
+        hand((hour % 12) / 12 * 360, r - 52, 7)
+    draw.ellipse((cx - 6, cy - 6, cx + 6, cy + 6), fill="black")
+
+
+def _draw_dot_grid(
+    draw: ImageDraw.ImageDraw, x0: int, y0: int, rows: int, cols: int
+) -> int:
+    """Draw a filled-circle array grid. Returns height used."""
+    gap, rad = 34, 10
+    for rr in range(rows):
+        for cc in range(cols):
+            cx, cy = x0 + cc * gap + rad, y0 + rr * gap + rad
+            draw.ellipse((cx - rad, cy - rad, cx + rad, cy + rad), fill="black")
+    return rows * gap
+
+
+def _draw_checkbox(
+    draw: ImageDraw.ImageDraw, x: int, y_center: int, label: str, font
+) -> None:
+    """Draw a real (pencil-friendly) checkbox square + label."""
+    box = 18
+    top = int(y_center - box / 2)
+    draw.rectangle((x, top, x + box, top + box), outline="black", width=2)
+    draw.text((x + box + 10, top - 2), label, font=font, fill="black")
+
+
+def _render_error_audit_image(
+    worksheet: ErrorAuditWorksheet,
+    *,
+    width: int = 1050,
+    margin: int = 72,
+) -> Image.Image:
+    """Render an error-audit ("Bug Hunt") worksheet to an image.
+
+    Layout pass first (wrap all text, sum block heights), then a draw pass.
+    Each specimen is a bordered case card: specimen box, mark cue,
+    diagnose checkboxes, fix area (rewrite lines / redraw box / none),
+    and an optional verify line.
+    """
+    title_font = _load_font(36, bold=True)
+    badge_font = _load_font(20, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    case_font = _load_font(24, bold=True)
+    body_font = _load_font(22)
+    small_font = _load_font(20)
+
+    title_h = _line_height(title_font, extra=4)
+    badge_h = _line_height(badge_font, extra=14)
+    meta_h = _line_height(meta_font, extra=2)
+    instr_h = _line_height(instruction_font, extra=4)
+    case_h = _line_height(case_font, extra=6)
+    body_h = _line_height(body_font, extra=6)
+    small_h = _line_height(small_font, extra=6)
+
+    content_w = width - 2 * margin
+    card_pad = 14
+    card_inner = content_w - 2 * card_pad
+
+    instr_lines = _wrap_text(worksheet.instructions, instruction_font, content_w)
+
+    # Legend block (diagnose stage): one checkbox row per entry.
+    # Adversarial mode re-labels it as the assignment list.
+    legend_label = "ASSIGN SUSPECTS:" if worksheet.adversarial else "SUSPECTS:"
+    legend_h = (len(worksheet.legend) + 1) * body_h if worksheet.legend else 0
+
+    def art_height(art: dict | None) -> int:
+        if not art:
+            return 0
+        if art.get("kind") == "clock":
+            return 250
+        if art.get("kind") == "dots":
+            return int(art.get("rows", 2)) * 34 + 16
+        return 0
+
+    # Per-specimen layout: wrap prompt + body lines now; heights are
+    # computed once below in card_heights (keeps layout + draw in sync).
+    cards: list[dict] = []
+    for spec in worksheet.specimens:
+        prompt_lines = _wrap_text(spec.prompt, case_font, card_inner - 90)
+        body_wrapped: list[str] = []
+        for line in spec.lines:
+            body_wrapped.extend(_wrap_text(line, body_font, card_inner - 24) or [""])
+        ans: list[str] = []
+        if worksheet.show_answers:
+            if spec.bug_location:
+                ans.extend(
+                    _wrap_text(f"Bug: {spec.bug_location}", small_font, card_inner - 24)
+                )
+            if spec.diagnosis:
+                ans.extend(
+                    _wrap_text(f"Diagnosis: {spec.diagnosis}", small_font, card_inner - 24)
+                )
+            if spec.fix_text and worksheet.fix_mode == "rewrite":
+                ans.extend(
+                    _wrap_text(f"Fix: {spec.fix_text}", small_font, card_inner - 24)
+                )
+        cards.append(
+            {"prompt": prompt_lines, "body": body_wrapped, "answers": ans,
+             "art": spec.art}
+        )
+
+    card_heights = []
+    for c in cards:
+        h = (
+            2 * card_pad
+            + max(len(c["prompt"]), 1) * case_h
+            + 6
+            + art_height(c["art"])
+            + len(c["body"]) * body_h
+            + 10
+        )
+        if worksheet.show_answers:
+            h += len(c["answers"]) * small_h
+        else:
+            h += small_h  # mark cue
+            if worksheet.legend:
+                h += legend_h
+            if worksheet.fix_mode == "rewrite":
+                h += small_h + worksheet.fix_lines * body_h
+            elif worksheet.fix_mode == "redraw":
+                h += small_h + (
+                    260 if c["art"] and c["art"].get("kind") == "clock" else 190
+                )
+            if worksheet.verify:
+                h += small_h
+        card_heights.append(h)
+    total_h = (
+        margin
+        + title_h
+        + badge_h
+        + 8
+        + meta_h * 2
+        + 6
+        + len(instr_lines) * instr_h
+        + 10
+        + sum(card_heights)
+        + 14 * len(card_heights)
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_h)), color="white")
+    draw = ImageDraw.Draw(image)
+    y = margin
+
+    # Title + theme badge on one row.
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    badge_text = f" {worksheet.theme_label} "
+    badge_w = _text_width(badge_font, badge_text) + 24
+    bx1 = width - margin - badge_w
+    draw.rounded_rectangle(
+        (bx1, y, bx1 + badge_w, y + badge_h), radius=10, outline="black", width=2
+    )
+    draw.text((bx1 + 12, y + 7), badge_text.strip(), font=badge_font, fill="black")
+    y += max(title_h, badge_h) + 8
+
+    # Name / Date row.
+    name_text, date_text = "Name: ____________", "Date: ____________"
+    draw.text((margin, y), name_text, font=meta_font, fill="black")
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += meta_h * 2 + 6
+
+    for line in instr_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instr_h
+    y += 10
+
+    # Case cards.
+    for idx, (spec, c) in enumerate(zip(worksheet.specimens, cards), start=1):
+        ch = card_heights[idx - 1]
+        draw.rounded_rectangle(
+            (margin, y, width - margin, y + ch), radius=12, outline="black", width=2
+        )
+        cy = y + card_pad
+
+        num = f"{idx}."
+        draw.text((margin + card_pad, cy), num, font=case_font, fill="black")
+        px = margin + card_pad + 44
+        for line in c["prompt"] or [""]:
+            draw.text((px, cy), line, font=case_font, fill="black")
+            cy += case_h
+        cy += 6
+
+        # Optional picture (clock face / dot grid), centered in the card.
+        art = c["art"]
+        if art and art.get("kind") == "clock":
+            _draw_clock_face(
+                draw, width // 2, cy + 115, 100,
+                float(art.get("hour", 12)), int(art.get("minute", 0)),
+                art.get("missing"), small_font,
+            )
+            cy += 250
+        elif art and art.get("kind") == "dots":
+            _draw_dot_grid(
+                draw, margin + card_pad + 12, cy + 8,
+                int(art.get("rows", 2)), int(art.get("cols", 2)),
+            )
+            cy += art_height(art)
+
+        # Specimen body in a light inner box.
+        body_h_px = len(c["body"]) * body_h + 12
+        draw.rectangle(
+            (margin + card_pad, cy, width - margin - card_pad, cy + body_h_px),
+            outline=(120, 120, 120),
+            width=1,
+        )
+        by = cy + 6
+        for line in c["body"]:
+            draw.text((margin + card_pad + 12, by), line, font=body_font, fill="black")
+            by += body_h
+        cy += body_h_px + 10
+
+        if worksheet.show_answers:
+            for line in c["answers"]:
+                draw.text(
+                    (margin + card_pad + 12, cy), line, font=small_font, fill="black"
+                )
+                cy += small_h
+        else:
+            _draw_checkbox(
+                draw, margin + card_pad + 12, cy + small_h // 2,
+                "Bug circled", small_font,
+            )
+            cy += small_h
+            if worksheet.legend:
+                draw.text(
+                    (margin + card_pad + 12, cy), legend_label,
+                    font=body_font, fill="black",
+                )
+                cy += body_h
+                for entry in worksheet.legend:
+                    _draw_checkbox(
+                        draw, margin + card_pad + 36, cy + body_h // 2,
+                        entry, body_font,
+                    )
+                    cy += body_h
+            if worksheet.fix_mode == "rewrite":
+                draw.text(
+                    (margin + card_pad + 12, cy), "Fix:", font=small_font, fill="black"
+                )
+                cy += small_h
+                for _ in range(worksheet.fix_lines):
+                    base = cy + body_h // 2
+                    draw.line(
+                        (margin + card_pad + 12, base, width - margin - card_pad, base),
+                        fill="black",
+                        width=1,
+                    )
+                    cy += body_h
+            elif worksheet.fix_mode == "redraw":
+                draw.text(
+                    (margin + card_pad + 12, cy), "Redraw it fixed:",
+                    font=small_font, fill="black",
+                )
+                cy += small_h
+                # Scaffold the redraw space: clock specimens get a starter
+                # circle with anchor numbers; everything else a plain box.
+                bx0, bx1 = margin + card_pad + 12, width - margin - card_pad
+                if art and art.get("kind") == "clock":
+                    box_h = 250
+                    draw.rectangle((bx0, cy, bx1, cy + box_h), outline="black", width=1)
+                    scx, scy, scr = (bx0 + bx1) // 2, cy + box_h // 2, 95
+                    draw.ellipse(
+                        (scx - scr, scy - scr, scx + scr, scy + scr),
+                        outline=(150, 150, 150), width=2,
+                    )
+                    for label, nx, ny in (("12", 0, -1), ("3", 1, 0), ("6", 0, 1), ("9", -1, 0)):
+                        draw.text(
+                            (scx + nx * (scr - 30) - _text_width(small_font, label) / 2,
+                             scy + ny * (scr - 30) - 12),
+                            label, font=small_font, fill=(150, 150, 150),
+                        )
+                    cy += box_h + 10
+                else:
+                    draw.rectangle(
+                        (bx0, cy, bx1, cy + 180), outline="black", width=1,
+                    )
+                    cy += 190
+            if worksheet.verify:
+                _draw_checkbox(
+                    draw, margin + card_pad + 12, cy + small_h // 2,
+                    "Re-checked my fix", small_font,
+                )
+                cy += small_h
+        y += ch + 14
+
+    return image
+
+
+def render_error_audit_to_image(worksheet: ErrorAuditWorksheet, output_path: str) -> str:
+    """Render error-audit worksheet to a PNG image."""
+    image = _render_error_audit_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_error_audit_to_pdf(worksheet: ErrorAuditWorksheet, output_path: str) -> str:
+    """Render error-audit worksheet to a PDF."""
+    image = _render_error_audit_image(worksheet).convert("RGB")
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     image.save(out, format="PDF")

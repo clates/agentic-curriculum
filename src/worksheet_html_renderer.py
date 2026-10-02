@@ -321,6 +321,27 @@ _CSS = """\
     font-size: 10pt; font-weight: bold;
     border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
   }
+
+  /* Error audit ("Bug Hunt") */
+  .ea-badge {
+    display: inline-block; border: 2px solid #333; border-radius: 10px;
+    padding: 2px 14px; font-size: 10pt; font-weight: bold; margin-bottom: 8px;
+  }
+  .ea-card { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+  .ea-prompt { font-size: 11pt; font-weight: bold; margin-bottom: 6px; }
+  .ea-art { text-align: center; margin: 6px 0; }
+  .ea-specimen { border: 1px solid #999; padding: 5px 9px; font-size: 10pt; margin-bottom: 6px; }
+  .ea-check { font-size: 10pt; margin: 3px 0; }
+  .ea-box {
+    display: inline-block; width: 12px; height: 12px;
+    border: 2px solid #222; border-radius: 2px; margin-right: 8px; vertical-align: baseline;
+  }
+  .ea-indent { margin-left: 22px; }
+  .ea-legend-label { font-size: 9.5pt; font-weight: bold; margin: 5px 0 2px; }
+  .ea-redrawbox { border: 1px solid #222; min-height: 1.6in; margin: 4px 0 6px; }
+  .ea-starter { text-align: center; margin: 4px 0; }
+  .ea-starter svg { opacity: 0.35; }
+  .ea-redrawbox.ea-with-starter { min-height: 1.1in; }
 </style>"""
 
 _HTML_WRAPPER = """\
@@ -996,6 +1017,165 @@ def _render_pictograph(data: dict, primary: str, light: str) -> str:
 """
 
 
+def _svg_clock(hour: float, minute: int, missing: str | None) -> str:
+    """Inline-SVG analog clock face (prints crisply, no image assets)."""
+    import math
+
+    r, cx, cy = 70, 80, 80
+    parts = [f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="white" stroke="black" stroke-width="3"/>']
+    for n in range(12):
+        a = math.radians(n * 30)
+        long = n % 3 == 0
+        r1 = r - (12 if long else 6)
+        x1, y1 = cx + r1 * math.sin(a), cy - r1 * math.cos(a)
+        x2, y2 = cx + r * math.sin(a), cy - r * math.cos(a)
+        parts.append(
+            f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+            f'stroke="black" stroke-width="{3 if long else 1}"/>'
+        )
+    for label, n in (("12", 0), ("3", 3), ("6", 6), ("9", 9)):
+        a = math.radians(n * 30)
+        tx, ty = cx + (r - 24) * math.sin(a), cy - (r - 24) * math.cos(a)
+        parts.append(
+            f'<text x="{tx:.1f}" y="{ty + 5:.1f}" text-anchor="middle" '
+            f'font-size="13" font-family="Arial">{label}</text>'
+        )
+
+    def hand(angle_deg: float, length: float, w: int) -> None:
+        a = math.radians(angle_deg)
+        parts.append(
+            f'<line x1="{cx}" y1="{cy}" x2="{cx + length * math.sin(a):.1f}" '
+            f'y2="{cy - length * math.cos(a):.1f}" stroke="black" stroke-width="{w}" '
+            f'stroke-linecap="round"/>'
+        )
+
+    if missing != "minute":
+        hand((minute % 60) / 60 * 360, r - 18, 4)
+    if missing != "hour":
+        hand((hour % 12) / 12 * 360, r - 38, 7)
+    parts.append(f'<circle cx="{cx}" cy="{cy}" r="4" fill="black"/>')
+    return f'<svg width="160" height="160" viewBox="0 0 160 160">{"".join(parts)}</svg>'
+
+
+def _svg_dots(rows: int, cols: int) -> str:
+    """Inline-SVG filled-circle array grid."""
+    gap, rad = 26, 8
+    w, h = cols * gap, rows * gap
+    parts = []
+    for rr in range(rows):
+        for cc in range(cols):
+            parts.append(
+                f'<circle cx="{cc * gap + rad + 2}" cy="{rr * gap + rad + 2}" '
+                f'r="{rad}" fill="black"/>'
+            )
+    return (
+        f'<svg width="{w + 4}" height="{h + 4}" viewBox="0 0 {w + 4} {h + 4}">'
+        f'{"".join(parts)}</svg>'
+    )
+
+
+def _render_error_audit(data: dict, primary: str, light: str) -> str:
+    title = data.get("title", "Bug Hunt")
+    day_label = data.get("day_label", "")
+    theme = data.get("theme_label", "Bug Hunter")
+    legend = data.get("legend", [])
+    specimens = data.get("specimens", [])
+    fix_mode = data.get("fix_mode", "rewrite")
+    verify = data.get("verify", True)
+    adversarial = data.get("adversarial", False)
+    show_answers = data.get("show_answers", False)
+    fix_lines = int(data.get("fix_lines", 2))
+
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    legend_label = "ASSIGN SUSPECTS:" if adversarial else "SUSPECTS:"
+
+    def art_html(art: dict | None) -> str:
+        if not art:
+            return ""
+        if art.get("kind") == "clock":
+            return (
+                '<div class="ea-art">'
+                + _svg_clock(
+                    float(art.get("hour", 12)),
+                    int(art.get("minute", 0)),
+                    art.get("missing"),
+                )
+                + "</div>"
+            )
+        if art.get("kind") == "dots":
+            return (
+                '<div class="ea-art">'
+                + _svg_dots(int(art.get("rows", 2)), int(art.get("cols", 2)))
+                + "</div>"
+            )
+        return ""
+
+    cards_html = ""
+    for idx, spec in enumerate(specimens, start=1):
+        prompt = _h(spec.get("prompt", ""))
+        lines = "".join(f"<div>{_h(ln)}</div>" for ln in spec.get("lines", []))
+        if show_answers:
+            stage = ""
+            if spec.get("bug_location"):
+                stage += f"<div><b>Bug:</b> {_h(spec['bug_location'])}</div>"
+            if spec.get("diagnosis"):
+                stage += f"<div><b>Diagnosis:</b> {_h(spec['diagnosis'])}</div>"
+            if spec.get("fix_text") and fix_mode == "rewrite":
+                stage += f"<div><b>Fix:</b> {_h(spec['fix_text'])}</div>"
+        else:
+            stage = '<div class="ea-check"><span class="ea-box"></span>Bug circled</div>'
+            if legend:
+                stage += f'<div class="ea-legend-label">{_h(legend_label)}</div>'
+                for entry in legend:
+                    stage += (
+                        '<div class="ea-check ea-indent">'
+                        f'<span class="ea-box"></span>{_h(entry)}</div>'
+                    )
+            if fix_mode == "rewrite":
+                stage += "<div>Fix:</div>" + _answer_lines(fix_lines)
+            elif fix_mode == "redraw":
+                scaffold = ""
+                if (spec.get("art") or {}).get("kind") == "clock":
+                    scaffold = (
+                        '<div class="ea-starter">'
+                        + _svg_clock(12, 0, "both")
+                        + "</div>"
+                    )
+                stage += f"<div>Redraw it fixed:</div>{scaffold}" + (
+                    '<div class="ea-redrawbox"></div>' if not scaffold else
+                    '<div class="ea-redrawbox ea-with-starter"></div>'
+                )
+            if verify:
+                stage += (
+                    '<div class="ea-check">'
+                    '<span class="ea-box"></span>Re-checked my fix</div>'
+                )
+        cards_html += (
+            f'<div class="ea-card" style="border-color:{primary};">'
+            f'<div class="ea-prompt">{idx}. {prompt}</div>'
+            f"{art_html(spec.get('art'))}"
+            f'<div class="ea-specimen">{lines}</div>'
+            f"{stage}</div>"
+        )
+
+    instructions = _h(
+        data.get(
+            "instructions",
+            "Something is wrong in each case. Circle the bug, "
+            "diagnose it, fix it, then re-check your fix.",
+        )
+    )
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+<div class="ea-badge" style="border-color:{primary};color:{primary};">{_h(theme)}</div>
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{cards_html}
+"""
+
+
 # ── Dispatch table ─────────────────────────────────────────────────────────
 
 _RENDERERS = {
@@ -1009,6 +1189,7 @@ _RENDERERS = {
     "wordSortWorksheet": _render_word_sort,
     "writingScaffoldWorksheet": _render_writing_scaffold,
     "tChartWorksheet": _render_t_chart,
+    "errorAuditWorksheet": _render_error_audit,
     "barGraphWorksheet": _render_bar_graph,
     "pictographWorksheet": _render_pictograph,
 }
