@@ -340,7 +340,7 @@ _CSS = """\
   .ea-legend-label { font-size: 9.5pt; font-weight: bold; margin: 5px 0 2px; }
   .ea-redrawbox { border: 1px solid #222; min-height: 1.6in; margin: 4px 0 6px; }
   .ea-starter { text-align: center; margin: 4px 0; }
-  .ea-starter svg { opacity: 0.35; }
+  .ea-starter svg { opacity: 0.5; }
   .ea-redrawbox.ea-with-starter { min-height: 1.1in; }
 </style>"""
 
@@ -1017,11 +1017,16 @@ def _render_pictograph(data: dict, primary: str, light: str) -> str:
 """
 
 
-def _svg_clock(hour: float, minute: int, missing: str | None) -> str:
-    """Inline-SVG analog clock face (prints crisply, no image assets)."""
+def _svg_clock(hour: float, minute: int, missing: str | None, starter: bool = False) -> str:
+    """Inline-SVG analog clock face (prints crisply, no image assets).
+
+    Numerals are drawn last so hands never cover them. Starter scaffolds
+    push numerals inward so the 12-tick doesn't strike through "12".
+    """
     import math
 
     r, cx, cy = 70, 80, 80
+    num_inset = 32 if starter else 24
     parts = [f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="white" stroke="black" stroke-width="3"/>']
     for n in range(12):
         a = math.radians(n * 30)
@@ -1033,13 +1038,6 @@ def _svg_clock(hour: float, minute: int, missing: str | None) -> str:
             f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
             f'stroke="black" stroke-width="{3 if long else 1}"/>'
         )
-    for label, n in (("12", 0), ("3", 3), ("6", 6), ("9", 9)):
-        a = math.radians(n * 30)
-        tx, ty = cx + (r - 24) * math.sin(a), cy - (r - 24) * math.cos(a)
-        parts.append(
-            f'<text x="{tx:.1f}" y="{ty + 5:.1f}" text-anchor="middle" '
-            f'font-size="13" font-family="Arial">{label}</text>'
-        )
 
     def hand(angle_deg: float, length: float, w: int) -> None:
         a = math.radians(angle_deg)
@@ -1049,11 +1047,23 @@ def _svg_clock(hour: float, minute: int, missing: str | None) -> str:
             f'stroke-linecap="round"/>'
         )
 
-    if missing != "minute":
+    if missing not in ("minute", "both"):
         hand((minute % 60) / 60 * 360, r - 18, 4)
-    if missing != "hour":
+    if missing not in ("hour", "both"):
         hand((hour % 12) / 12 * 360, r - 38, 7)
     parts.append(f'<circle cx="{cx}" cy="{cy}" r="4" fill="black"/>')
+    for label, n in (("12", 0), ("3", 3), ("6", 6), ("9", 9)):
+        a = math.radians(n * 30)
+        tx, ty = cx + (r - num_inset) * math.sin(a), cy - (r - num_inset) * math.cos(a)
+        hw = 11 if len(label) == 2 else 8
+        parts.append(
+            f'<rect x="{tx - hw:.1f}" y="{ty - 8:.1f}" width="{hw * 2}" '
+            f'height="18" fill="white"/>'
+        )
+        parts.append(
+            f'<text x="{tx:.1f}" y="{ty + 5:.1f}" text-anchor="middle" '
+            f'font-size="13" font-family="Arial">{label}</text>'
+        )
     return f'<svg width="160" height="160" viewBox="0 0 160 160">{"".join(parts)}</svg>'
 
 
@@ -1138,7 +1148,7 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
                 if (spec.get("art") or {}).get("kind") == "clock":
                     scaffold = (
                         '<div class="ea-starter">'
-                        + _svg_clock(12, 0, "both")
+                        + _svg_clock(12, 0, "both", starter=True)
                         + "</div>"
                     )
                 stage += f"<div>Redraw it fixed:</div>{scaffold}" + (

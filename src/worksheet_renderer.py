@@ -3665,11 +3665,6 @@ def _draw_clock_face(
         x1, y1 = cx + r1 * math.sin(a), cy - r1 * math.cos(a)
         x2, y2 = cx + r * math.sin(a), cy - r * math.cos(a)
         draw.line((x1, y1, x2, y2), fill="black", width=3 if long else 1)
-    for label, n in (("12", 0), ("3", 3), ("6", 6), ("9", 9)):
-        a = math.radians(n * 30)
-        tx, ty = cx + (r - 34) * math.sin(a), cy - (r - 34) * math.cos(a)
-        w = _text_width(num_font, label)
-        draw.text((tx - w / 2, ty - 12), label, font=num_font, fill="black")
 
     def hand(angle_deg: float, length: float, width: int) -> None:
         a = math.radians(angle_deg)
@@ -3679,11 +3674,20 @@ def _draw_clock_face(
             width=width,
         )
 
-    if missing != "minute":
+    if missing not in ("minute", "both"):
         hand((minute % 60) / 60 * 360, r - 24, 4)
-    if missing != "hour":
+    if missing not in ("hour", "both"):
         hand((hour % 12) / 12 * 360, r - 52, 7)
     draw.ellipse((cx - 6, cy - 6, cx + 6, cy + 6), fill="black")
+    # Numerals last, each on a white halo so hands never cover them.
+    for label, n in (("12", 0), ("3", 3), ("6", 6), ("9", 9)):
+        a = math.radians(n * 30)
+        tx, ty = cx + (r - 34) * math.sin(a), cy - (r - 34) * math.cos(a)
+        w = _text_width(num_font, label)
+        draw.rectangle(
+            (tx - w / 2 - 3, ty - 14, tx + w / 2 + 3, ty + 6), fill="white"
+        )
+        draw.text((tx - w / 2, ty - 12), label, font=num_font, fill="black")
 
 
 def _draw_dot_grid(
