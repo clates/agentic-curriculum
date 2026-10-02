@@ -56,6 +56,7 @@ PAYLOAD = {
             "prompt": "Zoe says this circle shows thirds.",
             "lines": ["Study Zoe's circle. What did she get wrong?"],
             "art": {"kind": "partitions", "parts": 4},
+            "starter_art": {"kind": "partitions", "parts": 3},
             "bug_location": "Zoe's circle has 4 equal pieces, not 3; each piece is one fourth, not one third.",
             "diagnosis": "Wrong count",
         },

@@ -4036,13 +4036,14 @@ def _render_error_audit_image(
                         )
                     cy += box_h + 10
                 elif art and art.get("kind") == "partitions":
-                    # Starter scaffold: the CORRECT equal partitions at
-                    # reduced opacity, sized for the student to trace over.
+                    # Starter scaffold: the CORRECT target shape (starter_art
+                    # override when the bug itself is the piece count).
+                    sart = c.get("starter_art") or art
                     box_h = 230
                     draw.rectangle((bx0, cy, bx1, cy + box_h), outline="black", width=1)
                     _draw_partitions(
                         draw, (bx0 + bx1) // 2, cy + box_h // 2, 95,
-                        int(art.get("parts", 2)), gray=True,
+                        int(sart.get("parts", 2)), gray=True,
                     )
                     cy += box_h + 10
                 else:

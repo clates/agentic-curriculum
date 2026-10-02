@@ -36,7 +36,7 @@ Stick strictly to **CVC** (Cat, Pig), **CCVC** (Snow, Frog), and **CVCC** (Raft,
 
 ## 3. Supported Worksheet Types
 
-21 types are registered in `WorksheetFactory`. The table below shows the factory key (snake_case), the HTML renderer kind (camelCase, for `render_worksheet_html`), and which renderer supports each type.
+22 types are registered in `WorksheetFactory`. The table below shows the factory key (snake_case), the HTML renderer kind (camelCase, for `render_worksheet_html`), and which renderer supports each type.
 
 | Factory key | HTML kind | HTML | PIL |
 |-------------|-----------|------|-----|
@@ -61,6 +61,7 @@ Stick strictly to **CVC** (Cat, Pig), **CCVC** (Snow, Frog), and **CVCC** (Raft,
 | `labeled_diagram` | — | — | ✓ |
 | `two_operand` | — | — | ✓ |
 | `error_audit` | `errorAuditWorksheet` | ✓ | ✓ |
+| `ten_frame` | `tenFrameWorksheet` | ✓ | ✓ |
 
 ### Critical data-format difference: `feature_matrix`
 The **HTML renderer** expects `items` as a **list of plain strings** (row labels). The **PIL factory** expects `items` as a list of dicts with `name` and `checked_properties` keys. Mixing these up produces broken output with no error.

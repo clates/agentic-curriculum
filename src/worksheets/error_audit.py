@@ -41,6 +41,9 @@ class ErrorAuditSpecimen:
     #     circle cut into N wedges; wedge i is mis-sized (unequal) — the bug
     #     to circle. "shaded" (optional) fills wedge(s) for shaded-fraction
     #     claims. broken/shaded may be None for count/shading bugs.
+    starter_art: dict | None = None  # optional redraw-scaffold override:
+    #   the CORRECT target shape (e.g. equal thirds when the bug is a
+    #   four-piece "thirds"). Defaults to art rendered without the bug.
 
     @classmethod
     def from_mapping(cls, payload: dict) -> "ErrorAuditSpecimen":
@@ -54,6 +57,7 @@ class ErrorAuditSpecimen:
             diagnosis=payload.get("diagnosis"),
             fix_text=payload.get("fix_text"),
             art=payload.get("art"),
+            starter_art=payload.get("starter_art"),
         )
 
 
@@ -138,6 +142,9 @@ def _normalize_specimens(
         art = normalized[-1].art
         if isinstance(art, dict) and art.get("kind") == "partitions":
             _validate_partitions_art(art)
+        starter = normalized[-1].starter_art
+        if isinstance(starter, dict) and starter.get("kind") == "partitions":
+            _validate_partitions_art(starter)
     return normalized
 
 

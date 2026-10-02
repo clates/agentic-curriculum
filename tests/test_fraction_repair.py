@@ -35,6 +35,7 @@ def _payload(**over):
                 "prompt": "Zoe says this circle shows thirds.",
                 "lines": ["Study Zoe's circle."],
                 "art": {"kind": "partitions", "parts": 4},
+                "starter_art": {"kind": "partitions", "parts": 3},
                 "bug_location": "Four pieces, not three.",
                 "diagnosis": "Wrong count",
             },
@@ -180,8 +181,9 @@ def test_html_renders_partitions_svg():
     assert "<svg" in frag
     # 3 specimen-art SVGs + 3 starter-scaffold SVGs (redraw mode).
     assert frag.count("<svg") == 6
-    # Cut lines: specimen art (2 + 4 + 4) + starters (2 + 4 + 4).
-    assert frag.count('stroke-width="2"') == 20
+    # Cut lines: specimen art (2 + 4 + 4) + starters (2 + 3 + 4 —
+    # thirds starter shows the correct 3-piece target).
+    assert frag.count('stroke-width="2"') == 19
 
 
 def test_html_redraw_starter_present():
@@ -190,8 +192,37 @@ def test_html_redraw_starter_present():
     assert frag.count('class="ea-starter"') == 3
     assert frag.count("ea-redrawbox") == 3
     # Starter SVGs use the reduced-opacity gray stroke
-    # (cut lines + circle outline per starter: 2+1, 4+1, 4+1).
-    assert frag.count('stroke="#8a8a8a"') == 13
+    # (cut lines + circle outline per starter: 2+1 halves, 3+1 thirds, 4+1
+    # fourths — the thirds starter shows the CORRECT 3-piece target).
+    assert frag.count('stroke="#8a8a8a"') == 12
+
+
+def test_starter_art_override_and_validation():
+    from src.worksheets.error_audit import ErrorAuditSpecimen
+
+    spec = ErrorAuditSpecimen.from_mapping(
+        {
+            "prompt": "Zoe thirds",
+            "lines": ["x"],
+            "art": {"kind": "partitions", "parts": 4},
+            "starter_art": {"kind": "partitions", "parts": 3},
+        }
+    )
+    assert spec.starter_art == {"kind": "partitions", "parts": 3}
+    with pytest.raises(ValueError):
+        WorksheetFactory.create(
+            "error_audit",
+            {
+                "specimens": [
+                    {
+                        "prompt": "bad",
+                        "lines": ["x"],
+                        "art": {"kind": "partitions", "parts": 4},
+                        "starter_art": {"kind": "partitions", "parts": 13},
+                    }
+                ]
+            },
+        )
 
 
 def test_html_shading_renders_filled_wedges():

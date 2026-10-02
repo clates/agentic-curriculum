@@ -1329,9 +1329,10 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
                         + "</div>"
                     )
                 elif art.get("kind") == "partitions":
+                    sart = spec.get("starter_art") or art
                     scaffold = (
                         '<div class="ea-starter">'
-                        + _svg_partitions(int(art.get("parts", 2)), starter=True)
+                        + _svg_partitions(int(sart.get("parts", 2)), starter=True)
                         + "</div>"
                     )
                 stage += f"<div>Redraw it fixed:</div>{scaffold}" + (
