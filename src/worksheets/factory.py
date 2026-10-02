@@ -85,6 +85,10 @@ from .frayer_model import (
     FrayerModelWorksheet,
     generate_frayer_model_worksheet,
 )
+from .error_audit import (
+    ErrorAuditWorksheet,
+    generate_error_audit_worksheet,
+)
 
 
 def _create_two_operand(payload: dict[str, Any]) -> MathWorksheet:
@@ -376,6 +380,27 @@ def _create_frayer_model(payload: dict[str, Any]) -> FrayerModelWorksheet:
     )
 
 
+def _create_error_audit(payload: dict[str, Any]) -> ErrorAuditWorksheet:
+    """Create an error-audit ("Bug Hunt") worksheet from payload."""
+    return generate_error_audit_worksheet(
+        specimens=payload.get("specimens", []),
+        title=payload.get("title", "Bug Hunt"),
+        instructions=payload.get(
+            "instructions",
+            "Something is wrong in each case. Circle the bug, "
+            "diagnose it, fix it, then re-check your fix.",
+        ),
+        theme_label=payload.get("theme_label", "Bug Hunter"),
+        legend=payload.get("legend", []),
+        fix_mode=payload.get("fix_mode", "rewrite"),
+        verify=payload.get("verify", True),
+        adversarial=payload.get("adversarial", False),
+        show_answers=payload.get("show_answers", False),
+        fix_lines=payload.get("fix_lines", 2),
+        metadata=payload.get("metadata"),
+    )
+
+
 class WorksheetFactory:
     """Factory class for dispatching JSON requests to the correct worksheet renderer."""
 
@@ -400,6 +425,7 @@ class WorksheetFactory:
         "writing_scaffold": _create_writing_scaffold,
         "labeled_diagram": _create_labeled_diagram,
         "frayer_model": _create_frayer_model,
+        "error_audit": _create_error_audit,
     }
 
     @classmethod
