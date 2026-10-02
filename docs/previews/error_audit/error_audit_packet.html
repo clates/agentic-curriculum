@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bug Hunt Demo (HTML)</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+
+  /* Error audit ("Bug Hunt") */
+  .ea-badge {
+    display: inline-block; border: 2px solid #333; border-radius: 10px;
+    padding: 2px 14px; font-size: 10pt; font-weight: bold; margin-bottom: 8px;
+  }
+  .ea-card { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+  .ea-prompt { font-size: 11pt; font-weight: bold; margin-bottom: 6px; }
+  .ea-art { text-align: center; margin: 6px 0; }
+  .ea-specimen { border: 1px solid #999; padding: 5px 9px; font-size: 10pt; margin-bottom: 6px; }
+  .ea-check { font-size: 10pt; margin: 3px 0; }
+  .ea-box {
+    display: inline-block; width: 12px; height: 12px;
+    border: 2px solid #222; border-radius: 2px; margin-right: 8px; vertical-align: baseline;
+  }
+  .ea-indent { margin-left: 22px; }
+  .ea-legend-label { font-size: 9.5pt; font-weight: bold; margin: 5px 0 2px; }
+  .ea-redrawbox { border: 1px solid #222; min-height: 1.6in; margin: 4px 0 6px; }
+  .ea-starter { text-align: center; margin: 4px 0; }
+  .ea-starter svg { opacity: 0.35; }
+  .ea-redrawbox.ea-with-starter { min-height: 1.1in; }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Telling Time: Half Hour</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Telling Time: Half Hour</div>
+<div class="ea-badge" style="border-color:#1d4ed8;color:#1d4ed8;">Clock Doctor</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Rory Raccoon drew these clocks, but every one has a bug! Circle the bug, check the suspect that did it, then redraw the clock fixed in the starter circle.</div>
+<div class="ea-card" style="border-color:#1d4ed8;"><div class="ea-prompt">1. Rory says this clock shows 3:30.</div><div class="ea-art"><svg width="160" height="160" viewBox="0 0 160 160"><circle cx="80" cy="80" r="70" fill="white" stroke="black" stroke-width="3"/><line x1="80.0" y1="22.0" x2="80.0" y2="10.0" stroke="black" stroke-width="3"/><line x1="112.0" y1="24.6" x2="115.0" y2="19.4" stroke="black" stroke-width="1"/><line x1="135.4" y1="48.0" x2="140.6" y2="45.0" stroke="black" stroke-width="1"/><line x1="138.0" y1="80.0" x2="150.0" y2="80.0" stroke="black" stroke-width="3"/><line x1="135.4" y1="112.0" x2="140.6" y2="115.0" stroke="black" stroke-width="1"/><line x1="112.0" y1="135.4" x2="115.0" y2="140.6" stroke="black" stroke-width="1"/><line x1="80.0" y1="138.0" x2="80.0" y2="150.0" stroke="black" stroke-width="3"/><line x1="48.0" y1="135.4" x2="45.0" y2="140.6" stroke="black" stroke-width="1"/><line x1="24.6" y1="112.0" x2="19.4" y2="115.0" stroke="black" stroke-width="1"/><line x1="22.0" y1="80.0" x2="10.0" y2="80.0" stroke="black" stroke-width="3"/><line x1="24.6" y1="48.0" x2="19.4" y2="45.0" stroke="black" stroke-width="1"/><line x1="48.0" y1="24.6" x2="45.0" y2="19.4" stroke="black" stroke-width="1"/><text x="80.0" y="39.0" text-anchor="middle" font-size="13" font-family="Arial">12</text><text x="126.0" y="85.0" text-anchor="middle" font-size="13" font-family="Arial">3</text><text x="80.0" y="131.0" text-anchor="middle" font-size="13" font-family="Arial">6</text><text x="34.0" y="85.0" text-anchor="middle" font-size="13" font-family="Arial">9</text><line x1="80" y1="80" x2="80.0" y2="132.0" stroke="black" stroke-width="4" stroke-linecap="round"/><line x1="80" y1="80" x2="112.0" y2="80.0" stroke="black" stroke-width="7" stroke-linecap="round"/><circle cx="80" cy="80" r="4" fill="black"/></svg></div><div class="ea-specimen"><div>Study Rory&#x27;s clock. What did he get wrong?</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Hour-hand trap</div><div class="ea-check ea-indent"><span class="ea-box"></span>Minute mix-up</div><div class="ea-check ea-indent"><span class="ea-box"></span>Missing hand</div><div>Redraw it fixed:</div><div class="ea-starter"><svg width="160" height="160" viewBox="0 0 160 160"><circle cx="80" cy="80" r="70" fill="white" stroke="black" stroke-width="3"/><line x1="80.0" y1="22.0" x2="80.0" y2="10.0" stroke="black" stroke-width="3"/><line x1="112.0" y1="24.6" x2="115.0" y2="19.4" stroke="black" stroke-width="1"/><line x1="135.4" y1="48.0" x2="140.6" y2="45.0" stroke="black" stroke-width="1"/><line x1="138.0" y1="80.0" x2="150.0" y2="80.0" stroke="black" stroke-width="3"/><line x1="135.4" y1="112.0" x2="140.6" y2="115.0" stroke="black" stroke-width="1"/><line x1="112.0" y1="135.4" x2="115.0" y2="140.6" stroke="black" stroke-width="1"/><line x1="80.0" y1="138.0" x2="80.0" y2="150.0" stroke="black" stroke-width="3"/><line x1="48.0" y1="135.4" x2="45.0" y2="140.6" stroke="black" stroke-width="1"/><line x1="24.6" y1="112.0" x2="19.4" y2="115.0" stroke="black" stroke-width="1"/><line x1="22.0" y1="80.0" x2="10.0" y2="80.0" stroke="black" stroke-width="3"/><line x1="24.6" y1="48.0" x2="19.4" y2="45.0" stroke="black" stroke-width="1"/><line x1="48.0" y1="24.6" x2="45.0" y2="19.4" stroke="black" stroke-width="1"/><text x="80.0" y="39.0" text-anchor="middle" font-size="13" font-family="Arial">12</text><text x="126.0" y="85.0" text-anchor="middle" font-size="13" font-family="Arial">3</text><text x="80.0" y="131.0" text-anchor="middle" font-size="13" font-family="Arial">6</text><text x="34.0" y="85.0" text-anchor="middle" font-size="13" font-family="Arial">9</text><line x1="80" y1="80" x2="80.0" y2="28.0" stroke="black" stroke-width="4" stroke-linecap="round"/><line x1="80" y1="80" x2="80.0" y2="48.0" stroke="black" stroke-width="7" stroke-linecap="round"/><circle cx="80" cy="80" r="4" fill="black"/></svg></div><div class="ea-redrawbox ea-with-starter"></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div><div class="ea-card" style="border-color:#1d4ed8;"><div class="ea-prompt">2. Rory says this clock shows 9:00.</div><div class="ea-art"><svg width="160" height="160" viewBox="0 0 160 160"><circle cx="80" cy="80" r="70" fill="white" stroke="black" stroke-width="3"/><line x1="80.0" y1="22.0" x2="80.0" y2="10.0" stroke="black" stroke-width="3"/><line x1="112.0" y1="24.6" x2="115.0" y2="19.4" stroke="black" stroke-width="1"/><line x1="135.4" y1="48.0" x2="140.6" y2="45.0" stroke="black" stroke-width="1"/><line x1="138.0" y1="80.0" x2="150.0" y2="80.0" stroke="black" stroke-width="3"/><line x1="135.4" y1="112.0" x2="140.6" y2="115.0" stroke="black" stroke-width="1"/><line x1="112.0" y1="135.4" x2="115.0" y2="140.6" stroke="black" stroke-width="1"/><line x1="80.0" y1="138.0" x2="80.0" y2="150.0" stroke="black" stroke-width="3"/><line x1="48.0" y1="135.4" x2="45.0" y2="140.6" stroke="black" stroke-width="1"/><line x1="24.6" y1="112.0" x2="19.4" y2="115.0" stroke="black" stroke-width="1"/><line x1="22.0" y1="80.0" x2="10.0" y2="80.0" stroke="black" stroke-width="3"/><line x1="24.6" y1="48.0" x2="19.4" y2="45.0" stroke="black" stroke-width="1"/><line x1="48.0" y1="24.6" x2="45.0" y2="19.4" stroke="black" stroke-width="1"/><text x="80.0" y="39.0" text-anchor="middle" font-size="13" font-family="Arial">12</text><text x="126.0" y="85.0" text-anchor="middle" font-size="13" font-family="Arial">3</text><text x="80.0" y="131.0" text-anchor="middle" font-size="13" font-family="Arial">6</text><text x="34.0" y="85.0" text-anchor="middle" font-size="13" font-family="Arial">9</text><line x1="80" y1="80" x2="48.0" y2="80.0" stroke="black" stroke-width="7" stroke-linecap="round"/><circle cx="80" cy="80" r="4" fill="black"/></svg></div><div class="ea-specimen"><div>Study Rory&#x27;s clock. What did he get wrong?</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Hour-hand trap</div><div class="ea-check ea-indent"><span class="ea-box"></span>Minute mix-up</div><div class="ea-check ea-indent"><span class="ea-box"></span>Missing hand</div><div>Redraw it fixed:</div><div class="ea-starter"><svg width="160" height="160" viewBox="0 0 160 160"><circle cx="80" cy="80" r="70" fill="white" stroke="black" stroke-width="3"/><line x1="80.0" y1="22.0" x2="80.0" y2="10.0" stroke="black" stroke-width="3"/><line x1="112.0" y1="24.6" x2="115.0" y2="19.4" stroke="black" stroke-width="1"/><line x1="135.4" y1="48.0" x2="140.6" y2="45.0" stroke="black" stroke-width="1"/><line x1="138.0" y1="80.0" x2="150.0" y2="80.0" stroke="black" stroke-width="3"/><line x1="135.4" y1="112.0" x2="140.6" y2="115.0" stroke="black" stroke-width="1"/><line x1="112.0" y1="135.4" x2="115.0" y2="140.6" stroke="black" stroke-width="1"/><line x1="80.0" y1="138.0" x2="80.0" y2="150.0" stroke="black" stroke-width="3"/><line x1="48.0" y1="135.4" x2="45.0" y2="140.6" stroke="black" stroke-width="1"/><line x1="24.6" y1="112.0" x2="19.4" y2="115.0" stroke="black" stroke-width="1"/><line x1="22.0" y1="80.0" x2="10.0" y2="80.0" stroke="black" stroke-width="3"/><line x1="24.6" y1="48.0" x2="19.4" y2="45.0" stroke="black" stroke-width="1"/><line x1="48.0" y1="24.6" x2="45.0" y2="19.4" stroke="black" stroke-width="1"/><text x="80.0" y="39.0" text-anchor="middle" font-size="13" font-family="Arial">12</text><text x="126.0" y="85.0" text-anchor="middle" font-size="13" font-family="Arial">3</text><text x="80.0" y="131.0" text-anchor="middle" font-size="13" font-family="Arial">6</text><text x="34.0" y="85.0" text-anchor="middle" font-size="13" font-family="Arial">9</text><line x1="80" y1="80" x2="80.0" y2="28.0" stroke="black" stroke-width="4" stroke-linecap="round"/><line x1="80" y1="80" x2="80.0" y2="48.0" stroke="black" stroke-width="7" stroke-linecap="round"/><circle cx="80" cy="80" r="4" fill="black"/></svg></div><div class="ea-redrawbox ea-with-starter"></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Multiplication as Arrays</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Multiplication as Arrays</div>
+<div class="ea-badge" style="border-color:#15803d;color:#15803d;">Array Detective</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Each row shows an array and a kid&#x27;s claim about it. One claim is wrong! Circle the bug, check the suspect, then write the fixed sentence on the lines.</div>
+<div class="ea-card" style="border-color:#15803d;"><div class="ea-prompt">1. Milo&#x27;s array: 3 rows of 4 dots. Milo says 3 + 4 = 7.</div><div class="ea-art"><svg width="108" height="82" viewBox="0 0 108 82"><circle cx="10" cy="10" r="8" fill="black"/><circle cx="36" cy="10" r="8" fill="black"/><circle cx="62" cy="10" r="8" fill="black"/><circle cx="88" cy="10" r="8" fill="black"/><circle cx="10" cy="36" r="8" fill="black"/><circle cx="36" cy="36" r="8" fill="black"/><circle cx="62" cy="36" r="8" fill="black"/><circle cx="88" cy="36" r="8" fill="black"/><circle cx="10" cy="62" r="8" fill="black"/><circle cx="36" cy="62" r="8" fill="black"/><circle cx="62" cy="62" r="8" fill="black"/><circle cx="88" cy="62" r="8" fill="black"/></svg></div><div class="ea-specimen"><div>Milo&#x27;s claim: &quot;3 rows of 4 is 3 + 4 = 7.&quot;</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Counted wrong</div><div class="ea-check ea-indent"><span class="ea-box"></span>Rows/columns mixed</div><div class="ea-check ea-indent"><span class="ea-box"></span>Plus instead of times</div><div>Fix:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div><div class="ea-card" style="border-color:#15803d;"><div class="ea-prompt">2. Zoe&#x27;s array: 2 rows of 5 dots. Zoe says 5 rows of 2.</div><div class="ea-art"><svg width="134" height="56" viewBox="0 0 134 56"><circle cx="10" cy="10" r="8" fill="black"/><circle cx="36" cy="10" r="8" fill="black"/><circle cx="62" cy="10" r="8" fill="black"/><circle cx="88" cy="10" r="8" fill="black"/><circle cx="114" cy="10" r="8" fill="black"/><circle cx="10" cy="36" r="8" fill="black"/><circle cx="36" cy="36" r="8" fill="black"/><circle cx="62" cy="36" r="8" fill="black"/><circle cx="88" cy="36" r="8" fill="black"/><circle cx="114" cy="36" r="8" fill="black"/></svg></div><div class="ea-specimen"><div>Zoe&#x27;s claim: &quot;This shows 5 rows of 2.&quot;</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Counted wrong</div><div class="ea-check ea-indent"><span class="ea-box"></span>Rows/columns mixed</div><div class="ea-check ea-indent"><span class="ea-box"></span>Plus instead of times</div><div>Fix:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div>
+</div>
+<div class="page last-page">
+<div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Long Division: Find the Bug</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Long Division: Find the Bug</div>
+<div class="ea-badge" style="border-color:#7c3aed;color:#7c3aed;">Division Detective</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Each case shows a solved long-division problem with one planted error. Circle the wrong step, name the suspect, and rework it correctly.</div>
+<div class="ea-card" style="border-color:#7c3aed;"><div class="ea-prompt">1. Case: 96 / 4. Sam&#x27;s work says quotient 24, remainder 4.</div><div class="ea-specimen"><div>4 goes into 9 two times (2 x 4 = 8), subtract: 1.</div><div>Bring down 6 -&gt; 16. 4 goes into 16 four times.</div><div>Quotient 24, remainder 4.</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Digit too big</div><div class="ea-check ea-indent"><span class="ea-box"></span>Bad remainder</div><div class="ea-check ea-indent"><span class="ea-box"></span>Subtraction slip</div><div>Fix:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div><div class="ea-card" style="border-color:#7c3aed;"><div class="ea-prompt">2. Case: 75 / 3. Ana&#x27;s work says quotient 26.</div><div class="ea-specimen"><div>3 goes into 7 two times (2 x 3 = 6), subtract: 1.</div><div>Bring down 5 -&gt; 15. 3 goes into 15 six times (6 x 3 = 18).</div><div>Quotient 26.</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Digit too big</div><div class="ea-check ea-indent"><span class="ea-box"></span>Bad remainder</div><div class="ea-check ea-indent"><span class="ea-box"></span>Subtraction slip</div><div>Fix:</div><div class="answer-lines"><div class="answer-line"></div><div class="answer-line"></div></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>

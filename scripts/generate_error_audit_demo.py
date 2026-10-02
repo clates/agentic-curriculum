@@ -18,18 +18,34 @@ from worksheet_renderer import (
     render_error_audit_to_image,
     render_error_audit_to_pdf,
 )
+from worksheet_html_renderer import render_worksheet_html, build_print_packet_html
 
 OUT = "error_audit_demo_series"
 os.makedirs(OUT, exist_ok=True)
 
+HTML_SHEETS: list[tuple[str, str, dict]] = []  # (name, day_label, payload)
 
-def build(name, payload):
+
+def build(name, payload, day_label=None):
     ws = WorksheetFactory.create("error_audit", payload)
     img = render_error_audit_to_image(ws, f"{OUT}/{name}.png")
     pdf = render_error_audit_to_pdf(ws, f"{OUT}/{name}.pdf")
     key = WorksheetFactory.create("error_audit", {**payload, "show_answers": True})
     render_error_audit_to_image(key, f"{OUT}/{name}_key.png")
     print(f"OK {img} + {pdf} (+ key)")
+    if day_label:
+        html_data = {
+            "title": payload["title"],
+            "theme_label": payload.get("theme_label", "Bug Hunter"),
+            "instructions": payload.get("instructions", ""),
+            "legend": payload.get("legend", []),
+            "fix_mode": payload.get("fix_mode", "rewrite"),
+            "verify": payload.get("verify", True),
+            "adversarial": payload.get("adversarial", False),
+            "fix_lines": payload.get("fix_lines", 2),
+            "specimens": payload.get("specimens", []),
+        }
+        HTML_SHEETS.append((name, day_label, html_data))
 
 
 # 1 — Clock Doctor: redraw mode. Specimen body describes the (buggy) clock
@@ -61,7 +77,7 @@ build("01_clock_doctor", {
             "diagnosis": "Missing hand",
         },
     ],
-})
+}, "Monday")
 
 # 2 — Array Detective: rewrite mode, ELL-friendly short text.
 build("02_array_detective", {
@@ -93,7 +109,7 @@ build("02_array_detective", {
             "fix_text": "This shows 2 rows of 5, which is 10.",
         },
     ],
-})
+}, "Tuesday")
 
 # 3 — Division Detective: rewrite mode, upper elementary.
 build("03_division_detective", {
@@ -130,6 +146,17 @@ build("03_division_detective", {
             "fix_text": "75 / 3 = 25. Check: 25 x 3 = 75.",
         },
     ],
-})
+}, "Wednesday")
+
+# HTML packet (same sheets through the HTML renderer — higher fidelity).
+pages = []
+for _name, day_label, html_data in HTML_SHEETS:
+    frag = render_worksheet_html("errorAuditWorksheet", html_data, day_label)
+    assert frag, f"no HTML fragment for {_name}"
+    pages.append((day_label, frag))
+packet = build_print_packet_html(pages, "Bug Hunt Demo (HTML)")
+with open(os.path.join(OUT, "error_audit_packet.html"), "w") as f:
+    f.write(packet)
+print("OK error_audit_packet.html")
 
 print("DONE:", sorted(os.listdir(OUT)))
