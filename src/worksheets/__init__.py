@@ -158,6 +158,7 @@ from .error_audit import (
     ErrorAuditSpecimen,
     ErrorAuditWorksheet,
     generate_error_audit_worksheet,
+    decimal_stack_rows,
     FIX_MODES,
 )
 
@@ -263,6 +264,7 @@ __all__ = [
     "ErrorAuditSpecimen",
     "ErrorAuditWorksheet",
     "generate_error_audit_worksheet",
+    "decimal_stack_rows",
     "FIX_MODES",
     # Ten-frame ("Make Ten")
     "TenFrameProblem",

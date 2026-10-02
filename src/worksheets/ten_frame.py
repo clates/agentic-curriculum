@@ -32,6 +32,11 @@ class TenFrameProblem:
     addend_a: int  # counters shown in the FIRST ten-frame (0-10)
     addend_b: int  # counters shown in the SECOND ten-frame (0-10)
     label: str = ""  # optional story context, e.g. "Sam has 8 red marbles..."
+    fill_a: str = "black"  # counter style for frame A: CSS color or emoji
+    fill_b: str = "black"  # counter style for frame B: CSS color or emoji
+    # A fill is a CSS color name/hex (rendered as a colored dot in every
+    # renderer) or an emoji character (rendered as a glyph in HTML; PIL
+    # has no emoji font and falls back to a black dot).
 
     @property
     def total(self) -> int:
@@ -60,6 +65,8 @@ class TenFrameProblem:
             addend_a=int(payload.get("addend_a", 0)),
             addend_b=int(payload.get("addend_b", 0)),
             label=payload.get("label", "") or "",
+            fill_a=payload.get("fill_a", "black") or "black",
+            fill_b=payload.get("fill_b", "black") or "black",
         )
 
     def proof_equations(self) -> List[str]:
@@ -95,9 +102,15 @@ class TenFrameWorksheet(BaseWorksheet):
             block = [f"## Problem {idx}: {prob.addend_a} + {prob.addend_b}"]
             if prob.label:
                 block.append(f"    {prob.label}")
-            block.append("    [ten-frame: {} filled] [ten-frame: {} filled]".format(
-                prob.addend_a, prob.addend_b
-            ))
+            frame_a = f"{prob.addend_a} filled"
+            frame_b = f"{prob.addend_b} filled"
+            if prob.fill_a != "black":
+                frame_a += f" ({prob.fill_a})"
+            if prob.fill_b != "black":
+                frame_b += f" ({prob.fill_b})"
+            block.append(
+                f"    [ten-frame: {frame_a}] [ten-frame: {frame_b}]"
+            )
             if self.show_answers:
                 block.append(
                     f"    **Proof:** {' , '.join(prob.proof_equations())}"
@@ -127,6 +140,12 @@ def _validate_problem(problem: TenFrameProblem) -> None:
         if not MIN_ADDEND <= value <= MAX_ADDEND:
             raise ValueError(
                 f"{name} must be between {MIN_ADDEND} and {MAX_ADDEND}, got {value}"
+            )
+    for name, fill in (("fill_a", problem.fill_a), ("fill_b", problem.fill_b)):
+        if not isinstance(fill, str) or not 1 <= len(fill) <= 24:
+            raise ValueError(
+                f"{name} must be a CSS color or emoji string "
+                f"(1-24 chars), got {fill!r}"
             )
     if problem.total > MAX_SUM:
         raise ValueError(

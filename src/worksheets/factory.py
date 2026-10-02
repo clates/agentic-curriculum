@@ -401,6 +401,7 @@ def _create_error_audit(payload: dict[str, Any]) -> ErrorAuditWorksheet:
         adversarial=payload.get("adversarial", False),
         show_answers=payload.get("show_answers", False),
         fix_lines=payload.get("fix_lines", 2),
+        columns=payload.get("columns", 1),
         metadata=payload.get("metadata"),
     )
 

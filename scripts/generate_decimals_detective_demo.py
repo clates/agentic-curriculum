@@ -31,7 +31,8 @@ PAYLOAD = {
     "instructions": (
         "Each case shows a kid's decimal work with one planted error. "
         "Circle the wrong step, check the suspect that did it, "
-        "then rewrite the work correctly on the lines."
+        "then rewrite the work correctly in the lined-up grid: "
+        "decimal points stay in their column, gray helper zeroes get traced."
     ),
     "legend": ["Line-Up Slip", "Trailing-Zero Myth", "Place Swap"],
     "fix_mode": "rewrite",
@@ -64,6 +65,11 @@ PAYLOAD = {
                 "Line up the decimal points: 0.50 + 0.25 = 0.75. "
                 "Check: 5 tenths + 2 tenths = 7 tenths."
             ),
+            "fix_scaffold": {
+                "kind": "decimal_stack",
+                "addends": ["0.5", "0.25"],
+                "answer": "0.75",
+            },
         },
         {
             "prompt": "Case 2: Dev compares 1.2 and 1.20. He says 1.20 is bigger.",

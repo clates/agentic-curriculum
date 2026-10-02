@@ -160,3 +160,53 @@ def test_html_render_answer_key():
     assert "8 + 2 = 10" in frag
     assert "10 + 3 = 13" in frag
     assert "answer-lines" not in frag
+
+
+def test_fill_defaults_to_black():
+    ws = generate_ten_frame_worksheet([_prob()])
+    prob = ws.problems[0]
+    assert prob.fill_a == "black"
+    assert prob.fill_b == "black"
+
+
+def test_fill_passthrough_and_validation():
+    ws = generate_ten_frame_worksheet([_prob(fill_a="blue", fill_b="🦆")])
+    prob = ws.problems[0]
+    assert prob.fill_a == "blue"
+    assert prob.fill_b == "🦆"
+    md = ws.to_markdown()
+    assert "(blue)" in md and "(🦆)" in md
+    with pytest.raises(ValueError):
+        generate_ten_frame_worksheet([_prob(fill_a=123)])  # type: ignore[dict-item]
+    with pytest.raises(ValueError):
+        generate_ten_frame_worksheet([_prob(fill_b="x" * 25)])
+
+
+def test_html_renders_color_and_emoji_fills():
+    from src.worksheet_html_renderer import render_worksheet_html
+
+    frag = render_worksheet_html(
+        "tenFrameWorksheet",
+        {
+            "title": "Make Ten",
+            "problems": [
+                _prob(fill_a="blue", fill_b="red"),
+                _prob(fill_a="🦆", fill_b="🦆"),
+            ],
+        },
+        "Thursday",
+    )
+    assert frag is not None
+    assert 'fill="blue"' in frag
+    assert 'fill="red"' in frag
+    assert "🦆" in frag
+
+
+def test_pil_render_with_fills_smoke(tmp_path):
+    from src.worksheet_renderer import render_ten_frame_to_image
+
+    ws = generate_ten_frame_worksheet([_prob(fill_a="blue", fill_b="🦆")])
+    img = render_ten_frame_to_image(ws, str(tmp_path / "fills.png"))
+    import os
+
+    assert os.path.getsize(img) > 5000

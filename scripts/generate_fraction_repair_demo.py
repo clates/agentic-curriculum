@@ -30,13 +30,13 @@ PAYLOAD = {
     "theme_label": "Fraction Repair Shop",
     "instructions": (
         "Pip and friends cut these fraction shapes, but every one has a bug! "
-        "Circle the bug, check the suspect that did it, then redraw the shape "
-        "fixed in the box. The faint starter shape shows the equal pieces "
-        "you need."
+        "Circle the bug, check the suspect that did it, then draw the "
+        "missing lines in the blank circle to fix it."
     ),
     "legend": ["Unequal pieces", "Wrong count", "Shading slip"],
     "fix_mode": "redraw",
     "verify": True,
+    "columns": 2,
     "metadata": {
         "learner": "Dev",
         "grade": 3,
@@ -49,6 +49,7 @@ PAYLOAD = {
             "prompt": "Pip says this circle shows halves.",
             "lines": ["Study Pip's circle. What did he get wrong?"],
             "art": {"kind": "partitions", "parts": 2, "broken": 0},
+            "blank_fix_circle": True,
             "bug_location": "The two pieces are not equal; one is much bigger, so neither is one half.",
             "diagnosis": "Unequal pieces",
         },
@@ -57,6 +58,7 @@ PAYLOAD = {
             "lines": ["Study Zoe's circle. What did she get wrong?"],
             "art": {"kind": "partitions", "parts": 4},
             "starter_art": {"kind": "partitions", "parts": 3},
+            "blank_fix_circle": True,
             "bug_location": "Zoe's circle has 4 equal pieces, not 3; each piece is one fourth, not one third.",
             "diagnosis": "Wrong count",
         },
@@ -64,6 +66,7 @@ PAYLOAD = {
             "prompt": "Milo says the shaded part of the circle is one fourth.",
             "lines": ["Study Milo's circle. What did he get wrong?"],
             "art": {"kind": "partitions", "parts": 4, "shaded": [0, 1]},
+            "blank_fix_circle": True,
             "bug_location": "Two pieces are shaded, so the shaded part is two fourths (one half), not one fourth.",
             "diagnosis": "Shading slip",
         },
@@ -86,6 +89,7 @@ html_data = {
     "legend": PAYLOAD["legend"],
     "fix_mode": PAYLOAD["fix_mode"],
     "verify": PAYLOAD["verify"],
+    "columns": PAYLOAD["columns"],
     "adversarial": False,
     "fix_lines": 2,
     "specimens": PAYLOAD["specimens"],

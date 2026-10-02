@@ -182,19 +182,20 @@ def _html_frag(**data_over):
     from src.worksheet_html_renderer import render_worksheet_html
 
     payload = _payload(**data_over)
+    data = {
+        "title": payload["title"],
+        "theme_label": payload["theme_label"],
+        "instructions": payload["instructions"],
+        "legend": payload["legend"],
+        "fix_mode": payload["fix_mode"],
+        "verify": payload["verify"],
+        "adversarial": False,
+        "specimens": payload["specimens"],
+    }
+    data.update(data_over)
     frag = render_worksheet_html(
         "errorAuditWorksheet",
-        {
-            "title": payload["title"],
-            "theme_label": payload["theme_label"],
-            "instructions": payload["instructions"],
-            "legend": payload["legend"],
-            "fix_mode": payload["fix_mode"],
-            "verify": payload["verify"],
-            "adversarial": False,
-            "specimens": payload["specimens"],
-            **data_over,
-        },
+        data,
         "Thursday",
     )
     assert frag is not None
@@ -262,3 +263,101 @@ def test_html_key_mode():
     assert "Bug:" in frag
     assert "Bug circled" not in frag
     assert "ea-starter" not in frag  # key mode has no redraw scaffolds
+
+
+def _blank_payload(**over):
+    payload = _payload()
+    for spec in payload["specimens"]:
+        spec["blank_fix_circle"] = True
+    payload.update(over)
+    return payload
+
+
+def test_columns_validation():
+    with pytest.raises(ValueError):
+        generate_error_audit_worksheet(
+            _blank_payload()["specimens"], columns=3
+        )
+    ws = generate_error_audit_worksheet(
+        _blank_payload()["specimens"], columns=2, fix_mode="redraw"
+    )
+    assert ws.columns == 2
+    assert generate_error_audit_worksheet(
+        _blank_payload()["specimens"]).columns == 1
+
+
+def test_blank_fix_circle_markdown():
+    ws = generate_error_audit_worksheet(
+        _blank_payload()["specimens"], fix_mode="redraw"
+    )
+    md = ws.to_markdown()
+    assert md.count("blank circle") == 3
+    assert "[redraw box]" not in md
+
+
+def test_html_blank_circle_no_starter():
+    frag = _html_frag(
+        specimens=_blank_payload()["specimens"],
+    )
+    # 3 specimen-art SVGs + 3 bare-circle scaffold SVGs; no starters.
+    assert frag.count("<svg") == 6
+    assert frag.count('r="70" fill="white"') == 3  # one bare circle each
+    assert "ea-starter" not in frag
+    assert "ea-redrawbox" not in frag
+    assert "draw the lines in the circle" in frag
+
+
+def test_html_key_shows_fixed_shape():
+    frag = _html_frag(
+        specimens=_blank_payload()["specimens"], show_answers=True
+    )
+    assert "Fixed shape:" in frag
+
+
+def test_html_two_up_wraps_cards():
+    frag = _html_frag(
+        specimens=_blank_payload()["specimens"], columns=2
+    )
+    assert 'class="ea-cards-2"' in frag
+    single = _html_frag(specimens=_blank_payload()["specimens"])
+    assert 'class="ea-cards-2"' not in single
+
+
+def test_pil_two_up_blank_and_key(tmp_path):
+    from src.worksheet_renderer import render_error_audit_to_image
+    from PIL import Image
+    import os
+
+    one = generate_error_audit_worksheet(
+        _blank_payload()["specimens"], fix_mode="redraw"
+    )
+    two = generate_error_audit_worksheet(
+        _blank_payload()["specimens"], fix_mode="redraw", columns=2
+    )
+    p1 = render_error_audit_to_image(one, str(tmp_path / "one.png"))
+    p2 = render_error_audit_to_image(two, str(tmp_path / "two.png"))
+    assert os.path.getsize(p1) > 5000
+    assert os.path.getsize(p2) > 5000
+    h1 = Image.open(p1).size[1]
+    h2 = Image.open(p2).size[1]
+    assert h2 < h1  # two-up halves the whitespace
+
+    key = generate_error_audit_worksheet(
+        _blank_payload()["specimens"], fix_mode="redraw", show_answers=True
+    )
+    pk = render_error_audit_to_image(key, str(tmp_path / "key.png"))
+    assert os.path.getsize(pk) > 5000
+
+
+def test_pil_long_title_wraps_below_badge(tmp_path):
+    from src.worksheet_renderer import render_error_audit_to_image
+    import os
+
+    ws = generate_error_audit_worksheet(
+        _blank_payload()["specimens"],
+        title="Fractions: Halves, Thirds & Fourths",
+        theme_label="Fraction Repair Shop",
+        fix_mode="redraw",
+    )
+    out = render_error_audit_to_image(ws, str(tmp_path / "wrapped.png"))
+    assert os.path.getsize(out) > 5000

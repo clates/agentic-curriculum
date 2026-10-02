@@ -31,22 +31,27 @@ METADATA = {
 PROBLEMS = [
     # Carrying: 8 + 5 -> 8 + 2 = 10, 10 + 3 = 13
     {"addend_a": 8, "addend_b": 5,
-     "label": "Sam has 8 blue blocks and finds 5 red ones."},
+     "label": "Sam has 8 blue blocks and finds 5 red ones.",
+     "fill_a": "blue", "fill_b": "red"},
     # Carrying: 9 + 6 -> 9 + 1 = 10, 10 + 5 = 15
     {"addend_a": 9, "addend_b": 6,
-     "label": "Sam sees 9 ducks and 6 more swim over."},
+     "label": "Sam sees 9 ducks and 6 more swim over.",
+     "fill_a": "🦆", "fill_b": "🦆"},
     # Carrying: 7 + 4 -> 7 + 3 = 10, 10 + 1 = 11
     {"addend_a": 7, "addend_b": 4,
-     "label": "Sam bakes 7 cookies, then 4 more."},
+     "label": "Sam bakes 7 cookies, then 4 more.",
+     "fill_a": "🍪", "fill_b": "🍪"},
     # Non-carrying: 6 + 3 = 9 (no bridge needed)
     {"addend_a": 6, "addend_b": 3,
-     "label": "Sam kicks 6 goals, then 3 more."},
+     "label": "Sam kicks 6 goals, then 3 more.",
+     "fill_a": "⚽", "fill_b": "⚽"},
     # Non-carrying make-ten: 8 + 2 = 10 exactly
     {"addend_a": 8, "addend_b": 2,
      "label": "Sam holds 8 cards and picks up 2."},
     # Carrying: 5 + 7 -> 5 + 5 = 10, 10 + 2 = 12
     {"addend_a": 5, "addend_b": 7,
-     "label": "Sam spots 5 fish, then 7 turtles."},
+     "label": "Sam spots 5 fish, then 7 turtles.",
+     "fill_a": "🐟", "fill_b": "🐢"},
 ]
 
 payload = {

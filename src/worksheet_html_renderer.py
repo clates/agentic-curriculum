@@ -26,8 +26,10 @@ from typing import Any
 
 try:  # package context (tests, app): src.worksheet_html_renderer
     from .worksheets.ten_frame import TenFrameProblem
+    from .worksheets.error_audit import decimal_stack_rows
 except ImportError:  # top-level context (scripts run with src on sys.path)
     from worksheets.ten_frame import TenFrameProblem
+    from worksheets.error_audit import decimal_stack_rows
 
 # ── Day palette ────────────────────────────────────────────────────────────
 
@@ -347,6 +349,16 @@ _CSS = """\
   .ea-starter { text-align: center; margin: 4px 0; }
   .ea-starter svg { opacity: 0.5; }
   .ea-redrawbox.ea-with-starter { min-height: 1.1in; }
+  .ea-cards-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .ea-dec-grid { border-collapse: collapse; margin: 4px 0 2px; font-family: "Courier New", monospace; font-size: 13pt; }
+  .ea-dec-grid td { width: 30px; height: 34px; text-align: center; vertical-align: middle; padding: 0; }
+  .ea-dec-given { font-weight: bold; }
+  .ea-dec-point { font-weight: bold; }
+  .ea-dec-write { border: 1.5px solid #222; border-radius: 4px; }
+  .ea-dec-pad { color: #999; border: 1.5px dotted #999; border-radius: 4px; }
+  .ea-dec-rule td { border-top: 2px solid #222; height: 0; }
+  .ea-dec-plus { font-weight: bold; padding-right: 6px; }
+  .ea-dec-caption { font-size: 9pt; color: #555; margin: 0 0 4px; }
 
   /* Ten-frame ("Make Ten") */
   .tf-card { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
@@ -1098,10 +1110,18 @@ def _svg_dots(rows: int, cols: int) -> str:
     )
 
 
-def _svg_ten_frame(filled: int) -> str:
+def _tf_is_color(fill: str) -> bool:
+    """True when *fill* is a CSS color (name or hex), not an emoji glyph."""
+    fill = (fill or "black").strip()
+    return fill.startswith("#") or fill.isalpha()
+
+
+def _svg_ten_frame(filled: int, fill: str = "black") -> str:
     """Inline-SVG 5x2 ten-frame; first *filled* cells (row-major) are filled.
 
     A counter tally prints under the frame so the pair reads at a glance.
+    *fill* is a CSS color (colored dot) or an emoji character (glyph in
+    each filled cell).
     """
     cell, rad = 26, 8
     w, h = 5 * cell, 2 * cell
@@ -1124,7 +1144,13 @@ def _svg_ten_frame(filled: int) -> str:
             idx = rr * 5 + cc
             cx, cy = cc * cell + cell // 2, rr * cell + cell // 2
             if idx < filled:
-                parts.append(f'<circle cx="{cx}" cy="{cy}" r="{rad}" fill="black"/>')
+                if _tf_is_color(fill):
+                    parts.append(f'<circle cx="{cx}" cy="{cy}" r="{rad}" fill="{_h(fill)}"/>')
+                else:
+                    parts.append(
+                        f'<text x="{cx}" y="{cy}" text-anchor="middle" '
+                        f'dominant-baseline="central" font-size="15">{_h(fill)}</text>'
+                    )
             else:
                 parts.append(
                     f'<circle cx="{cx}" cy="{cy}" r="{rad}" fill="white" '
@@ -1159,8 +1185,8 @@ def _render_ten_frame(data: dict, primary: str, light: str) -> str:
         label_html = f'<div class="tf-label">{_h(label)}</div>' if label else ""
         frames = (
             '<div class="tf-frames">'
-            + _svg_ten_frame(a)
-            + _svg_ten_frame(b)
+            + _svg_ten_frame(a, prob.get("fill_a", "black"))
+            + _svg_ten_frame(b, prob.get("fill_b", "black"))
             + "</div>"
         )
         if show_answers:
@@ -1202,6 +1228,7 @@ def _svg_partitions(
     broken: int | None = None,
     shaded=None,
     starter: bool = False,
+    blank: bool = False,
 ) -> str:
     """Inline-SVG circle partitioned into wedges (fraction picture).
 
@@ -1209,10 +1236,17 @@ def _svg_partitions(
     shaded: wedge index (or list) filled as the "shaded fraction".
     starter: draw the CORRECT equal partition shape for tracing over
     (paired with .ea-starter's 0.5 opacity).
+    blank: draw a bare circle outline only — the student partitions it.
     """
     import math
 
     r, cx, cy = 70, 80, 80
+    if blank:
+        return (
+            f'<svg width="160" height="160" viewBox="0 0 160 160">'
+            f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="white" '
+            f'stroke="black" stroke-width="3"/></svg>'
+        )
     stroke = "#8a8a8a" if starter else "black"
     step = 360.0 / parts
     edges = [i * step for i in range(parts + 1)]
@@ -1250,6 +1284,51 @@ def _svg_partitions(
     return f'<svg width="160" height="160" viewBox="0 0 160 160">{"".join(out)}</svg>'
 
 
+def _html_decimal_stack(scaffold: dict, filled: bool) -> str:
+    """Guided rewrite grid: decimal-aligned digit slots with helper zeroes.
+
+    Decimal points are pre-printed in their own column; short terms carry
+    faint dotted helper zeroes to trace. In key mode (*filled*) the answer
+    row carries its digits.
+    """
+    grid = decimal_stack_rows(scaffold, filled=filled)
+
+    def _cell(char: str, kind: str) -> str:
+        if kind == "spacer":
+            return "<td></td>"
+        if kind == "point":
+            return '<td class="ea-dec-point">.</td>'
+        if kind == "pad":
+            return '<td class="ea-dec-pad">0</td>'
+        if kind == "write":
+            return '<td class="ea-dec-write"></td>'
+        return f'<td class="ea-dec-given">{_h(char)}</td>'
+
+    def _row(cells: list, plus: bool = False) -> str:
+        tds = "".join(_cell(ch, kind) for ch, kind in cells)
+        prefix = '<td class="ea-dec-plus">+</td>' if plus else "<td></td>"
+        return f"<tr>{prefix}{tds}</tr>"
+
+    ncols = len(grid["terms"][0]) + 1 if grid["terms"] else 1
+    terms = "".join(
+        _row(cells, plus=(i == len(grid["terms"]) - 1))
+        for i, cells in enumerate(grid["terms"])
+    )
+    rule = f'<tr class="ea-dec-rule"><td colspan="{ncols}"></td></tr>'
+    answer = _row(grid["answer"])
+    caption = ""
+    if grid["has_pads"] and not filled:
+        caption = (
+            '<div class="ea-dec-caption">Gray 0s are helpers — trace them. '
+            "Decimal points stay in their column.</div>"
+        )
+    return (
+        "<div>Fix (line up the decimals):</div>"
+        f'<table class="ea-dec-grid">{terms}{rule}{answer}</table>'
+        f"{caption}"
+    )
+
+
 def _render_error_audit(data: dict, primary: str, light: str) -> str:
     title = data.get("title", "Bug Hunt")
     day_label = data.get("day_label", "")
@@ -1261,6 +1340,7 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
     adversarial = data.get("adversarial", False)
     show_answers = data.get("show_answers", False)
     fix_lines = int(data.get("fix_lines", 2))
+    columns = int(data.get("columns", 1))
 
     dh = _day_header(day_label, title, primary) if day_label else ""
     legend_label = "ASSIGN SUSPECTS:" if adversarial else "SUSPECTS:"
@@ -1308,6 +1388,16 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
                 stage += f"<div><b>Diagnosis:</b> {_h(spec['diagnosis'])}</div>"
             if spec.get("fix_text") and fix_mode == "rewrite":
                 stage += f"<div><b>Fix:</b> {_h(spec['fix_text'])}</div>"
+            if fix_mode == "redraw":
+                art = spec.get("art") or {}
+                if art.get("kind") == "partitions":
+                    sart = spec.get("starter_art") or {}
+                    parts = int(sart.get("parts", art.get("parts", 2)))
+                    stage += (
+                        '<div><b>Fixed shape:</b></div><div class="ea-art">'
+                        + _svg_partitions(parts)
+                        + "</div>"
+                    )
         else:
             stage = '<div class="ea-check"><span class="ea-box"></span>Bug circled</div>'
             if legend:
@@ -1318,27 +1408,43 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
                         f'<span class="ea-box"></span>{_h(entry)}</div>'
                     )
             if fix_mode == "rewrite":
-                stage += "<div>Fix:</div>" + _answer_lines(fix_lines)
+                if spec.get("fix_scaffold"):
+                    stage += _html_decimal_stack(
+                        spec["fix_scaffold"], filled=show_answers
+                    )
+                else:
+                    stage += "<div>Fix:</div>" + _answer_lines(fix_lines)
             elif fix_mode == "redraw":
-                scaffold = ""
                 art = spec.get("art") or {}
-                if art.get("kind") == "clock":
+                if spec.get("blank_fix_circle") and art.get("kind") == "partitions":
                     scaffold = (
-                        '<div class="ea-starter">'
-                        + _svg_clock(12, 0, "both", starter=True)
+                        '<div class="ea-art">'
+                        + _svg_partitions(2, blank=True)
                         + "</div>"
                     )
-                elif art.get("kind") == "partitions":
-                    sart = spec.get("starter_art") or art
-                    scaffold = (
-                        '<div class="ea-starter">'
-                        + _svg_partitions(int(sart.get("parts", 2)), starter=True)
-                        + "</div>"
+                    stage += (
+                        "<div>Redraw it fixed — draw the lines in the circle:</div>"
+                        f"{scaffold}"
                     )
-                stage += f"<div>Redraw it fixed:</div>{scaffold}" + (
-                    '<div class="ea-redrawbox"></div>' if not scaffold else
-                    '<div class="ea-redrawbox ea-with-starter"></div>'
-                )
+                else:
+                    scaffold = ""
+                    if art.get("kind") == "clock":
+                        scaffold = (
+                            '<div class="ea-starter">'
+                            + _svg_clock(12, 0, "both", starter=True)
+                            + "</div>"
+                        )
+                    elif art.get("kind") == "partitions":
+                        sart = spec.get("starter_art") or art
+                        scaffold = (
+                            '<div class="ea-starter">'
+                            + _svg_partitions(int(sart.get("parts", 2)), starter=True)
+                            + "</div>"
+                        )
+                    stage += f"<div>Redraw it fixed:</div>{scaffold}" + (
+                        '<div class="ea-redrawbox"></div>' if not scaffold else
+                        '<div class="ea-redrawbox ea-with-starter"></div>'
+                    )
             if verify:
                 stage += (
                     '<div class="ea-check">'
@@ -1359,6 +1465,9 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
             "diagnose it, fix it, then re-check your fix.",
         )
     )
+
+    if columns == 2:
+        cards_html = f'<div class="ea-cards-2">{cards_html}</div>'
 
     return f"""
 {dh}

@@ -44,6 +44,14 @@ class ErrorAuditSpecimen:
     starter_art: dict | None = None  # optional redraw-scaffold override:
     #   the CORRECT target shape (e.g. equal thirds when the bug is a
     #   four-piece "thirds"). Defaults to art rendered without the bug.
+    fix_scaffold: dict | None = None  # optional guided rewrite grid:
+    #   {"kind": "decimal_stack", "addends": ["0.5", "0.25"],
+    #    "answer": "0.75"} — replaces ruled lines with decimal-aligned
+    #   digit slots. Decimal points are pre-printed in their column;
+    #   short terms are padded with faint helper zeroes to trace.
+    blank_fix_circle: bool = False  # redraw mode, partitions art only:
+    #   the fix area is a single blank circle outline — the student draws
+    #   the partition lines themselves instead of tracing a starter shape.
 
     @classmethod
     def from_mapping(cls, payload: dict) -> "ErrorAuditSpecimen":
@@ -58,6 +66,8 @@ class ErrorAuditSpecimen:
             fix_text=payload.get("fix_text"),
             art=payload.get("art"),
             starter_art=payload.get("starter_art"),
+            fix_scaffold=payload.get("fix_scaffold"),
+            blank_fix_circle=bool(payload.get("blank_fix_circle", False)),
         )
 
 
@@ -119,6 +129,7 @@ class ErrorAuditWorksheet(BaseWorksheet):
     adversarial: bool = False
     show_answers: bool = False
     fix_lines: int = 2  # ruled lines in rewrite mode
+    columns: int = 1  # case cards per row (1 or 2; 2-up halves the whitespace)
     metadata: dict | None = None
 
     def to_markdown(self) -> str:
@@ -147,13 +158,129 @@ class ErrorAuditWorksheet(BaseWorksheet):
                         + " / ".join(f"( ) {entry}" for entry in self.legend)
                     )
                 if self.fix_mode == "rewrite":
-                    block.append("    Fix:" + " _" * 20)
+                    if spec.fix_scaffold:
+                        block.append("    Fix (line up the decimals):")
+                        grid = decimal_stack_rows(
+                            spec.fix_scaffold, filled=self.show_answers
+                        )
+                        for row in grid["terms"]:
+                            block.append("    " + _scaffold_row_text(row))
+                        block.append("    " + "-" * (len(grid["terms"][0]) * 2 + 1))
+                        block.append("    " + _scaffold_row_text(grid["answer"]))
+                        if grid["has_pads"]:
+                            block.append("    (gray 0s are helpers — trace them)")
+                    else:
+                        block.append("    Fix:" + " _" * 20)
                 elif self.fix_mode == "redraw":
-                    block.append("    [redraw box]")
+                    if spec.blank_fix_circle:
+                        block.append("    [blank circle — draw the partition lines]")
+                    else:
+                        block.append("    [redraw box]")
                 if self.verify:
                     block.append("    ( ) Re-checked my fix")
             body.append("\n".join(block))
         return "\n\n".join(header + body)
+
+
+def _scaffold_row_text(row: list[tuple[str, str]]) -> str:
+    """Render one decimal_stack row as plain text (markdown fallback)."""
+    glyphs = []
+    for char, kind in row:
+        if kind == "write":
+            glyphs.append("_")
+        elif kind == "spacer":
+            glyphs.append(" ")
+        else:
+            glyphs.append(char)
+    return " ".join(glyphs)
+
+
+def _validate_fix_scaffold(scaffold: dict | None) -> None:
+    """Validate a specimen's guided rewrite scaffold; raise ValueError."""
+    if scaffold is None:
+        return
+    if not isinstance(scaffold, dict):
+        raise ValueError(f"fix_scaffold must be a dict, got {scaffold!r}")
+    kind = scaffold.get("kind")
+    if kind != "decimal_stack":
+        raise ValueError(
+            f"fix_scaffold kind must be 'decimal_stack', got {kind!r}"
+        )
+    addends = scaffold.get("addends")
+    answer = scaffold.get("answer")
+    if not isinstance(addends, list) or not addends:
+        raise ValueError("decimal_stack scaffold needs a non-empty 'addends' list")
+    for label, value in [("answer", answer), *[(f"addend[{i}]", a) for i, a in enumerate(addends)]]:
+        if not isinstance(value, str) or "." not in value:
+            raise ValueError(
+                f"decimal_stack {label} must be a decimal string like "
+                f"'0.50', got {value!r}"
+            )
+        whole, _, frac = value.partition(".")
+        if not whole.isdigit() or not frac.isdigit():
+            raise ValueError(
+                f"decimal_stack {label} must be digits around one '.', "
+                f"got {value!r}"
+            )
+
+
+def decimal_stack_rows(
+    scaffold: dict, *, filled: bool = False
+) -> dict:
+    """Build decimal-aligned grid rows for a decimal_stack scaffold.
+
+    Every row has the same columns: integer digits right-aligned, one
+    decimal-point column, fractional digits left-aligned. Short fraction
+    parts are extended with ("0", "pad") helper cells meant to be traced.
+    In student mode (filled=False) digit positions are ("", "write")
+    blanks; in key mode (filled=True) they carry the answer digits.
+
+    Returns {"terms": [[(char, kind)]], "answer": [(char, kind)],
+    "has_pads": bool}. Kinds: "given" | "pad" | "point" | "write" |
+    "spacer".
+    """
+    addends = list(scaffold.get("addends", []))
+    answer = scaffold.get("answer", "")
+    wholes = [a.partition(".")[0] for a in addends] + [answer.partition(".")[0]]
+    fracs = [a.partition(".")[2] for a in addends] + [answer.partition(".")[2]]
+    left = max(len(w) for w in wholes)
+    right = max(len(f) for f in fracs)
+
+    def _term_row(term: str) -> list[tuple[str, str]]:
+        whole, _, frac = term.partition(".")
+        cells: list[tuple[str, str]] = []
+        for _ in range(left - len(whole)):
+            cells.append(("", "spacer"))
+        cells.extend((ch, "given") for ch in whole)
+        cells.append((".", "point"))
+        cells.extend((ch, "given") for ch in frac)
+        for _ in range(right - len(frac)):
+            cells.append(("0", "pad"))
+        return cells
+
+    def _answer_row() -> list[tuple[str, str]]:
+        whole, _, frac = answer.partition(".")
+        cells: list[tuple[str, str]] = []
+        for _ in range(left - len(whole)):
+            cells.append(("", "spacer"))
+        if filled:
+            cells.extend((ch, "given") for ch in whole)
+            cells.append((".", "point"))
+            cells.extend((ch, "given") for ch in frac)
+            for _ in range(right - len(frac)):
+                cells.append(("0", "pad"))
+        else:
+            cells.extend(("", "write") for _ in whole)
+            cells.append((".", "point"))
+            cells.extend(("", "write") for _ in frac)
+            for _ in range(right - len(frac)):
+                cells.append(("0", "pad"))
+        return cells
+
+    terms = [_term_row(a) for a in addends]
+    ans = _answer_row()
+    has_pads = any(kind == "pad" for row in terms + [ans] for _, kind in row)
+    return {"terms": terms, "answer": ans, "has_pads": has_pads}
 
 
 def _normalize_specimens(
@@ -176,6 +303,7 @@ def _normalize_specimens(
                     _validate_clock_art(target)
                 elif kind == "dots":
                     _validate_dots_art(target)
+        _validate_fix_scaffold(normalized[-1].fix_scaffold)
     return normalized
 
 
@@ -194,6 +322,7 @@ def generate_error_audit_worksheet(
     adversarial: bool = False,
     show_answers: bool = False,
     fix_lines: int = 2,
+    columns: int = 1,
     metadata: dict | None = None,
 ) -> ErrorAuditWorksheet:
     """Create an error-audit worksheet.
@@ -212,6 +341,8 @@ def generate_error_audit_worksheet(
             (Error Chef). Legend becomes the assignment list.
         show_answers: Answer-key mode (fills bug/diagnosis/fix).
         fix_lines: Ruled lines per specimen in rewrite mode.
+        columns: Case cards per row, 1 or 2. Two-up rendering halves
+            whitespace on short-card sheets.
         metadata: Optional metadata dictionary.
     """
     if fix_mode not in FIX_MODES:
@@ -221,6 +352,8 @@ def generate_error_audit_worksheet(
         raise ValueError("At least one specimen is required")
     if fix_lines < 1:
         raise ValueError("fix_lines must be at least 1")
+    if columns not in (1, 2):
+        raise ValueError(f"columns must be 1 or 2, got {columns!r}")
 
     return ErrorAuditWorksheet(
         title=title,
@@ -233,6 +366,7 @@ def generate_error_audit_worksheet(
         adversarial=adversarial,
         show_answers=show_answers,
         fix_lines=fix_lines,
+        columns=columns,
         metadata=metadata or {},
     )
 
@@ -241,5 +375,6 @@ __all__ = [
     "ErrorAuditSpecimen",
     "ErrorAuditWorksheet",
     "generate_error_audit_worksheet",
+    "decimal_stack_rows",
     "FIX_MODES",
 ]
