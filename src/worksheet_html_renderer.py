@@ -1197,6 +1197,57 @@ def _render_ten_frame(data: dict, primary: str, light: str) -> str:
 <div class="ws-instructions">{instructions}</div>
 {cards_html}
 """
+def _svg_partitions(
+    parts: int,
+    broken: int | None = None,
+    shaded=None,
+    starter: bool = False,
+) -> str:
+    """Inline-SVG circle partitioned into wedges (fraction picture).
+
+    broken: index of one mis-sized (unequal) wedge — the bug to circle.
+    shaded: wedge index (or list) filled as the "shaded fraction".
+    starter: draw the CORRECT equal partition shape for tracing over
+    (paired with .ea-starter's 0.5 opacity).
+    """
+    import math
+
+    r, cx, cy = 70, 80, 80
+    stroke = "#8a8a8a" if starter else "black"
+    step = 360.0 / parts
+    edges = [i * step for i in range(parts + 1)]
+    if not starter and broken is not None and 0 <= broken < parts:
+        d = step * 0.38
+        edges[broken] -= d
+        edges[broken + 1] += d
+    shade = [] if starter else (
+        [int(s) for s in shaded] if isinstance(shaded, (list, tuple))
+        else ([int(shaded)] if shaded is not None else [])
+    )
+    out = []
+    for i in shade:
+        if not 0 <= i < parts:
+            continue
+        a1, a2 = math.radians(edges[i]), math.radians(edges[i + 1])
+        x1, y1 = cx + r * math.sin(a1), cy - r * math.cos(a1)
+        x2, y2 = cx + r * math.sin(a2), cy - r * math.cos(a2)
+        large = 1 if (edges[i + 1] - edges[i]) > 180 else 0
+        out.append(
+            f'<path d="M {cx} {cy} L {x1:.1f} {y1:.1f} '
+            f'A {r} {r} 0 {large} 1 {x2:.1f} {y2:.1f} Z" '
+            f'fill="#b9b9b9" stroke="none"/>'
+        )
+    for a in edges[:parts]:
+        aa = math.radians(a)
+        out.append(
+            f'<line x1="{cx}" y1="{cy}" x2="{cx + r * math.sin(aa):.1f}" '
+            f'y2="{cy - r * math.cos(aa):.1f}" stroke="{stroke}" stroke-width="2"/>'
+        )
+    out.append(
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{stroke}" '
+        f'stroke-width="3"/>'
+    )
+    return f'<svg width="160" height="160" viewBox="0 0 160 160">{"".join(out)}</svg>'
 
 
 def _render_error_audit(data: dict, primary: str, light: str) -> str:
@@ -1233,6 +1284,16 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
                 + _svg_dots(int(art.get("rows", 2)), int(art.get("cols", 2)))
                 + "</div>"
             )
+        if art.get("kind") == "partitions":
+            return (
+                '<div class="ea-art">'
+                + _svg_partitions(
+                    int(art.get("parts", 2)),
+                    art.get("broken"),
+                    art.get("shaded"),
+                )
+                + "</div>"
+            )
         return ""
 
     cards_html = ""
@@ -1260,10 +1321,17 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
                 stage += "<div>Fix:</div>" + _answer_lines(fix_lines)
             elif fix_mode == "redraw":
                 scaffold = ""
-                if (spec.get("art") or {}).get("kind") == "clock":
+                art = spec.get("art") or {}
+                if art.get("kind") == "clock":
                     scaffold = (
                         '<div class="ea-starter">'
                         + _svg_clock(12, 0, "both", starter=True)
+                        + "</div>"
+                    )
+                elif art.get("kind") == "partitions":
+                    scaffold = (
+                        '<div class="ea-starter">'
+                        + _svg_partitions(int(art.get("parts", 2)), starter=True)
                         + "</div>"
                     )
                 stage += f"<div>Redraw it fixed:</div>{scaffold}" + (

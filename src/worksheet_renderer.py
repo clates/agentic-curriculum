@@ -3692,6 +3692,65 @@ def _draw_clock_face(
         draw.text((tx - w / 2, ty - 12), label, font=num_font, fill="black")
 
 
+def _partition_edges(parts: int, broken: int | None) -> list[float]:
+    """Wedge boundary angles (deg, clockwise from 12 o'clock) for a pie.
+
+    Equal cuts by default; wedge *broken* is grown on both sides (its
+    neighbors shrink) so one piece is visibly unequal.
+    """
+    step = 360.0 / parts
+    edges = [i * step for i in range(parts + 1)]
+    if broken is not None and 0 <= broken < parts:
+        d = step * 0.38
+        edges[broken] -= d
+        edges[broken + 1] += d
+    return edges
+
+
+def _shade_indices(shaded) -> list[int]:
+    if shaded is None:
+        return []
+    if isinstance(shaded, (list, tuple)):
+        return [int(s) for s in shaded]
+    return [int(shaded)]
+
+
+def _draw_partitions(
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    cy: int,
+    r: int,
+    parts: int,
+    broken: int | None = None,
+    shaded=None,
+    gray: bool = False,
+) -> None:
+    """Draw a circle partitioned into *parts* wedges (fraction picture).
+
+    broken: index of one mis-sized (unequal) wedge — the bug to circle.
+    shaded: wedge index (or list) filled in as the "shaded fraction".
+    gray: draw the CORRECT equal partition shape (redraw-box starter).
+    """
+    import math
+
+    color = (150, 150, 150) if gray else "black"
+    edges = _partition_edges(parts, None if gray else broken)
+    bbox = (cx - r, cy - r, cx + r, cy + r)
+    for i in _shade_indices(None if gray else shaded):
+        if 0 <= i < parts:
+            draw.pieslice(
+                bbox, edges[i] - 90, edges[i + 1] - 90, fill=(185, 185, 185)
+            )
+    for a in edges[:parts]:
+        aa = math.radians(a)
+        draw.line(
+            (cx, cy, cx + r * math.sin(aa), cy - r * math.cos(aa)),
+            fill=color,
+            width=2,
+        )
+    draw.ellipse(bbox, outline=color, width=3)
+
+
 def _draw_dot_grid(
     draw: ImageDraw.ImageDraw, x0: int, y0: int, rows: int, cols: int
 ) -> int:
@@ -3761,6 +3820,8 @@ def _render_error_audit_image(
             return 250
         if art.get("kind") == "dots":
             return int(art.get("rows", 2)) * 34 + 16
+        if art.get("kind") == "partitions":
+            return 210
         return 0
 
     # Per-specimen layout: wrap prompt + body lines now; heights are
@@ -3810,7 +3871,9 @@ def _render_error_audit_image(
                 h += small_h + worksheet.fix_lines * body_h
             elif worksheet.fix_mode == "redraw":
                 h += small_h + (
-                    260 if c["art"] and c["art"].get("kind") == "clock" else 190
+                    260 if c["art"] and c["art"].get("kind") == "clock" else
+                    240 if c["art"] and c["art"].get("kind") == "partitions"
+                    else 190
                 )
             if worksheet.verify:
                 h += small_h
@@ -3891,6 +3954,12 @@ def _render_error_audit_image(
                 int(art.get("rows", 2)), int(art.get("cols", 2)),
             )
             cy += art_height(art)
+        elif art and art.get("kind") == "partitions":
+            _draw_partitions(
+                draw, width // 2, cy + 100, 85,
+                int(art.get("parts", 2)), art.get("broken"), art.get("shaded"),
+            )
+            cy += art_height(art)
 
         # Specimen body in a light inner box.
         body_h_px = len(c["body"]) * body_h + 12
@@ -3965,6 +4034,16 @@ def _render_error_audit_image(
                              scy + ny * (scr - 30) - 12),
                             label, font=small_font, fill=(150, 150, 150),
                         )
+                    cy += box_h + 10
+                elif art and art.get("kind") == "partitions":
+                    # Starter scaffold: the CORRECT equal partitions at
+                    # reduced opacity, sized for the student to trace over.
+                    box_h = 230
+                    draw.rectangle((bx0, cy, bx1, cy + box_h), outline="black", width=1)
+                    _draw_partitions(
+                        draw, (bx0 + bx1) // 2, cy + box_h // 2, 95,
+                        int(art.get("parts", 2)), gray=True,
+                    )
                     cy += box_h + 10
                 else:
                     draw.rectangle(

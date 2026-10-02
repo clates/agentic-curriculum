@@ -33,10 +33,14 @@ class ErrorAuditSpecimen:
     bug_location: str | None = None  # answer key: where the bug is
     diagnosis: str | None = None  # answer key: legend entry that applies
     fix_text: str | None = None  # answer key: corrected version (rewrite mode)
-    art: dict | None = None  # optional picture: {"kind": "clock"|"dots", ...}
+    art: dict | None = None  # optional picture: {"kind": "clock"|"dots"|"partitions", ...}
     #   clock: {"hour": 3.0, "minute": 30, "missing": "minute"|"hour"|None}
     #     hour is a clock position (3.5 = halfway past 3); minute is 0-59.
     #   dots: {"rows": 3, "cols": 4} — filled-circle array grid.
+    #   partitions: {"parts": N, "broken": i, "shaded": i|[i,...]}
+    #     circle cut into N wedges; wedge i is mis-sized (unequal) — the bug
+    #     to circle. "shaded" (optional) fills wedge(s) for shaded-fraction
+    #     claims. broken/shaded may be None for count/shading bugs.
 
     @classmethod
     def from_mapping(cls, payload: dict) -> "ErrorAuditSpecimen":
@@ -51,6 +55,24 @@ class ErrorAuditSpecimen:
             fix_text=payload.get("fix_text"),
             art=payload.get("art"),
         )
+
+
+def _validate_partitions_art(art: dict) -> None:
+    """Validate a partitions art dict; raise ValueError on bad specs."""
+    parts = art.get("parts")
+    if not isinstance(parts, int) or isinstance(parts, bool) or not 2 <= parts <= 12:
+        raise ValueError(f"partitions art needs integer parts 2-12, got {parts!r}")
+    for field in ("broken", "shaded"):
+        val = art.get(field)
+        if val is None:
+            continue
+        idxs = val if isinstance(val, (list, tuple)) else [val]
+        for idx in idxs:
+            if not isinstance(idx, int) or isinstance(idx, bool) or not 0 <= idx < parts:
+                raise ValueError(
+                    f"partitions {field!r} must be an integer index 0-{parts - 1}, "
+                    f"got {idx!r}"
+                )
 
 
 @dataclass
@@ -113,6 +135,9 @@ def _normalize_specimens(
             normalized.append(ErrorAuditSpecimen.from_mapping(item))
         else:
             raise TypeError("Specimens must be ErrorAuditSpecimen or dict entries")
+        art = normalized[-1].art
+        if isinstance(art, dict) and art.get("kind") == "partitions":
+            _validate_partitions_art(art)
     return normalized
 
 

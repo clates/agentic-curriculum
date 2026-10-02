@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fraction Repair Shop (HTML)</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+
+  /* Error audit ("Bug Hunt") */
+  .ea-badge {
+    display: inline-block; border: 2px solid #333; border-radius: 10px;
+    padding: 2px 14px; font-size: 10pt; font-weight: bold; margin-bottom: 8px;
+  }
+  .ea-card { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+  .ea-prompt { font-size: 11pt; font-weight: bold; margin-bottom: 6px; }
+  .ea-art { text-align: center; margin: 6px 0; }
+  .ea-specimen { border: 1px solid #999; padding: 5px 9px; font-size: 10pt; margin-bottom: 6px; }
+  .ea-check { font-size: 10pt; margin: 3px 0; }
+  .ea-box {
+    display: inline-block; width: 12px; height: 12px;
+    border: 2px solid #222; border-radius: 2px; margin-right: 8px; vertical-align: baseline;
+  }
+  .ea-indent { margin-left: 22px; }
+  .ea-legend-label { font-size: 9.5pt; font-weight: bold; margin: 5px 0 2px; }
+  .ea-redrawbox { border: 1px solid #222; min-height: 1.6in; margin: 4px 0 6px; }
+  .ea-starter { text-align: center; margin: 4px 0; }
+  .ea-starter svg { opacity: 0.5; }
+  .ea-redrawbox.ea-with-starter { min-height: 1.1in; }
+</style>
+</head>
+<body>
+<div class="page last-page">
+<div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Fractions: Halves, Thirds &amp; Fourths</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Fractions: Halves, Thirds &amp; Fourths</div>
+<div class="ea-badge" style="border-color:#c2410c;color:#c2410c;">Fraction Repair Shop</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Pip and friends cut these fraction shapes, but every one has a bug! Circle the bug, check the suspect that did it, then redraw the shape fixed in the box. The faint starter shape shows the equal pieces you need.</div>
+<div class="ea-card" style="border-color:#c2410c;"><div class="ea-prompt">1. Pip says this circle shows halves.</div><div class="ea-art"><svg width="160" height="160" viewBox="0 0 160 160"><line x1="80" y1="80" x2="14.9" y2="54.2" stroke="black" stroke-width="2"/><line x1="80" y1="80" x2="14.9" y2="105.8" stroke="black" stroke-width="2"/><circle cx="80" cy="80" r="70" fill="none" stroke="black" stroke-width="3"/></svg></div><div class="ea-specimen"><div>Study Pip&#x27;s circle. What did he get wrong?</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Unequal pieces</div><div class="ea-check ea-indent"><span class="ea-box"></span>Wrong count</div><div class="ea-check ea-indent"><span class="ea-box"></span>Shading slip</div><div>Redraw it fixed:</div><div class="ea-starter"><svg width="160" height="160" viewBox="0 0 160 160"><line x1="80" y1="80" x2="80.0" y2="10.0" stroke="#8a8a8a" stroke-width="2"/><line x1="80" y1="80" x2="80.0" y2="150.0" stroke="#8a8a8a" stroke-width="2"/><circle cx="80" cy="80" r="70" fill="none" stroke="#8a8a8a" stroke-width="3"/></svg></div><div class="ea-redrawbox ea-with-starter"></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div><div class="ea-card" style="border-color:#c2410c;"><div class="ea-prompt">2. Zoe says this circle shows thirds.</div><div class="ea-art"><svg width="160" height="160" viewBox="0 0 160 160"><line x1="80" y1="80" x2="80.0" y2="10.0" stroke="black" stroke-width="2"/><line x1="80" y1="80" x2="150.0" y2="80.0" stroke="black" stroke-width="2"/><line x1="80" y1="80" x2="80.0" y2="150.0" stroke="black" stroke-width="2"/><line x1="80" y1="80" x2="10.0" y2="80.0" stroke="black" stroke-width="2"/><circle cx="80" cy="80" r="70" fill="none" stroke="black" stroke-width="3"/></svg></div><div class="ea-specimen"><div>Study Zoe&#x27;s circle. What did she get wrong?</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Unequal pieces</div><div class="ea-check ea-indent"><span class="ea-box"></span>Wrong count</div><div class="ea-check ea-indent"><span class="ea-box"></span>Shading slip</div><div>Redraw it fixed:</div><div class="ea-starter"><svg width="160" height="160" viewBox="0 0 160 160"><line x1="80" y1="80" x2="80.0" y2="10.0" stroke="#8a8a8a" stroke-width="2"/><line x1="80" y1="80" x2="150.0" y2="80.0" stroke="#8a8a8a" stroke-width="2"/><line x1="80" y1="80" x2="80.0" y2="150.0" stroke="#8a8a8a" stroke-width="2"/><line x1="80" y1="80" x2="10.0" y2="80.0" stroke="#8a8a8a" stroke-width="2"/><circle cx="80" cy="80" r="70" fill="none" stroke="#8a8a8a" stroke-width="3"/></svg></div><div class="ea-redrawbox ea-with-starter"></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div><div class="ea-card" style="border-color:#c2410c;"><div class="ea-prompt">3. Milo says the shaded part of the circle is one fourth.</div><div class="ea-art"><svg width="160" height="160" viewBox="0 0 160 160"><path d="M 80 80 L 80.0 10.0 A 70 70 0 0 1 150.0 80.0 Z" fill="#b9b9b9" stroke="none"/><path d="M 80 80 L 150.0 80.0 A 70 70 0 0 1 80.0 150.0 Z" fill="#b9b9b9" stroke="none"/><line x1="80" y1="80" x2="80.0" y2="10.0" stroke="black" stroke-width="2"/><line x1="80" y1="80" x2="150.0" y2="80.0" stroke="black" stroke-width="2"/><line x1="80" y1="80" x2="80.0" y2="150.0" stroke="black" stroke-width="2"/><line x1="80" y1="80" x2="10.0" y2="80.0" stroke="black" stroke-width="2"/><circle cx="80" cy="80" r="70" fill="none" stroke="black" stroke-width="3"/></svg></div><div class="ea-specimen"><div>Study Milo&#x27;s circle. What did he get wrong?</div></div><div class="ea-check"><span class="ea-box"></span>Bug circled</div><div class="ea-legend-label">SUSPECTS:</div><div class="ea-check ea-indent"><span class="ea-box"></span>Unequal pieces</div><div class="ea-check ea-indent"><span class="ea-box"></span>Wrong count</div><div class="ea-check ea-indent"><span class="ea-box"></span>Shading slip</div><div>Redraw it fixed:</div><div class="ea-starter"><svg width="160" height="160" viewBox="0 0 160 160"><line x1="80" y1="80" x2="80.0" y2="10.0" stroke="#8a8a8a" stroke-width="2"/><line x1="80" y1="80" x2="150.0" y2="80.0" stroke="#8a8a8a" stroke-width="2"/><line x1="80" y1="80" x2="80.0" y2="150.0" stroke="#8a8a8a" stroke-width="2"/><line x1="80" y1="80" x2="10.0" y2="80.0" stroke="#8a8a8a" stroke-width="2"/><circle cx="80" cy="80" r="70" fill="none" stroke="#8a8a8a" stroke-width="3"/></svg></div><div class="ea-redrawbox ea-with-starter"></div><div class="ea-check"><span class="ea-box"></span>Re-checked my fix</div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>
