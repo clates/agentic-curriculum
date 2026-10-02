@@ -24,6 +24,11 @@ from __future__ import annotations
 import html as _html
 from typing import Any
 
+try:  # package context (tests, app): src.worksheet_html_renderer
+    from .worksheets.ten_frame import TenFrameProblem
+except ImportError:  # top-level context (scripts run with src on sys.path)
+    from worksheets.ten_frame import TenFrameProblem
+
 # ── Day palette ────────────────────────────────────────────────────────────
 
 _DAY_PALETTE: dict[str, tuple[str, str]] = {
@@ -1159,17 +1164,12 @@ def _render_ten_frame(data: dict, primary: str, light: str) -> str:
             + "</div>"
         )
         if show_answers:
-            key_lines = ""
-            if a < 10 and 0 < min(b, 10 - a) < b:
-                split = min(b, 10 - a)
-                key_lines = (
-                    f'<div class="tf-key">{_h(f"{a} + {split} = 10")}</div>'
-                    f'<div class="tf-key">{_h(f"10 + {b - split} = {total}")}</div>'
-                )
-            elif a < 10 and 0 < min(b, 10 - a) and total == 10:
-                key_lines = f'<div class="tf-key">{_h(f"{a} + {b} = 10")}</div>'
-            else:
-                key_lines = f'<div class="tf-key">{_h(f"{a} + {b} = {total}")}</div>'
+            # Single source of truth: the model's make-ten proof logic.
+            prob_model = TenFrameProblem.from_mapping(prob)
+            key_lines = "".join(
+                f'<div class="tf-key">{_h(eq)}</div>'
+                for eq in prob_model.proof_equations()
+            )
             proof = f'<div class="tf-proof-label">Make ten:</div>{key_lines}'
         else:
             proof = (

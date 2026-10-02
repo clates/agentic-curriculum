@@ -149,6 +149,32 @@ def test_pil_redraw_starter_box_makes_sheet_taller():
     assert taller > 600
 
 
+def test_pil_starter_art_override_changes_scaffold():
+    """Regression: starter_art must reach the PIL redraw scaffold."""
+    import hashlib
+
+    from src.worksheet_renderer import _render_error_audit_image
+
+    def _img(parts):
+        payload = _payload()
+        payload["specimens"] = [
+            {
+                "prompt": "Zoe says this circle shows thirds.",
+                "lines": ["Study Zoe's circle."],
+                "art": {"kind": "partitions", "parts": 4},
+                "starter_art": {"kind": "partitions", "parts": parts},
+                "bug_location": "Four pieces, not three.",
+                "diagnosis": "Wrong count",
+            }
+        ]
+        return _render_error_audit_image(WorksheetFactory.create("error_audit", payload))
+
+    def _digest(img):
+        return hashlib.md5(img.tobytes()).hexdigest()
+
+    assert _digest(_img(3)) != _digest(_img(12))
+
+
 # ── HTML renderer ──────────────────────────────────────────────────────────
 
 

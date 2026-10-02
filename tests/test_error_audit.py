@@ -80,7 +80,8 @@ def test_adversarial_and_redraw_modes():
     )
     assert ws.adversarial is True
     md = ws.to_markdown()
-    assert "ASSIGN" in md or "redraw box" in md
+    assert "ASSIGN SUSPECTS:" in md
+    assert "Suspects:" not in md.replace("ASSIGN SUSPECTS:", "")
 
 
 def test_show_answers_renders_key():

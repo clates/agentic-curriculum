@@ -61,6 +61,32 @@ class ErrorAuditSpecimen:
         )
 
 
+def _validate_clock_art(art: dict) -> None:
+    """Validate a clock art dict; raise ValueError on bad specs."""
+    try:
+        hour = float(art.get("hour", 12))
+    except (TypeError, ValueError):
+        raise ValueError(f"clock art needs numeric hour, got {art.get('hour')!r}")
+    if not 0 <= hour <= 12:
+        raise ValueError(f"clock art hour must be 0-12, got {hour!r}")
+    minute = art.get("minute", 0)
+    if isinstance(minute, bool) or not isinstance(minute, int) or not 0 <= minute <= 59:
+        raise ValueError(f"clock art minute must be int 0-59, got {minute!r}")
+    if art.get("missing") not in (None, "hour", "minute", "both"):
+        raise ValueError(
+            "clock art missing must be hour/minute/both/None, "
+            f"got {art.get('missing')!r}"
+        )
+
+
+def _validate_dots_art(art: dict) -> None:
+    """Validate a dots art dict; raise ValueError on bad specs."""
+    for field in ("rows", "cols"):
+        val = art.get(field, 2)
+        if isinstance(val, bool) or not isinstance(val, int) or val < 1:
+            raise ValueError(f"dots art {field!r} must be int >= 1, got {val!r}")
+
+
 def _validate_partitions_art(art: dict) -> None:
     """Validate a partitions art dict; raise ValueError on bad specs."""
     parts = art.get("parts")
@@ -100,6 +126,8 @@ class ErrorAuditWorksheet(BaseWorksheet):
         header = [f"# {self.title}", f"*{self.theme_label}*", self.instructions]
         if self.legend and not self.adversarial:
             header.append("Suspects: " + ", ".join(self.legend))
+        elif self.legend:
+            header.append("ASSIGN SUSPECTS: " + ", ".join(self.legend))
         body = []
         for idx, spec in enumerate(self.specimens, start=1):
             block = [f"## Case {idx}: {spec.prompt}"]
@@ -139,12 +167,15 @@ def _normalize_specimens(
             normalized.append(ErrorAuditSpecimen.from_mapping(item))
         else:
             raise TypeError("Specimens must be ErrorAuditSpecimen or dict entries")
-        art = normalized[-1].art
-        if isinstance(art, dict) and art.get("kind") == "partitions":
-            _validate_partitions_art(art)
-        starter = normalized[-1].starter_art
-        if isinstance(starter, dict) and starter.get("kind") == "partitions":
-            _validate_partitions_art(starter)
+        for target in (normalized[-1].art, normalized[-1].starter_art):
+            if isinstance(target, dict):
+                kind = target.get("kind")
+                if kind == "partitions":
+                    _validate_partitions_art(target)
+                elif kind == "clock":
+                    _validate_clock_art(target)
+                elif kind == "dots":
+                    _validate_dots_art(target)
     return normalized
 
 

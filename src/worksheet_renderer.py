@@ -3848,7 +3848,7 @@ def _render_error_audit_image(
                 )
         cards.append(
             {"prompt": prompt_lines, "body": body_wrapped, "answers": ans,
-             "art": spec.art}
+             "art": spec.art, "starter_art": spec.starter_art}
         )
 
     card_heights = []
