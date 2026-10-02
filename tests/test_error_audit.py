@@ -100,6 +100,15 @@ def test_specimen_art_passthrough():
     assert ws.specimens[0].art == art
 
 
+def test_metadata_round_trips_through_factory():
+    ws = WorksheetFactory.create(
+        "error_audit",
+        {**_payload(), "metadata": {"learner": "Maya", "strategy": "misconception-hunter"}},
+    )
+    assert ws.metadata["learner"] == "Maya"
+    assert ws.metadata["strategy"] == "misconception-hunter"
+
+
 def test_pil_render_smoke(tmp_path):
     from src.worksheet_renderer import (
         render_error_audit_to_image,

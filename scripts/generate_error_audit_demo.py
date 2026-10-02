@@ -61,6 +61,13 @@ build("01_clock_doctor", {
     "legend": ["Hour-hand trap", "Minute mix-up", "Missing hand"],
     "fix_mode": "redraw",
     "verify": True,
+    "metadata": {
+        "learner": "Maya",
+        "grade": 1,
+        "subject": "telling_time",
+        "strategy": "misconception-hunter",
+        "source": "bank:maya_dev_batch/Clock Doctor",
+    },
     "specimens": [
         {
             "prompt": "Rory says this clock shows 3:30.",
@@ -91,6 +98,13 @@ build("02_array_detective", {
     "legend": ["Counted wrong", "Rows/columns mixed", "Plus instead of times"],
     "fix_mode": "rewrite",
     "verify": True,
+    "metadata": {
+        "learner": "Dev",
+        "grade": 3,
+        "subject": "multiplication_arrays",
+        "strategy": "misconception-hunter",
+        "source": "bank:maya_dev_batch/array_error_detective",
+    },
     "specimens": [
         {
             "prompt": "Milo's array: 3 rows of 4 dots. Milo says 3 + 4 = 7.",
@@ -122,6 +136,13 @@ build("03_division_detective", {
     "legend": ["Digit too big", "Bad remainder", "Subtraction slip"],
     "fix_mode": "rewrite",
     "verify": True,
+    "metadata": {
+        "learner": "Priya",
+        "grade": 5,
+        "subject": "long_division",
+        "strategy": "misconception-hunter",
+        "source": "bank:priya_sam_batch/Division Detective",
+    },
     "specimens": [
         {
             "prompt": "Case: 96 / 4. Sam's work says quotient 24, remainder 4.",
