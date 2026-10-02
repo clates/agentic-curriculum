@@ -103,7 +103,10 @@ def test_specimen_art_passthrough():
 def test_metadata_round_trips_through_factory():
     ws = WorksheetFactory.create(
         "error_audit",
-        {**_payload(), "metadata": {"learner": "Maya", "strategy": "misconception-hunter"}},
+        {
+            "specimens": [_spec()],
+            "metadata": {"learner": "Maya", "strategy": "misconception-hunter"},
+        },
     )
     assert ws.metadata["learner"] == "Maya"
     assert ws.metadata["strategy"] == "misconception-hunter"
