@@ -27,6 +27,7 @@ try:
         FillBlankWorksheet,
         WordSortWorksheet,
         ErrorAuditWorksheet,
+        TenFrameWorksheet,
     )
 except ImportError:  # Fallback when executed outside package context
     CURRENT_DIR = os.path.dirname(__file__)
@@ -47,6 +48,7 @@ except ImportError:  # Fallback when executed outside package context
         FillBlankWorksheet,
         WordSortWorksheet,
         ErrorAuditWorksheet,
+        TenFrameWorksheet,
     )  # type: ignore
 
 _FONT_CANDIDATES = (
@@ -3992,6 +3994,226 @@ def render_error_audit_to_image(worksheet: ErrorAuditWorksheet, output_path: str
 def render_error_audit_to_pdf(worksheet: ErrorAuditWorksheet, output_path: str) -> str:
     """Render error-audit worksheet to a PDF."""
     image = _render_error_audit_image(worksheet).convert("RGB")
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PDF")
+    return str(out)
+
+
+# ══ Ten-frame ("Make Ten") worksheets ══════════════════════════════════════
+
+
+def _draw_ten_frame(
+    draw: ImageDraw.ImageDraw,
+    x0: int,
+    y0: int,
+    filled: int,
+    *,
+    cell: int = 44,
+    frame_gap: int = 0,
+    counter_font=None,
+    count_label: bool = False,
+) -> int:
+    """Draw one 5x2 ten-frame with the first *filled* cells filled.
+
+    Returns the frame height. Counters fill row-major (top row first),
+    matching the standard make-ten convention.
+    """
+    w, h = 5 * cell, 2 * cell
+    draw.rounded_rectangle((x0, y0, x0 + w, y0 + h), radius=8, outline="black", width=2)
+    for i in range(1, 5):
+        draw.line((x0 + i * cell, y0, x0 + i * cell, y0 + h), fill="black", width=1)
+    draw.line((x0, y0 + cell, x0 + w, y0 + cell), fill="black", width=1)
+    rad = int(cell * 0.26)
+    for rr in range(2):
+        for cc in range(5):
+            idx = rr * 5 + cc
+            cx = x0 + cc * cell + cell // 2
+            cy = y0 + rr * cell + cell // 2
+            if idx < filled:
+                draw.ellipse(
+                    (cx - rad, cy - rad, cx + rad, cy + rad), fill="black"
+                )
+            else:
+                draw.ellipse(
+                    (cx - rad, cy - rad, cx + rad, cy + rad),
+                    outline=(170, 170, 170), width=1,
+                )
+    if count_label and counter_font is not None:
+        label = str(filled)
+        draw.text(
+            (x0 + w // 2 - _text_width(counter_font, label) // 2, y0 + h + 4),
+            label, font=counter_font, fill="black",
+        )
+    del frame_gap
+    return h
+
+
+def _render_ten_frame_image(
+    worksheet: TenFrameWorksheet,
+    *,
+    width: int = 1050,
+    margin: int = 72,
+) -> Image.Image:
+    """Render a ten-frame "Make Ten" worksheet to an image.
+
+    Layout pass first (wrap text, sum card heights), then a draw pass.
+    Each problem is a bordered card: number + equation header, optional
+    story line, a double ten-frame (addend_a + addend_b counters), and
+    ruled make-ten proof lines (filled with the key in answer mode).
+    """
+    title_font = _load_font(36, bold=True)
+    meta_font = _load_font(24)
+    instruction_font = _load_font(22, italic=True)
+    case_font = _load_font(24, bold=True)
+    body_font = _load_font(22)
+    small_font = _load_font(20)
+    count_font = _load_font(18, bold=True)
+
+    title_h = _line_height(title_font, extra=4)
+    meta_h = _line_height(meta_font, extra=2)
+    instr_h = _line_height(instruction_font, extra=4)
+    case_h = _line_height(case_font, extra=6)
+    body_h = _line_height(body_font, extra=6)
+    small_h = _line_height(small_font, extra=6)
+
+    content_w = width - 2 * margin
+    card_pad = 14
+    card_inner = content_w - 2 * card_pad
+
+    instr_lines = _wrap_text(worksheet.instructions, instruction_font, content_w)
+
+    cell = 44
+    frame_h = 2 * cell
+    frames_h = frame_h + 24 + 20  # frames + count labels + padding
+
+    # Pre-wrap all per-card text so layout and draw stay in sync.
+    cards: list[dict] = []
+    for prob in worksheet.problems:
+        if worksheet.show_answers:
+            head = f"{prob.addend_a} + {prob.addend_b} = {prob.total}"
+        else:
+            head = f"{prob.addend_a} + {prob.addend_b} = ____"
+        label_lines = _wrap_text(prob.label, body_font, card_inner - 24) if prob.label else []
+        cards.append({"head": head, "label": label_lines})
+
+    card_heights = []
+    for c in cards:
+        h = 2 * card_pad + case_h + 6 + len(c["label"]) * body_h + 8
+        h += frames_h
+        if worksheet.show_answers:
+            h += small_h + small_h  # key equations
+        else:
+            h += small_h + worksheet.equation_lines * body_h
+        card_heights.append(h)
+    total_h = (
+        margin
+        + title_h
+        + 8
+        + meta_h * 2
+        + 6
+        + len(instr_lines) * instr_h
+        + 10
+        + sum(card_heights)
+        + 14 * len(card_heights)
+        + margin
+    )
+
+    image = Image.new("RGB", (width, int(total_h)), color="white")
+    draw = ImageDraw.Draw(image)
+    y = margin
+
+    draw.text((margin, y), worksheet.title, font=title_font, fill="black")
+    y += title_h + 8
+
+    name_text, date_text = "Name: ____________", "Date: ____________"
+    draw.text((margin, y), name_text, font=meta_font, fill="black")
+    draw.text(
+        (width - margin - _text_width(meta_font, date_text), y),
+        date_text,
+        font=meta_font,
+        fill="black",
+    )
+    y += meta_h * 2 + 6
+
+    for line in instr_lines:
+        draw.text((margin, y), line, font=instruction_font, fill="black")
+        y += instr_h
+    y += 10
+
+    # Problem cards.
+    for idx, (prob, c) in enumerate(zip(worksheet.problems, cards), start=1):
+        ch = card_heights[idx - 1]
+        draw.rounded_rectangle(
+            (margin, y, width - margin, y + ch), radius=12, outline="black", width=2
+        )
+        cy = y + card_pad
+
+        num = f"{idx}."
+        draw.text((margin + card_pad, cy), num, font=case_font, fill="black")
+        draw.text((margin + card_pad + 44, cy), c["head"], font=case_font, fill="black")
+        cy += case_h + 6
+        for line in c["label"]:
+            draw.text((margin + card_pad + 12, cy), line, font=body_font, fill="black")
+            cy += body_h
+        cy += 8
+
+        # Double ten-frame, centered: frame A (filled) + gap + frame B.
+        pair_w = 2 * (5 * cell) + 60
+        fx = margin + (content_w - pair_w) // 2
+        _draw_ten_frame(
+            draw, fx, cy, prob.addend_a, cell=cell,
+            counter_font=count_font, count_label=True,
+        )
+        _draw_ten_frame(
+            draw, fx + 5 * cell + 60, cy, prob.addend_b, cell=cell,
+            counter_font=count_font, count_label=True,
+        )
+        cy += frames_h
+
+        if worksheet.show_answers:
+            draw.text(
+                (margin + card_pad + 12, cy), "Make ten:",
+                font=small_font, fill="black",
+            )
+            cy += small_h
+            for eq in prob.proof_equations():
+                draw.text(
+                    (margin + card_pad + 36, cy), eq,
+                    font=small_font, fill="black",
+                )
+                cy += small_h
+        else:
+            draw.text(
+                (margin + card_pad + 12, cy), "Make ten:",
+                font=small_font, fill="black",
+            )
+            cy += small_h
+            for _ in range(worksheet.equation_lines):
+                base = cy + body_h // 2
+                draw.line(
+                    (margin + card_pad + 12, base, width - margin - card_pad, base),
+                    fill="black",
+                    width=1,
+                )
+                cy += body_h
+        y += ch + 14
+
+    return image
+
+
+def render_ten_frame_to_image(worksheet: TenFrameWorksheet, output_path: str) -> str:
+    """Render ten-frame worksheet to a PNG image."""
+    image = _render_ten_frame_image(worksheet)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    image.save(out, format="PNG")
+    return str(out)
+
+
+def render_ten_frame_to_pdf(worksheet: TenFrameWorksheet, output_path: str) -> str:
+    """Render ten-frame worksheet to a PDF."""
+    image = _render_ten_frame_image(worksheet).convert("RGB")
     out = Path(output_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     image.save(out, format="PDF")

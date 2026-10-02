@@ -342,6 +342,15 @@ _CSS = """\
   .ea-starter { text-align: center; margin: 4px 0; }
   .ea-starter svg { opacity: 0.5; }
   .ea-redrawbox.ea-with-starter { min-height: 1.1in; }
+
+  /* Ten-frame ("Make Ten") */
+  .tf-card { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+  .tf-prompt { font-size: 11pt; font-weight: bold; margin-bottom: 4px; }
+  .tf-label { font-size: 10pt; margin-bottom: 4px; }
+  .tf-frames { text-align: center; margin: 6px 0 4px; }
+  .tf-frames svg { margin: 0 14px; vertical-align: top; }
+  .tf-proof-label { font-size: 9.5pt; font-weight: bold; margin: 5px 0 2px; }
+  .tf-key { font-size: 10pt; margin: 2px 0 2px 22px; font-weight: bold; }
 </style>"""
 
 _HTML_WRAPPER = """\
@@ -1084,6 +1093,112 @@ def _svg_dots(rows: int, cols: int) -> str:
     )
 
 
+def _svg_ten_frame(filled: int) -> str:
+    """Inline-SVG 5x2 ten-frame; first *filled* cells (row-major) are filled.
+
+    A counter tally prints under the frame so the pair reads at a glance.
+    """
+    cell, rad = 26, 8
+    w, h = 5 * cell, 2 * cell
+    label_h = 18
+    parts = [
+        f'<rect x="1.5" y="1.5" width="{w - 3}" height="{h - 3}" rx="6" '
+        f'fill="white" stroke="black" stroke-width="3"/>'
+    ]
+    for i in range(1, 5):
+        parts.append(
+            f'<line x1="{i * cell}" y1="1.5" x2="{i * cell}" y2="{h - 1.5}" '
+            f'stroke="black" stroke-width="1"/>'
+        )
+    parts.append(
+        f'<line x1="1.5" y1="{cell}" x2="{w - 1.5}" y2="{cell}" '
+        f'stroke="black" stroke-width="1"/>'
+    )
+    for rr in range(2):
+        for cc in range(5):
+            idx = rr * 5 + cc
+            cx, cy = cc * cell + cell // 2, rr * cell + cell // 2
+            if idx < filled:
+                parts.append(f'<circle cx="{cx}" cy="{cy}" r="{rad}" fill="black"/>')
+            else:
+                parts.append(
+                    f'<circle cx="{cx}" cy="{cy}" r="{rad}" fill="white" '
+                    f'stroke="#aaa" stroke-width="1"/>'
+                )
+    parts.append(
+        f'<text x="{w // 2}" y="{h + 13}" text-anchor="middle" font-size="12" '
+        f'font-family="Arial" font-weight="bold">{filled}</text>'
+    )
+    return (
+        f'<svg width="{w}" height="{h + label_h}" viewBox="0 0 {w} {h + label_h}">'
+        f'{"".join(parts)}</svg>'
+    )
+
+
+def _render_ten_frame(data: dict, primary: str, light: str) -> str:
+    title = data.get("title", "Make Ten!")
+    day_label = data.get("day_label", "")
+    problems = data.get("problems", [])
+    show_answers = data.get("show_answers", False)
+    equation_lines = int(data.get("equation_lines", 2))
+
+    dh = _day_header(day_label, title, primary) if day_label else ""
+
+    cards_html = ""
+    for idx, prob in enumerate(problems, start=1):
+        a = int(prob.get("addend_a", 0))
+        b = int(prob.get("addend_b", 0))
+        total = a + b
+        head = f"{a} + {b} = {total}" if show_answers else f"{a} + {b} = ______"
+        label = prob.get("label", "")
+        label_html = f'<div class="tf-label">{_h(label)}</div>' if label else ""
+        frames = (
+            '<div class="tf-frames">'
+            + _svg_ten_frame(a)
+            + _svg_ten_frame(b)
+            + "</div>"
+        )
+        if show_answers:
+            key_lines = ""
+            if a < 10 and 0 < min(b, 10 - a) < b:
+                split = min(b, 10 - a)
+                key_lines = (
+                    f'<div class="tf-key">{_h(f"{a} + {split} = 10")}</div>'
+                    f'<div class="tf-key">{_h(f"10 + {b - split} = {total}")}</div>'
+                )
+            elif a < 10 and 0 < min(b, 10 - a) and total == 10:
+                key_lines = f'<div class="tf-key">{_h(f"{a} + {b} = 10")}</div>'
+            else:
+                key_lines = f'<div class="tf-key">{_h(f"{a} + {b} = {total}")}</div>'
+            proof = f'<div class="tf-proof-label">Make ten:</div>{key_lines}'
+        else:
+            proof = (
+                f'<div class="tf-proof-label">Make ten:</div>'
+                + _answer_lines(equation_lines)
+            )
+        cards_html += (
+            f'<div class="tf-card" style="border-color:{primary};">'
+            f'<div class="tf-prompt">{idx}. {_h(head)}</div>'
+            f"{label_html}{frames}{proof}</div>"
+        )
+
+    instructions = _h(
+        data.get(
+            "instructions",
+            "Move counters to fill the first ten-frame to ten. "
+            "Write the make-ten proof on the lines.",
+        )
+    )
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{cards_html}
+"""
+
+
 def _render_error_audit(data: dict, primary: str, light: str) -> str:
     title = data.get("title", "Bug Hunt")
     day_label = data.get("day_label", "")
@@ -1200,6 +1315,7 @@ _RENDERERS = {
     "writingScaffoldWorksheet": _render_writing_scaffold,
     "tChartWorksheet": _render_t_chart,
     "errorAuditWorksheet": _render_error_audit,
+    "tenFrameWorksheet": _render_ten_frame,
     "barGraphWorksheet": _render_bar_graph,
     "pictographWorksheet": _render_pictograph,
 }

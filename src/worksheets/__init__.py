@@ -162,6 +162,14 @@ from .error_audit import (
 )
 
 
+# Ten-frame ("Make Ten") worksheet components
+from .ten_frame import (
+    TenFrameProblem,
+    TenFrameWorksheet,
+    generate_ten_frame_worksheet,
+)
+
+
 # Factory for creating worksheets from JSON payloads
 from .factory import WorksheetFactory
 
@@ -256,6 +264,10 @@ __all__ = [
     "ErrorAuditWorksheet",
     "generate_error_audit_worksheet",
     "FIX_MODES",
+    # Ten-frame ("Make Ten")
+    "TenFrameProblem",
+    "TenFrameWorksheet",
+    "generate_ten_frame_worksheet",
     # Factory
     "WorksheetFactory",
 ]
