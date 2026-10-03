@@ -663,6 +663,10 @@ def submit_packet_feedback(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+    # Verify packet exists before processing feedback
+    if get_weekly_packet(student_id, packet_id) is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+
     # Get current student profile
     profile = get_student_profile(student_id)
     if not profile:
