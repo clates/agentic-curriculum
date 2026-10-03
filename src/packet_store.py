@@ -185,6 +185,16 @@ def _insert_weekly_packet(
             created_at,
             updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(packet_id) DO UPDATE SET
+            student_id = excluded.student_id,
+            grade_level = excluded.grade_level,
+            subject = excluded.subject,
+            week_of = excluded.week_of,
+            status = excluded.status,
+            weekly_overview = excluded.weekly_overview,
+            summary_json = excluded.summary_json,
+            payload_json = excluded.payload_json,
+            updated_at = excluded.updated_at
         """,
         (
             weekly_plan.get("plan_id"),
@@ -302,6 +312,7 @@ def save_weekly_packet(
 
     with _get_connection() as conn:
         _insert_weekly_packet(conn, weekly_plan, status)
+        conn.execute("DELETE FROM daily_lessons WHERE packet_id = ?", (packet_id,))
         _persist_daily_lessons(conn, packet_id, weekly_plan.get("daily_plan", []))
 
 
