@@ -2,7 +2,7 @@
 Pydantic models for packet feedback API requests and responses.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class SubmitFeedbackRequest(BaseModel):
@@ -10,6 +10,14 @@ class SubmitFeedbackRequest(BaseModel):
 
     mastery_feedback: dict[str, str] | None = None
     quantity_feedback: int | None = None
+
+    @model_validator(mode="after")
+    def check_at_least_one_field(self) -> "SubmitFeedbackRequest":
+        if self.mastery_feedback is None and self.quantity_feedback is None:
+            raise ValueError(
+                "At least one of mastery_feedback or quantity_feedback must be provided"
+            )
+        return self
 
 
 class FeedbackResponse(BaseModel):
