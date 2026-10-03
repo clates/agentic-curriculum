@@ -73,6 +73,7 @@ def _build_math_worksheet(request: MathWorksheetRequest) -> WorksheetArtifactPla
     return WorksheetArtifactPlan(
         kind="mathWorksheet",
         worksheet=worksheet,
+        html_data=request.model_dump(),
         filename_hint=_derive_filename("math", request.metadata),
         metadata=request.metadata or {},
     )

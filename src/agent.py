@@ -26,12 +26,6 @@ try:  # Prefer package-relative imports when available
     from .worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan
     from .worksheets import Worksheet, ReadingWorksheet
     from .packet_store import save_weekly_packet
-    from .worksheet_renderer import (
-        render_worksheet_to_image,
-        render_worksheet_to_pdf,
-        render_reading_worksheet_to_image,
-        render_reading_worksheet_to_pdf,
-    )
     from .worksheet_html_renderer import render_worksheet_html, HTML_SUPPORTED_KINDS
 except ImportError:  # Fallback for direct script execution
     sys.path.insert(0, os.path.dirname(__file__))
@@ -39,13 +33,6 @@ except ImportError:  # Fallback for direct script execution
     from logic import get_filtered_standards  # type: ignore
     from resource_models import ResourceRequests  # type: ignore
     from worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan  # type: ignore
-    from worksheets import Worksheet, ReadingWorksheet  # type: ignore
-    from worksheet_renderer import (  # type: ignore
-        render_worksheet_to_image,
-        render_worksheet_to_pdf,
-        render_reading_worksheet_to_image,
-        render_reading_worksheet_to_pdf,
-    )
     from worksheet_html_renderer import render_worksheet_html, HTML_SUPPORTED_KINDS  # type: ignore
     from packet_store import save_weekly_packet  # type: ignore
 
@@ -443,7 +430,15 @@ def _render_worksheet_artifacts(
     for plan in plans:
         # ── HTML-first rendering ───────────────────────────────────────────
         if plan.kind in HTML_SUPPORTED_KINDS and plan.html_data is not None:
-            html_content = render_worksheet_html(plan.kind, plan.html_data, day_label)
+            try:
+                html_content = render_worksheet_html(plan.kind, plan.html_data, day_label)
+            except Exception as exc:
+                artifact_errors.append(
+                    {"kind": plan.kind, "format": "html", "message": str(exc)}
+                )
+                if generation_logger:
+                    generation_logger.log_daily_error(day_label, "artifact_render", str(exc))
+                continue
             if html_content is not None:
                 output_path = _unique_artifact_path(
                     day_dir, plan.filename_hint or plan.kind, "html"
@@ -470,68 +465,11 @@ def _render_worksheet_artifacts(
                 )
                 continue
 
-        # ── Pillow fallback rendering ──────────────────────────────────────
-        render_jobs: list[tuple[str, Callable[[Path], Path]]] = []
-        if plan.kind == "mathWorksheet":
-            worksheet = cast(Worksheet, plan.worksheet)
-            render_jobs = [
-                (
-                    "png",
-                    lambda output_path, worksheet=worksheet: render_worksheet_to_image(
-                        worksheet, output_path
-                    ),
-                ),
-                (
-                    "pdf",
-                    lambda output_path, worksheet=worksheet: render_worksheet_to_pdf(
-                        worksheet, output_path
-                    ),
-                ),
-            ]
-        elif plan.kind == "readingWorksheet" and plan.worksheet is not None:
-            worksheet = cast(ReadingWorksheet, plan.worksheet)
-            render_jobs = [
-                (
-                    "png",
-                    lambda output_path, worksheet=worksheet: render_reading_worksheet_to_image(
-                        worksheet, output_path
-                    ),
-                ),
-                (
-                    "pdf",
-                    lambda output_path, worksheet=worksheet: render_reading_worksheet_to_pdf(
-                        worksheet, output_path
-                    ),
-                ),
-            ]
-        else:
-            message = f"No renderer available for worksheet kind '{plan.kind}'"
-            artifact_errors.append({"kind": plan.kind, "message": message})
-            if generation_logger:
-                generation_logger.log_daily_error(day_label, "artifact_render", message)
-            continue
-
-        for fmt, renderer in render_jobs:
-            output_path = _unique_artifact_path(day_dir, plan.filename_hint or plan.kind, fmt)
-            try:
-                rendered_path = renderer(output_path)
-            except Exception as exc:  # pragma: no cover - exercised via unit tests
-                message = str(exc)
-                artifact_errors.append({"kind": plan.kind, "format": fmt, "message": message})
-                if generation_logger:
-                    generation_logger.log_daily_error(day_label, "artifact_render", message)
-                continue
-
-            rendered_file = Path(rendered_path)
-            size_bytes, checksum = _artifact_file_metadata(rendered_file)
-            artifacts_by_kind.setdefault(plan.kind, []).append(
-                {
-                    "type": fmt,
-                    "path": _relative_artifact_path(rendered_file),
-                    "size_bytes": size_bytes,
-                    "sha256": checksum,
-                }
-            )
+        # ── No HTML renderer ───────────────────────────────────────────────
+        message = f"No renderer available for worksheet kind '{plan.kind}'"
+        artifact_errors.append({"kind": plan.kind, "message": message})
+        if generation_logger:
+            generation_logger.log_daily_error(day_label, "artifact_render", message)
 
     return artifacts_by_kind, artifact_errors
 

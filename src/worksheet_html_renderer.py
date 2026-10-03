@@ -3015,6 +3015,7 @@ _RENDERERS = {
     "numberLineWorksheet": _render_number_line,
     "labeledDiagramWorksheet": _render_labeled_diagram,
     "twoOperandWorksheet": _render_two_operand,
+    "mathWorksheet": _render_two_operand,  # legacy PIL math → HTML two-operand
 }
 
 #: Worksheet kinds that have an HTML renderer.
