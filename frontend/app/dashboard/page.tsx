@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, Button, Badge } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
 import { useEnrichedStudents, useWeeklyPacketsStats, usePendingPackets } from '@/lib/hooks';
