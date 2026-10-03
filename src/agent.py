@@ -331,7 +331,8 @@ def _resolve_day_standards(assignment: dict, standards_by_id: dict, standards: l
 
 def _create_fallback_lesson_plan(day_standards: list, rules: dict) -> dict:
     """Return a deterministic lesson plan used when LLM calls fail."""
-    description = day_standards[0].get("description", "") if day_standards else "the assigned topic"
+    raw_description = day_standards[0].get("description") if day_standards else ""
+    description = raw_description or "the assigned topic"
     return {
         "objective": f"Learn about: {description}",
         "materials_needed": rules.get("allowed_materials", [])[:2],
