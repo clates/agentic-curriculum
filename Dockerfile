@@ -71,13 +71,16 @@ set -e
 # Start cron daemon (reads /etc/cron.d/curriculum, jobs run as appuser)
 cron
 
-# Seed the database only if it doesn't exist yet
+# Always seed/update standards on startup (idempotent — INSERT OR REPLACE).
+# Add or update JSON files in standards_data/ and redeploy to pick up changes.
 DB_PATH="${CURRICULUM_DB_PATH:-/app/curriculum.db}"
-if [ ! -f "$DB_PATH" ]; then
-  echo "Database not found at $DB_PATH — seeding..."
-  su -s /bin/bash appuser -c "PYTHONPATH=/app/src python /app/src/ingest_standards.py"
-else
-  echo "Database found at $DB_PATH — skipping seed."
+echo "Seeding curriculum database at $DB_PATH..."
+su -s /bin/bash appuser -c "PYTHONPATH=/app/src python /app/src/ingest_standards.py"
+
+# Run standards migration if present (for ID renames, splits, etc.)
+if [ -f /app/src/migrate_standards.py ]; then
+  echo "Running standards migration..."
+  su -s /bin/bash appuser -c "PYTHONPATH=/app/src python /app/src/migrate_standards.py"
 fi
 
 # Start backend in background (as appuser)
