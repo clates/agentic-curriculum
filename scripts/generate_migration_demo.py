@@ -138,7 +138,7 @@ pages.append(("Friday", render_worksheet_html("twoOperandWorksheet", {
 }, "Friday")))
 
 # Build the packet
-packet_html = build_print_packet_html(pages, "PIL-to-HTML Migration — All 10 New Types")
+packet_html = build_print_packet_html(pages, "HTML Migration — All 10 New Types")
 
 outdir = os.path.join(ROOT, "docs", "previews", "html-migration")
 os.makedirs(outdir, exist_ok=True)
