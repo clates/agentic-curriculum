@@ -250,8 +250,12 @@ def delete_student(student_id: str) -> bool:
 
     Returns:
         True if the student was deleted, False if not found
+
+    Raises:
+        sqlite3.OperationalError: if the database is locked after timeout
     """
     conn = sqlite3.connect(DB_FILE)
+    conn.execute("PRAGMA busy_timeout = 5000")  # 5s timeout instead of hanging forever
     conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
@@ -260,7 +264,10 @@ def delete_student(student_id: str) -> bool:
         # worksheet_artifacts, and packet_feedback automatically.
         # weekly_packets may not exist in minimal test DBs, so ignore if absent.
         try:
-            cursor.execute("DELETE FROM weekly_packets WHERE student_id = ?", (student_id,))
+            cursor.execute(
+                "DELETE FROM weekly_packets WHERE student_id = ?",
+                (student_id,),
+            )
         except sqlite3.OperationalError:
             pass
         cursor.execute(
@@ -269,6 +276,9 @@ def delete_student(student_id: str) -> bool:
         )
         conn.commit()
         return cursor.rowcount > 0
+    except sqlite3.OperationalError:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 

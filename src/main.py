@@ -5,6 +5,10 @@ FastAPI application for serving student data from curriculum.db
 """
 
 from __future__ import annotations
+
+import sqlite3
+
+from agent import generate_weekly_plan
 from packet_store import (
     get_artifact_for_student,
     get_packet_feedback,
@@ -13,7 +17,6 @@ from packet_store import (
     list_weekly_packets,
     save_packet_feedback,
 )
-from agent import generate_weekly_plan
 from trio_generator import generate_trio_for_student
 from db_utils import (
     create_student,
@@ -341,8 +344,15 @@ def delete_student_endpoint(student_id: str):
 
     Raises:
         HTTPException: 404 if student not found
+        HTTPException: 503 if database is locked
     """
-    deleted = delete_student(student_id)
+    try:
+        deleted = delete_student(student_id)
+    except sqlite3.OperationalError as e:
+        raise HTTPException(
+            status_code=503,
+            detail="Database temporarily unavailable — please retry",
+        ) from e
 
     if not deleted:
         raise HTTPException(status_code=404, detail="Student not found")
