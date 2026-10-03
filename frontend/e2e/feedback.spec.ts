@@ -164,7 +164,7 @@ test.describe('Plan detail modal — existing feedback', () => {
   }) => {
     await page.goto('/plans');
     await page.getByRole('heading', { name: 'Edit Feedback Student' }).click();
-    await expect(page.getByRole('button', { name: 'Edit Feedback' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Edit Feedback', exact: true })).toBeVisible();
   });
 });
 
@@ -228,7 +228,7 @@ test.describe('Feedback modal — first submission', () => {
 
   test('Submit button is disabled until both ratings are selected', async ({ page }) => {
     await openFeedbackModal(page);
-    const submit = page.getByRole('button', { name: 'Submit Feedback' });
+    const submit = page.getByRole('button', { name: 'Submit Feedback', exact: true });
     await expect(submit).toBeDisabled();
 
     await page.getByRole('button', { name: 'Mastered' }).click();
@@ -276,11 +276,11 @@ test.describe('Feedback modal — first submission', () => {
     await openFeedbackModal(page);
     await page.getByRole('button', { name: 'Mastered' }).click();
     await page.getByRole('button', { name: 'Just Right' }).click();
-    await page.getByRole('button', { name: 'Submit Feedback' }).click();
+    await page.getByRole('button', { name: 'Submit Feedback', exact: true }).click();
 
     // Modal closes and plan list refreshes — now the packet shows Edit Feedback
     await page.getByRole('heading', { name: 'Submit Feedback Student', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Edit Feedback' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Edit Feedback', exact: true })).toBeVisible();
   });
 });
 
@@ -307,7 +307,7 @@ test.describe('Feedback modal — editing existing feedback', () => {
   async function openEditModal(page: import('@playwright/test').Page) {
     await page.goto('/plans');
     await page.getByRole('heading', { name: 'Resubmit Feedback Student' }).click();
-    await page.getByRole('button', { name: 'Edit Feedback' }).click();
+    await page.getByRole('button', { name: 'Edit Feedback', exact: true }).click();
   }
 
   test('title reads "Edit Feedback"', async ({ page }) => {
