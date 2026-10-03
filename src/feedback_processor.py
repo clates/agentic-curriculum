@@ -28,8 +28,10 @@ def validate_mastery_feedback(mastery_feedback: dict[str, str]) -> None:
         mastery_feedback: Dictionary mapping standard_id to rating
 
     Raises:
-        ValueError: If any rating is invalid
+        ValueError: If feedback is empty or any rating is invalid
     """
+    if not mastery_feedback:
+        raise ValueError("Mastery feedback must not be empty")
     for standard_id, rating in mastery_feedback.items():
         if rating not in MASTERY_RATINGS:
             raise ValueError(
