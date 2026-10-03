@@ -288,15 +288,19 @@ def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGra
     if subject_keyword == "Math":
         keyword = "Mathematics"
 
-    # 1. Try CASE data first
-    if keyword:
-        cursor.execute(
-            "SELECT identifier FROM case_items WHERE fullStatement LIKE ?", (f"%{keyword}%",)
-        )
-        start_nodes = [row["identifier"] for row in cursor.fetchall()]
-    else:
-        cursor.execute("SELECT identifier FROM case_items")
-        start_nodes = [row["identifier"] for row in cursor.fetchall()]
+    # 1. Try CASE data first (may fail if tables don't exist)
+    start_nodes: list[str] = []
+    try:
+        if keyword:
+            cursor.execute(
+                "SELECT identifier FROM case_items WHERE fullStatement LIKE ?", (f"%{keyword}%",)
+            )
+            start_nodes = [row["identifier"] for row in cursor.fetchall()]
+        else:
+            cursor.execute("SELECT identifier FROM case_items")
+            start_nodes = [row["identifier"] for row in cursor.fetchall()]
+    except sqlite3.OperationalError:
+        pass  # CASE tables not present — fall through to standards table
 
     if start_nodes:
         # Recursively find descendants in CASE hierarchy
@@ -352,24 +356,27 @@ def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGra
 
     # 2. Fallback to standards table
     if subject_keyword:
-        cursor.execute("SELECT * FROM standards WHERE subject = ?", (subject_keyword,))
-        rows = cursor.fetchall()
-        if rows:
-            items = []
-            for r in rows:
-                desc = r["description"] or ""
-                items.append(
-                    {
-                        "identifier": r["standard_id"],
-                        "fullStatement": desc,
-                        "humanCodingScheme": r["standard_id"],
-                        "educationLevel": str(r["grade_level"]),
-                        "CFItemType": "Standard",
-                        "title": desc[:60] if desc else r["standard_id"],
-                    }
-                )
-            conn.close()
-            return CASEGraphV2(items, [])
+        try:
+            cursor.execute("SELECT * FROM standards WHERE subject = ?", (subject_keyword,))
+            rows = cursor.fetchall()
+            if rows:
+                items = []
+                for r in rows:
+                    desc = r["description"] or ""
+                    items.append(
+                        {
+                            "identifier": r["standard_id"],
+                            "fullStatement": desc,
+                            "humanCodingScheme": r["standard_id"],
+                            "educationLevel": str(r["grade_level"]),
+                            "CFItemType": "Standard",
+                            "title": desc[:60] if desc else r["standard_id"],
+                        }
+                    )
+                conn.close()
+                return CASEGraphV2(items, [])
+        except sqlite3.OperationalError:
+            pass  # standards table also not present
 
     conn.close()
     return CASEGraphV2([], [])
