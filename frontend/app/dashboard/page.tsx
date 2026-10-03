@@ -13,6 +13,7 @@ export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useWeeklyPacketsStats();
   const { packets: pendingPackets } = usePendingPackets();
   const { showToast } = useToast();
+  const router = useRouter();
 
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<{
@@ -277,7 +278,12 @@ export default function Dashboard() {
 
                       if (hasPendingPacket) {
                         return (
-                          <Button variant="primary" size="md" className="w-full">
+                          <Button
+                            variant="primary"
+                            size="md"
+                            className="w-full"
+                            onClick={() => router.push('/plans')}
+                          >
                             Submit Feedback
                           </Button>
                         );
