@@ -8,7 +8,11 @@ import random
 sys.path.insert(0, os.path.abspath("src"))
 
 from worksheets.factory import WorksheetFactory
-from worksheet_renderer import (
+# ⚠️ PIL DEPRECATED — This script needs migration to HTML renderer.
+# Replace: "from worksheet_renderer import render_X_to_image, render_X_to_pdf"
+#    With: "from worksheet_html_renderer import render_worksheet_html, build_print_packet_html"
+# See: https://github.com/clates/agentic-curriculum/pull/115
+# (was: from worksheet_renderer import ...)
     render_matching_to_image,
     render_matching_to_pdf,
     render_reading_worksheet_to_image,
@@ -120,7 +124,11 @@ def generate_civics_series():
         "show_answers": False,
     }
     ws4_odd = WorksheetFactory.create("odd_one_out", citizen_odd_data)
-    from worksheet_renderer import render_odd_one_out_to_image, render_odd_one_out_to_pdf
+    # ⚠️ PIL DEPRECATED — This script needs migration to HTML renderer.
+# Replace: "from worksheet_renderer import render_X_to_image, render_X_to_pdf"
+#    With: "from worksheet_html_renderer import render_worksheet_html, build_print_packet_html"
+# See: https://github.com/clates/agentic-curriculum/pull/115
+# (was: from worksheet_renderer import ...)
 
     render_odd_one_out_to_image(ws4_odd, f"{output_dir}/04_good_citizen_odd_one_out.png")
     render_odd_one_out_to_pdf(ws4_odd, f"{output_dir}/04_good_citizen_odd_one_out.pdf")

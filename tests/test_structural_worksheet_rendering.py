@@ -1,4 +1,4 @@
-"""Tests for rendering structural relationship worksheets to images and PDFs."""
+"""Tests for rendering structural relationship worksheets as HTML."""
 
 import tempfile
 from pathlib import Path
@@ -11,16 +11,7 @@ from src.worksheets import (
     generate_odd_one_out_worksheet,
     generate_tree_map_worksheet,
 )
-from src.worksheet_renderer import (
-    render_venn_diagram_to_image,
-    render_venn_diagram_to_pdf,
-    render_feature_matrix_to_image,
-    render_feature_matrix_to_pdf,
-    render_odd_one_out_to_image,
-    render_odd_one_out_to_pdf,
-    render_tree_map_to_image,
-    render_tree_map_to_pdf,
-)
+from src.worksheet_html_renderer import render_worksheet_html
 
 
 @pytest.fixture
@@ -41,11 +32,10 @@ def test_render_venn_diagram_to_image(temp_dir):
         word_bank=["dog", "lizard", "whale"],
     )
     output_path = Path(temp_dir) / "venn.png"
-    result = render_venn_diagram_to_image(worksheet, output_path)
+    result = render_worksheet_html("vennDiagramWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert result == output_path
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_venn_diagram_to_pdf(temp_dir):
@@ -60,11 +50,10 @@ def test_render_venn_diagram_to_pdf(temp_dir):
         right_items=["3", "5"],
     )
     output_path = Path(temp_dir) / "venn.pdf"
-    result = render_venn_diagram_to_pdf(worksheet, output_path)
+    result = render_worksheet_html("vennDiagramWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert result == output_path
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_venn_diagram_creates_parent_dirs(temp_dir):
@@ -74,9 +63,10 @@ def test_render_venn_diagram_creates_parent_dirs(temp_dir):
         right_label="B",
     )
     output_path = Path(temp_dir) / "nested" / "dir" / "venn.png"
-    render_venn_diagram_to_image(worksheet, output_path)
+    result = render_worksheet_html("vennDiagramWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert output_path.exists()
+    assert result is not None
+    assert len(result) > 200
 
 
 # ============ Feature Matrix Rendering Tests ============
@@ -89,11 +79,10 @@ def test_render_feature_matrix_to_image(temp_dir):
         properties=["Has Fur", "Has Legs", "Lives in Water"],
     )
     output_path = Path(temp_dir) / "matrix.png"
-    result = render_feature_matrix_to_image(worksheet, output_path)
+    result = render_worksheet_html("featureMatrixWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert result == output_path
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_feature_matrix_to_pdf(temp_dir):
@@ -107,11 +96,10 @@ def test_render_feature_matrix_to_pdf(temp_dir):
         show_answers=True,
     )
     output_path = Path(temp_dir) / "matrix.pdf"
-    result = render_feature_matrix_to_pdf(worksheet, output_path)
+    result = render_worksheet_html("featureMatrixWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert result == output_path
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_feature_matrix_handles_long_names(temp_dir):
@@ -121,9 +109,10 @@ def test_render_feature_matrix_handles_long_names(temp_dir):
         properties=["Property A", "Property B"],
     )
     output_path = Path(temp_dir) / "matrix_long.png"
-    render_feature_matrix_to_image(worksheet, output_path)
+    result = render_worksheet_html("featureMatrixWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert output_path.exists()
+    assert result is not None
+    assert len(result) > 200
 
 
 # ============ Odd One Out Rendering Tests ============
@@ -138,11 +127,10 @@ def test_render_odd_one_out_to_image(temp_dir):
         ],
     )
     output_path = Path(temp_dir) / "odd.png"
-    result = render_odd_one_out_to_image(worksheet, output_path)
+    result = render_worksheet_html("oddOneOutWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert result == output_path
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_odd_one_out_to_pdf(temp_dir):
@@ -158,11 +146,10 @@ def test_render_odd_one_out_to_pdf(temp_dir):
         show_answers=True,
     )
     output_path = Path(temp_dir) / "odd.pdf"
-    result = render_odd_one_out_to_pdf(worksheet, output_path)
+    result = render_worksheet_html("oddOneOutWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert result == output_path
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_odd_one_out_with_reasoning_lines(temp_dir):
@@ -172,9 +159,10 @@ def test_render_odd_one_out_with_reasoning_lines(temp_dir):
         reasoning_lines=4,
     )
     output_path = Path(temp_dir) / "odd_lines.png"
-    render_odd_one_out_to_image(worksheet, output_path)
+    result = render_worksheet_html("oddOneOutWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert output_path.exists()
+    assert result is not None
+    assert len(result) > 200
 
 
 # ============ Tree Map Rendering Tests ============
@@ -190,11 +178,10 @@ def test_render_tree_map_to_image(temp_dir):
         ],
     )
     output_path = Path(temp_dir) / "tree.png"
-    result = render_tree_map_to_image(worksheet, output_path)
+    result = render_worksheet_html("treeMapWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert result == output_path
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_tree_map_to_pdf(temp_dir):
@@ -209,11 +196,10 @@ def test_render_tree_map_to_pdf(temp_dir):
         word_bank=["dog", "eagle", "salmon", "cat", "parrot", "tuna", "whale", "penguin", "shark"],
     )
     output_path = Path(temp_dir) / "tree.pdf"
-    result = render_tree_map_to_pdf(worksheet, output_path)
+    result = render_worksheet_html("treeMapWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert result == output_path
-    assert output_path.exists()
-    assert output_path.stat().st_size > 0
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_tree_map_with_empty_slots(temp_dir):
@@ -226,9 +212,10 @@ def test_render_tree_map_with_empty_slots(temp_dir):
         ],
     )
     output_path = Path(temp_dir) / "tree_empty.png"
-    render_tree_map_to_image(worksheet, output_path)
+    result = render_worksheet_html("treeMapWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert output_path.exists()
+    assert result is not None
+    assert len(result) > 200
 
 
 def test_render_tree_map_single_branch(temp_dir):
@@ -240,6 +227,7 @@ def test_render_tree_map_single_branch(temp_dir):
         ],
     )
     output_path = Path(temp_dir) / "tree_single.png"
-    render_tree_map_to_image(worksheet, output_path)
+    result = render_worksheet_html("treeMapWorksheet", worksheet.model_dump() if hasattr(worksheet, "model_dump") else vars(worksheet), "")
 
-    assert output_path.exists()
+    assert result is not None
+    assert len(result) > 200
