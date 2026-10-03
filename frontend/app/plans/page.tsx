@@ -240,11 +240,10 @@ export default function PlansPage() {
               <section className="mb-12">
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-foreground text-2xl font-semibold">
-                    Pending Plans - Feedback Needed!
+                    Pending Plans
                   </h2>
-                  <Badge variant="warning" className="px-4 py-2 text-base">
+                  <Badge variant="default" className="px-4 py-2 text-base">
                     {pendingPackets.length} {pendingPackets.length === 1 ? 'Plan' : 'Plans'}
-                    Awaiting Feedback
                   </Badge>
                 </div>
 

@@ -143,9 +143,7 @@ export function usePendingPackets() {
 
   const packets = useMemo(() => {
     if (!allPackets) return [];
-    return allPackets.filter(
-      (packet) => (packet.status === 'ready' || packet.status === 'draft') && !packet.has_feedback
-    );
+    return allPackets.filter((packet) => packet.status === 'ready' || packet.status === 'draft');
   }, [allPackets]);
 
   return { packets, isLoading, error };
