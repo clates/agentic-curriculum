@@ -8,7 +8,7 @@ This document outlines the architecture, constraints, and "Instructional Pair" s
 The system is built on a modular Python framework:
 *   **`src/worksheets/`**: Logic for specific data structures (e.g., `MatchingWorksheet`, `ReadingWorksheet`).
 *   **`src/worksheets/factory.py`**: A unified entry point to create worksheet objects from dictionary payloads. Required for PIL rendering; **not needed** for HTML rendering.
-*   **`src/worksheet_renderer.py`**: ⚠️ **DEPRECATED** — The legacy PIL/Pillow engine. All types have been migrated to HTML rendering. This module emits a `DeprecationWarning` on import and will be removed in a future release. Render functions follow the pattern `render_X_to_image(ws, path)` / `render_X_to_pdf(ws, path)`.
+*   **`src/worksheet_renderer.py`**: 🗑️ **REMOVED** — The legacy PIL/Pillow engine has been deleted. All 24 worksheet types render via `src/worksheet_html_renderer.py` (HTML + inline SVG + print CSS). Use `render_worksheet_html(kind, data_dict, day_label)` + `build_print_packet_html(pages, title)`.
 *   **`src/worksheet_html_renderer.py`**: The preferred engine for printable worksheet packets. Produces clean, browser-printable HTML with day-colour theming. Two key functions:
     *   `render_worksheet_html(kind, data, day_label) -> str | None` — renders one worksheet to an HTML fragment. `kind` uses **camelCase** strings (e.g. `"readingWorksheet"`, `"featureMatrixWorksheet"`). `data` is a plain dict — **do not pass a WorksheetFactory object**.
     *   `build_print_packet_html(pages, packet_title) -> str` — assembles a list of `(day_label, fragment)` tuples into a single printable HTML document that auto-opens the browser print dialog on load.

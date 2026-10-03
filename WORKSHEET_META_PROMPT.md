@@ -18,7 +18,7 @@ Use this prompt to generate high-quality, themed worksheets for a 1st-grade leve
 **Technical Requirements:**
 1. Use the `reading_comprehension` worksheet type.
 2. The script must import `WorksheetFactory` from `worksheets.factory`.
-3. The script must import `render_reading_worksheet_to_image` and `render_reading_worksheet_to_pdf` from `worksheet_renderer`.
+3. The script must import `render_worksheet_html` and `build_print_packet_html` from `worksheet_html_renderer`.
 4. Define a `generate_series()` function that creates an output directory and iterates through a list of worksheet data dictionaries.
 5. Each worksheet data dictionary should include:
    - `title`: e.g., "[Theme] Quest X: [Title]"
