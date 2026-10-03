@@ -1904,520 +1904,11 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
 """
 
 
-def _render_venn_diagram(data: dict, primary: str, light: str) -> str:
-    """Render a vennDiagramWorksheet payload as an HTML fragment."""
-    title = data.get("title", "Venn Diagram")
-    instructions = data.get(
-        "instructions",
-        "Sort the words from the word bank into the correct section of "
-        "the Venn diagram.",
-    )
-    left_label = data.get("left_label", "Left")
-    right_label = data.get("right_label", "Right")
-    both_label = data.get("both_label", "Both")
-    left_items = list(data.get("left_items") or [])
-    right_items = list(data.get("right_items") or [])
-    both_items = list(data.get("both_items") or [])
-
-    # Word bank: entries may be dicts with text/category, or plain strings.
-    word_bank_raw = data.get("word_bank") or []
-    texts: list[str] = []
-    for entry in word_bank_raw:
-        if isinstance(entry, dict):
-            texts.append(str(entry.get("text", "")))
-        elif hasattr(entry, "text"):
-            texts.append(str(entry.text))
-        else:
-            texts.append(str(entry))
-    bank_texts = [t for t in texts if t]
-
-    # Shuffled display order (deterministic seed so print output is stable).
-    display = list(bank_texts)
-    random.Random(20261003).shuffle(display)
-
-    diagram = _svg_venn(
-        left_label,
-        right_label,
-        both_label,
-        left_items,
-        right_items,
-        both_items,
-        primary,
-    )
-
-    chips = "".join(f'<span class="venn-chip">{_h(t)}</span>' for t in display)
-    wordbank = (
-        f'<div class="venn-wordbank" style="border-color:{primary};">'
-        f'<div class="venn-wordbank-title" style="color:{primary};">'
-        "Word Bank</div>"
-        f"{chips}</div>"
-        if bank_texts
-        else ""
-    )
-
-    header = ""
-    day_label = data.get("day_label", "")
-    if day_label:
-        header = (
-            f'<div class="ws-day" style="color:{primary};">{_h(day_label)}</div>'
-        )
-
-    return f"""\
-{header}
-<h2 class="ws-title" style="color:{primary};">{_h(title)}</h2>
-<div class="ws-name-date">Name: __________________&nbsp;&nbsp;&nbsp;Date: __________________</div>
-<div class="ws-instructions">{_h(instructions)}</div>
-{_VENN_CSS}
-<div class="venn-diagram">{diagram}</div>
-{wordbank}
-"""
-
-
-def _render_handwriting(data: dict, primary: str, light: str) -> str:
-    """Render a handwriting worksheet as an HTML fragment.
-
-    Data keys (matching HandwritingWorksheet): title, instructions, items
-    (list of {text, image_path, sub_label}), rows, cols, day_label.
-    """
-    title = data.get("title", "Handwriting Practice")
-    day_label = data.get("day_label", "")
-    instructions_text = data.get(
-        "instructions", "Look at the picture and practice writing the word on the lines."
-    )
-    items = data.get("items", [])
-    rows = int(data.get("rows", 4) or 4)
-    cols = int(data.get("cols", 2) or 2)
-
-    # Day header bar (omitted when no day label, matching the other renderers).
-    dh = ""
-    if day_label:
-        dh = (
-            f'<div class="day-header" style="background:{primary};">'
-            f'<div class="day-header-label">{_h(day_label)}</div>'
-            f'<div class="day-header-title">{_h(title)}</div>'
-            "</div>"
-        )
-
-    # Grid of practice cells, capped at rows*cols like the PIL renderer.
-    cells = "".join(_hw_cell(item, primary) for item in items[: rows * cols])
-    grid_style = f"grid-template-columns:repeat({cols},1fr);"
-
-    return f"""{dh}
-<div class="ws-title" style="color:{primary};border-bottom-color:{primary};">{_h(title)}</div>
-<div class="name-date-row">
-  <span>Name:&nbsp;&nbsp;_______________________________________</span>
-  <span class="short">Date:&nbsp;&nbsp;_______________</span>
-</div>
-<div class="ws-instructions">{_h(instructions_text)}</div>
-<div class="hw-grid" style="{grid_style}">
-{cells}
-</div>
-"""
-
-
-def _render_pixel_copy(data: dict, primary: str, light: str) -> str:
-    """Render a pixel copy worksheet as an HTML fragment.
-
-    Two grids side by side: the coloured reference (left) and the blank copy
-    grid (right), plus a colour legend below.  Data keys: title, instructions,
-    image_path, grid_size, day_label (injected by the dispatch wrapper).
-    """
-    title = data.get("title", "Pixel Copy")
-    day_label = data.get("day_label", "")
-    instructions = data.get(
-        "instructions",
-        "Look at the colors on the left. Copy them to the grid on the right!",
-    )
-    image_path = data.get("image_path", "")
-    grid_size = int(data.get("grid_size", 24) or 24)
-
-    dh = _day_header(day_label, title, primary) if day_label else ""
-
-    ref_colors = _pc_reference_colors(image_path, grid_size)
-    cell_px = _pc_cell_px(grid_size)
-
-    ref_svg = _svg_pixel_grid(ref_colors, grid_size, cell_px)
-    blank_svg = _svg_pixel_grid([], grid_size, cell_px)
-
-    grids = f"""
-<div class="pc-grids">
-  <div class="pc-grid-box">
-    <div class="pc-grid-label" style="color:{primary};">Reference</div>
-    {ref_svg}
-  </div>
-  <div class="pc-grid-box">
-    <div class="pc-grid-label" style="color:{primary};">Your Copy</div>
-    {blank_svg}
-  </div>
-</div>
-{_pc_legend(ref_colors, primary, light)}
-"""
-
-    return f"""
-{dh}
-{_title_block(title, primary)}
-{_name_date()}
-<div class="ws-instructions">{_h(instructions)}</div>
-{grids}
-"""
-
-
-def _render_alphabet(data: dict, primary: str, light: str) -> str:
-    """Render an alphabet worksheet fragment.
-
-    Data keys: letter, starting_words, containing_words,
-    character_image_path (optional), title, instructions, day_label.
-    """
-    # Factory upper-cases the letter; normalize raw data the same way (PIL parity).
-    letter = str(data.get("letter", "A") or "A")[:1].upper()
-    starting_words = list(data.get("starting_words", []) or [])
-    containing_words = list(data.get("containing_words", []) or [])
-    character_image_path = data.get("character_image_path") or ""
-    title = data.get("title", "Alphabet Practice")
-    day_label = data.get("day_label", "")
-
-    dh = _day_header(day_label, title, primary) if day_label else ""
-
-    # Centerpiece: large uppercase + lowercase pair, optional character image.
-    img_html = ""
-    if character_image_path:
-        img_html = (
-            f'<img class="abc-image" src="{_h(character_image_path)}" '
-            f'alt="{_h(letter)} character">'
-        )
-    centerpiece = (
-        f'<div class="abc-centerpiece">'
-        f'<span class="abc-letter" style="color:{primary};">'
-        f"{_h(letter)}{_h(letter.lower())}</span>"
-        f"{img_html}"
-        f"</div>"
-    )
-
-    practice = (
-        f'<div class="abc-practice">'
-        f'<div class="abc-practice-label">Trace and write the letter '
-        f"{_h(letter)}:</div>"
-        f"{_trace_row(letter)}"       # Line 1: uppercase, fading
-        f"{_trace_row(letter.lower())}"  # Line 2: lowercase, fading
-        f'<div class="abc-practice-label">Now write it on your own:</div>'
-        f"{_free_line()}"              # Line 3: free practice
-        f"{_spacing_line(letter)}"      # Line 4: spacing blanks
-        f"</div>"
-    )
-
-    words = (
-        f'<div class="abc-words"><div class="abc-words-grid">'
-        + _words_column(
-            f"Words that start with {letter}", starting_words, primary, light
-        )
-        + _words_column(
-            f"Words that have {letter} in them", containing_words, primary, light
-        )
-        + "</div></div>"
-    )
-
-    instructions = _h(
-        data.get("instructions", "Practice your letters and reading words!")
-    )
-
-    return f"""\
-{dh}
-{_title_block(title, primary)}
-{_name_date()}
-<div class="ws-instructions">{instructions}</div>
-{centerpiece}
-{practice}
-{words}
-"""
-
-
-#: Dispatch-table entry for worksheet_html_renderer._RENDERERS integration.
-DISPATCH_KEY = "alphabetWorksheet"
-
-
-def _render_sequencing(data: dict, primary: str, light: str) -> str:
-    """Render a sequencing worksheet as an HTML fragment.
-
-    Args:
-        data: Dict matching the SequencingWorksheet payload shape:
-            title, instructions, activity_name, steps (list of
-            {text, image_path?, correct_order?}), show_answers, day_label?
-        primary: Primary accent colour (hex) from the day palette.
-        light: Light accent colour (hex) from the day palette.
-
-    Returns:
-        HTML fragment string with ``seq-`` prefixed CSS classes.
-    """
-    title = data.get("title", "Put It in Order!")
-    activity_name = data.get("activity_name", "Activity")
-    steps = data.get("steps", []) or []
-    show_answers = bool(data.get("show_answers", False))
-    day_label = data.get("day_label", "")
-
-    # Day header (matches the convention of the other HTML renderers).
-    dh = ""
-    if day_label:
-        day = _h(day_label)
-        dh = (
-            f'<div class="day-header" style="background:{primary};">'
-            f'<span class="day-header-label">{day}</span>'
-            f'<span class="day-header-title">{_h(title)}</span></div>'
-        )
-
-    instructions = _h(
-        data.get(
-            "instructions",
-            "Cut out each step below. Paste them in the correct order "
-            "on another sheet of paper.",
-        )
-    )
-
-    cards_html = ""
-    for step in steps:
-        if not isinstance(step, dict):
-            step = {"text": step}
-        text = _h(step.get("text", ""))
-        correct_order = step.get("correct_order")
-        image_path = step.get("image_path")
-
-        # Number box: filled with the correct order in answer-key mode,
-        # blank otherwise (mirrors the PIL renderer).
-        num_inner = ""
-        num_cls = "seq-num"
-        if show_answers and correct_order is not None:
-            num_inner = _h(str(correct_order))
-            num_cls = "seq-num seq-num-answer"
-        num_box = f'<div class="{num_cls}">{num_inner}</div>'
-
-        img_html = ""
-        if image_path:
-            img_html = f'<img class="seq-image" src="{_h(image_path)}" alt="">'
-
-        cards_html += (
-            f'<div class="seq-card" style="border-color:{primary}44;">'
-            f"{num_box}{img_html}"
-            f'<div class="seq-text">{text}</div>'
-            f"</div>"
-        )
-
-    cards = f'<div class="seq-cards">{cards_html}</div>' if cards_html else ""
-
-    return f"""\
-{_SEQ_CSS}
-{dh}
-<div class="ws-title" style="color:{primary};">{_h(title)}</div>
-<div class="ws-name-date">Name: ______________________ &nbsp;&nbsp; Date: ____________</div>
-<div class="ws-instructions">{instructions}</div>
-<div class="seq-activity" style="color:{primary};">Activity: {_h(activity_name)}</div>
-<div class="seq-scissors">&#9986; - - - - - - Cut here - - - - - - - - - - - - - - - - - - - -</div>
-{cards}
-"""
-
-
-def _render_fill_in_the_blank(data: dict, primary: str, light: str) -> str:
-    """Render a fill-in-the-blank worksheet as an HTML fragment.
-
-    Mirrors the PIL renderer: text flows inline, each gap is an underlined
-    slot with its gray "(n)" number above the line, newline segments become
-    paragraph breaks, and the word bank appears as a dashed box of shuffled
-    tiles below the passage. With show_answers, each gap slot carries the
-    red answer text instead of the blank.
-    """
-    title = data.get("title", "Fill in the Blank")
-    day_label = data.get("day_label", "")
-    segments = data.get("segments", []) or []
-    word_bank = list(data.get("word_bank", []) or [])
-    answers = data.get("answers", {}) or {}
-    show_answers = bool(data.get("show_answers", False))
-
-    dh = _day_header(day_label, title, primary) if day_label else ""
-
-    # -- Passage ------------------------------------------------------------
-    para_parts: list[str] = []
-    paras_html: list[str] = []
-    for seg in segments:
-        text, gap, newline = _fib_segment_fields(seg)
-        if newline:
-            paras_html.append("".join(para_parts))
-            para_parts = []
-        elif text is not None:
-            para_parts.append(f'<span class="fib-text">{_h(text)}</span>')
-        elif gap is not None:
-            ans = answers.get(str(gap))
-            if show_answers and ans is not None:
-                para_parts.append(
-                    f'<span class="fib-gap fib-gap-filled">'
-                    f'<span class="fib-answer">{_h(ans)}</span></span>'
-                )
-            else:
-                para_parts.append(
-                    f'<span class="fib-gap">'
-                    f'<span class="fib-gap-num">({int(gap)})</span>'
-                    f"</span>"
-                )
-    paras_html.append("".join(para_parts))
-
-    paras = "".join(
-        f'<p class="fib-para">{body}</p>' for body in paras_html if body
-    )
-    passage_html = f'<div class="fib-passage">{paras}</div>'
-
-    # -- Word bank (shuffled display order) ----------------------------------
-    wb_html = ""
-    if word_bank:
-        shuffled = word_bank[:]
-        random.shuffle(shuffled)
-        tiles = "".join(f'<span class="fib-wb-tile">{_h(w)}</span>' for w in shuffled)
-        wb_html = (
-            f'<div class="fib-word-bank">'
-            f'<div class="fib-wb-label">Word Bank — write each word in the correct blank above:</div>'
-            f'<div class="fib-wb-tiles">{tiles}</div>'
-            f"</div>"
-        )
-
-    instructions = _h(
-        data.get("instructions", "Use the word bank to fill in the blanks.")
-    )
-
-    return f"""\
-{dh}
-{_title_block(title, primary)}
-{_name_date()}
-<div class="ws-instructions">{instructions}</div>
-{passage_html}
-{wb_html}
-"""
-
-
-def _render_story_map(data: dict, primary: str, light: str) -> str:
-    """Render a story map worksheet as an HTML fragment."""
-    title = data.get("title", "Story Map")
-    day_label = data.get("day_label", "")
-    show_answers = bool(data.get("show_answers", False))
-    fields = data.get("fields", [])
-
-    dh = (
-        f'<div class="sm-day-header" style="background:{primary};">'
-        f'<div class="sm-day-header-label">{_h(day_label)}</div>'
-        f'<div class="sm-day-header-title">{_h(title)}</div>'
-        f"</div>"
-        if day_label
-        else ""
-    )
-
-    story_title_html = _story_title_row() if data.get("story_title_field", True) else ""
-
-    boxes = "".join(
-        _field_box(f if isinstance(f, dict) else vars(f), show_answers, light, primary)
-        for f in fields
-    )
-    grid_html = f'<div class="sm-grid">{boxes}</div>' if boxes else ""
-
-    instructions = _h(data.get("instructions", "Fill in each box about the story you read."))
-
-    return f"""{_SM_CSS}
-{dh}
-<div class="sm-title" style="color:{primary};border-bottom-color:{primary};">{_h(title)}</div>
-<div class="sm-name-date-row">
-  <span>Name:&nbsp;&nbsp;_______________________________________</span>
-  <span>Date:&nbsp;&nbsp;_______________</span>
-</div>
-<div class="sm-instructions">{instructions}</div>
-{story_title_html}
-{grid_html}
-"""
-
-
-
-
-def _render_number_line(data: dict, primary: str, light: str) -> str:
-    """Render a number line worksheet as an HTML fragment."""
-    title = data.get("title", "Number Line")
-    day_label = data.get("day_label", "")
-    tasks = data.get("tasks", []) or []
-    show_answers = bool(data.get("show_answers", False))
-
-    dh = _day_header(day_label, title, primary) if day_label else ""
-
-    default_instr = (
-        "Write the missing numbers on each number line."
-        if show_answers
-        else "Fill in the missing numbers on each number line."
-    )
-    instructions = _h(data.get("instructions", default_instr))
-
-    task_html = ""
-    for idx, task in enumerate(tasks, 1):
-        prompt = _task_get(task, "prompt") or ""
-        prompt_html = (
-            f'<div class="nl-prompt"><strong>{idx}.</strong> {_h(prompt)}</div>'
-        )
-        svg = _svg_number_line(task, show_answers, primary)
-        if not svg:
-            continue
-        task_html += f'<div class="nl-task">{prompt_html}{svg}</div>'
-
-    return f"""\
-{dh}
-{_title_block(title, primary)}
-{_name_date()}
-<div class="ws-instructions">{instructions}</div>
-{_NL_CSS}
-<div class="nl-tasks">
-{task_html}
-</div>
-"""
-
-
-def _render_labeled_diagram(data: dict, primary: str, light: str) -> str:
-    """Render a labeled diagram worksheet as an HTML fragment."""
-    title = data.get("title", "Labeled Diagram")
-    day_label = data.get("day_label", "")
-    show_answers = bool(data.get("show_answers", False))
-    word_bank = bool(data.get("word_bank", False))
-    image_path = data.get("image_path")
-    labels = _label_dicts(data.get("labels", []))
-
-    dh = (
-        f'<div class="ld-day-header" style="background:{_h(primary)};">'
-        f'<div class="ld-day-header-label">{_h(day_label)}</div>'
-        f'<div class="ld-day-header-title">{_h(title)}</div>'
-        f"</div>"
-        if day_label
-        else ""
-    )
-
-    diagram = _diagram_html(labels, image_path, primary)
-    bank = _word_bank_html(labels, primary, light) if word_bank else ""
-    slots = "".join(_label_slot(lbl, show_answers) for lbl in labels)
-    labels_html = f'<div class="ld-labels">{slots}</div>' if slots else ""
-
-    instructions = _h(
-        data.get("instructions", "Label each part of the diagram.")
-    )
-
-    return f"""{_LD_CSS}
-{dh}
-<div class="ld-title" style="color:{_h(primary)};border-bottom-color:{_h(primary)};">{_h(title)}</div>
-<div class="ld-name-date-row">
-  <span>Name:&nbsp;&nbsp;_______________________________________</span>
-  <span>Date:&nbsp;&nbsp;_______________</span>
-</div>
-<div class="ld-instructions">{instructions}</div>
-{diagram}
-{bank}
-{labels_html}
-"""
-
-
-
-
-
 _VENN_CSS = """\
 <style>
   .venn-diagram { text-align: center; margin: 6px 0; }
   .venn-svg { display: block; width: 100%%; max-width: 640px; margin: 0 auto; }
-  .venn-wordbank { border: 1.5px dashed %s; border-radius: 4px; padding: 7px 9px; margin-top: 10px; }
+  .venn-wordbank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 10px; }
   .venn-wordbank-title { font-size: 9pt; font-style: italic; margin-bottom: 5px; }
   .venn-chip { display: inline-block; border: 1px solid #555; border-radius: 3px; padding: 2px 8px; margin: 2px; font-size: 9.5pt; background: white; }
   .venn-circle-label { font-size: 11pt; font-weight: bold; fill: #222; }
@@ -2430,7 +1921,7 @@ _NL_CSS = """\
   .nl-tasks { display: flex; flex-direction: column; gap: 18px; }
   .nl-task { }
   .nl-prompt { font-size: 10pt; margin-bottom: 4px; }
-  .nl-svg { display: block; width: 100%%; max-width: 780px; margin: 0 auto; }
+  .nl-svg { display: block; width: 100%; max-width: 780px; margin: 0 auto; }
   .nl-axis { stroke: #111; stroke-width: 2.5; }
   .nl-tick { stroke: #666; stroke-width: 1.5; }
   .nl-label { font-size: 10pt; fill: #222; text-anchor: middle; }
@@ -2473,9 +1964,9 @@ _LD_CSS = """\
   .ld-name-date-row { display: flex; justify-content: space-between; font-size: 10pt; margin: 6px 0 4px; }
   .ld-instructions { font-style: italic; font-size: 10.5pt; margin-bottom: 10px; }
   .ld-diagram { position: relative; border: 2px solid #555; border-radius: 6px; min-height: 2.5in; margin: 8px 0 12px; overflow: hidden; }
-  .ld-diagram img { width: 100%%; display: block; }
+  .ld-diagram img { width: 100%; display: block; }
   .ld-diagram-placeholder { color: #aaa; font-size: 16pt; text-align: center; padding: 1.2in 0; }
-  .ld-callout { position: absolute; width: 24px; height: 24px; border-radius: 50%%; background: white; border: 2px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10pt; font-weight: bold; transform: translate(-50%%, -50%%); }
+  .ld-callout { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: white; border: 2px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10pt; font-weight: bold; transform: translate(-50%, -50%); }
   .ld-word-bank { border-radius: 4px; padding: 7px 9px; margin: 8px 0; }
   .ld-word-bank-title { font-size: 9pt; font-weight: bold; margin-bottom: 5px; }
   .ld-word-bank-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -2492,8 +1983,6 @@ _LD_CSS = """\
 _TRACE_OPACITIES = (1.0, 0.65, 0.40, 0.20)
 _PC_PLACEHOLDER_PALETTE = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4"]
 _PC_LEGEND_MAX = 6
-PIXEL_COPY_DISPATCH = {"pixelCopyWorksheet": None}  # placeholder, actual dispatch uses _RENDERERS
-
 
 def _escape_attr(text: object) -> str:
     """Escape for use inside an SVG attribute (quotes included)."""
@@ -2739,8 +2228,9 @@ def _pc_reference_colors(image_path: str | None, grid_size: int) -> list[list[st
                 ["#{:02x}{:02x}{:02x}".format(*px[c, r][:3]) for c in range(n)]
                 for r in range(n)
             ]
-        except Exception:
-            pass
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning("pixel_copy: cannot read %s: %s", image_path, exc)
     return _pc_placeholder_colors(n)
 
 def _svg_pixel_grid(colors: list, grid_size: int, cell_px: int) -> str:
@@ -2853,23 +2343,6 @@ def _render_pixel_copy(data: dict, primary: str, light: str) -> str:
 {grids}
 """
 
-def render_pixel_copy_html(kind: str, data: dict, day_label: str = "") -> str | None:
-    """Dispatch wrapper mirroring render_worksheet_html for pixelCopyWorksheet."""
-    renderer = PIXEL_COPY_DISPATCH.get(kind)
-    if renderer is None:
-        return None
-    # Same day palette as worksheet_html_renderer (mon-fri accents, grey default).
-    palette = {
-        "monday": ("#1d4ed8", "#dbeafe"),
-        "tuesday": ("#15803d", "#dcfce7"),
-        "wednesday": ("#7c3aed", "#ede9fe"),
-        "thursday": ("#c2410c", "#ffedd5"),
-        "friday": ("#0f766e", "#ccfbf1"),
-    }
-    key = day_label.strip().lower().split()[0] if day_label else ""
-    primary, light = palette.get(key, ("#374151", "#f3f4f6"))
-    enriched = {**data, "day_label": day_label}
-    return renderer(enriched, primary, light)
 
 
 def _trace_row(char: str) -> str:
@@ -2977,8 +2450,6 @@ def _render_alphabet(data: dict, primary: str, light: str) -> str:
 """
 
 
-#: Dispatch-table entry for worksheet_html_renderer._RENDERERS integration.
-DISPATCH_KEY = "alphabetWorksheet"
 
 
 def _render_sequencing(data: dict, primary: str, light: str) -> str:
@@ -3481,16 +2952,16 @@ def _render_two_operand(data: dict, primary: str, light: str) -> str:
     dh = _day_header(day_label, title, primary) if day_label else ""
 
     problems_html = ""
-    for i, prob in enumerate(problems):
+    for i, prob in enumerate(problems, 1):
         if isinstance(prob, dict):
-            a = str(prob.get("operand_one", ""))
-            b = str(prob.get("operand_two", ""))
-            op = str(prob.get("operator", "+"))
+            a = _h(str(prob.get("operand_one", "")))
+            b = _h(str(prob.get("operand_two", "")))
+            op = _h(str(prob.get("operator", "+")))
         else:
-            a = str(getattr(prob, "operand_one", ""))
-            b = str(getattr(prob, "operand_two", ""))
+            a = _h(str(getattr(prob, "operand_one", "")))
+            b = _h(str(getattr(prob, "operand_two", "")))
             op_val = getattr(prob, "operator", "+")
-            op = str(op_val.value if hasattr(op_val, "value") else op_val)
+            op = _h(str(op_val.value if hasattr(op_val, "value") else op_val))
 
         width = max(len(a), len(b))
         problems_html += (
