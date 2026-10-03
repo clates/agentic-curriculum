@@ -115,6 +115,17 @@ _HTML_BUILDERS = {
     "wordSortWorksheet": _build_html_plan,
     "writingScaffoldWorksheet": _build_html_plan,
     "tChartWorksheet": _build_html_plan,
+    # Ported from PIL → HTML (PR #113)
+    "vennDiagramWorksheet": _build_html_plan,
+    "handwritingWorksheet": _build_html_plan,
+    "pixelCopyWorksheet": _build_html_plan,
+    "alphabetWorksheet": _build_html_plan,
+    "sequencingWorksheet": _build_html_plan,
+    "fillInBlankWorksheet": _build_html_plan,
+    "storyMapWorksheet": _build_html_plan,
+    "numberLineWorksheet": _build_html_plan,
+    "labeledDiagramWorksheet": _build_html_plan,
+    "twoOperandWorksheet": _build_html_plan,
 }
 
 

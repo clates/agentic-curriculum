@@ -1,6 +1,16 @@
 """Rendering helpers for Worksheet objects."""
 
+
 from __future__ import annotations
+
+import warnings
+warnings.warn(
+    "worksheet_renderer is DEPRECATED — all worksheet types now render via "
+    "worksheet_html_renderer. Use render_worksheet_html() instead. "
+    "This module will be removed in a future release.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import math
 import random
