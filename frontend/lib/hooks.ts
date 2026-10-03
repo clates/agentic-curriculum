@@ -58,6 +58,22 @@ export function useStudents() {
   });
 }
 
+function parseBlob(raw: string | null | undefined): Record<string, any> {
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+function studentGradeLabel(student: any): string {
+  const grade = student?.grade_level;
+  if (grade === 0 || grade === '0') return 'Kindergarten';
+  if (grade != null) return `Grade ${grade}`;
+  return '—';
+}
+
 export function useEnrichedStudents() {
   const { data: students, isLoading, error } = useStudents();
 
@@ -66,11 +82,13 @@ export function useEnrichedStudents() {
     return students.map((s) => ({
       id: s.student_id,
       name: parseMetadata(s.metadata_blob)?.name || 'Unknown',
-      grade: '3rd Grade', // TODO: Extract from metadata
-      subject: 'Math', // TODO: Extract from metadata
-      masteredCount: 0, // TODO: Calculate from progress
-      totalStandards: 20, // TODO: Calculate from progress
-      avatarUrl: undefined,
+      grade: studentGradeLabel(s),
+      subject: parseBlob(s.plan_rules_blob)?.theme_rules?.theme_subjects?.[0] || '—',
+      masteredCount: parseBlob(s.progress_blob)?.mastered_standards?.length ?? 0,
+      totalStandards: parseBlob(s.progress_blob)?.standard_metadata
+        ? Object.keys(parseBlob(s.progress_blob).standard_metadata).length
+        : 0,
+      avatarUrl: parseMetadata(s.metadata_blob)?.avatar_url ?? undefined,
     }));
   }, [students]);
 
@@ -83,7 +101,15 @@ export function useWeeklyPacketsStats() {
   const stats = useMemo(() => {
     if (!allPackets) return { activePlans: 0, totalWorksheets: 0 };
 
-    const activePlans = allPackets.length;
+    // Compute current Monday for "this week" filtering
+    const now = new Date();
+    const dayOfWeek = (now.getDay() + 6) % 7; // Monday = 0
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - dayOfWeek);
+    const weekKey = monday.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const thisWeekPackets = allPackets.filter((p) => p.week_of === weekKey);
+    const activePlans = thisWeekPackets.length;
     const totalWorksheets = allPackets.reduce((acc, packet) => {
       if (!packet.worksheet_counts) return acc;
       return acc + Object.values(packet.worksheet_counts).reduce((sum, count) => sum + count, 0);

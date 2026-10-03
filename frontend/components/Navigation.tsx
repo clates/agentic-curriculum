@@ -61,9 +61,6 @@ export function Navigation() {
               >
                 Progress Map
               </a>
-              <a href="#" className="hover:text-foreground text-neutral-500 transition-colors">
-                Settings
-              </a>
             </div>
           </div>
           <div className="flex items-center">

@@ -280,8 +280,16 @@ export default function PlansPage() {
                     <Card
                       key={packet.packet_id}
                       padding="lg"
+                      role="button"
+                      tabIndex={0}
                       className="border-primary-200 hover:border-primary-400 cursor-pointer border-2 transition-all hover:shadow-md"
                       onClick={() => handleViewPlan(packet)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleViewPlan(packet);
+                        }
+                      }}
                     >
                       <div className="space-y-4">
                         <div className="flex items-start justify-between">

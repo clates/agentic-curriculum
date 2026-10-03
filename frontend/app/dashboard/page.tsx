@@ -97,7 +97,7 @@ export default function Dashboard() {
           <div className="mb-8">
             <div className="flex items-center space-x-3">
               <div className="bg-primary-200 h-12 w-12 rounded-full"></div>
-              <h2 className="text-foreground text-2xl font-semibold">Welcome back, Sarah!</h2>
+              <h2 className="text-foreground text-2xl font-semibold">Welcome back!</h2>
             </div>
           </div>
 
