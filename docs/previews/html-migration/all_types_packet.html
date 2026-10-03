@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PIL-to-HTML Migration — All 10 New Types</title>
+  <style>
+  @page { size: letter; margin: 0.45in 0.5in; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Trebuchet MS', Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #111;
+    line-height: 1.5;
+  }
+
+  /* Page structure */
+  .page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    padding-bottom: 0.1in;
+  }
+  .page:last-child { page-break-after: avoid; break-after: avoid; }
+
+  @media screen {
+    body { background: #b0b0b0; padding: 24px; }
+    .page {
+      background: white;
+      max-width: 7.5in;
+      margin: 0 auto 28px;
+      padding: 0.45in 0.5in 0.35in;
+      box-shadow: 0 4px 18px rgba(0,0,0,.30);
+      min-height: 10.3in;
+    }
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .page { padding: 0; box-shadow: none; margin: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* Day header bar */
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 10px 5px 12px;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 6px;
+    color: white;
+  }
+  .day-header-label {
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    opacity: 0.85;
+  }
+  .day-header-title { font-size: 12pt; font-weight: bold; }
+
+  /* Title / instructions / name-date */
+  .ws-title {
+    font-size: 15pt;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+    line-height: 1.2;
+  }
+  .ws-instructions {
+    font-size: 9.5pt;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .name-date-row {
+    display: flex;
+    gap: 16px;
+    font-size: 9.5pt;
+    margin-bottom: 10px;
+  }
+  .name-date-row span { flex: 1; border-bottom: 1px solid #444; padding-bottom: 1px; }
+  .name-date-row span.short { flex: 0 0 2.2in; }
+
+  .answer-lines { margin: 2px 0 4px; }
+  .answer-line { border-bottom: 1px solid #777; height: 22px; margin-bottom: 3px; width: 100%; }
+
+  /* Reading */
+  .passage-title { font-size: 12pt; font-weight: bold; margin: 7px 0 3px; }
+  .passage {
+    background: #f7f7f5;
+    border-left: 4px solid #aaa;
+    padding: 7px 11px;
+    font-size: 9.5pt;
+    line-height: 1.6;
+    margin-bottom: 9px;
+  }
+  .passage p { margin-bottom: 6px; }
+  .passage p:last-child { margin-bottom: 0; }
+  .questions-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .question { margin-bottom: 9px; }
+  .question-prompt { font-size: 9.5pt; font-weight: bold; margin-bottom: 3px; line-height: 1.35; }
+  .vocab-section { margin-top: 9px; }
+  .vocab-section h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .vocab-item { border: 1px solid #ccc; border-radius: 3px; padding: 3px 5px; font-size: 9pt; line-height: 1.35; }
+  .vocab-term { font-weight: bold; }
+  .vocab-def { color: #444; }
+
+  /* Feature matrix */
+  .feature-matrix-wrapper { overflow-x: auto; margin-top: 4px; }
+  table.feature-matrix { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.feature-matrix th {
+    background: #2c2c2c; color: white;
+    padding: 5px 8px; font-size: 9.5pt; text-align: center;
+    border: 1px solid #555;
+  }
+  table.feature-matrix th.fm-item-col { text-align: left; min-width: 1.4in; }
+  table.feature-matrix td { border: 1px solid #bbb; padding: 4px 8px; vertical-align: middle; }
+  td.fm-item-cell { font-weight: bold; background: #f9f9f9; }
+  td.fm-check-cell { text-align: center; font-size: 14pt; color: #666; }
+
+  /* Tree map */
+  .tm-root-row { display: flex; justify-content: center; margin-bottom: 6px; }
+  .tm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 18px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .tm-branches-grid { display: grid; gap: 8px; margin-top: 6px; }
+  .tm-branch { border: 2px solid #555; border-radius: 4px; padding: 6px 8px; min-height: 80px; }
+  .tm-branch-name {
+    font-size: 10pt; font-weight: bold; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px;
+  }
+  .tm-slot { font-size: 9.5pt; padding: 2px 4px; }
+  .tm-slot.blank { border-bottom: 1px solid #888; margin-bottom: 3px; color: #999; }
+  .tm-slot.prefilled { font-weight: bold; }
+
+  /* Capstone tree map (word-bank variant) */
+  .ctm-root-row { display: flex; justify-content: center; margin-bottom: 8px; }
+  .ctm-root {
+    border: 2.5px solid #333; border-radius: 5px;
+    padding: 6px 20px; font-size: 13pt; font-weight: bold; background: #f0f4ff;
+  }
+  .ctm-branches { display: flex; gap: 12px; margin-bottom: 10px; }
+  .ctm-branch { flex: 1; border: 2px solid #555; border-radius: 4px; padding: 7px 9px; min-height: 120px; }
+  .ctm-branch-name {
+    font-weight: bold; font-size: 10.5pt; text-align: center;
+    border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 6px;
+  }
+  .ctm-slot { border-bottom: 1px solid #aaa; height: 24px; margin-bottom: 4px; }
+  .ctm-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; }
+  .ctm-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ctm-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ctm-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+
+  /* Odd one out */
+  .oo-group { margin-bottom: 14px; }
+  .oo-number { font-size: 9pt; font-weight: bold; color: #666; margin-bottom: 4px; }
+  .oo-items-row { display: flex; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+  .oo-item {
+    border: 2px solid #555; border-radius: 20px;
+    padding: 5px 14px; font-size: 10.5pt; background: #fafafa;
+    cursor: pointer;
+  }
+  .oo-answer-row { font-size: 9pt; color: #444; }
+  .oo-answer-line { border-bottom: 1px solid #888; height: 20px; margin-top: 3px; }
+
+  /* Matching */
+  .matching-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .matching-left, .matching-right {
+    flex: 1; border: 1.5px solid #444; border-radius: 4px;
+    padding: 5px 9px; font-size: 10pt; background: #fafafa;
+  }
+  .matching-line { flex: 0 0 60px; border-bottom: 1px solid #888; height: 1px; position: relative; }
+  .matching-number { font-size: 9pt; font-weight: bold; color: #666; flex: 0 0 18px; text-align: right; }
+  /* Geography-style matching (lettered right column) */
+  .matching-columns { display: flex; gap: 0; }
+  .matching-left-col, .matching-right-col { flex: 1; }
+  .matching-spacer-col { flex: 0 0 0.6in; }
+  .matching-item { display: flex; align-items: baseline; gap: 6px; padding: 5px 0; font-size: 10.5pt; }
+  .matching-item-num, .matching-item-letter {
+    font-size: 10pt; font-weight: bold; color: #555;
+    flex: 0 0 20px; text-align: right;
+  }
+  .matching-instructions-note { font-size: 9pt; color: #555; font-style: italic; margin-bottom: 8px; }
+
+  /* Cause & Effect */
+  .cause-effect-pair { display: flex; align-items: stretch; gap: 0; margin-bottom: 12px; }
+  .ce-cause, .ce-effect { flex: 1; border: 1.5px solid #444; padding: 6px 9px; min-height: 68px; }
+  .ce-cause { background: #fffbe6; border-right: none; border-radius: 5px 0 0 5px; }
+  .ce-effect { background: #eaf5ea; border-left: none; border-radius: 0 5px 5px 0; }
+  .ce-arrow {
+    display: flex; align-items: center; padding: 0 6px; font-size: 18pt; color: #666;
+    background: #f0f0f0; border-top: 1.5px solid #444; border-bottom: 1.5px solid #444; flex: 0 0 auto;
+  }
+  .ce-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; color: #888; margin-bottom: 3px; letter-spacing: 0.03em; }
+  .ce-text { font-size: 9.5pt; font-weight: bold; color: #222; margin-bottom: 3px; line-height: 1.3; }
+  .ce-open-text { font-size: 9.5pt; color: #555; font-style: italic; }
+
+  /* Frayer model */
+  .frayer-entry { margin-bottom: 16px; }
+  .frayer-word-box {
+    text-align: center; font-size: 14pt; font-weight: bold;
+    border: 2px solid #333; padding: 5px; background: #f0f4ff; border-bottom: none;
+  }
+  .frayer-grid { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid #333; }
+  .frayer-cell { padding: 6px 8px; min-height: 82px; font-size: 9.5pt; line-height: 1.4; }
+  .frayer-cell:nth-child(1) { border-right: 1px solid #333; border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(2) { border-bottom: 1px solid #333; }
+  .frayer-cell:nth-child(3) { border-right: 1px solid #333; }
+  .frayer-cell-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; color: #777; margin-bottom: 3px; letter-spacing: 0.04em; }
+
+  /* Word sort */
+  .word-sort-categories { display: grid; gap: 8px; margin-bottom: 12px; }
+  .ws-category { border: 2px solid #333; border-radius: 4px; padding: 7px 9px; min-height: 72px; }
+  .ws-category-label { font-weight: bold; font-size: 10.5pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin-bottom: 5px; }
+  .ws-tile-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 4px; }
+  .ws-tile-bank-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .ws-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ws-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+
+  /* Writing scaffold */
+  .scaffold-section { margin-bottom: 12px; }
+  .scaffold-part-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; color: #666; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .scaffold-starter { font-style: italic; color: #444; font-size: 10pt; margin-bottom: 4px; background: #f5f5f5; padding: 4px 8px; border-left: 3px solid #bbb; }
+
+  /* T-chart */
+  .t-chart-word-bank { margin-bottom: 8px; }
+  .t-chart-word-bank-label { font-size: 9pt; font-weight: bold; color: #555; margin-bottom: 4px; }
+  table.t-chart { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t-chart th { background: #2c2c2c; color: white; padding: 6px 10px; font-size: 11pt; text-align: center; width: 50%; }
+  table.t-chart th:first-child { border-right: 2px solid white; }
+  table.t-chart td { border: 1px solid #aaa; height: 24px; padding: 0 6px; vertical-align: middle; }
+  table.t-chart td:first-child { border-right: 2px solid #555; }
+
+  /* Bar graph */
+  .bg-wrap { margin-top: 8px; }
+  .bg-flex { display: flex; align-items: stretch; }
+  .bg-ytitle {
+    flex: 0 0 0.24in; writing-mode: vertical-rl; transform: rotate(180deg);
+    text-align: center; font-size: 8.5pt; font-weight: bold; color: #444;
+  }
+  .bg-ticks { flex: 0 0 0.48in; position: relative; }
+  .bg-tick { position: absolute; right: 5px; transform: translateY(-50%); font-size: 8.5pt; color: #555; }
+  .bg-plot { flex: 1; position: relative; border-left: 2px solid #333; border-bottom: 2px solid #333; }
+  .bg-gridline { position: absolute; left: 0; right: 0; border-top: 1px solid #dcdcdc; }
+  .bg-lanes { position: absolute; inset: 0; display: flex; }
+  .bg-lane { flex: 1; border-right: 1px solid #ededed; display: flex; align-items: flex-end; justify-content: center; }
+  .bg-lane:last-child { border-right: none; }
+  .bg-bar { width: 58%; border: 1.5px solid #333; border-bottom: none; position: relative; }
+  .bg-bar-val { position: absolute; top: -15px; left: -20px; right: -20px; text-align: center; font-size: 8.5pt; font-weight: bold; color: #222; }
+  .bg-xrow { display: flex; }
+  .bg-xspacer { flex: 0 0 0.72in; }
+  .bg-xlabels { flex: 1; display: flex; }
+  .bg-xlabel { flex: 1; text-align: center; font-size: 9pt; font-weight: bold; padding-top: 4px; line-height: 1.15; }
+  .bg-xtitle { flex: 1; text-align: center; font-size: 8.5pt; font-weight: bold; color: #444; margin-top: 2px; }
+
+  /* Pictograph */
+  .pg-key {
+    display: inline-block; font-size: 10pt; font-weight: bold;
+    padding: 4px 10px; border-radius: 4px; margin: 4px 0 10px;
+  }
+  .pg-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 6px 0; min-height: 34px; }
+  .pg-label { flex: 0 0 1.7in; font-weight: bold; font-size: 10pt; padding-right: 8px; }
+  .pg-symbols { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15pt; line-height: 1; }
+  .pg-cell { width: 22px; height: 22px; border: 1px dashed #bbb; border-radius: 3px; }
+
+  /* Graph interpretation questions (shared by bar graph + pictograph) */
+  .graph-questions { margin-top: 12px; }
+  .graph-questions h3 {
+    font-size: 10pt; font-weight: bold;
+    border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
+  }
+
+  /* Error audit ("Bug Hunt") */
+  .ea-badge {
+    display: inline-block; border: 2px solid #333; border-radius: 10px;
+    padding: 2px 14px; font-size: 10pt; font-weight: bold; margin-bottom: 8px;
+  }
+  .ea-card { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+  .ea-prompt { font-size: 11pt; font-weight: bold; margin-bottom: 6px; }
+  .ea-art { text-align: center; margin: 6px 0; }
+  .ea-specimen { border: 1px solid #999; padding: 5px 9px; font-size: 10pt; margin-bottom: 6px; }
+  .ea-check { font-size: 10pt; margin: 3px 0; }
+  .ea-box {
+    display: inline-block; width: 12px; height: 12px;
+    border: 2px solid #222; border-radius: 2px; margin-right: 8px; vertical-align: baseline;
+  }
+  .ea-indent { margin-left: 22px; }
+  .ea-legend-label { font-size: 9.5pt; font-weight: bold; margin: 5px 0 2px; }
+  .ea-redrawbox { border: 1px solid #222; min-height: 1.6in; margin: 4px 0 6px; }
+  .ea-starter { text-align: center; margin: 4px 0; }
+  .ea-starter svg { opacity: 0.5; }
+  .ea-redrawbox.ea-with-starter { min-height: 1.1in; }
+  .ea-cards-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .ea-dec-grid { border-collapse: collapse; margin: 4px 0 2px; font-family: "Courier New", monospace; font-size: 13pt; }
+  .ea-dec-grid td { width: 30px; height: 34px; text-align: center; vertical-align: middle; padding: 0; }
+  .ea-dec-given { font-weight: bold; }
+  .ea-dec-point { font-weight: bold; }
+  .ea-dec-write { border: 1.5px solid #222; border-radius: 4px; }
+  .ea-dec-pad { color: #999; border: 1.5px dotted #999; border-radius: 4px; }
+  .ea-dec-rule td { border-top: 2px solid #222; height: 0; }
+  .ea-dec-plus { font-weight: bold; padding-right: 6px; }
+  .ea-dec-caption { font-size: 9pt; color: #555; margin: 0 0 4px; }
+
+  /* Ten-frame ("Make Ten") */
+  .tf-card { border: 2px solid #333; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+  .tf-prompt { font-size: 11pt; font-weight: bold; margin-bottom: 4px; }
+  .tf-label { font-size: 10pt; margin-bottom: 4px; }
+  .tf-frames { text-align: center; margin: 6px 0 4px; }
+  .tf-frames svg { margin: 0 14px; vertical-align: top; }
+  .tf-proof-label { font-size: 9.5pt; font-weight: bold; margin: 5px 0 2px; }
+  .tf-key { font-size: 10pt; margin: 2px 0 2px 22px; font-weight: bold; }
+
+
+
+.venn-svg { display: block; width: 100%; max-width: 640px; margin: 6px auto; }
+  .venn-circle { fill-opacity: 0.25; }
+  .venn-circle-label { font-size: 20px; font-weight: 700; fill: #111827; }
+  .venn-lens-label { font-size: 16px; font-weight: 700; fill: #374151; }
+  .venn-item { font-size: 15px; fill: #111827; }
+  .venn-wordbank {
+    margin: 14px 0 6px 0; padding: 8px 10px;
+    border: 2px dashed #9ca3af; border-radius: 8px;
+    text-align: center; background: #f9fafb;
+  }
+  .venn-wordbank-title {
+    font-size: 15px; font-weight: 700; letter-spacing: 0.04em;
+    margin-bottom: 6px; text-transform: uppercase;
+  }
+  .venn-chip {
+    display: inline-block; margin: 3px 6px; padding: 4px 12px;
+    border: 1.5px solid #9ca3af; border-radius: 999px;
+    background: #ffffff; font-size: 15px;
+  }
+
+/* Pixel copy */
+  .pc-grids {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .pc-grid-box { text-align: center; }
+  .pc-grid-label {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .pc-legend {
+    margin-top: 10px;
+    border: 1.5px dashed #aaa;
+    border-radius: 4px;
+    padding: 7px 9px;
+  }
+  .pc-legend-title {
+    font-size: 8.5pt;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 5px;
+  }
+  .pc-legend-row { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .pc-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9.5pt;
+  }
+  .pc-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #555;
+    border-radius: 3px;
+  }
+
+.seq-activity {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #1e3a8a;
+    margin: 8px 0 4px;
+  }
+  .seq-scissors {
+    font-size: 9pt;
+    font-style: italic;
+    color: #a0a0a0;
+    margin-bottom: 10px;
+  }
+  .seq-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .seq-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #fcfcfc;
+    border: 2px dashed #646464;
+    border-radius: 4px;
+    min-height: 0.9in;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .seq-num {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border: 2px solid #3c3c3c;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13pt;
+    font-weight: bold;
+  }
+  .seq-num-answer {
+    color: #c81e1e;
+  }
+  .seq-image {
+    flex: 0 0 auto;
+    width: 0.7in;
+    height: 0.7in;
+    object-fit: contain;
+  }
+  .seq-text {
+    font-size: 12pt;
+    font-weight: bold;
+    line-height: 1.35;
+  }
+  @media print {
+    .seq-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+.sm-day-header {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 5px 10px 5px 12px; border-radius: 4px 4px 0 0;
+    margin-bottom: 6px; color: white;
+  }
+  .sm-day-header-label {
+    font-size: 9pt; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.07em; opacity: 0.85;
+  }
+  .sm-day-header-title { font-size: 12pt; font-weight: bold; }
+  .sm-title {
+    font-size: 15pt; font-weight: bold; line-height: 1.2;
+    padding-bottom: 4px; margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+  }
+  .sm-name-date-row {
+    display: flex; justify-content: space-between;
+    font-size: 10pt; margin: 6px 0 4px;
+  }
+  .sm-instructions {
+    font-style: italic; font-size: 10.5pt; margin-bottom: 10px;
+  }
+  .sm-story-title {
+    display: flex; align-items: flex-end; gap: 6px;
+    margin: 4px 0 12px; font-size: 12pt;
+  }
+  .sm-story-title-line {
+    flex: 1; border-bottom: 2px solid #444; height: 1.15em;
+  }
+  .sm-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .sm-box {
+    border: 2px solid #646464; border-radius: 4px; overflow: hidden;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .sm-box-label {
+    font-weight: bold; font-size: 12pt; text-align: center;
+    padding: 4px 8px; border-bottom: 2px solid #646464;
+  }
+  .sm-box-body { padding: 6px 10px 10px; }
+  .sm-prompt {
+    font-style: italic; font-size: 9.5pt; color: #505050;
+    margin-bottom: 6px;
+  }
+  .sm-line { border-bottom: 1px solid #b4b4b4; height: 24px; }
+  .sm-answer {
+    color: #3c3cb4; font-size: 10.5pt; white-space: pre-wrap;
+    padding: 2px 0 8px;
+  }
+
+.nl-tasks { display: flex; flex-direction: column; gap: 18px; margin-top: 14px; }
+  .nl-task { break-inside: avoid; page-break-inside: avoid; }
+  .nl-prompt { font-style: italic; margin-bottom: 2px; }
+  .nl-svg { display: block; width: 100%; height: auto; max-width: 760px; }
+  .nl-svg .nl-axis { stroke: #111; stroke-width: 2.5; }
+  .nl-svg .nl-tick { stroke: #111; stroke-width: 2; }
+  .nl-svg .nl-label { font-size: 15px; fill: #111; text-anchor: middle; }
+  .nl-svg .nl-blank { fill: none; stroke: #6b7280; stroke-width: 1.2; }
+  .nl-svg .nl-mark { fill: #dc3232; }
+
+.ld-day-header {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 5px 10px 5px 12px; border-radius: 4px 4px 0 0;
+    margin-bottom: 6px; color: white;
+  }
+  .ld-day-header-label {
+    font-size: 9pt; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.07em; opacity: 0.85;
+  }
+  .ld-day-header-title { font-size: 12pt; font-weight: bold; }
+  .ld-title {
+    font-size: 15pt; font-weight: bold; line-height: 1.2;
+    padding-bottom: 4px; margin-bottom: 4px;
+    border-bottom: 2.5px solid currentColor;
+  }
+  .ld-name-date-row {
+    display: flex; justify-content: space-between;
+    font-size: 10pt; margin: 6px 0 4px;
+  }
+  .ld-instructions {
+    font-style: italic; font-size: 10.5pt; margin-bottom: 10px;
+  }
+  /* Diagram box: image or placeholder with numbered callout dots */
+  .ld-diagram {
+    position: relative;
+    border: 2px solid #a0a0a0; border-radius: 4px;
+    background: #f8f8ff;
+    min-height: 3.3in; margin-bottom: 14px;
+    overflow: hidden;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .ld-diagram img {
+    display: block; max-width: 100%; max-height: 3.3in; margin: 0 auto;
+  }
+  .ld-diagram-placeholder {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #b4b4b4; font-style: italic; font-size: 13pt;
+  }
+  .ld-callout {
+    position: absolute; width: 28px; height: 28px;
+    margin: -14px 0 0 -14px;
+    border-radius: 50%;
+    background: #6495ed; border: 2px solid #3c64c8;
+    color: white; font-weight: bold; font-size: 10.5pt;
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* Word bank tile bank */
+  .ld-word-bank {
+    margin: 0 0 14px;
+    padding: 8px 10px;
+    border: 2px dashed #646464; border-radius: 6px;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .ld-word-bank-title {
+    font-weight: bold; font-size: 11pt; margin-bottom: 6px;
+  }
+  .ld-word-bank-tiles {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .ld-word-tile {
+    border: 1.5px solid #646464; border-radius: 4px;
+    padding: 3px 10px; font-size: 10.5pt;
+    background: white;
+  }
+  .ld-word-tile-hint {
+    display: block; font-size: 8pt; color: #707070; font-style: italic;
+  }
+  /* Numbered label slots */
+  .ld-labels {
+    display: grid; grid-template-columns: 1fr 1fr;
+    column-gap: 24px; row-gap: 12px;
+  }
+  .ld-label-slot {
+    display: flex; align-items: flex-end; gap: 4px;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .ld-label-number { font-size: 11pt; white-space: nowrap; }
+  .ld-label-blank {
+    flex: 1; border-bottom: 1.5px solid #111; height: 1.05em;
+  }
+  .ld-label-answer {
+    flex: 1; font-size: 11pt; color: #3c3cb4;
+    border-bottom: 1.5px solid #3c3cb4;
+    padding-bottom: 1px;
+  }
+
+  /* Handwriting practice */
+  .hw-grid { display: grid; gap: 12px 16px; margin-top: 2px; }
+  .hw-cell {
+    border: 1.5px solid #555;
+    border-radius: 6px;
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+  }
+  .hw-image {
+    height: 0.9in;
+    max-width: 100%;
+    object-fit: contain;
+    align-self: center;
+    margin-bottom: 4px;
+  }
+  .hw-image-blank {
+    height: 0.9in;
+    border: 1.5px dashed #bbb;
+    border-radius: 4px;
+    align-self: center;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .hw-trace {
+    font-size: 21pt;
+    font-weight: bold;
+    letter-spacing: 0.22em;
+    color: #c4c4c4;                 /* light trace colour */
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    border-bottom: 2px dashed #9a9a9a;   /* dashed trace underline */
+    padding-bottom: 1px;
+    margin-bottom: 8px;
+    line-height: 1.25;
+  }
+  .hw-write {
+    height: calc(3 * 0.4in);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent calc(0.4in - 1px),
+      #777 calc(0.4in - 1px),
+      #777 0.4in
+    );
+  }
+  .hw-write.hw-bottom-rail { border-bottom: 2px solid #555; }
+  .hw-sublabel {
+    font-size: 9pt;
+    color: #666;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+/* Alphabet worksheet */
+  .abc-centerpiece {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 6px 0 2px;
+    margin-bottom: 6px;
+  }
+  .abc-letter {
+    font-size: 92pt;
+    font-weight: bold;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+  .abc-image { height: 1.9in; max-width: 1.9in; object-fit: contain; }
+  .abc-practice { margin-top: 8px; }
+  .abc-practice-label {
+    font-size: 9.5pt;
+    font-weight: bold;
+    color: #555;
+    margin: 8px 0 3px;
+  }
+  /* Handwriting ruled lines: solid top, dashed midline, solid bottom */
+  .abc-rule {
+    position: relative;
+    height: 58px;
+    border-top: 2px solid #969696;
+    border-bottom: 2px solid #969696;
+    margin-bottom: 10px;
+  }
+  .abc-rule::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    border-top: 1px dashed #969696;
+  }
+  .abc-trace-row {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 14px 2px;
+  }
+  .abc-trace-char {
+    font-size: 40pt;
+    font-weight: bold;
+    line-height: 1;
+    margin-right: 26px;
+  }
+  .abc-spacing-row { padding: 0 14px; color: #777; font-size: 16pt; font-weight: bold; }
+  .abc-spacing-row span { margin-right: 34px; white-space: nowrap; }
+  .abc-words { margin-top: 12px; }
+  .abc-words-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .abc-words-col { border: 2px solid; border-radius: 6px; padding: 7px 10px; }
+  .abc-words-title {
+    font-size: 11pt;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #bbb;
+    padding-bottom: 3px;
+    margin-bottom: 6px;
+  }
+  .abc-word {
+    font-size: 13pt;
+    line-height: 1.55;
+    list-style: none;
+    padding-left: 6px;
+  }
+
+/* Fill in the blank */
+  .fib-passage { font-size: 11pt; line-height: 2.1; margin-bottom: 10px; }
+  .fib-para { margin-bottom: 10px; }
+  .fib-para:last-child { margin-bottom: 0; }
+  .fib-gap {
+    display: inline-block; min-width: 1.1in; text-align: center;
+    border-bottom: 1.5px solid #444; padding: 0 6px;
+    vertical-align: baseline; line-height: 1.1;
+  }
+  .fib-gap-num { font-size: 8pt; color: #8a8a8a; display: block; line-height: 1.4; }
+  .fib-gap-filled { min-width: 1.1in; }
+  .fib-answer { color: #c81e1e; font-weight: bold; font-size: 10pt; }
+  .fib-word-bank { border: 1.5px dashed #aaa; border-radius: 4px; padding: 7px 9px; margin-top: 8px; }
+  .fib-wb-label { font-size: 8.5pt; color: #888; font-style: italic; margin-bottom: 5px; }
+  .fib-wb-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .fib-wb-tile { border: 1px solid #555; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; }
+  /* Two-operand math */
+  .to-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px 18px; }
+  .to-problem { display: flex; align-items: flex-start; gap: 6px; font-family: 'Trebuchet MS', Arial, sans-serif; }
+  .to-num { font-size: 10pt; font-weight: bold; color: #555; padding-top: 2px; flex: 0 0 18px; }
+  .to-stack { text-align: right; }
+  .to-row { font-size: 14pt; font-weight: bold; padding: 1px 0; letter-spacing: 0.03em; }
+  .to-op { margin-right: 4px; }
+  .to-underline { border-bottom: 2px solid #333; margin: 2px 0; height: 2px; }
+  .to-answer-box { height: 28px; border: 1.5px solid #999; border-radius: 3px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="page"><div class="ws-day" style="color:#1d4ed8;">Monday</div>
+<h2 class="ws-title" style="color:#1d4ed8;">Venn Diagram — Animals &amp; Plants</h2>
+<div class="ws-name-date">Name: __________________&nbsp;&nbsp;&nbsp;Date: __________________</div>
+<div class="ws-instructions">Sort each word into the correct part of the diagram.</div>
+<style>
+  .venn-diagram { text-align: center; margin: 6px 0; }
+  .venn-svg { display: block; width: 100%%; max-width: 640px; margin: 0 auto; }
+  .venn-wordbank { border: 1.5px dashed %s; border-radius: 4px; padding: 7px 9px; margin-top: 10px; }
+  .venn-wordbank-title { font-size: 9pt; font-style: italic; margin-bottom: 5px; }
+  .venn-chip { display: inline-block; border: 1px solid #555; border-radius: 3px; padding: 2px 8px; margin: 2px; font-size: 9.5pt; background: white; }
+  .venn-circle-label { font-size: 11pt; font-weight: bold; fill: #222; }
+  .venn-lens-label { font-size: 9pt; font-weight: bold; fill: #555; }
+  .venn-item { font-size: 9pt; fill: #333; }
+</style>
+<div class="venn-diagram"><svg class="venn-svg" viewBox="0 0 700 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Venn diagram: Animals / Plants"><circle class="venn-circle venn-circle-left" cx="250" cy="240" r="150" fill="#1d4ed8" fill-opacity="0.25" stroke="#1d4ed8" stroke-width="2.5"/><circle class="venn-circle venn-circle-right" cx="450" cy="240" r="150" fill="#1d4ed8" fill-opacity="0.25" stroke="#1d4ed8" stroke-width="2.5"/><text class="venn-circle-label" x="250" y="78" text-anchor="middle">Animals</text><text class="venn-circle-label" x="450" y="78" text-anchor="middle">Plants</text><text class="venn-lens-label" x="350" y="104" text-anchor="middle">Both</text><text class="venn-item" x="165" y="220" text-anchor="middle">Elephant</text><text class="venn-item" x="535" y="220" text-anchor="middle">Oak Tree</text></svg></div>
+<div class="venn-wordbank" style="border-color:#1d4ed8;"><div class="venn-wordbank-title" style="color:#1d4ed8;">Word Bank</div><span class="venn-chip">Mushroom</span><span class="venn-chip">Fish</span><span class="venn-chip">Tree</span><span class="venn-chip">Coral</span><span class="venn-chip">Flower</span><span class="venn-chip">Dog</span></div>
+</div>
+<div class="page"><div class="day-header" style="background:#1d4ed8;"><div class="day-header-label">Monday</div><div class="day-header-title">Handwriting Practice — Animals</div></div>
+<div class="ws-title" style="color:#1d4ed8;border-bottom-color:#1d4ed8;">Handwriting Practice — Animals</div>
+<div class="name-date-row">
+  <span>Name:&nbsp;&nbsp;_______________________________________</span>
+  <span class="short">Date:&nbsp;&nbsp;_______________</span>
+</div>
+<div class="ws-instructions">Trace each word, then write it on the lines below.</div>
+<div class="hw-grid" style="grid-template-columns:repeat(2,1fr);">
+<div class="hw-cell" style="border-color:#1d4ed8;"><div class="hw-image-blank"></div><div class="hw-trace">cat</div><div class="hw-write"></div></div><div class="hw-cell" style="border-color:#1d4ed8;"><div class="hw-image-blank"></div><div class="hw-trace">dog</div><div class="hw-write"></div></div><div class="hw-cell" style="border-color:#1d4ed8;"><div class="hw-image-blank"></div><div class="hw-trace">bird</div><div class="hw-write"></div></div><div class="hw-cell" style="border-color:#1d4ed8;"><div class="hw-image-blank"></div><div class="hw-trace">fish</div><div class="hw-write"></div></div>
+</div>
+</div>
+<div class="page">
+<div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Pixel Copy — Color Grid</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Pixel Copy — Color Grid</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Copy the colors from the left grid into the right grid.</div>
+
+<div class="pc-grids">
+  <div class="pc-grid-box">
+    <div class="pc-grid-label" style="color:#15803d;">Reference</div>
+    <svg class="pc-grid" width="144" height="144" viewBox="0 0 144 144" shape-rendering="crispEdges"><rect x="0" y="0" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="18" y="0" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="36" y="0" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="54" y="0" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="72" y="0" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="90" y="0" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="108" y="0" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="126" y="0" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="0" y="18" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="18" y="18" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="36" y="18" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="54" y="18" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="72" y="18" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="90" y="18" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="108" y="18" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="126" y="18" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="0" y="36" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="18" y="36" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="36" y="36" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="54" y="36" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="72" y="36" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="90" y="36" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="108" y="36" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="126" y="36" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="0" y="54" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="18" y="54" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="36" y="54" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="54" y="54" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="72" y="54" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="90" y="54" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="108" y="54" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="126" y="54" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="0" y="72" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="18" y="72" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="36" y="72" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="54" y="72" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="72" y="72" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="90" y="72" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="108" y="72" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="126" y="72" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="0" y="90" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="18" y="90" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="36" y="90" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="54" y="90" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="72" y="90" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="90" y="90" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="108" y="90" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="126" y="90" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="0" y="108" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="18" y="108" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="36" y="108" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="54" y="108" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="72" y="108" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="90" y="108" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="108" y="108" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="126" y="108" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="0" y="126" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="18" y="126" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/><rect x="36" y="126" width="18" height="18" fill="#4363d8" stroke="#333" stroke-width="0.5"/><rect x="54" y="126" width="18" height="18" fill="#f58231" stroke="#333" stroke-width="0.5"/><rect x="72" y="126" width="18" height="18" fill="#911eb4" stroke="#333" stroke-width="0.5"/><rect x="90" y="126" width="18" height="18" fill="#e6194b" stroke="#333" stroke-width="0.5"/><rect x="108" y="126" width="18" height="18" fill="#3cb44b" stroke="#333" stroke-width="0.5"/><rect x="126" y="126" width="18" height="18" fill="#ffe119" stroke="#333" stroke-width="0.5"/></svg>
+  </div>
+  <div class="pc-grid-box">
+    <div class="pc-grid-label" style="color:#15803d;">Your Copy</div>
+    <svg class="pc-grid" width="144" height="144" viewBox="0 0 144 144" shape-rendering="crispEdges"><rect x="0" y="0" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="18" y="0" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="36" y="0" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="54" y="0" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="72" y="0" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="90" y="0" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="108" y="0" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="126" y="0" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="0" y="18" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="18" y="18" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="36" y="18" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="54" y="18" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="72" y="18" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="90" y="18" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="108" y="18" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="126" y="18" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="0" y="36" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="18" y="36" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="36" y="36" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="54" y="36" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="72" y="36" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="90" y="36" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="108" y="36" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="126" y="36" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="0" y="54" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="18" y="54" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="36" y="54" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="54" y="54" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="72" y="54" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="90" y="54" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="108" y="54" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="126" y="54" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="0" y="72" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="18" y="72" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="36" y="72" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="54" y="72" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="72" y="72" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="90" y="72" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="108" y="72" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="126" y="72" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="0" y="90" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="18" y="90" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="36" y="90" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="54" y="90" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="72" y="90" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="90" y="90" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="108" y="90" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="126" y="90" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="0" y="108" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="18" y="108" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="36" y="108" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="54" y="108" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="72" y="108" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="90" y="108" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="108" y="108" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="126" y="108" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="0" y="126" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="18" y="126" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="36" y="126" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="54" y="126" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="72" y="126" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="90" y="126" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="108" y="126" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/><rect x="126" y="126" width="18" height="18" fill="white" stroke="#777" stroke-width="0.5"/></svg>
+  </div>
+</div>
+<div class="pc-legend"><div class="pc-legend-title" style="color:#15803d;">Colour Key — use these colours:</div><div class="pc-legend-row"><span class="pc-legend-item"><span class="pc-swatch" style="background:#3cb44b;"></span>Colour 1</span><span class="pc-legend-item"><span class="pc-swatch" style="background:#e6194b;"></span>Colour 2</span><span class="pc-legend-item"><span class="pc-swatch" style="background:#ffe119;"></span>Colour 3</span><span class="pc-legend-item"><span class="pc-swatch" style="background:#4363d8;"></span>Colour 4</span><span class="pc-legend-item"><span class="pc-swatch" style="background:#f58231;"></span>Colour 5</span><span class="pc-legend-item"><span class="pc-swatch" style="background:#911eb4;"></span>Colour 6</span></div></div>
+
+</div>
+<div class="page"><div class="day-header" style="background:#15803d;"><div class="day-header-label">Tuesday</div><div class="day-header-title">Alphabet Practice — Letter B</div></div>
+<div class="ws-title" style="color:#15803d;border-bottom-color:#15803d;">Alphabet Practice — Letter B</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Practice writing the letter B and reading B words!</div>
+<div class="abc-centerpiece"><span class="abc-letter" style="color:#15803d;">Bb</span></div>
+<div class="abc-practice"><div class="abc-practice-label">Trace and write the letter B:</div><div class="abc-rule"><div class="abc-trace-row"><span class="abc-trace-char" style="color:rgba(0,0,0,1.00);">B</span><span class="abc-trace-char" style="color:rgba(0,0,0,0.65);">B</span><span class="abc-trace-char" style="color:rgba(0,0,0,0.40);">B</span><span class="abc-trace-char" style="color:rgba(0,0,0,0.20);">B</span></div></div><div class="abc-rule"><div class="abc-trace-row"><span class="abc-trace-char" style="color:rgba(0,0,0,1.00);">b</span><span class="abc-trace-char" style="color:rgba(0,0,0,0.65);">b</span><span class="abc-trace-char" style="color:rgba(0,0,0,0.40);">b</span><span class="abc-trace-char" style="color:rgba(0,0,0,0.20);">b</span></div></div><div class="abc-practice-label">Now write it on your own:</div><div class="abc-rule"></div><div class="abc-practice-label">Write B b in the blanks to practice spacing:</div><div class="abc-spacing-row"><span>__&nbsp;&nbsp;__</span><span>__&nbsp;&nbsp;__</span><span>__&nbsp;&nbsp;__</span><span>__&nbsp;&nbsp;__</span><span>__&nbsp;&nbsp;__</span><span>__&nbsp;&nbsp;__</span><span>__&nbsp;&nbsp;__</span><span>__&nbsp;&nbsp;__</span></div></div>
+<div class="abc-words"><div class="abc-words-grid"><div class="abc-words-col" style="border-color:#15803d;background:#dcfce7;"><div class="abc-words-title" style="color:#15803d;">Words that start with B</div><div class="abc-word">&#8226;&nbsp;&nbsp;Ball</div><div class="abc-word">&#8226;&nbsp;&nbsp;Bear</div><div class="abc-word">&#8226;&nbsp;&nbsp;Bird</div><div class="abc-word">&#8226;&nbsp;&nbsp;Blue</div></div><div class="abc-words-col" style="border-color:#15803d;background:#dcfce7;"><div class="abc-words-title" style="color:#15803d;">Words that have B in them</div><div class="abc-word">&#8226;&nbsp;&nbsp;Cabbage</div><div class="abc-word">&#8226;&nbsp;&nbsp;Rabbit</div><div class="abc-word">&#8226;&nbsp;&nbsp;Table</div><div class="abc-word">&#8226;&nbsp;&nbsp;Zebra</div></div></div></div>
+</div>
+<div class="page"><style>
+  .seq-activity { font-size: 13pt; font-weight: bold; color: #1e3a8a; margin: 8px 0 4px; }
+  .seq-scissors { font-size: 9pt; font-style: italic; color: #a0a0a0; margin-bottom: 10px; }
+  .seq-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .seq-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: #fcfcfc; border: 2px dashed #646464; border-radius: 4px; min-height: 0.9in; page-break-inside: avoid; break-inside: avoid; }
+  .seq-num { flex: 0 0 auto; width: 34px; height: 34px; border: 2px solid #3c3c3c; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 13pt; font-weight: bold; }
+  .seq-num-answer { color: #c81e1e; }
+  .seq-image { flex: 0 0 auto; width: 0.7in; height: 0.7in; object-fit: contain; }
+  .seq-text { font-size: 12pt; font-weight: bold; line-height: 1.35; }
+  @media print { .seq-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+<div class="day-header" style="background:#7c3aed;"><span class="day-header-label">Wednesday</span><span class="day-header-title">Sequencing — Brush Your Teeth</span></div>
+<div class="ws-title" style="color:#7c3aed;">Sequencing — Brush Your Teeth</div>
+<div class="ws-name-date">Name: ______________________ &nbsp;&nbsp; Date: ____________</div>
+<div class="ws-instructions">Cut out each step and paste them in the correct order.</div>
+<div class="seq-activity" style="color:#7c3aed;">Activity: Brushing Your Teeth</div>
+<div class="seq-scissors">&#9986; - - - - - - Cut here - - - - - - - - - - - - - - - - - - - -</div>
+<div class="seq-cards"><div class="seq-card" style="border-color:#7c3aed44;"><div class="seq-num"></div><div class="seq-text">Put toothpaste on the toothbrush</div></div><div class="seq-card" style="border-color:#7c3aed44;"><div class="seq-num"></div><div class="seq-text">Wet the toothbrush with water</div></div><div class="seq-card" style="border-color:#7c3aed44;"><div class="seq-num"></div><div class="seq-text">Brush all your teeth for 2 minutes</div></div><div class="seq-card" style="border-color:#7c3aed44;"><div class="seq-num"></div><div class="seq-text">Rinse your mouth with water</div></div></div>
+</div>
+<div class="page"><div class="day-header" style="background:#7c3aed;"><div class="day-header-label">Wednesday</div><div class="day-header-title">Fill in the Blank — Our Solar System</div></div>
+<div class="ws-title" style="color:#7c3aed;border-bottom-color:#7c3aed;">Fill in the Blank — Our Solar System</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Use the word bank to fill in each blank.</div>
+<div class="fib-passage"><p class="fib-para"><span class="fib-text">The </span><span class="fib-gap"><span class="fib-gap-num">(1)</span></span><span class="fib-text"> is the star at the center of our solar system.</span></p><p class="fib-para"><span class="fib-text">The </span><span class="fib-gap"><span class="fib-gap-num">(2)</span></span><span class="fib-text"> is the closest planet to the Sun.</span></p><p class="fib-para"><span class="fib-text">Earth has one </span><span class="fib-gap"><span class="fib-gap-num">(3)</span></span><span class="fib-text"> that orbits around it.</span></p></div>
+<div class="fib-word-bank"><div class="fib-wb-label">Word Bank — write each word in the correct blank above:</div><div class="fib-wb-tiles"><span class="fib-wb-tile">Sun</span><span class="fib-wb-tile">Mercury</span><span class="fib-wb-tile">moon</span></div></div>
+</div>
+<div class="page"><style>
+  .sm-title { font-size: 15pt; font-weight: bold; padding-bottom: 4px; margin-bottom: 4px; border-bottom: 2.5px solid currentColor; line-height: 1.2; }
+  .sm-name-date-row { display: flex; justify-content: space-between; font-size: 10pt; margin: 6px 0 4px; }
+  .sm-instructions { font-style: italic; font-size: 10.5pt; margin-bottom: 10px; }
+  .sm-story-title { display: flex; align-items: flex-end; gap: 6px; margin: 4px 0 12px; font-size: 12pt; }
+  .sm-story-title-line { flex: 1; border-bottom: 2px solid #444; height: 1.15em; }
+  .sm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .sm-box { border: 2px solid #646464; border-radius: 4px; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
+  .sm-box-label { font-weight: bold; font-size: 12pt; text-align: center; padding: 4px 8px; border-bottom: 2px solid #646464; }
+  .sm-box-body { padding: 6px 10px 10px; }
+  .sm-prompt { font-style: italic; font-size: 9.5pt; color: #505050; margin-bottom: 6px; }
+  .sm-line { border-bottom: 1px solid #b4b4b4; height: 24px; }
+  .sm-answer { color: #3c3cb4; font-size: 10.5pt; white-space: pre-wrap; padding: 2px 0 8px; }
+</style>
+<div class="sm-day-header" style="background:#c2410c;"><div class="sm-day-header-label">Thursday</div><div class="sm-day-header-title">Story Map — The Three Little Pigs</div></div>
+<div class="sm-title" style="color:#c2410c;border-bottom-color:#c2410c;">Story Map — The Three Little Pigs</div>
+<div class="sm-name-date-row">
+  <span>Name:&nbsp;&nbsp;_______________________________________</span>
+  <span>Date:&nbsp;&nbsp;_______________</span>
+</div>
+<div class="sm-instructions">Fill in each box about the story you read.</div>
+<div class="sm-story-title"><b>Story&nbsp;Title:</b><div class="sm-story-title-line"></div></div>
+<div class="sm-grid"><div class="sm-box"><div class="sm-box-label" style="background:#ffedd5;border-bottom-color:#c2410c;color:#c2410c;">Characters</div><div class="sm-box-body"><div class="sm-prompt">Who is in the story?</div><div class="sm-line"></div><div class="sm-line"></div></div></div><div class="sm-box"><div class="sm-box-label" style="background:#ffedd5;border-bottom-color:#c2410c;color:#c2410c;">Setting</div><div class="sm-box-body"><div class="sm-prompt">Where does the story happen?</div><div class="sm-line"></div></div></div><div class="sm-box"><div class="sm-box-label" style="background:#ffedd5;border-bottom-color:#c2410c;color:#c2410c;">Problem</div><div class="sm-box-body"><div class="sm-prompt">What goes wrong?</div><div class="sm-line"></div><div class="sm-line"></div></div></div><div class="sm-box"><div class="sm-box-label" style="background:#ffedd5;border-bottom-color:#c2410c;color:#c2410c;">Solution</div><div class="sm-box-body"><div class="sm-prompt">How is the problem fixed?</div><div class="sm-line"></div><div class="sm-line"></div></div></div></div>
+</div>
+<div class="page"><div class="day-header" style="background:#c2410c;"><div class="day-header-label">Thursday</div><div class="day-header-title">Number Lines — Count by 1s and 2s</div></div>
+<div class="ws-title" style="color:#c2410c;border-bottom-color:#c2410c;">Number Lines — Count by 1s and 2s</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Fill in the missing numbers on each number line.</div>
+<style>
+  .nl-tasks { display: flex; flex-direction: column; gap: 18px; }
+  .nl-task { }
+  .nl-prompt { font-size: 10pt; margin-bottom: 4px; }
+  .nl-svg { display: block; width: 100%%; max-width: 780px; margin: 0 auto; }
+  .nl-axis { stroke: #111; stroke-width: 2.5; }
+  .nl-tick { stroke: #666; stroke-width: 1.5; }
+  .nl-label { font-size: 10pt; fill: #222; text-anchor: middle; }
+  .nl-blank { fill: white; stroke: #777; stroke-width: 1.5; }
+  .nl-mark { }
+</style>
+<div class="nl-tasks">
+<div class="nl-task"><div class="nl-prompt"><strong>1.</strong> Count from 0 to 10</div><svg class="nl-svg" viewBox="0 0 760 88" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Number line from 0 to 10"><line class="nl-axis" x1="10.0" y1="40.0" x2="750.0" y2="40.0"/><polygon class="nl-axis" fill="#111" points="756.0,40.0 746.0,34.5 746.0,45.5"/><polygon class="nl-axis" fill="#111" points="4.0,40.0 14.0,34.5 14.0,45.5"/><line class="nl-tick" x1="18.00" y1="32.0" x2="18.00" y2="48.0"/><text class="nl-label" x="18.00" y="78.0">0</text><line class="nl-tick" x1="90.40" y1="32.0" x2="90.40" y2="48.0"/><text class="nl-label" x="90.40" y="78.0">1</text><line class="nl-tick" x1="162.80" y1="32.0" x2="162.80" y2="48.0"/><text class="nl-label" x="162.80" y="78.0">2</text><line class="nl-tick" x1="235.20" y1="32.0" x2="235.20" y2="48.0"/><rect class="nl-blank" x="220.20" y="56.0" width="30.0" height="26" rx="2"/><line class="nl-tick" x1="307.60" y1="32.0" x2="307.60" y2="48.0"/><text class="nl-label" x="307.60" y="78.0">4</text><line class="nl-tick" x1="380.00" y1="32.0" x2="380.00" y2="48.0"/><circle class="nl-mark" cx="380.00" cy="20.0" r="6.0" fill="#c2410c"/><text class="nl-label" x="380.00" y="78.0">5</text><line class="nl-tick" x1="452.40" y1="32.0" x2="452.40" y2="48.0"/><text class="nl-label" x="452.40" y="78.0">6</text><line class="nl-tick" x1="524.80" y1="32.0" x2="524.80" y2="48.0"/><rect class="nl-blank" x="509.80" y="56.0" width="30.0" height="26" rx="2"/><line class="nl-tick" x1="597.20" y1="32.0" x2="597.20" y2="48.0"/><text class="nl-label" x="597.20" y="78.0">8</text><line class="nl-tick" x1="669.60" y1="32.0" x2="669.60" y2="48.0"/><text class="nl-label" x="669.60" y="78.0">9</text><line class="nl-tick" x1="742.00" y1="32.0" x2="742.00" y2="48.0"/><text class="nl-label" x="742.00" y="78.0">10</text></svg></div><div class="nl-task"><div class="nl-prompt"><strong>2.</strong> Count by 2s from 0 to 20</div><svg class="nl-svg" viewBox="0 0 760 88" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Number line from 0 to 20"><line class="nl-axis" x1="10.0" y1="40.0" x2="750.0" y2="40.0"/><polygon class="nl-axis" fill="#111" points="756.0,40.0 746.0,34.5 746.0,45.5"/><polygon class="nl-axis" fill="#111" points="4.0,40.0 14.0,34.5 14.0,45.5"/><line class="nl-tick" x1="18.00" y1="32.0" x2="18.00" y2="48.0"/><text class="nl-label" x="18.00" y="78.0">0</text><line class="nl-tick" x1="90.40" y1="32.0" x2="90.40" y2="48.0"/><text class="nl-label" x="90.40" y="78.0">2</text><line class="nl-tick" x1="162.80" y1="32.0" x2="162.80" y2="48.0"/><text class="nl-label" x="162.80" y="78.0">4</text><line class="nl-tick" x1="235.20" y1="32.0" x2="235.20" y2="48.0"/><text class="nl-label" x="235.20" y="78.0">6</text><line class="nl-tick" x1="307.60" y1="32.0" x2="307.60" y2="48.0"/><rect class="nl-blank" x="292.60" y="56.0" width="30.0" height="26" rx="2"/><line class="nl-tick" x1="380.00" y1="32.0" x2="380.00" y2="48.0"/><circle class="nl-mark" cx="380.00" cy="20.0" r="6.0" fill="#c2410c"/><text class="nl-label" x="380.00" y="78.0">10</text><line class="nl-tick" x1="452.40" y1="32.0" x2="452.40" y2="48.0"/><text class="nl-label" x="452.40" y="78.0">12</text><line class="nl-tick" x1="524.80" y1="32.0" x2="524.80" y2="48.0"/><rect class="nl-blank" x="509.80" y="56.0" width="30.0" height="26" rx="2"/><line class="nl-tick" x1="597.20" y1="32.0" x2="597.20" y2="48.0"/><text class="nl-label" x="597.20" y="78.0">16</text><line class="nl-tick" x1="669.60" y1="32.0" x2="669.60" y2="48.0"/><text class="nl-label" x="669.60" y="78.0">18</text><line class="nl-tick" x1="742.00" y1="32.0" x2="742.00" y2="48.0"/><text class="nl-label" x="742.00" y="78.0">20</text></svg></div>
+</div>
+</div>
+<div class="page"><style>
+  .ld-title { font-size: 15pt; font-weight: bold; padding-bottom: 4px; margin-bottom: 4px; border-bottom: 2.5px solid; line-height: 1.2; }
+  .ld-name-date-row { display: flex; justify-content: space-between; font-size: 10pt; margin: 6px 0 4px; }
+  .ld-instructions { font-style: italic; font-size: 10.5pt; margin-bottom: 10px; }
+  .ld-diagram { position: relative; border: 2px solid #555; border-radius: 6px; min-height: 2.5in; margin: 8px 0 12px; overflow: hidden; }
+  .ld-diagram img { width: 100%%; display: block; }
+  .ld-diagram-placeholder { color: #aaa; font-size: 16pt; text-align: center; padding: 1.2in 0; }
+  .ld-callout { position: absolute; width: 24px; height: 24px; border-radius: 50%%; background: white; border: 2px solid #222; display: flex; align-items: center; justify-content: center; font-size: 10pt; font-weight: bold; transform: translate(-50%%, -50%%); }
+  .ld-word-bank { border-radius: 4px; padding: 7px 9px; margin: 8px 0; }
+  .ld-word-bank-title { font-size: 9pt; font-weight: bold; margin-bottom: 5px; }
+  .ld-word-bank-tiles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ld-word-tile { border: 1.5px solid; border-radius: 3px; padding: 2px 8px; font-size: 9.5pt; background: white; white-space: nowrap; }
+  .ld-word-tile-hint { font-size: 8pt; color: #888; margin-left: 4px; }
+  .ld-labels { margin-top: 10px; }
+  .ld-label-slot { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 10.5pt; }
+  .ld-label-number { font-weight: bold; flex: 0 0 18px; text-align: right; }
+  .ld-label-blank { flex: 1; border-bottom: 1.5px solid #777; height: 22px; }
+  .ld-label-answer { color: #c81e1e; font-weight: bold; }
+</style>
+<div class="ld-day-header" style="background:#0f766e;"><div class="ld-day-header-label">Friday</div><div class="ld-day-header-title">Labeled Diagram — Parts of a Flower</div></div>
+<div class="ld-title" style="color:#0f766e;border-bottom-color:#0f766e;">Labeled Diagram — Parts of a Flower</div>
+<div class="ld-name-date-row">
+  <span>Name:&nbsp;&nbsp;_______________________________________</span>
+  <span>Date:&nbsp;&nbsp;_______________</span>
+</div>
+<div class="ld-instructions">Label each part of the flower using the word bank.</div>
+<div class="ld-diagram"><div class="ld-diagram-placeholder">[ Diagram ]</div><div class="ld-callout" style="left:12.50%;top:35%;" data-number="1">1</div><div class="ld-callout" style="left:37.50%;top:65%;" data-number="2">2</div><div class="ld-callout" style="left:62.50%;top:35%;" data-number="3">3</div><div class="ld-callout" style="left:87.50%;top:65%;" data-number="4">4</div></div>
+<div class="ld-word-bank" style="background:#ccfbf1;"><div class="ld-word-bank-title" style="color:#0f766e;">Word Bank:</div><div class="ld-word-bank-tiles"><span class="ld-word-tile" style="border-color:#0f766e;">Leaves</span><span class="ld-word-tile" style="border-color:#0f766e;">Roots</span><span class="ld-word-tile" style="border-color:#0f766e;">Stem</span><span class="ld-word-tile" style="border-color:#0f766e;">Petals</span></div></div>
+<div class="ld-labels"><div class="ld-label-slot"><span class="ld-label-number">1.</span><span class="ld-label-blank"></span></div><div class="ld-label-slot"><span class="ld-label-number">2.</span><span class="ld-label-blank"></span></div><div class="ld-label-slot"><span class="ld-label-number">3.</span><span class="ld-label-blank"></span></div><div class="ld-label-slot"><span class="ld-label-number">4.</span><span class="ld-label-blank"></span></div></div>
+</div>
+<div class="page last-page"><div class="day-header" style="background:#0f766e;"><div class="day-header-label">Friday</div><div class="day-header-title">Math Practice — Addition &amp; Subtraction</div></div>
+<div class="ws-title" style="color:#0f766e;border-bottom-color:#0f766e;">Math Practice — Addition &amp; Subtraction</div>
+<div class="name-date-row"><span>Name:&nbsp;&nbsp;_______________________________________</span><span class="short">Date:&nbsp;&nbsp;_______________</span></div>
+<div class="ws-instructions">Solve each problem in the box.</div>
+<div class="to-grid"><div class="to-problem"><span class="to-num">0.</span><div class="to-stack"><div class="to-row">23</div><div class="to-row"><span class="to-op">+</span>15</div><div class="to-underline" style="width:2.4em;"></div><div class="to-answer-box"></div></div></div><div class="to-problem"><span class="to-num">1.</span><div class="to-stack"><div class="to-row">47</div><div class="to-row"><span class="to-op">-</span>28</div><div class="to-underline" style="width:2.4em;"></div><div class="to-answer-box"></div></div></div><div class="to-problem"><span class="to-num">2.</span><div class="to-stack"><div class="to-row">56</div><div class="to-row"><span class="to-op">+</span>34</div><div class="to-underline" style="width:2.4em;"></div><div class="to-answer-box"></div></div></div><div class="to-problem"><span class="to-num">3.</span><div class="to-stack"><div class="to-row">31</div><div class="to-row"><span class="to-op">+</span>19</div><div class="to-underline" style="width:2.4em;"></div><div class="to-answer-box"></div></div></div></div>
+</div>
+<script>window.addEventListener("load", () => window.print());</script>
+</body>
+</html>
