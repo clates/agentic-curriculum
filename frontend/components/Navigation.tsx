@@ -61,7 +61,7 @@ export function Navigation() {
               >
                 Progress Map
               </a>
-              </div>
+            </div>
           </div>
           <div className="flex items-center">
             <div className="bg-primary-200 h-8 w-8 rounded-full"></div>

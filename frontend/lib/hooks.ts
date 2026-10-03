@@ -60,7 +60,11 @@ export function useStudents() {
 
 function parseBlob(raw: string | null | undefined): Record<string, any> {
   if (!raw) return {};
-  try { return JSON.parse(raw); } catch { return {}; }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
 }
 
 function studentGradeLabel(student: any): string {
