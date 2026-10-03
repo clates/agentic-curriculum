@@ -8,7 +8,7 @@ This document outlines the architecture, constraints, and "Instructional Pair" s
 The system is built on a modular Python framework:
 *   **`src/worksheets/`**: Logic for specific data structures (e.g., `MatchingWorksheet`, `ReadingWorksheet`).
 *   **`src/worksheets/factory.py`**: A unified entry point to create worksheet objects from dictionary payloads. Required for PIL rendering; **not needed** for HTML rendering.
-*   **`src/worksheet_renderer.py`**: The visual (PIL/Pillow) engine. Use for image-heavy types (handwriting, pixel copy, alphabet) or when PNG/PDF output is explicitly needed. Render functions follow the pattern `render_X_to_image(ws, path)` / `render_X_to_pdf(ws, path)`.
+*   **`src/worksheet_renderer.py`**: ⚠️ **DEPRECATED** — The legacy PIL/Pillow engine. All types have been migrated to HTML rendering. This module emits a `DeprecationWarning` on import and will be removed in a future release. Render functions follow the pattern `render_X_to_image(ws, path)` / `render_X_to_pdf(ws, path)`.
 *   **`src/worksheet_html_renderer.py`**: The preferred engine for printable worksheet packets. Produces clean, browser-printable HTML with day-colour theming. Two key functions:
     *   `render_worksheet_html(kind, data, day_label) -> str | None` — renders one worksheet to an HTML fragment. `kind` uses **camelCase** strings (e.g. `"readingWorksheet"`, `"featureMatrixWorksheet"`). `data` is a plain dict — **do not pass a WorksheetFactory object**.
     *   `build_print_packet_html(pages, packet_title) -> str` — assembles a list of `(day_label, fragment)` tuples into a single printable HTML document that auto-opens the browser print dialog on load.
@@ -17,8 +17,7 @@ The system is built on a modular Python framework:
 | Situation | Use |
 |-----------|-----|
 | Single printable packet for a student | **HTML** (`render_worksheet_html` + `build_print_packet_html`) |
-| Pixel art, handwriting, or alphabet sheets | PIL (`worksheet_renderer.py`) |
-| PNG/PDF files needed for individual download | PIL |
+| PNG/PDF files needed for individual download | PIL (deprecated) |
 | Embedding in the API weekly-plan flow | HTML (agent.py already uses this) |
 
 ---
@@ -36,7 +35,7 @@ Stick strictly to **CVC** (Cat, Pig), **CCVC** (Snow, Frog), and **CVCC** (Raft,
 
 ## 3. Supported Worksheet Types
 
-22 types are registered in `WorksheetFactory`. The table below shows the factory key (snake_case), the HTML renderer kind (camelCase, for `render_worksheet_html`), and which renderer supports each type.
+24 types are registered in `WorksheetFactory`. The table below shows the factory key (snake_case), the HTML renderer kind (camelCase, for `render_worksheet_html`), and which renderer supports each type.
 
 | Factory key | HTML kind | HTML | PIL |
 |-------------|-----------|------|-----|
@@ -50,16 +49,16 @@ Stick strictly to **CVC** (Cat, Pig), **CCVC** (Snow, Frog), and **CVCC** (Raft,
 | `word_sort` | `wordSortWorksheet` | ✓ | ✓ |
 | `writing_scaffold` | `writingScaffoldWorksheet` | ✓ | ✓ |
 | `t_chart` | `tChartWorksheet` | ✓ | ✓ |
-| `handwriting` | — | — | ✓ |
-| `pixel_copy` | — | — | ✓ |
-| `alphabet` | — | — | ✓ |
-| `fill_in_the_blank` | — | — | ✓ |
-| `sequencing` | — | — | ✓ |
-| `venn_diagram` | — | — | ✓ |
-| `story_map` | — | — | ✓ |
-| `number_line` | — | — | ✓ |
-| `labeled_diagram` | — | — | ✓ |
-| `two_operand` | — | — | ✓ |
+| `handwriting` | `handwritingWorksheet` | ✓ | ✓ |
+| `pixel_copy` | `pixelCopyWorksheet` | ✓ | ✓ |
+| `alphabet` | `alphabetWorksheet` | ✓ | ✓ |
+| `fill_in_the_blank` | `fillInBlankWorksheet` | ✓ | ✓ |
+| `sequencing` | `sequencingWorksheet` | ✓ | ✓ |
+| `venn_diagram` | `vennDiagramWorksheet` | ✓ | ✓ |
+| `story_map` | `storyMapWorksheet` | ✓ | ✓ |
+| `number_line` | `numberLineWorksheet` | ✓ | ✓ |
+| `labeled_diagram` | `labeledDiagramWorksheet` | ✓ | ✓ |
+| `two_operand` | `twoOperandWorksheet` | ✓ | ✓ |
 | `error_audit` | `errorAuditWorksheet` | ✓ | ✓ |
 | `ten_frame` | `tenFrameWorksheet` | ✓ | ✓ |
 
