@@ -80,7 +80,8 @@ def test_adversarial_and_redraw_modes():
     )
     assert ws.adversarial is True
     md = ws.to_markdown()
-    assert "ASSIGN" in md or "redraw box" in md
+    assert "ASSIGN SUSPECTS:" in md
+    assert "Suspects:" not in md.replace("ASSIGN SUSPECTS:", "")
 
 
 def test_show_answers_renders_key():
@@ -162,3 +163,82 @@ def test_html_render_smoke():
     assert "Clock Doctor" in frag
     assert "<svg" in frag
     assert "Hour-hand trap" in frag
+
+
+def _scaffold_spec(**over):
+    base = _spec(
+        fix_scaffold={
+            "kind": "decimal_stack",
+            "addends": ["0.5", "0.25"],
+            "answer": "0.75",
+        }
+    )
+    base.update(over)
+    return base
+
+
+def test_fix_scaffold_decimal_stack_rows():
+    from src.worksheets.error_audit import decimal_stack_rows
+
+    grid = decimal_stack_rows(
+        {"kind": "decimal_stack", "addends": ["0.5", "0.25"], "answer": "0.75"}
+    )
+    # Columns: 1 int + point + 2 frac = 4 per row; the short term pads.
+    assert [c for _, c in grid["terms"][0]].count("pad") == 1
+    assert [c for _, c in grid["terms"][1]].count("pad") == 0
+    assert grid["has_pads"] is True
+    points = [i for i, (_, k) in enumerate(grid["terms"][0]) if k == "point"]
+    assert points == [i for i, (_, k) in enumerate(grid["terms"][1]) if k == "point"]
+    assert points == [i for i, (_, k) in enumerate(grid["answer"]) if k == "point"]
+    key = decimal_stack_rows(
+        {"kind": "decimal_stack", "addends": ["0.5", "0.25"], "answer": "0.75"},
+        filled=True,
+    )
+    assert "".join(c for c, k in key["answer"] if k == "given") == "075"
+
+
+def test_fix_scaffold_validation():
+    with pytest.raises(ValueError):
+        generate_error_audit_worksheet([_scaffold_spec(
+            fix_scaffold={"kind": "mystery_grid"})])
+    with pytest.raises(ValueError):
+        generate_error_audit_worksheet([_scaffold_spec(
+            fix_scaffold={"kind": "decimal_stack", "addends": [], "answer": "0.75"})])
+    with pytest.raises(ValueError):
+        generate_error_audit_worksheet([_scaffold_spec(
+            fix_scaffold={"kind": "decimal_stack",
+                          "addends": ["0.5"], "answer": "3/4"})])
+
+
+def test_fix_scaffold_markdown_and_renders(tmp_path):
+    ws = generate_error_audit_worksheet([_scaffold_spec()])
+    md = ws.to_markdown()
+    assert "line up the decimals" in md
+    assert "helpers" in md
+    assert "Fix:" + " _" * 20 not in md
+
+    from src.worksheet_renderer import render_error_audit_to_image
+    from src.worksheet_html_renderer import render_worksheet_html
+    import os
+
+    img = render_error_audit_to_image(ws, str(tmp_path / "scaffold.png"))
+    assert os.path.getsize(img) > 5000
+    key = generate_error_audit_worksheet(
+        [_scaffold_spec()], show_answers=True
+    )
+    key_img = render_error_audit_to_image(key, str(tmp_path / "scaffold_key.png"))
+    assert os.path.getsize(key_img) > 5000
+
+    frag = render_worksheet_html(
+        "errorAuditWorksheet",
+        {
+            "title": "Decimals",
+            "fix_mode": "rewrite",
+            "specimens": [_scaffold_spec()],
+        },
+        "Thursday",
+    )
+    assert frag is not None
+    assert "ea-dec-grid" in frag
+    assert "ea-dec-pad" in frag
+    assert "line up the decimals" in frag

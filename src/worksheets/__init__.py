@@ -158,7 +158,16 @@ from .error_audit import (
     ErrorAuditSpecimen,
     ErrorAuditWorksheet,
     generate_error_audit_worksheet,
+    decimal_stack_rows,
     FIX_MODES,
+)
+
+
+# Ten-frame ("Make Ten") worksheet components
+from .ten_frame import (
+    TenFrameProblem,
+    TenFrameWorksheet,
+    generate_ten_frame_worksheet,
 )
 
 
@@ -255,7 +264,12 @@ __all__ = [
     "ErrorAuditSpecimen",
     "ErrorAuditWorksheet",
     "generate_error_audit_worksheet",
+    "decimal_stack_rows",
     "FIX_MODES",
+    # Ten-frame ("Make Ten")
+    "TenFrameProblem",
+    "TenFrameWorksheet",
+    "generate_ten_frame_worksheet",
     # Factory
     "WorksheetFactory",
 ]

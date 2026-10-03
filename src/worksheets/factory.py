@@ -89,6 +89,10 @@ from .error_audit import (
     ErrorAuditWorksheet,
     generate_error_audit_worksheet,
 )
+from .ten_frame import (
+    TenFrameWorksheet,
+    generate_ten_frame_worksheet,
+)
 
 
 def _create_two_operand(payload: dict[str, Any]) -> MathWorksheet:
@@ -397,6 +401,23 @@ def _create_error_audit(payload: dict[str, Any]) -> ErrorAuditWorksheet:
         adversarial=payload.get("adversarial", False),
         show_answers=payload.get("show_answers", False),
         fix_lines=payload.get("fix_lines", 2),
+        columns=payload.get("columns", 1),
+        metadata=payload.get("metadata"),
+    )
+
+
+def _create_ten_frame(payload: dict[str, Any]) -> TenFrameWorksheet:
+    """Create a ten-frame ("Make Ten") worksheet from payload."""
+    return generate_ten_frame_worksheet(
+        problems=payload.get("problems", []),
+        title=payload.get("title", "Make Ten!"),
+        instructions=payload.get(
+            "instructions",
+            "Move counters to fill the first ten-frame to ten. "
+            "Write the make-ten proof on the lines.",
+        ),
+        show_answers=payload.get("show_answers", False),
+        equation_lines=payload.get("equation_lines", 2),
         metadata=payload.get("metadata"),
     )
 
@@ -426,6 +447,7 @@ class WorksheetFactory:
         "labeled_diagram": _create_labeled_diagram,
         "frayer_model": _create_frayer_model,
         "error_audit": _create_error_audit,
+        "ten_frame": _create_ten_frame,
     }
 
     @classmethod
