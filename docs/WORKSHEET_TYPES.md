@@ -785,7 +785,7 @@ After creating a worksheet, use the rendering functions to generate printable fi
 
 ```python
 from src.worksheets import generate_two_operand_math_worksheet
-from src.worksheet_renderer import render_worksheet_to_pdf, render_worksheet_to_image
+<!-- PIL renderer removed — all rendering is now HTML via worksheet_html_renderer -->
 
 worksheet = generate_two_operand_math_worksheet(
     problems=[{"operand_one": 3, "operand_two": 2, "operator": "+"}],
@@ -802,7 +802,8 @@ For reading worksheets:
 
 ```python
 from src.worksheets import generate_reading_comprehension_worksheet
-from src.worksheet_renderer import (
+from src.worksheet_html_renderer import render_worksheet_html  # was: PIL renderer
+from src.worksheets import (
     render_reading_worksheet_to_pdf,
     render_reading_worksheet_to_image,
 )
@@ -826,7 +827,8 @@ from src.worksheets import (
     generate_odd_one_out_worksheet,
     generate_tree_map_worksheet,
 )
-from src.worksheet_renderer import (
+from src.worksheet_html_renderer import render_worksheet_html  # was: PIL renderer
+from src.worksheets import (
     render_venn_diagram_to_pdf,
     render_venn_diagram_to_image,
     render_feature_matrix_to_pdf,

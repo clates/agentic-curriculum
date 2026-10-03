@@ -151,21 +151,3 @@ def test_html_fragment_contains_stages():
     assert "0.50 + 0.25 = 0.75" not in frag  # no answers on student sheet
 
 
-def test_pil_render_smoke(tmp_path):
-    from src.worksheet_renderer import (
-        render_error_audit_to_image,
-        render_error_audit_to_pdf,
-    )
-
-    payload = _decimals_payload()
-    ws = WorksheetFactory.create("error_audit", payload)
-    img = render_error_audit_to_image(ws, str(tmp_path / "sheet.png"))
-    pdf = render_error_audit_to_pdf(ws, str(tmp_path / "sheet.pdf"))
-    key = WorksheetFactory.create(
-        "error_audit", {**payload, "show_answers": True}
-    )
-    kimg = render_error_audit_to_image(key, str(tmp_path / "key.png"))
-    import os
-
-    for path in (img, pdf, kimg):
-        assert os.path.getsize(path) > 5000, path

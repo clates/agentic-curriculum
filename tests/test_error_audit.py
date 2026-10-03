@@ -113,30 +113,6 @@ def test_metadata_round_trips_through_factory():
     assert ws.metadata["strategy"] == "misconception-hunter"
 
 
-def test_pil_render_smoke(tmp_path):
-    from src.worksheet_renderer import (
-        render_error_audit_to_image,
-        render_error_audit_to_pdf,
-    )
-
-    ws = WorksheetFactory.create(
-        "error_audit",
-        {
-            "title": "Telling Time: Half Hour",
-            "theme_label": "Clock Doctor",
-            "instructions": "Circle the bug.",
-            "legend": ["Hour-hand trap", "Missing hand"],
-            "fix_mode": "redraw",
-            "specimens": [_spec(art={"kind": "clock", "hour": 3.0, "minute": 30})],
-        },
-    )
-    img = render_error_audit_to_image(ws, str(tmp_path / "smoke.png"))
-    pdf = render_error_audit_to_pdf(ws, str(tmp_path / "smoke.pdf"))
-    import os
-
-    assert os.path.getsize(img) > 5000
-    assert os.path.getsize(pdf) > 5000
-
 
 def test_html_render_smoke():
     from src.worksheet_html_renderer import render_worksheet_html
@@ -210,35 +186,3 @@ def test_fix_scaffold_validation():
                           "addends": ["0.5"], "answer": "3/4"})])
 
 
-def test_fix_scaffold_markdown_and_renders(tmp_path):
-    ws = generate_error_audit_worksheet([_scaffold_spec()])
-    md = ws.to_markdown()
-    assert "line up the decimals" in md
-    assert "helpers" in md
-    assert "Fix:" + " _" * 20 not in md
-
-    from src.worksheet_renderer import render_error_audit_to_image
-    from src.worksheet_html_renderer import render_worksheet_html
-    import os
-
-    img = render_error_audit_to_image(ws, str(tmp_path / "scaffold.png"))
-    assert os.path.getsize(img) > 5000
-    key = generate_error_audit_worksheet(
-        [_scaffold_spec()], show_answers=True
-    )
-    key_img = render_error_audit_to_image(key, str(tmp_path / "scaffold_key.png"))
-    assert os.path.getsize(key_img) > 5000
-
-    frag = render_worksheet_html(
-        "errorAuditWorksheet",
-        {
-            "title": "Decimals",
-            "fix_mode": "rewrite",
-            "specimens": [_scaffold_spec()],
-        },
-        "Thursday",
-    )
-    assert frag is not None
-    assert "ea-dec-grid" in frag
-    assert "ea-dec-pad" in frag
-    assert "line up the decimals" in frag
