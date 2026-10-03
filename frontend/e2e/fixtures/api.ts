@@ -33,7 +33,8 @@ export async function createStudent(
       metadata: { name: opts.name, birthday: opts.birthday },
     },
   });
-  if (!res.ok()) {
+  // 400 = already exists (idempotent — retries are safe)
+  if (!res.ok() && res.status() !== 400) {
     throw new Error(`createStudent failed: ${res.status()} ${await res.text()}`);
   }
 }
