@@ -1,5 +1,8 @@
 """Rendering helpers for Worksheet objects."""
 
+
+from __future__ import annotations
+
 import warnings
 warnings.warn(
     "worksheet_renderer is DEPRECATED — all worksheet types now render via "
@@ -8,8 +11,6 @@ warnings.warn(
     DeprecationWarning,
     stacklevel=2,
 )
-
-from __future__ import annotations
 
 import math
 import random
