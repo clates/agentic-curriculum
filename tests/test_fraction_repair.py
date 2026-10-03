@@ -111,71 +111,7 @@ def test_fraction_repair_worksheet_fields():
 # ── PIL renderer ───────────────────────────────────────────────────────────
 
 
-def test_pil_renders_fraction_repair_png_pdf_key(tmp_path):
-    import os
 
-    from src.worksheet_renderer import (
-        render_error_audit_to_image,
-        render_error_audit_to_pdf,
-        _render_error_audit_image,
-    )
-
-    ws = WorksheetFactory.create("error_audit", _payload())
-    img = render_error_audit_to_image(ws, str(tmp_path / "sheet.png"))
-    pdf = render_error_audit_to_pdf(ws, str(tmp_path / "sheet.pdf"))
-    key_ws = WorksheetFactory.create("error_audit", _payload(show_answers=True))
-    key = render_error_audit_to_image(key_ws, str(tmp_path / "key.png"))
-    assert os.path.getsize(img) > 5000
-    assert os.path.getsize(pdf) > 5000
-    assert os.path.getsize(key) > 5000
-    # Key mode drops the interactive stages, so the sheet is taller.
-    assert _render_error_audit_image(ws).height > _render_error_audit_image(key_ws).height
-
-
-def test_pil_redraw_starter_box_makes_sheet_taller():
-    from src.worksheet_renderer import _render_error_audit_image
-
-    ws_redraw = WorksheetFactory.create(
-        "error_audit", _payload(fix_mode="redraw", verify=False)
-    )
-    ws_none = WorksheetFactory.create(
-        "error_audit", _payload(fix_mode="none", verify=False)
-    )
-    taller = (
-        _render_error_audit_image(ws_redraw).height
-        - _render_error_audit_image(ws_none).height
-    )
-    # 3 redraw boxes with partition starter scaffolds (~230px each).
-    assert taller > 600
-
-
-def test_pil_starter_art_override_changes_scaffold():
-    """Regression: starter_art must reach the PIL redraw scaffold."""
-    import hashlib
-
-    from src.worksheet_renderer import _render_error_audit_image
-
-    def _img(parts):
-        payload = _payload()
-        payload["specimens"] = [
-            {
-                "prompt": "Zoe says this circle shows thirds.",
-                "lines": ["Study Zoe's circle."],
-                "art": {"kind": "partitions", "parts": 4},
-                "starter_art": {"kind": "partitions", "parts": parts},
-                "bug_location": "Four pieces, not three.",
-                "diagnosis": "Wrong count",
-            }
-        ]
-        return _render_error_audit_image(WorksheetFactory.create("error_audit", payload))
-
-    def _digest(img):
-        return hashlib.md5(img.tobytes()).hexdigest()
-
-    assert _digest(_img(3)) != _digest(_img(12))
-
-
-# ── HTML renderer ──────────────────────────────────────────────────────────
 
 
 def _html_frag(**data_over):
@@ -323,41 +259,4 @@ def test_html_two_up_wraps_cards():
     assert 'class="ea-cards-2"' not in single
 
 
-def test_pil_two_up_blank_and_key(tmp_path):
-    from src.worksheet_renderer import render_error_audit_to_image
-    from PIL import Image
-    import os
 
-    one = generate_error_audit_worksheet(
-        _blank_payload()["specimens"], fix_mode="redraw"
-    )
-    two = generate_error_audit_worksheet(
-        _blank_payload()["specimens"], fix_mode="redraw", columns=2
-    )
-    p1 = render_error_audit_to_image(one, str(tmp_path / "one.png"))
-    p2 = render_error_audit_to_image(two, str(tmp_path / "two.png"))
-    assert os.path.getsize(p1) > 5000
-    assert os.path.getsize(p2) > 5000
-    h1 = Image.open(p1).size[1]
-    h2 = Image.open(p2).size[1]
-    assert h2 < h1  # two-up halves the whitespace
-
-    key = generate_error_audit_worksheet(
-        _blank_payload()["specimens"], fix_mode="redraw", show_answers=True
-    )
-    pk = render_error_audit_to_image(key, str(tmp_path / "key.png"))
-    assert os.path.getsize(pk) > 5000
-
-
-def test_pil_long_title_wraps_below_badge(tmp_path):
-    from src.worksheet_renderer import render_error_audit_to_image
-    import os
-
-    ws = generate_error_audit_worksheet(
-        _blank_payload()["specimens"],
-        title="Fractions: Halves, Thirds & Fourths",
-        theme_label="Fraction Repair Shop",
-        fix_mode="redraw",
-    )
-    out = render_error_audit_to_image(ws, str(tmp_path / "wrapped.png"))
-    assert os.path.getsize(out) > 5000

@@ -103,27 +103,6 @@ def test_metadata_round_trips_through_factory():
     assert ws.metadata["source"].startswith("bank:")
 
 
-def test_pil_render_smoke(tmp_path):
-    from src.worksheet_renderer import (
-        render_ten_frame_to_image,
-        render_ten_frame_to_pdf,
-    )
-
-    ws = WorksheetFactory.create(
-        "ten_frame",
-        {
-            "title": "Make Ten: Addition Within 20",
-            "instructions": "Move counters to fill the first ten-frame to ten.",
-            "problems": [_prob(), _prob(addend_a=6, addend_b=3)],
-        },
-    )
-    img = render_ten_frame_to_image(ws, str(tmp_path / "smoke.png"))
-    pdf = render_ten_frame_to_pdf(ws, str(tmp_path / "smoke.pdf"))
-    import os
-
-    assert os.path.getsize(img) > 5000
-    assert os.path.getsize(pdf) > 5000
-
 
 def test_html_render_smoke():
     from src.worksheet_html_renderer import render_worksheet_html
@@ -202,11 +181,3 @@ def test_html_renders_color_and_emoji_fills():
     assert "🦆" in frag
 
 
-def test_pil_render_with_fills_smoke(tmp_path):
-    from src.worksheet_renderer import render_ten_frame_to_image
-
-    ws = generate_ten_frame_worksheet([_prob(fill_a="blue", fill_b="🦆")])
-    img = render_ten_frame_to_image(ws, str(tmp_path / "fills.png"))
-    import os
-
-    assert os.path.getsize(img) > 5000

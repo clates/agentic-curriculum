@@ -8,12 +8,16 @@ import random
 sys.path.insert(0, os.path.abspath("src"))
 
 from worksheets.factory import WorksheetFactory
-from worksheet_renderer import (
-    render_matching_to_image,
-    render_matching_to_pdf,
-    render_reading_worksheet_to_image,
-    render_reading_worksheet_to_pdf,
-)
+# ⚠️ PIL DEPRECATED — This script needs migration to HTML renderer.
+# Replace: "from worksheet_renderer import render_X_to_image, render_X_to_pdf"
+#    With: "from worksheet_html_renderer import render_worksheet_html, build_print_packet_html"
+# See: https://github.com/clates/agentic-curriculum/pull/115
+# ⚠️ PIL DEPRECATED — This script needs migration to HTML renderer.
+# See: https://github.com/clates/agentic-curriculum/pull/116
+# Migrate by replacing render_X_to_image/_to_pdf calls with:
+#   render_worksheet_html("kind", data_dict, day_label)
+#   build_print_packet_html(pages, title)
+import sys; sys.exit("⚠️  PIL renderer deleted. See comment above for migration instructions.")
 
 
 def generate_varied_toddler_series():

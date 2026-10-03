@@ -40,7 +40,7 @@ and a frontend test server on port 3002 — it never touches `curriculum.db` or 
 - `src/agent.py` — OpenAI-driven weekly plan generation (needs `OPENAI_API_KEY`)
 - `src/trio_generator.py` — generates 3 plans per student post-feedback; NTFY notify via `src/ntfy.py`
 - `src/worksheet_html_renderer.py` — HTML print-packet engine (preferred for printables)
-- `src/worksheet_renderer.py` — PIL engine (PNG/PDF, image-heavy types)
+- `src/worksheet_html_renderer.py` — HTML engine (all 24 types, browser-printable)
 - `src/worksheets/` — 22 worksheet types; `factory.py` is the unified entry point
 - `tests/` — pytest; fixtures in `conftest.py`, builders in `factories.py` (temp DBs, never `curriculum.db`)
 - `frontend/e2e/` — Playwright specs; seeding helpers in `fixtures/api.ts` (backed by `scripts/e2e_seed.py`)
