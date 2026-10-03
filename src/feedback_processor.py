@@ -11,7 +11,7 @@ import json
 
 
 # Feedback rating constants
-MASTERY_RATINGS = {"NOT_STARTED", "DEVELOPING", "MASTERED", "BENCHED"}
+MASTERY_RATINGS = {"NOT_STARTED", "DEVELOPING", "MASTERED", "BENCHED", "STRUGGLING"}
 QUANTITY_RATINGS = {-2, -1, 0, 1, 2}
 
 # Configuration constants
@@ -93,6 +93,12 @@ def process_mastery_feedback(
         # Update cooldown and lists based on rating
         if rating == "NOT_STARTED":
             # Reset - needs immediate re-introduction
+            mastered.discard(standard_id)
+            developing.add(standard_id)
+            metadata["cooldown_weeks"] = 0
+
+        elif rating == "STRUGGLING":
+            # Needs more practice — same reset as NOT_STARTED, immediate retry
             mastered.discard(standard_id)
             developing.add(standard_id)
             metadata["cooldown_weeks"] = 0
