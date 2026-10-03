@@ -146,6 +146,9 @@ export default function PlansPage() {
       setMasteryRating(null);
       setQuantityRating(null);
     },
+    onError: (error: Error) => {
+      showToast(error.message || 'Failed to submit feedback. Please try again.', 'error');
+    },
   });
 
   const { mutate: submitFeedback } = feedbackMutation;
