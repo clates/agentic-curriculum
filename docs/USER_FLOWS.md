@@ -1,6 +1,6 @@
 # User Flows — CurricuLearn
 
-Last updated: 2026-10-03. Documents expected behavior per flow vs. observed behavior. Gaps are flagged with ⚠️.
+Last updated: 2026-10-03 (post-deploy verification). Documents expected behavior per flow vs. observed behavior. Gaps are flagged with ⚠️.
 
 ---
 
@@ -56,6 +56,7 @@ Last updated: 2026-10-03. Documents expected behavior per flow vs. observed beha
 | Close modal | Modal dismissed (Close, Escape, backdrop click) | — | ✅ |
 | ⚠️ Standards shown as wall of text | Should be formatted as list | — | ⚠️ UX |
 | ⚠️ Keyboard accessibility | Plan cards now have role=button, tabIndex, key handlers | — | ✅ fixed |
+| ⚠️ Print All | Opens print tab and renders correctly, but throws React #185 (max update depth) in calling tab | — | ⚠️ |
 
 ---
 
@@ -75,6 +76,7 @@ Last updated: 2026-10-03. Documents expected behavior per flow vs. observed beha
 | Update Feedback | Submits updated ratings | `POST .../feedback` | ✅ |
 | ⚠️ Empty body {} | Previously overwrote feedback with nulls — now rejected | — | ✅ fixed |
 | ⚠️ Double-submit protection | No debounce on submit button — multiple POSTs possible | — | ⚠️ |
+| Failed submission (400/500) | Error toast shown (#129) | — | ✅ fixed |
 
 ### Feedback — Locked State
 | Step | Expected | Status |
@@ -92,7 +94,7 @@ Last updated: 2026-10-03. Documents expected behavior per flow vs. observed beha
 | See student cards | Shows real name, grade, subject, progress | `GET /students` | ✅ fixed |
 | Stats: "Plans This Week" | Counts packets with week_of = current Monday | — | ✅ fixed |
 | Stats: "Worksheets Ready" | Total worksheets across all packets | — | ✅ |
-| ⚠️ "Submit Feedback" button | Now navigates to /plans | — | ✅ fixed |
+| "Submit Feedback" button | Navigates to /plans via Link wrapper (#129) | — | ✅ fixed |
 | ⚠️ Grade label | Now shows real grade_level (or Kindergarten) | — | ✅ fixed |
 
 ---
@@ -144,23 +146,32 @@ Last updated: 2026-10-03. Documents expected behavior per flow vs. observed beha
 
 ---
 
-## Known Gaps (code fixed, awaiting deploy)
+## Recently Deployed (2026-10-03)
 
-- Dashboard button navigation (merged, not yet deployed)
-- Progress error state (merged, not yet deployed)
-- Dashboard real student data (merged, not yet deployed)
-- "Plans This Week" filtering (merged, not yet deployed)
-- STRUGGLING rating support (merged, not yet deployed)
-- Null feedback rejection (merged, not yet deployed)
-- Generator scripts PIL cleanup (merged, not yet deployed)
+All verified on prod:
+
+| Fix | PR |
+|-----|-----|
+| Dashboard button navigation (Link wrapper) | #129 |
+| Pending plans filter excludes feedback-submitted packets | #129 |
+| Silent feedback errors now show toast | #129 |
+| STRUGGLING rating support | #126 |
+| Null/empty feedback rejection | #126 |
+| Progress page error state (was misleading empty) | #123 |
+| Dashboard real student data + stats | #124 |
+| "Plans This Week" filtering | #124 |
+| Generator scripts PIL cleanup | #125 |
+| SQLite WAL mode + busy_timeout (DELETE timeout) | #127 |
+| User flows documentation | #128 |
 
 ## Known Gaps (not yet addressed)
 
 - ⚠️ No double-submit protection on feedback/generate buttons
 - ⚠️ Whitespace-only student names pass validation
-- ⚠️ curriculum.db missing → progress map + curriculum graph always empty
+- ⚠️ curriculum.db missing → progress map + curriculum graph always empty (nodes=0, edges=0 for all subjects)
 - ⚠️ Plan generation produces 0 artifacts when LLM unavailable (no API key?)
 - ⚠️ Standards rendered as run-on text in plan modal
 - ⚠️ "Plans This Week" counts current week → shows 0 when no plans generated this week (correct but confusing)
 - ⚠️ "Worksheets Ready" counts ALL worksheets ever, not just "ready" ones
 - ⚠️ Past-dated plans shown identically to current ones
+- ⚠️ Print All throws React error #185 (max update depth) in main tab — packet renders fine but console errors
