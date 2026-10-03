@@ -169,19 +169,21 @@ export function usePendingPackets() {
 
   const packets = useMemo(() => {
     if (!allPackets) return [];
-    return allPackets.filter((packet) => packet.status === 'ready' || packet.status === 'draft');
+    return allPackets.filter(
+      (packet) => (packet.status === 'ready' || packet.status === 'draft') && !packet.has_feedback
+    );
   }, [allPackets]);
 
   return { packets, isLoading, error };
 }
 
-// Get completed plans (status: 'complete')
+// Get completed plans (status: 'complete' or has feedback)
 export function useCompletedPackets() {
   const { data: allPackets, isLoading, error } = useWeeklyPacketsBase();
 
   const packets = useMemo(() => {
     if (!allPackets) return [];
-    return allPackets.filter((packet) => packet.status === 'complete');
+    return allPackets.filter((packet) => packet.status === 'complete' || packet.has_feedback);
   }, [allPackets]);
 
   return { packets, isLoading, error };

@@ -163,7 +163,8 @@ test.describe('Plan detail modal — existing feedback', () => {
     page,
   }) => {
     await page.goto('/plans');
-    await page.getByRole('heading', { name: 'Edit Feedback Student' }).click();
+    // Packet has feedback → appears in Completed table, not Pending cards
+    await page.locator('table tr').filter({ hasText: 'Edit Feedback Student' }).click();
     await expect(page.getByRole('button', { name: 'Edit Feedback', exact: true })).toBeVisible();
   });
 });
@@ -192,7 +193,8 @@ test.describe('Plan detail modal — locked feedback', () => {
     page,
   }) => {
     await page.goto('/plans');
-    await page.getByRole('heading', { name: 'Locked Feedback Student' }).click();
+    // Packet has feedback → appears in Completed table
+    await page.locator('table tr').filter({ hasText: 'Locked Feedback Student' }).click();
     const btn = page.getByRole('button', { name: 'Feedback Submitted' });
     await expect(btn).toBeVisible();
     await expect(btn).toBeDisabled();
@@ -279,7 +281,8 @@ test.describe('Feedback modal — first submission', () => {
     await page.getByRole('button', { name: 'Submit Feedback', exact: true }).click();
 
     // Modal closes and plan list refreshes — now the packet shows Edit Feedback
-    await page.getByRole('heading', { name: 'Submit Feedback Student', exact: true }).click();
+    // Packet now has feedback → appears in Completed table
+    await page.locator('table tr').filter({ hasText: 'Submit Feedback Student' }).click();
     await expect(page.getByRole('button', { name: 'Edit Feedback', exact: true })).toBeVisible();
   });
 });
@@ -306,7 +309,8 @@ test.describe('Feedback modal — editing existing feedback', () => {
 
   async function openEditModal(page: import('@playwright/test').Page) {
     await page.goto('/plans');
-    await page.getByRole('heading', { name: 'Resubmit Feedback Student' }).click();
+    // Packet has feedback → appears in Completed table
+    await page.locator('table tr').filter({ hasText: 'Resubmit Feedback Student' }).click();
     await page.getByRole('button', { name: 'Edit Feedback', exact: true }).click();
   }
 
