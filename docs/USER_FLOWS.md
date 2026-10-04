@@ -166,9 +166,11 @@ All verified on prod:
 
 ## Known Gaps (not yet addressed)
 
+- ⚠️ Page titles all show "Parent Dashboard" — missing per-page metadata (#136)
+- ⚠️ Duplicate plan generation shows success toast without warning (#137)
 - ⚠️ No double-submit protection on feedback/generate buttons
 - ⚠️ Whitespace-only student names pass validation
-- ⚠️ curriculum.db missing → progress map + curriculum graph always empty (nodes=0, edges=0 for all subjects)
+- ⚠️ curriculum.db missing → progress map + curriculum graph always empty (nodes=0, edges=0 for all subjects) — fix merged #131, awaiting deploy
 - ⚠️ Plan generation produces 0 artifacts when LLM unavailable (no API key?)
 - ⚠️ Standards rendered as run-on text in plan modal
 - ⚠️ "Plans This Week" counts current week → shows 0 when no plans generated this week (correct but confusing)
