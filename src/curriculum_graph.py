@@ -288,7 +288,35 @@ def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGra
     if subject_keyword == "Math":
         keyword = "Mathematics"
 
-    # 1. Try CASE data first (may fail if tables don't exist)
+    # 1. ALWAYS load items from the standards table first, so that real
+    #    standards data appears in the graph regardless of CASE table state.
+    #    (The CASE path below can "succeed" against an empty/filtered CASE
+    #    dataset and produce an empty graph; the standards table is the
+    #    source of truth for populated subject data.)
+    standards_items: list[dict] = []
+    try:
+        if subject_keyword:
+            cursor.execute(
+                "SELECT * FROM standards WHERE subject = ?", (subject_keyword,)
+            )
+        else:
+            cursor.execute("SELECT * FROM standards")
+        for r in cursor.fetchall():
+            desc = r["description"] or ""
+            standards_items.append(
+                {
+                    "identifier": r["standard_id"],
+                    "fullStatement": desc,
+                    "humanCodingScheme": r["standard_id"],
+                    "educationLevel": str(r["grade_level"]),
+                    "CFItemType": "Standard",
+                    "title": desc[:60] if desc else r["standard_id"],
+                }
+            )
+    except sqlite3.OperationalError:
+        pass  # standards table not present
+
+    # 2. Try CASE data (may fail if tables don't exist)
     start_nodes: list[str] = []
     try:
         if keyword:
@@ -300,7 +328,7 @@ def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGra
             cursor.execute("SELECT identifier FROM case_items")
             start_nodes = [row["identifier"] for row in cursor.fetchall()]
     except sqlite3.OperationalError:
-        pass  # CASE tables not present — fall through to standards table
+        pass  # CASE tables not present — fall through to standards items
 
     if start_nodes:
         # Recursively find descendants in CASE hierarchy
@@ -351,35 +379,20 @@ def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGra
                     unique_assoc.append(a)
                     seen_assoc.add(a["identifier"])
 
+        # 3. Merge standards items into the CASE items (standards win on
+        #    identifier collisions) so the standards data is always
+        #    represented in the graph, even when the CASE path produced
+        #    an empty or fully filtered item set.
+        merged = {item["identifier"]: item for item in standards_items}
+        for item in items:
+            merged.setdefault(item["identifier"], item)
+
         conn.close()
-        return CASEGraphV2(items, unique_assoc)
+        return CASEGraphV2(list(merged.values()), unique_assoc)
 
-    # 2. Fallback to standards table
-    if subject_keyword:
-        try:
-            cursor.execute("SELECT * FROM standards WHERE subject = ?", (subject_keyword,))
-            rows = cursor.fetchall()
-            if rows:
-                items = []
-                for r in rows:
-                    desc = r["description"] or ""
-                    items.append(
-                        {
-                            "identifier": r["standard_id"],
-                            "fullStatement": desc,
-                            "humanCodingScheme": r["standard_id"],
-                            "educationLevel": str(r["grade_level"]),
-                            "CFItemType": "Standard",
-                            "title": desc[:60] if desc else r["standard_id"],
-                        }
-                    )
-                conn.close()
-                return CASEGraphV2(items, [])
-        except sqlite3.OperationalError:
-            pass  # standards table also not present
-
+    # 3. No usable CASE data — build the graph from standards items alone
     conn.close()
-    return CASEGraphV2([], [])
+    return CASEGraphV2(standards_items, [])
 
 
 if __name__ == "__main__":
