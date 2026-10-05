@@ -15,7 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CurricuLearn - Parent Dashboard',
+  title: {
+    template: '%s — CurricuLearn',
+    default: 'CurricuLearn — Parent Dashboard',
+  },
   description: 'Homeschool curriculum planning made simple',
 };
 
