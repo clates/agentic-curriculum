@@ -7,6 +7,7 @@ FastAPI application for serving student data from curriculum.db
 from __future__ import annotations
 
 import sqlite3
+import subprocess
 
 from agent import generate_weekly_plan
 from packet_store import (
@@ -225,6 +226,40 @@ def read_root():
 def health_check():
     """Health check endpoint for container healthchecks and backend readiness polling."""
     return {"status": "ok"}
+
+
+def _resolve_git_sha() -> str:
+    """Return GIT_SHA from the environment, else `git rev-parse HEAD`, else "unknown"."""
+    sha = os.environ.get("GIT_SHA", "").strip()
+    if sha and sha != "unknown":
+        return sha
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parent,
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+        candidate = out.stdout.strip()
+        if out.returncode == 0 and len(candidate) == 40:
+            return candidate
+    except Exception:
+        pass
+    return "unknown"
+
+
+@app.get("/version")
+def get_version():
+    """Report which build is running (set via GIT_SHA/BUILD_TIME/RELEASE_TAG at image build)."""
+    sha = _resolve_git_sha()
+    return {
+        "sha": sha,
+        "short_sha": sha[:7] if sha != "unknown" else "unknown",
+        "build_time": os.environ.get("BUILD_TIME") or None,
+        "release_tag": os.environ.get("RELEASE_TAG") or None,
+    }
 
 
 @app.get("/system/options", response_model=SystemOptionsResponse)
