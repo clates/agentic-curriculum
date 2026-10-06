@@ -8,13 +8,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from db_utils import get_db_path
 from trio_generator import generate_trio_for_student
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DB = str(PROJECT_ROOT / "curriculum.db")
 
 
 def find_students_needing_plans(db_path: str) -> list[str]:
@@ -41,8 +41,8 @@ def find_students_needing_plans(db_path: str) -> list[str]:
         conn.close()
 
 
-def run(db_path: str = DEFAULT_DB) -> None:
-    students = find_students_needing_plans(db_path)
+def run(db_path: str | None = None) -> None:
+    students = find_students_needing_plans(db_path or get_db_path())
     logger.info("safety_net: found %d student(s) needing plans", len(students))
     for student_id in students:
         try:
