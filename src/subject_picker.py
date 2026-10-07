@@ -8,12 +8,11 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from constants import SUBJECTS
 from curriculum_graph import load_from_db
-from db_utils import get_student_profile
+from db_utils import get_db_path, get_student_profile
 
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DB_PATH = str(PROJECT_ROOT / "curriculum.db")
 
 
 def pick_subjects(student_id: str) -> list[str]:
@@ -31,7 +30,7 @@ def pick_subjects(student_id: str) -> list[str]:
     scores: dict[str, int] = {}
     for subject in SUBJECTS:
         try:
-            graph = load_from_db(DB_PATH, subject_keyword=subject)
+            graph = load_from_db(get_db_path(), subject_keyword=subject)
             node_ids = set(graph.graph.nodes())
             scores[subject] = len(developing & node_ids)
         except Exception as exc:

@@ -20,6 +20,7 @@ from packet_store import (
 )
 from trio_generator import generate_trio_for_student
 from db_utils import (
+    get_db_path,
     create_student,
     delete_student,
     get_student_profile,
@@ -790,7 +791,7 @@ def get_curriculum_graph(subject: str, prune: bool = False):
     """
     Retrieve the full structural dependency graph for a subject.
     """
-    graph = load_from_db(str(PROJECT_ROOT / "curriculum.db"), subject)
+    graph = load_from_db(get_db_path(), subject)
     return graph.export_for_visualization(prune=prune)
 
 
@@ -806,5 +807,5 @@ def get_student_progress_map(student_id: str, subject: str, prune: bool = True):
     progress = json.loads(profile["progress_blob"] or "{}")
     mastered = progress.get("mastered_standards", [])
 
-    graph = load_from_db(str(PROJECT_ROOT / "curriculum.db"), subject)
+    graph = load_from_db(get_db_path(), subject)
     return graph.export_for_visualization(mastered, prune=prune)
