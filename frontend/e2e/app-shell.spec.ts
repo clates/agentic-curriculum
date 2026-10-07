@@ -4,6 +4,7 @@
  *
  * Runs in both the `desktop` and `mobile` projects (see playwright.config.ts).
  */
+import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/test';
 
 const PAGES = [
@@ -32,14 +33,21 @@ test.describe('Every page', () => {
   });
 });
 
+// A tap that lands before hydration is dropped, so keep tapping until the menu reports open.
+async function openMobileMenu(page: Page) {
+  const toggle = page.getByRole('button', { name: 'Open navigation' });
+  await expect(async () => {
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true', { timeout: 1_000 });
+  }).toPass();
+}
+
 test.describe('Navigation', () => {
   test('every page is reachable from the header', async ({ page, isMobile }) => {
     await page.goto('/dashboard');
     for (const { path, link } of PAGES) {
       if (isMobile) {
-        const toggle = page.getByRole('button', { name: 'Open navigation' });
-        await toggle.click();
-        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+        await openMobileMenu(page);
         await page.locator('#mobile-nav-panel').getByRole('link', { name: link }).click();
         await expect(page.locator('#mobile-nav-panel')).toHaveCount(0);
       } else {
@@ -51,7 +59,7 @@ test.describe('Navigation', () => {
 
   test('the current page is marked in the header', async ({ page, isMobile }) => {
     await page.goto('/plans');
-    if (isMobile) await page.getByRole('button', { name: 'Open navigation' }).click();
+    if (isMobile) await openMobileMenu(page);
     await expect(page.locator('a[aria-current="page"]:visible')).toHaveText('Plans');
   });
 });
