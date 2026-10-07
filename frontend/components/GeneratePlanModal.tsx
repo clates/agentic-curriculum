@@ -22,6 +22,8 @@ export function GeneratePlanModal({
 }: GeneratePlanModalProps) {
   const { data: systemOptions, isLoading: optionsLoading } = useSystemOptions();
   const generateMutation = useGenerateWeeklyPlan();
+  // `generateMutation` is a new object every render; only `reset` is referentially stable.
+  const { reset: resetMutation } = generateMutation;
 
   const [selectedStudentId, setSelectedStudentId] = useState(preSelectedStudent?.id || '');
   const [subject, setSubject] = useState('');
@@ -38,14 +40,14 @@ export function GeneratePlanModal({
   // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
-      generateMutation.reset();
+      resetMutation();
       setSubject('');
       if (!preSelectedStudent) {
         setSelectedStudentId('');
         setGradeLevel(0);
       }
     }
-  }, [isOpen, preSelectedStudent, generateMutation]);
+  }, [isOpen, preSelectedStudent, resetMutation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
