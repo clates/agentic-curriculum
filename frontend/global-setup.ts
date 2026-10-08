@@ -90,6 +90,7 @@ export default async function globalSetup(): Promise<void> {
     { stdio: 'pipe', env: { ...process.env, CURRICULUM_DB_PATH: DB_FILE } }
   );
 
+  const backendLog = openSync('/tmp/playwright-backend.log', 'w');
   const uvicorn = spawn(
     `${projectRoot}/venv/bin/uvicorn`,
     ['main:app', '--port', String(BACKEND_PORT)],
@@ -106,7 +107,7 @@ export default async function globalSetup(): Promise<void> {
         NTFY_URL: `${STUB_BASE_URL}/ntfy`,
       },
       detached: true,
-      stdio: 'ignore',
+      stdio: ['ignore', backendLog, backendLog],
     }
   );
 

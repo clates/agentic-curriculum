@@ -42,7 +42,13 @@ export async function createStudent(
   });
   // 400 = already exists (idempotent — retries are safe)
   if (!res.ok() && res.status() !== 400) {
-    throw new Error(`createStudent failed: ${res.status()} ${await res.text()}`);
+    // Parallel workers each run a describe's beforeAll. Two creating the same student at once
+    // race in the backend's check-then-insert and the loser gets a 500 (UNIQUE constraint)
+    // instead of a 400. If the student exists now, the goal was met.
+    const exists = (await request.get(`${BACKEND}/student/${id}`)).ok();
+    if (!exists) {
+      throw new Error(`createStudent failed: ${res.status()} ${await res.text()}`);
+    }
   }
 }
 

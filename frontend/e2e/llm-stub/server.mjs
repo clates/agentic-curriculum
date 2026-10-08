@@ -80,6 +80,7 @@ function describePrompt(prompt) {
     student: /e2e-student:([\w-]+)/.exec(prompt)?.[1] ?? null,
     subject: /^Subject: (.+)$/m.exec(prompt)?.[1]?.trim() ?? null,
     grade: /^Grade Level: (\d+)/m.exec(prompt)?.[1] ?? null,
+    activities: /approximately (\d+) activities/.exec(prompt)?.[1] ?? null,
     brokenDay: /e2e-stub:broken-day=(\w+)/.exec(prompt)?.[1] ?? null,
   };
 }
@@ -142,7 +143,13 @@ async function handleChat(req, res) {
   try {
     if (prompt.includes('weekly lesson plan scaffold')) {
       const reply = scaffoldReply(prompt, meta);
-      record({ kind: 'scaffold', student: meta.student, subject: meta.subject, grade: meta.grade });
+      record({
+        kind: 'scaffold',
+        student: meta.student,
+        subject: meta.subject,
+        grade: meta.grade,
+        activities: meta.activities ? Number(meta.activities) : null,
+      });
       return sendJson(res, 200, completion(body.model, JSON.stringify(reply)));
     }
     if (prompt.includes('Create a lesson plan for the following educational standard')) {

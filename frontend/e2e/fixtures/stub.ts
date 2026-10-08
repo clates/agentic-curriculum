@@ -9,6 +9,8 @@ export interface StubCall {
   student?: string | null;
   subject?: string | null;
   grade?: string | null;
+  /** scaffold only: the per-day activity count the prompt asked the model for. */
+  activities?: number | null;
   day?: string;
   scenario?: string | null;
   title?: string | null;
