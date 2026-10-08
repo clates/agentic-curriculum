@@ -5,6 +5,7 @@ The fake (tests/llm_fakes.py) serves the same canned fixtures as the Playwright 
 can reach a real LLM: agent.OpenAI is replaced, and conftest pins OPENAI_BASE_URL to a dead port.
 """
 
+import importlib.util
 import json
 import sqlite3
 import sys
@@ -12,7 +13,8 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+SRC = Path(__file__).resolve().parents[1] / "src"
+sys.path.insert(0, str(SRC))
 
 import agent  # noqa: E402
 from tests.llm_fakes import DAYS, FakeOpenAI  # noqa: E402
@@ -181,10 +183,20 @@ def test_missing_api_key_is_a_value_error(monkeypatch):
 # --------------------------------------------------------------------------------------------
 
 
+def _load_private(name: str):
+    path = SRC / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(f"_private_{name}", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 @pytest.fixture(scope="module")
 def real_standards_db(tmp_path_factory):
-    import ingest_standards
-    import logic
+    # Load private copies by path: other test modules leave mocks/reloaded copies of these
+    # names in sys.modules, and this fixture must not depend on test order.
+    ingest_standards = _load_private("ingest_standards")
+    logic = _load_private("logic")
 
     db_path = tmp_path_factory.mktemp("standards") / "curriculum.db"
     with pytest.MonkeyPatch.context() as mp:
