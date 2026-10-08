@@ -1,0 +1,10 @@
+{
+  "weekly_overview": "E2E STUB WEEK: {{subject}} (grade {{grade}}) built from canned fixtures.",
+  "focus": {
+    "Monday": "Stub Monday focus",
+    "Tuesday": "Stub Tuesday focus",
+    "Wednesday": "Stub Wednesday focus",
+    "Thursday": "Stub Thursday focus",
+    "Friday": "Stub Friday focus"
+  }
+}

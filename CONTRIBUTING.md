@@ -37,6 +37,20 @@ The E2E suite spawns its own backend on port 8182 against an isolated database
 (`/tmp/playwright-test.db`) and a frontend test server on port 3002. It never touches
 `curriculum.db` or your running dev servers.
 
+### Tests never call a real LLM or ntfy
+
+- **pytest**: `tests/conftest.py` sets a fake `OPENAI_API_KEY` and points `OPENAI_BASE_URL` /
+  `NTFY_URL` at a dead local port for every test, and blocks non-loopback sockets.
+  `tests/test_no_external_calls.py` fails if `src/` gains a second `OpenAI(` client or a new
+  outbound-HTTP module. Mock `agent.OpenAI` with `tests/llm_fakes.FakeOpenAI`.
+- **E2E**: `global-setup.ts` starts `frontend/e2e/llm-stub/server.mjs` (127.0.0.1:8183, override
+  with `E2E_LLM_STUB_PORT`) and spawns the backend with `OPENAI_*`/`NTFY_URL` forced to it,
+  overriding your shell. Backend log: `/tmp/playwright-backend.log`; stub log:
+  `/tmp/playwright-llm-stub.log`; specs assert on calls with `e2e/fixtures/stub.ts`.
+- **New canned scenario**: edit `frontend/e2e/llm-stub/fixtures/*` (shared with pytest), or add a
+  directive handled in `server.mjs` / `tests/llm_fakes.py` and set it per student with
+  `createStudent(..., { stubScenario: 'broken-day=Wednesday' })`.
+
 `tests/validate_chunk*.py` and `tests/verify_fixes.py` are historical milestone scripts, not part of
 the pytest suite. `pytest tests/` is the real suite.
 

@@ -25,17 +25,30 @@ function seedScript(cmd: string, ...args: string[]): void {
 export async function createStudent(
   request: APIRequestContext,
   id: string,
-  opts: { name: string; birthday: string }
+  opts: { name: string; birthday: string; stubScenario?: string }
 ): Promise<void> {
+  // parent_notes appears verbatim in every LLM prompt. The stub reads `e2e-student:<id>` to
+  // attribute recorded calls to this student (specs run in parallel and share one stub), and
+  // `e2e-stub:<scenario>` (e.g. `broken-day=Wednesday`) to pick a canned scenario.
+  const parentNotes = [`e2e-student:${id}`, opts.stubScenario && `e2e-stub:${opts.stubScenario}`]
+    .filter(Boolean)
+    .join(' ');
   const res = await request.post(`${BACKEND}/students`, {
     data: {
       student_id: id,
       metadata: { name: opts.name, birthday: opts.birthday },
+      plan_rules: { parent_notes: parentNotes },
     },
   });
   // 400 = already exists (idempotent — retries are safe)
   if (!res.ok() && res.status() !== 400) {
-    throw new Error(`createStudent failed: ${res.status()} ${await res.text()}`);
+    // Parallel workers each run a describe's beforeAll. Two creating the same student at once
+    // race in the backend's check-then-insert and the loser gets a 500 (UNIQUE constraint)
+    // instead of a 400. If the student exists now, the goal was met.
+    const exists = (await request.get(`${BACKEND}/student/${id}`)).ok();
+    if (!exists) {
+      throw new Error(`createStudent failed: ${res.status()} ${await res.text()}`);
+    }
   }
 }
 

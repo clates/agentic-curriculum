@@ -1,0 +1,1 @@
+{"lesson_plan": {"objective": "Stub {{day}} reply cut off mid-sentence, as a truncated LLM response would be
