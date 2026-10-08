@@ -85,6 +85,21 @@ def test_hermetic_env_is_applied_to_every_test():
     assert os.environ["OPENAI_API_KEY"] == "pytest-not-a-real-key"
 
 
+def test_unmocked_llm_call_fails_fast_and_locally():
+    """With the hermetic env, a forgotten mock means a refused local connection, not a real call."""
+    import time
+
+    from openai import APIConnectionError, OpenAI
+
+    client = OpenAI(
+        api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ["OPENAI_BASE_URL"], max_retries=0
+    )
+    started = time.monotonic()
+    with pytest.raises(APIConnectionError):
+        client.chat.completions.create(model="x", messages=[{"role": "user", "content": "hi"}])
+    assert time.monotonic() - started < 5
+
+
 def test_socket_guard_blocks_non_loopback_hosts():
     with pytest.raises(ExternalNetworkBlocked):
         socket.getaddrinfo("example.com", 443)
