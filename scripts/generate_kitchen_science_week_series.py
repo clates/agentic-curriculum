@@ -13,7 +13,7 @@ Narrator: Professor Rex, a T. rex scientist, introduced on Monday. His arms are 
 reach the lab table, so he needs a helper — the student — to run every experiment for him.
 
 Output (kitchen_science_week_series/):
-  kitchen_science_week.html              — student packet (11 pages)
+  kitchen_science_week.html              — student packet (13 pages)
   kitchen_science_week_teacher_guide.html — Parent Experiment Guide: shopping list, safety, and
                                             per-day setup, the science explained for grown-ups,
                                             answer keys, and talking points
@@ -29,10 +29,12 @@ Standards (Virginia SOL):
               (objects may vibrate and produce sound; senses correspond to body structures)
   Thursday  — VA.SCIENCE.K.k.2.a, VA.SCIENCE.K.k.2.b, VA.SCIENCE.K.k.2.c, VA.SCIENCE.1.1.1
               (pushes and pulls cause motion, change direction, and strength matters; conduct
-              investigations to produce data)
+              investigations to produce data; recognize unexpected results — air pressure
+              holds a card under an upside-down cup of water)
   Friday    — VA.SCIENCE.K.k.10.c, VA.SCIENCE.K.k.10.d, VA.SCIENCE.K.k.4.c, VA.SCIENCE.1.1.1
               (changes can be observed and measured; changes may be fast or slow; water occurs in
-              different phases; capstone: the full investigation cycle)
+              different phases — melting ice and cloud-in-a-jar condensation; use physical
+              models to demonstrate natural processes; capstone: the full investigation cycle)
 """
 
 import os
@@ -412,7 +414,8 @@ def generate_kitchen_science_week_series():
                 "flat board or big piece of cardboard for a ramp. Put a strip of tape on the floor "
                 "as your starting line.\n\n"
                 "After reading, run the ramp test on the next page. Measure how far the car goes "
-                "by counting your heel-to-toe footsteps."
+                "by counting your heel-to-toe footsteps.\n\n"
+                "Then, over the sink, try Rex's magic cup trick and fill in the Lab Report."
             ),
             "passage": (
                 "Professor Rex loves cars. 'VROOM!' he roared. 'Today's question is: how can we "
@@ -429,7 +432,11 @@ def generate_kitchen_science_week_series():
                 "car up more.\n\n"
                 "'But helper,' said Rex, 'to be fair, we must only change ONE thing. Same car. Same "
                 "floor. Same starting spot. We only change how many books are under the ramp.' "
-                "Scientists call this a fair test."
+                "Scientists call this a fair test.\n\n"
+                "Then Rex showed one more trick. He filled a cup with water, put a card on top, "
+                "and flipped it upside down over the sink. The water stayed in the cup! 'What is "
+                "holding the card up?' he asked. 'Air!' Air is all around us, and it pushes on "
+                "everything. That push is called air pressure. Air can push, too!"
             ),
             "vocabulary": [
                 {
@@ -451,6 +458,10 @@ def generate_kitchen_science_week_series():
                 {
                     "term": "push",
                     "definition": "A force that moves something away from you.",
+                },
+                {
+                    "term": "air pressure",
+                    "definition": "The push of the air all around us. Air pushes on everything!",
                 },
             ],
             "questions": [
@@ -494,6 +505,39 @@ def generate_kitchen_science_week_series():
         "Thursday",
     )
 
+    add(
+        "writingScaffoldWorksheet",
+        {
+            "title": "Thursday: Lab Report — The Magic Cup",
+            "instructions": (
+                "Do this over the sink! Fill a cup with water all the way to the top. Lay a card "
+                "flat on top. Hold the card with your hand and flip the cup upside down. Now let "
+                "go of the card. Write or draw in each part. A grown-up can help you write."
+            ),
+            "topic": "What will happen to the card and the water?",
+            "sections": [
+                {
+                    "label": "ASK",
+                    "starter": "If I let go of the card, will the water fall out?",
+                    "lines": 0,
+                },
+                {"label": "I PREDICT", "starter": "I think the water will", "lines": 2},
+                {
+                    "label": "I OBSERVE (write or draw)",
+                    "starter": "When I let go, the card",
+                    "lines": 3,
+                },
+                {"label": "I LEARNED", "starter": "The card stayed up because the air", "lines": 2},
+                {
+                    "label": "TRY IT AGAIN",
+                    "starter": "Now fill the cup only HALF full. Does it still work?",
+                    "lines": 2,
+                },
+            ],
+        },
+        "Thursday",
+    )
+
     # =========================================================================
     # FRIDAY — Fast and Slow Changes (Capstone: the whole scientist loop)
     # Standards: K.k.10.c, K.k.10.d, K.k.4.c, 1.1.1
@@ -505,27 +549,25 @@ def generate_kitchen_science_week_series():
             "title": "Friday: Dino Volcano — Fast and Slow Changes",
             "passage_title": "Professor Rex's Big Experiment",
             "instructions": (
-                "Capstone activity: Build a dino volcano on a baking sheet. Put an ice cube on a "
-                "plate next to it at the START of the lesson. Check the ice cube when the volcano "
-                "is done.\n\n"
-                "Use the Steps of a Scientist page to put the whole experiment in order."
+                "Capstone activity: Put an ice cube on a plate at the START of the lesson. Then "
+                "make a cloud in a jar with a grown-up (the Lab Report page). Last, build a dino "
+                "volcano on a baking sheet. Check the ice cube when the volcano is done.\n\n"
+                "Use the Steps of a Scientist page to put the volcano experiment in order."
             ),
             "passage": (
-                "It was Professor Rex's favorite day. 'This week you learned to predict, to "
-                "observe, to find a cause, and to run a fair test,' he said. 'Today we use ALL of "
-                "them. Today we make a volcano!'\n\n"
-                "First, ask a question: what happens when baking soda meets vinegar? Next, make a "
-                "prediction. Then, test it. Pour vinegar into the cup inside your volcano and "
-                "watch. FIZZ! Foam bubbles up and spills over the sides like lava.\n\n"
-                "Observe closely. The bubbles are full of a gas. The baking soda and vinegar mixed "
-                "and made something brand new. That change happened in just a few seconds. It was "
-                "a fast change. And you cannot turn the bubbles back into baking soda!\n\n"
-                "Now look at your ice cube. It is melting into water, but slowly. That took many "
-                "minutes. It is a slow change. Some changes are even slower. A banana takes days "
-                "to turn brown.\n\n"
-                "Last, a scientist records what happened and makes a conclusion: what did we "
-                "learn? 'Fizz is fast, melting is slow,' said Rex. 'Helper, you are a real "
-                "scientist now!'"
+                "'This week you learned to predict, observe, find a cause, and run a fair test,' "
+                "said Professor Rex. 'Today we use ALL of them!'\n\n"
+                "First, the cloud jar. Warm water turned into water vapor, a gas you cannot see. "
+                "Cold ice on the lid cooled the vapor, and it turned back into tiny drops of "
+                "water. Millions of tiny drops make a cloud, just like in the sky!\n\n"
+                "Next, the volcano. Pour vinegar onto the baking soda and watch. FIZZ! Foam "
+                "spills over like lava. The bubbles are full of a gas that is brand new. That "
+                "change took just seconds. It was a fast change, and you cannot turn the bubbles "
+                "back into baking soda!\n\n"
+                "Now look at your ice cube. It is melting, but slowly. That took many minutes. It "
+                "is a slow change. A banana takes days to turn brown, which is even slower.\n\n"
+                "Last, a scientist records what happened and makes a conclusion. 'Fizz is fast, "
+                "melting is slow,' said Rex. 'Helper, you are a real scientist now!'"
             ),
             "vocabulary": [
                 {
@@ -545,14 +587,14 @@ def generate_kitchen_science_week_series():
                     "definition": "A change that happens in seconds — like the volcano fizzing.",
                 },
                 {
-                    "term": "record",
-                    "definition": "To write or draw what you observed so you remember it.",
+                    "term": "water vapor",
+                    "definition": "Water as a gas. It floats in the air and you cannot see it.",
                 },
             ],
             "questions": [
                 {
                     "prompt": "What did you predict would happen? What really happened?",
-                    "response_lines": 2,
+                    "response_lines": 1,
                 },
                 {
                     "prompt": "Was the fizz a fast change or a slow change? What about the ice cube?",
@@ -560,7 +602,11 @@ def generate_kitchen_science_week_series():
                 },
                 {
                     "prompt": "Can you turn the melted water back into ice? Can you turn the fizz back into baking soda?",
-                    "response_lines": 2,
+                    "response_lines": 1,
+                },
+                {
+                    "prompt": "What made the cloud in the jar: warm water, cold ice, or both?",
+                    "response_lines": 1,
                 },
                 {
                     "prompt": (
@@ -570,6 +616,38 @@ def generate_kitchen_science_week_series():
                     ),
                     "response_lines": 0,
                 },
+            ],
+        },
+        "Friday",
+    )
+
+    add(
+        "writingScaffoldWorksheet",
+        {
+            "title": "Friday: Lab Report — Cloud in a Jar",
+            "instructions": (
+                "A grown-up pours the hot water. You put the ice on the lid and watch! "
+                "Write or draw in each part. A grown-up can help you write."
+            ),
+            "topic": "Can we make a real cloud inside a jar?",
+            "sections": [
+                {
+                    "label": "ASK",
+                    "starter": "What happens when warm, wet air meets something cold?",
+                    "lines": 0,
+                },
+                {"label": "I PREDICT", "starter": "I think the jar will", "lines": 2},
+                {
+                    "label": "I OBSERVE (write or draw)",
+                    "starter": "Inside the jar I saw",
+                    "lines": 3,
+                },
+                {
+                    "label": "I OBSERVE — the lid",
+                    "starter": "When we lifted the lid, the cloud",
+                    "lines": 2,
+                },
+                {"label": "I LEARNED", "starter": "A cloud is made of", "lines": 2},
             ],
         },
         "Friday",
@@ -620,16 +698,18 @@ def generate_kitchen_science_week_series():
                 "observation and sorting materials by one property (how much light passes "
                 "through). Wednesday's rubber band guitar and rice drum looked for a cause — "
                 "vibrations — behind an effect — sound. Thursday's ramp race introduced the fair "
-                "test: change one thing, keep everything else the same, and measure. Friday's dino "
-                "volcano used every step together and compared fast and slow changes.\n\n"
-                "Professor Rex, a T. rex whose arms are too short to reach the table, gave "
-                "Christopher the job of lab helper all week.\n\n"
+                "test: change one thing, keep everything else the same, and measure. The "
+                "upside-down cup showed that air pushes too. Friday's cloud in a jar showed water "
+                "changing from gas to liquid, and the dino volcano used every step together and "
+                "compared fast and slow changes.\n\n"
                 "Key ideas to check for genuine understanding — not just recall:\n"
                 "1) A prediction comes before the test, and a wrong prediction is useful.\n"
                 "2) Whether something floats depends on how heavy it is for its size, not size alone.\n"
                 "3) Every sound starts with a vibration.\n"
-                "4) A stronger push makes a bigger change in motion; a fair test changes one thing.\n"
-                "5) Some changes are fast and some are slow, and some cannot be undone."
+                "4) A stronger push makes a bigger change in motion; a fair test changes one thing; "
+                "air is real stuff that pushes too.\n"
+                "5) Water changes form (ice melts, vapor condenses into a cloud); some changes are "
+                "fast, some slow, and some cannot be undone."
             ),
             "vocabulary": [
                 {
@@ -685,10 +765,10 @@ def generate_kitchen_science_week_series():
   <meta charset="UTF-8">
   <title>Kitchen Science Week — Parent Experiment Guide</title>
   <style>
-    @page { size: letter; margin: 0.5in 0.6in; }
+    @page { size: letter; margin: 0.4in 0.5in; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 11pt; color: #111; line-height: 1.5; }
-    @media screen { body { background: #b0b0b0; padding: 24px; } .page { background: white; max-width: 7.5in; margin: 0 auto 28px; padding: 0.45in 0.5in; box-shadow: 0 4px 18px rgba(0,0,0,.28); min-height: 10.3in; } }
+    body { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 10pt; color: #111; line-height: 1.36; }
+    @media screen { body { background: #b0b0b0; padding: 24px; } .page { background: white; max-width: 7.5in; margin: 0 auto 28px; padding: 0.4in 0.45in; box-shadow: 0 4px 18px rgba(0,0,0,.28); min-height: 10.3in; } }
     @media print { body { background: white; padding: 0; } .page { padding: 0; box-shadow: none; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     .page { page-break-after: always; break-after: page; }
     .page:last-child { page-break-after: avoid; break-after: avoid; }
@@ -699,12 +779,12 @@ def generate_kitchen_science_week_series():
     h2.thu { background: #c2410c; }
     h2.fri { background: #0f766e; }
     h2.gen { background: #374151; }
-    h3 { font-size: 10pt; font-weight: bold; color: #444; margin: 9px 0 3px; text-transform: uppercase; letter-spacing: 0.04em; }
-    p, li { font-size: 10pt; margin-bottom: 4px; }
+    h3 { font-size: 9.5pt; font-weight: bold; color: #444; margin: 6px 0 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+    p, li { font-size: 9.5pt; margin-bottom: 3px; }
     ul, ol { padding-left: 18px; margin-bottom: 6px; }
     .meta { font-size: 9.5pt; color: #444; margin-bottom: 6px; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .box { padding: 6px 10px; margin: 3px 0 8px; border-radius: 0 4px 4px 0; font-size: 10pt; border-left: 4px solid; }
+    .box { padding: 4px 9px; margin: 2px 0 5px; border-radius: 0 4px 4px 0; font-size: 9.5pt; border-left: 4px solid; }
     .materials { background: #f3f4f6; border-color: #374151; }
     .materials ul { list-style: none; padding-left: 0; }
     .materials li::before { content: "\\2610  "; }
@@ -744,8 +824,8 @@ def generate_kitchen_science_week_series():
     <tr><td>Mon</td><td>Sink or Float</td><td>Floating depends on weight for size and material</td><td>Predict</td></tr>
     <tr><td>Tue</td><td>Flashlight Detectives</td><td>Transparent, translucent, opaque; shadows</td><td>Observe and sort</td></tr>
     <tr><td>Wed</td><td>Rubber Band Guitar &amp; Rice Drum</td><td>Every sound starts with a vibration</td><td>Find the cause</td></tr>
-    <tr><td>Thu</td><td>Toy Car Ramp Race</td><td>Pushes, pulls, gravity, stronger force = bigger change</td><td>Fair test</td></tr>
-    <tr><td>Fri</td><td>Dino Volcano + Melting Ice</td><td>Fast and slow changes</td><td>All of them together</td></tr>
+    <tr><td>Thu</td><td>Toy Car Ramp Race + Magic Upside-Down Cup</td><td>Pushes, pulls, gravity, stronger force = bigger change; air pushes too (air pressure)</td><td>Fair test</td></tr>
+    <tr><td>Fri</td><td>Cloud in a Jar + Dino Volcano + Melting Ice</td><td>Water changes form (melting, condensation); fast and slow changes</td><td>All of them together</td></tr>
   </table>
 
   <h2 class="gen">Shopping &amp; gathering list</h2>
@@ -764,6 +844,8 @@ def generate_kitchen_science_week_series():
         <li>Uncooked rice (a spoonful)</li>
         <li>A pot and a metal spoon</li>
         <li>Toy car, stack of books, tape</li>
+        <li>Plastic cup or short glass, an index card or playing card, a drinking straw</li>
+        <li>Clear glass jar with a metal lid (pasta-sauce or mason jar)</li>
         <li>Board, baking sheet, or stiff cardboard (ramp)</li>
         <li>Plastic cup, baking sheet or tray</li>
       </ul>
@@ -779,6 +861,8 @@ def generate_kitchen_science_week_series():
         <li>Food coloring (red/orange for lava)</li>
         <li>Play dough or sand (to shape the volcano), optional</li>
         <li>Banana (for the slow-change comparison)</li>
+        <li>Aerosol hairspray (for the cloud jar), or use a match instead (see Friday)</li>
+        <li>Black construction paper (optional backdrop for the cloud)</li>
         <li>Balloon + empty plastic bottle (optional Friday extension)</li>
       </ul>
       <p style="margin-top:6px;">Swapping is fine. Any small object can join Monday's test, and any
@@ -786,6 +870,9 @@ def generate_kitchen_science_week_series():
     </div>
   </div>
 
+</div>
+
+<div class="page">
   <h2 class="gen">Safety for the whole week</h2>
   <div class="box safety">
     <ul>
@@ -793,6 +880,7 @@ def generate_kitchen_science_week_series():
       <li><strong>Small items</strong> (penny, grapes, rice, bottle caps) are choking hazards. Keep them away from younger siblings.</li>
       <li><strong>Flashlights:</strong> never into eyes. LED lights get warm. Only press against fingertips for a few seconds.</li>
       <li><strong>Rubber bands:</strong> no snapping toward faces.</li>
+      <li><strong>Cloud jar:</strong> a grown-up pours the hot water. Use hairspray <em>or</em> a match, <strong>never both</strong>, since hairspray is flammable.</li>
       <li><strong>Vinegar</strong> stings eyes. Do the volcano on a tray and keep hands away from faces. If it gets in an eye, rinse with water.</li>
     </ul>
   </div>
@@ -802,6 +890,9 @@ def generate_kitchen_science_week_series():
   child pours, drops, plucks, and measures. You ask questions. The most useful habit to build is
   <strong>predict out loud before every test</strong>, then compare. When a prediction is wrong,
   celebrate it ("Ooh, you found a surprise!"). Wrong predictions teach the most.</p>
+
+  <h2 class="gen">By the end of the week</h2>
+  <p>Christopher should be able to make a prediction before testing without being asked, say what made a test fair or unfair, and retell one experiment using <em>predicted / observed / learned</em>. Those habits matter more than any single fact from the week.</p>
 </div>
 
 <!-- ===================================================================== -->
@@ -968,7 +1059,90 @@ def generate_kitchen_science_week_series():
 
 <!-- ===================================================================== -->
 <div class="page">
-  <h2 class="fri">Friday — Dino Volcano: Fast &amp; Slow Changes &nbsp;<span style="font-weight:normal;font-size:10pt;">Skill: The whole loop</span></h2>
+  <h2 class="thu">Thursday, part 2 — The Magic Upside-Down Cup &nbsp;<span style="font-weight:normal;font-size:10pt;">Air pressure</span></h2>
+  <p class="meta">Standards: VA K.2.a (pushes can cause, or here prevent, motion), 1.1 (recognize unusual or unexpected results). About 15 minutes, after the ramp test.</p>
+
+  <h3>What you need</h3>
+  <div class="box materials"><p>A plastic cup or short, smooth-rimmed glass; an index card, playing card, or square of thin cardboard a bit bigger than the rim; water; the kitchen sink (or a big bowl or bathtub to catch spills); a drinking straw.</p></div>
+
+  <h3>Run it</h3>
+  <ol>
+    <li><strong>Practice once yourself first.</strong> It works best with a smooth rim and a flat card.</li>
+    <li>Your child fills the cup to the very top and lays the card flat on it.</li>
+    <li>Press the card down with a flat palm, flip the cup over quickly above the sink, and hold it upside down.</li>
+    <li>Get a prediction out loud: "When I take my hand away, what happens?" Then let go of the card. It stays, and the water stays in.</li>
+    <li>Your child fills in the Lab Report, then tries the "half full" retest. It usually still works, which surprises everyone.</li>
+    <li><strong>Straw bonus:</strong> dip a straw in water, put a finger over the top, and lift it out. The water stays in the straw. Lift the finger and it drops out.</li>
+  </ol>
+
+  <h3>What's really happening</h3>
+  <div class="box science">
+    <p>We live at the bottom of an ocean of air. The air above us has weight, and it presses on everything from every direction: up, down, and sideways. That push is <strong>air pressure</strong>. It's about 14.7 pounds on every square inch, but we never notice because it pushes equally on all sides of us.</p>
+    <p>Under the upside-down cup, the air in the room pushes <em>up</em> on the card. Pushing <em>down</em> on the card is only the weight of the water, which is much smaller. Nothing from outside can get in to push down from inside the cup, because the card seals the rim. So the upward air push wins, and the card stays. The water's surface tension helps by making a thin seal around the edge. With a half-full cup, the water sags a tiny bit when you let go, which stretches the trapped air. Stretched air pushes less, so the air outside still wins.</p>
+    <p>The straw works the same way. With your finger sealing the top, air can only push up from the bottom. Lift your finger, air pushes from the top too, and gravity pulls the water out.</p>
+    <p><em>For a 6-year-old:</em> "Air is all around us and it pushes on everything. Under the card, the air's push is stronger than the water's weight." That ties directly to the day's push-and-pull idea.</p>
+  </div>
+
+  <h3>Answer key — Lab Report</h3>
+  <div class="box answer-box thu">
+    <p><strong>I predict:</strong> Any prediction is fine. Most kids say the water will spill. <strong>I observe:</strong> The card stayed on and the water stayed in the cup. <strong>I learned:</strong> The air pushed up on the card (air pressure held it). <strong>Try it again:</strong> Usually yes, it still works half full.</p>
+    <p><strong>Reading (vocabulary):</strong> air pressure = the push of the air all around us.</p>
+  </div>
+
+  <h3>If it doesn't work</h3>
+  <div class="box misconception"><p>The usual culprits: a bendy or curled card, a chipped or uneven rim, or tilting the cup sideways. Use a fresh, flat card, keep the cup level, and try again. A failed run is a great real-science moment: "What changed? Let's fix one thing and retest." That's the fair-test habit from the ramp race.</p></div>
+
+  <h3>Misconceptions to watch</h3>
+  <div class="box misconception"><p>"The water is glued to the card," or "the card is sucking the water up." Nothing sucks. The air <em>pushes</em> from below. Kids also tend to think air is "nothing." Reinforce that air is real stuff with weight that can push. A follow-up: squeeze an empty, capped plastic bottle and feel the air push back.</p></div>
+
+  <h3>Go further</h3>
+  <div class="box extension"><p><strong>Sideways test:</strong> Once the card holds, carefully turn the cup sideways over the sink. Does it still hold? (Often yes, briefly. Air pushes from every direction, not just up.)</p></div>
+</div>
+
+<!-- ===================================================================== -->
+<div class="page">
+  <h2 class="fri">Friday, part 1 — Cloud in a Jar &nbsp;<span style="font-weight:normal;font-size:10pt;">Water changes form</span></h2>
+  <p class="meta">Standards: VA K.4.c (water occurs in different phases), 1.1 (use physical models to demonstrate natural processes). About 15 minutes. Do it first, before the volcano.</p>
+
+  <h3>What you need</h3>
+  <div class="box materials"><p>A clear glass jar with a metal lid (a pasta-sauce or mason jar), hot tap water or water heated in a kettle (hot but <em>not</em> boiling), a handful of ice cubes, aerosol hairspray (or one match: grown-up only), black paper behind the jar to make the cloud easier to see. Optional: a flashlight.</p></div>
+
+  <h3>Safety</h3>
+  <div class="box safety"><p><strong>A grown-up handles the hot water and the match.</strong> Use hairspray <em>or</em> a match, <strong>never both</strong>: hairspray is flammable. Use a sturdy glass jar. A thin glass can crack with very hot water, so warm the jar with tap water first.</p></div>
+
+  <h3>Run it</h3>
+  <ol>
+    <li>Put the black paper behind where the jar will stand. Your child reads the ASK on the Lab Report and makes a prediction.</li>
+    <li><strong>Grown-up:</strong> pour about 1 inch of hot water into the jar and swirl it to warm the sides.</li>
+    <li>Turn the lid upside down (like a little dish) and set it on top of the jar. Your child piles ice cubes in it. Wait about 20 seconds.</li>
+    <li>Lift the lid quickly, give one short spray of hairspray into the jar (or drop in a just-blown-out match), and put the iced lid straight back on.</li>
+    <li>Watch: a swirling, misty cloud fills the top of the jar within a minute. Shining a flashlight through the side makes it pop.</li>
+    <li>After observing, lift the lid. The cloud drifts out, and your child can wave a hand through it. Finish the Lab Report.</li>
+  </ol>
+
+  <h3>What's really happening</h3>
+  <div class="box science">
+    <p>The hot water <strong>evaporates</strong> fast, so the air in the jar fills with invisible water vapor (water as a gas). The ice on the lid chills the air at the top of the jar. Cold air can't hold as much water vapor, so the vapor <strong>condenses</strong>, turning back into tiny drops of liquid water. Each drop is far too small to fall, so they float together as a visible cloud.</p>
+    <p>The hairspray (or match smoke) is the secret ingredient. Water vapor needs tiny specks to condense onto, called <strong>condensation nuclei</strong>. Real clouds form on dust, sea salt, pollen, and smoke drifting in the sky. Without specks the jar still fogs a little, but the cloud is much thinner. Try it both ways if your child is curious. That's another fair test!</p>
+    <p>Connect it to the ice cube on the plate: <em>ice melting</em> is solid → liquid; the <em>cloud</em> is gas → liquid. Same water, different forms. This is a <strong>model</strong>. It's not the sky, but it works the same way the sky does, which is exactly what scientists use models for.</p>
+  </div>
+
+  <h3>Answer key</h3>
+  <div class="box answer-box fri">
+    <p><strong>Lab Report.</strong> <em>I predict:</em> any prediction. <em>I observe:</em> a cloud/fog/mist swirling at the top of the jar, sometimes water drops on the lid underside. <em>The lid:</em> the cloud floated out of the jar. <em>I learned:</em> a cloud is made of tiny drops of water.</p>
+    <p><strong>Friday reading Q4 ("What made the cloud?"):</strong> Both: warm water made water vapor, and the cold ice turned it back into tiny drops.</p>
+  </div>
+
+  <h3>Misconceptions to watch</h3>
+  <div class="box misconception"><p>"The cloud is smoke," or "it's steam." Visible mist is <em>liquid</em> water drops. The water vapor itself is invisible. The hairspray or smoke is only a tiny helper the drops form on. And clouds aren't "fluffy cotton." Your child just put a hand through one and felt it: a little cool and damp.</p></div>
+
+  <h3>Go further</h3>
+  <div class="box extension"><p><strong>Cloud spotting:</strong> On the next cloudy day, go outside and look up. "That's millions of tiny water drops, just like our jar." Or breathe on a cold window or mirror. The fog is your breath's water vapor condensing, a cloud you made yourself.</p></div>
+</div>
+
+<!-- ===================================================================== -->
+<div class="page">
+  <h2 class="fri">Friday, part 2 — Dino Volcano: Fast &amp; Slow Changes &nbsp;<span style="font-weight:normal;font-size:10pt;">Skill: The whole loop</span></h2>
   <p class="meta">Standards: VA K.10.c–d (changes can be observed and measured; fast or slow), K.4.c (water in different phases), 1.1 (full investigation)</p>
 
   <h3>What you need</h3>
@@ -1006,9 +1180,6 @@ def generate_kitchen_science_week_series():
   <h3>Go further</h3>
   <div class="box extension"><p><strong>Balloon blow-up:</strong> Pour ½ cup vinegar into an empty plastic bottle. Use a funnel or folded paper to put 2 tablespoons of baking soda inside a balloon. Stretch the balloon over the bottle's mouth, then lift it so the soda drops in. The gas you made inflates the balloon. That proves the bubbles really are a gas taking up space.</p></div>
 
-  <hr style="margin: 12px 0; border-color: #ccc;">
-  <h3>By the end of the week</h3>
-  <p>Christopher should be able to make a prediction before testing without being asked, say what made a test fair or unfair, and retell one experiment using <em>predicted / observed / learned</em>. Those habits matter more than any single fact from the week.</p>
 </div>
 
 </body>
@@ -1033,8 +1204,10 @@ def generate_kitchen_science_week_series():
         "Wed p2 — Cause and Effect: Vibrations and Sound",
         "Thu p1 — Reading: Push, Pull, Zoom!",
         "Thu p2 — T-Chart: Ramp Test Data",
+        "Thu p3 — Lab Report: The Magic Cup (air pressure)",
         "Fri p1 — Reading: Dino Volcano — Fast and Slow Changes (Capstone)",
-        "Fri p2 — Sequencing: Steps of a Scientist",
+        "Fri p2 — Lab Report: Cloud in a Jar",
+        "Fri p3 — Sequencing: Steps of a Scientist",
         "         — Parent Feedback & Teaching Notes",
     ]
     for label in labels:
