@@ -2988,6 +2988,223 @@ def _render_two_operand(data: dict, primary: str, light: str) -> str:
 """
 
 
+# ── Letter (incoming letter / reply / envelope) ────────────────────────────
+
+_LETTER_CSS = """\
+<style>
+  .lt-card { position: relative; border: 2px solid; border-radius: 6px; padding: 12px 18px 10px; margin: 6px 0 12px; font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', serif; font-size: 12pt; line-height: 1.55; page-break-inside: avoid; break-inside: avoid; }
+  .lt-card.parchment { background: #f7edd3; border-color: #b9975b; box-shadow: inset 0 0 18px rgba(150, 110, 40, 0.18); }
+  .lt-place { text-align: right; padding-right: 40px; font-style: italic; font-size: 10pt; color: #555; margin-bottom: 4px; }
+  .lt-greeting, .lt-closing { font-style: italic; }
+  .lt-body p { margin: 0 0 7px; text-indent: 1.5em; }
+  .lt-signoff { margin-left: 55%; margin-top: 4px; }
+  .lt-signature { font-weight: bold; font-style: italic; font-size: 13pt; }
+  .lt-seal { position: absolute; top: -12px; right: -10px; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d64545, #8f1414 70%); color: #f7d9a8; font-weight: bold; font-size: 18pt; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,.45); font-family: Georgia, serif; }
+  .lt-reply { margin-top: 4px; }
+  .lt-reply-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; color: #666; margin-bottom: 2px; }
+  .lt-write { font-size: 13pt; margin: 6px 0 2px; }
+  .lt-line { position: relative; border-bottom: 1.5px solid #9a9a9a; height: 34px; }
+  .lt-starter { position: absolute; left: 1.5em; bottom: 3px; color: #9a9a9a; font-size: 12.5pt; }
+  .lt-closing-row { display: flex; justify-content: flex-end; gap: 14px; align-items: baseline; margin-top: 12px; font-size: 11.5pt; }
+  .lt-closing-row .lt-choice { border: 1.5px solid #bbb; border-radius: 12px; padding: 0 9px; font-style: italic; }
+  .lt-sign-line { margin-left: 55%; border-bottom: 1.5px solid #9a9a9a; height: 34px; margin-top: 4px; }
+  .lt-sign-hint { margin-left: 55%; font-size: 8.5pt; color: #888; }
+  .lt-extras { display: flex; gap: 12px; margin-top: 12px; page-break-inside: avoid; break-inside: avoid; }
+  .lt-box { flex: 1; border: 1.5px dashed; border-radius: 5px; padding: 6px 10px; }
+  .lt-box-title { font-size: 9.5pt; font-weight: bold; margin-bottom: 4px; }
+  .lt-tile { display: inline-block; border: 1px solid #999; border-radius: 3px; padding: 1px 7px; margin: 2px 4px 2px 0; font-size: 11pt; background: #fff; }
+  .lt-check { font-size: 10.5pt; margin: 2px 0; }
+  .lt-check-box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid #333; margin-right: 7px; vertical-align: -1px; }
+  .lt-envelope { break-before: page; page-break-before: always; }
+  .lt-env-svg { width: 100%; height: auto; display: block; }
+  .lt-env-svg text { font-family: 'Trebuchet MS', Arial, sans-serif; }
+  @media screen { .lt-envelope { border-top: 2px dashed #bbb; margin-top: 0.4in; padding-top: 0.3in; } }
+</style>"""
+
+
+def _svg_envelope(to_text: str, from_text: str, primary: str) -> str:
+    """Cut-and-fold envelope: solid outline to cut, dashed lines to fold.
+
+    The printed centre panel is the envelope front (stamp, From, To); the four
+    flaps fold BACK, away from the printed side, so the address stays visible.
+    """
+    outline = (
+        "170,10 570,10 630,200 730,230 730,570 630,600 "
+        "590,860 150,860 110,600 10,570 10,230 110,200"
+    )
+    folds = [(110, 200, 630, 200), (630, 200, 630, 600), (630, 600, 110, 600), (110, 600, 110, 200)]
+    parts = [
+        '<svg class="lt-env-svg" viewBox="0 0 740 870" xmlns="http://www.w3.org/2000/svg" '
+        'role="img" aria-label="Cut-out envelope with fold lines">',
+        f'<polygon points="{outline}" fill="#fff" stroke="#222" stroke-width="2.5"/>',
+    ]
+    for x1, y1, x2, y2 in folds:
+        parts.append(
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#888" '
+            f'stroke-width="1.6" stroke-dasharray="9 6"/>'
+        )
+
+    def label(x: float, y: float, text: str, rotate: int = 0, size: int = 13) -> str:
+        rot = f' transform="rotate({rotate} {x} {y})"' if rotate else ""
+        return (
+            f'<text x="{x}" y="{y}" font-size="{size}" fill="#888" text-anchor="middle"{rot}>'
+            f"{_h(text)}</text>"
+        )
+
+    parts += [
+        label(370, 105, "TOP FLAP: fold back last and seal it shut", size=14),
+        label(370, 740, "BOTTOM FLAP: fold back, then glue the edges", size=14),
+        label(60, 400, "fold back", rotate=-90),
+        label(680, 400, "fold back", rotate=90),
+        # Stamp box
+        f'<rect x="538" y="216" width="76" height="90" fill="none" stroke="{primary}" '
+        f'stroke-width="2" stroke-dasharray="5 4"/>',
+        label(576, 256, "draw a", size=12),
+        label(576, 272, "stamp", size=12),
+        # From (top-left)
+        f'<text x="128" y="234" font-size="14" font-weight="bold" fill="{primary}">From:</text>',
+        '<line x1="178" y1="236" x2="400" y2="236" stroke="#999" stroke-width="1.3"/>',
+        '<line x1="128" y1="266" x2="400" y2="266" stroke="#999" stroke-width="1.3"/>',
+        # To (centre)
+        f'<text x="230" y="420" font-size="18" font-weight="bold" fill="{primary}">To:</text>',
+        '<line x1="268" y1="422" x2="560" y2="422" stroke="#999" stroke-width="1.5"/>',
+        '<line x1="230" y1="467" x2="560" y2="467" stroke="#999" stroke-width="1.5"/>',
+        '<line x1="230" y1="512" x2="560" y2="512" stroke="#999" stroke-width="1.5"/>',
+    ]
+    if from_text:
+        parts.append(f'<text x="182" y="230" font-size="14" fill="#333">{_h(from_text)}</text>')
+    if to_text:
+        parts.append(f'<text x="274" y="416" font-size="17" fill="#333">{_h(to_text)}</text>')
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def _render_letter(data: dict, primary: str, light: str) -> str:
+    """Render a letter worksheet: an incoming letter, a reply frame, or both.
+
+    Fields (all optional except that at least one of incoming/reply should be present):
+      style: "plain" (default) or "parchment" (tinted card with a wax seal)
+      incoming: {place_date, greeting, body (paragraphs split on blank lines),
+                 closing, signature, seal}  — or a plain string used as the body
+      reply: {greeting, paragraphs: [{starter, lines}], closing_options, signature_line}
+      word_bank: spelling-helper words; checklist: self-edit items rendered as checkboxes
+      envelope: true, or {to, from} to pre-print either line; adds a cut-and-fold
+                envelope on its own printed page
+    """
+    title = data.get("title", "Letter")
+    day_label = data.get("day_label", "")
+    style = data.get("style", "plain")
+    incoming = data.get("incoming")
+    reply = data.get("reply")
+    word_bank = data.get("word_bank", []) or []
+    checklist = data.get("checklist", []) or []
+    envelope = data.get("envelope")
+
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    instructions = _h(data.get("instructions", "Read the letter, then write a letter back."))
+
+    incoming_html = ""
+    if incoming:
+        if isinstance(incoming, str):
+            incoming = {"body": incoming}
+        parchment = style == "parchment"
+        card_style = "" if parchment else f"background:{light};border-color:{primary};"
+        signature = incoming.get("signature", "")
+        seal_html = ""
+        if parchment:
+            seal_char = incoming.get("seal") or (signature[:1] if signature else "✦")
+            seal_html = f'<div class="lt-seal">{_h(seal_char)}</div>'
+        place = incoming.get("place_date")
+        paras = [p.strip() for p in str(incoming.get("body", "")).split("\n\n") if p.strip()]
+        body_html = "".join(f"<p>{_h(p)}</p>" for p in paras)
+        greeting = incoming.get("greeting")
+        closing = incoming.get("closing")
+        incoming_html = (
+            f'<div class="lt-card{" parchment" if parchment else ""}" style="{card_style}">'
+            f"{seal_html}"
+            + (f'<div class="lt-place">{_h(place)}</div>' if place else "")
+            + (f'<div class="lt-greeting">{_h(greeting)}</div>' if greeting else "")
+            + f'<div class="lt-body">{body_html}</div>'
+            + '<div class="lt-signoff">'
+            + (f'<div class="lt-closing">{_h(closing)}</div>' if closing else "")
+            + (f'<div class="lt-signature">{_h(signature)}</div>' if signature else "")
+            + "</div></div>"
+        )
+
+    reply_html = ""
+    if reply:
+        greeting = reply.get("greeting", "Dear ________________,")
+        rows = ""
+        for para in reply.get("paragraphs", []) or [{"lines": 6}]:
+            starter = para.get("starter", "") if isinstance(para, dict) else str(para)
+            n_lines = max(1, int(para.get("lines", 2) if isinstance(para, dict) else 2))
+            first = f'<span class="lt-starter">{_h(starter)}</span>' if starter else ""
+            rows += f'<div class="lt-line">{first}</div>'
+            rows += '<div class="lt-line"></div>' * (n_lines - 1)
+        closing_opts = reply.get("closing_options", []) or []
+        closing_html = ""
+        if closing_opts:
+            choices = "".join(f'<span class="lt-choice">{_h(c)}</span>' for c in closing_opts)
+            closing_html = f'<div class="lt-closing-row"><span>Circle one:</span>{choices}</div>'
+        sign_html = ""
+        if reply.get("signature_line", True):
+            sign_html = (
+                '<div class="lt-sign-line"></div><div class="lt-sign-hint">sign your name</div>'
+            )
+        reply_html = (
+            f'<div class="lt-reply">'
+            f'<div class="lt-reply-label" style="color:{primary};">Your letter</div>'
+            f'<div class="lt-write">{_h(greeting)}</div>'
+            f"{rows}{closing_html}{sign_html}</div>"
+        )
+
+    extras = ""
+    if word_bank:
+        tiles = "".join(f'<span class="lt-tile">{_h(w)}</span>' for w in word_bank)
+        extras += (
+            f'<div class="lt-box" style="border-color:{primary};">'
+            f'<div class="lt-box-title" style="color:{primary};">Words to help you spell</div>'
+            f"{tiles}</div>"
+        )
+    if checklist:
+        items = "".join(
+            f'<div class="lt-check"><span class="lt-check-box"></span>{_h(c)}</div>'
+            for c in checklist
+        )
+        extras += (
+            f'<div class="lt-box" style="border-color:{primary};">'
+            f'<div class="lt-box-title" style="color:{primary};">Check your letter</div>'
+            f"{items}</div>"
+        )
+    extras_html = f'<div class="lt-extras">{extras}</div>' if extras else ""
+
+    envelope_html = ""
+    if envelope:
+        env = envelope if isinstance(envelope, dict) else {}
+        envelope_html = (
+            f'<div class="lt-envelope">'
+            f'<div class="ws-title" style="color:{primary};border-bottom-color:{primary};">'
+            f"Make an Envelope</div>"
+            f'<div class="ws-instructions">&#9986; Cut along the solid line. Fold the four flaps '
+            f"BACK on the dashed lines, side flaps first. Glue the bottom flap, tuck your letter "
+            f"inside, and seal the top. (Fold your letter in half the long way, then in thirds, "
+            f"so it fits.)</div>"
+            f'{_svg_envelope(env.get("to", ""), env.get("from", ""), primary)}'
+            f"</div>"
+        )
+
+    return f"""{_LETTER_CSS}
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{incoming_html}
+{reply_html}
+{extras_html}
+{envelope_html}
+"""
+
+
 # ── Dispatch table ─────────────────────────────────────────────────────────
 
 _RENDERERS = {
@@ -3015,6 +3232,7 @@ _RENDERERS = {
     "numberLineWorksheet": _render_number_line,
     "labeledDiagramWorksheet": _render_labeled_diagram,
     "twoOperandWorksheet": _render_two_operand,
+    "letterWorksheet": _render_letter,
     "mathWorksheet": _render_two_operand,  # legacy PIL math → HTML two-operand
 }
 
