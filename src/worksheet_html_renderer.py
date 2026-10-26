@@ -1927,6 +1927,8 @@ _NL_CSS = """\
   .nl-label { font-size: 10pt; fill: #222; text-anchor: middle; }
   .nl-blank { fill: white; stroke: #777; stroke-width: 1.5; }
   .nl-mark { }
+  .nl-jump { fill: none; stroke-width: 2.2; }
+  .nl-jump-label { font-size: 10pt; font-weight: bold; fill: #222; text-anchor: middle; }
 </style>"""
 
 _SM_CSS = """\
@@ -2702,6 +2704,12 @@ def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
     ``start`` to ``end`` (inclusive), numeric labels below each tick,
     blank write-in boxes for hidden positions (unless ``show_answers``),
     and filled marks above ``mark_positions`` ticks.
+
+    Optional ``jumps`` — a list of ``{"from": a, "to": b, "label": str}`` —
+    draws an arrowed hop arc above the line for each entry (forward or
+    backward), used to model addition and subtraction as movement. Set
+    ``hop_space: True`` to reserve the same headroom with no arcs drawn, so
+    the student has room to draw their own hops.
     """
     start = float(_task_get(task, "start", 0))
     end = float(_task_get(task, "end", 10))
@@ -2718,11 +2726,15 @@ def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
     if len(positions) < 2:
         return ""
 
+    jumps = [j for j in (_task_get(task, "jumps", []) or []) if isinstance(j, dict)]
+
+    # Hop arcs need headroom above the axis.
+    arc_room = 36.0 if jumps or _task_get(task, "hop_space", False) else 0.0
     W = 760.0
-    H = 88.0
+    H = 88.0 + arc_room
     pad_x = 18.0
-    line_y = 40.0
-    label_y = 78.0
+    line_y = 40.0 + arc_room
+    label_y = 78.0 + arc_room
     mark_r = 6.0
 
     x1, x2 = pad_x, W - pad_x
@@ -2770,6 +2782,39 @@ def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
             parts.append(
                 f'<text class="nl-label" x="{tx:.2f}" y="{label_y:.1f}">'
                 f"{_h(_fmt_num(pos))}</text>"
+            )
+
+    def x_of(value: float) -> float:
+        return x1 + (value - start) / step * spacing
+
+    for jump in jumps:
+        a = float(jump.get("from", start))
+        b = float(jump.get("to", start))
+        if a == b:
+            continue
+        ax, bx = x_of(a), x_of(b)
+        top = line_y - 10
+        lift = min(arc_room + 4, 22 + abs(bx - ax) * 0.18)
+        cx, cy = (ax + bx) / 2, top - lift * 2  # quadratic control point
+        parts.append(
+            f'<path class="nl-jump" d="M{ax:.2f},{top:.1f} '
+            f'Q{cx:.2f},{cy:.1f} {bx:.2f},{top:.1f}" stroke="{primary}"/>'
+        )
+        # Arrowhead along the curve's end tangent (end minus control point).
+        tx, ty = bx - cx, top - cy
+        norm = math.hypot(tx, ty) or 1.0
+        ux, uy = tx / norm, ty / norm
+        px, py = -uy, ux
+        parts.append(
+            f'<polygon fill="{primary}" points="{bx:.2f},{top:.1f} '
+            f"{bx - 9 * ux + 4.5 * px:.2f},{top - 9 * uy + 4.5 * py:.1f} "
+            f'{bx - 9 * ux - 4.5 * px:.2f},{top - 9 * uy - 4.5 * py:.1f}"/>'
+        )
+        label = jump.get("label")
+        if label:
+            parts.append(
+                f'<text class="nl-jump-label" x="{cx:.2f}" y="{top - lift - 4:.1f}">'
+                f"{_h(label)}</text>"
             )
 
     parts.append("</svg>")
