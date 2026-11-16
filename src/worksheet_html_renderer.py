@@ -48,6 +48,7 @@ _DAY_PALETTE: dict[str, tuple[str, str]] = {
     "wednesday": ("#7c3aed", "#ede9fe"),
     "thursday": ("#c2410c", "#ffedd5"),
     "friday": ("#0f766e", "#ccfbf1"),
+    "saturday": ("#b45309", "#fef3c7"),
 }
 _DEFAULT_PALETTE = ("#374151", "#f3f4f6")
 
