@@ -22,6 +22,7 @@ instantly identify which sheets belong to which day:
 from __future__ import annotations
 
 import html as _html
+import logging
 import random
 from collections import Counter
 import math
@@ -31,9 +32,13 @@ from typing import Any
 try:  # package context (tests, app): src.worksheet_html_renderer
     from .worksheets.ten_frame import TenFrameProblem
     from .worksheets.error_audit import decimal_stack_rows
+    from .worksheet_layouts import get_layout
 except ImportError:  # top-level context (scripts run with src on sys.path)
     from worksheets.ten_frame import TenFrameProblem
     from worksheets.error_audit import decimal_stack_rows
+    from worksheet_layouts import get_layout  # type: ignore
+
+logger = logging.getLogger(__name__)
 
 # ── Day palette ────────────────────────────────────────────────────────────
 
@@ -334,6 +339,79 @@ _CSS = """\
     border-bottom: 1px solid #bbb; padding-bottom: 2px; margin-bottom: 6px;
   }
 
+  /* Shape ID (gallery / attributes / sort / mirror-match) */
+  .shid-gallery { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
+  .shid-card {
+    flex: 0 0 auto; border: 2px solid #555; border-radius: 6px;
+    padding: 10px 14px; text-align: center; background: #fafafa;
+  }
+  .shid-blank { border-bottom: 1px solid #888; height: 18px; width: 1.3in; margin-top: 6px; }
+  .shid-pattern-blank {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 84px; min-height: 84px; font-size: 28pt; color: #aaa; border-style: dashed !important;
+  }
+  .shid-label-filled { font-weight: bold; font-size: 11pt; margin-top: 6px; }
+  .shid-attr-row { font-size: 9.5pt; margin-top: 8px; white-space: nowrap; }
+  .shid-bank-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+  .shid-bank-item {
+    border: 1.5px dashed #999; border-radius: 5px; padding: 6px 8px;
+    text-align: center; background: #fff;
+  }
+  .shid-letter { font-weight: bold; font-size: 10pt; margin-top: 3px; color: #555; }
+  .shid-write-line { font-size: 9.5pt; margin-top: 8px; color: #444; }
+  .shid-mirror-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .shid-mirror-ref { border: 2px solid #555; border-radius: 6px; padding: 6px; background: #fafafa; }
+  .shid-mirror-eq { font-size: 16pt; font-weight: bold; color: #666; }
+  .shid-mirror-opts { display: flex; gap: 8px; }
+  .shid-mirror-opt {
+    border: 2px solid #999; border-radius: 6px; padding: 6px; background: #fff; cursor: pointer;
+  }
+
+  /* Picture sequence */
+  .pseq-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+  .pseq-card {
+    flex: 1 1 1.5in; min-width: 1.5in; border: 2px solid #555; border-radius: 6px;
+    padding: 8px; text-align: center; background: #fafafa;
+  }
+  .pseq-number-box {
+    width: 30px; height: 30px; margin: 0 auto 6px; border: 2px solid #333;
+    border-radius: 4px; background: #fff;
+  }
+  .pseq-emoji { font-size: 26pt; line-height: 1; margin-bottom: 4px; }
+  .pseq-text { font-size: 9pt; line-height: 1.25; }
+
+  /* Mirror message */
+  .mm-intro-row { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 6px; margin-bottom: 10px; }
+  .mm-intro-pair { display: flex; align-items: center; gap: 8px; }
+  .mm-intro-normal {
+    font-size: 20pt; font-weight: bold; border: 2px solid #555; border-radius: 5px;
+    padding: 4px 12px; background: #fafafa;
+  }
+  .mm-intro-arrow { font-size: 14pt; color: #666; }
+  .mm-intro-mirrored {
+    display: inline-block; transform: scaleX(-1); font-size: 20pt; font-weight: bold;
+    border: 2px solid; border-radius: 5px; padding: 4px 12px; background: #fafafa;
+  }
+  /* The whole row (not each letter) is mirrored, so BOTH letter order and letter
+     shape flip together -- exactly what a real mirror held to the page undoes. */
+  .mm-trace-row {
+    display: flex; flex-wrap: nowrap; justify-content: center; gap: 6px;
+    margin-top: 8px; align-items: flex-end; transform: scaleX(-1);
+  }
+  .mm-box {
+    width: 44px; height: 54px; border: 2px solid; border-radius: 5px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center; background: #fff;
+  }
+  .mm-space { width: 22px; flex: 0 0 auto; }
+  .mm-letter {
+    display: inline-block;
+    font-size: 26pt; font-weight: bold; font-family: Georgia, 'Times New Roman', serif;
+    color: transparent; -webkit-text-stroke: 1.3px #999; text-stroke: 1.3px #999;
+  }
+  .mm-reveal-note {
+    margin-top: 12px; font-size: 9.5pt; font-style: italic; color: #555;
+    border-top: 1px dashed #bbb; padding-top: 8px;
+  }
   /* Error audit ("Bug Hunt") */
   .ea-badge {
     display: inline-block; border: 2px solid #333; border-radius: 10px;
@@ -794,6 +872,213 @@ _CSS = """\
   .to-op { margin-right: 4px; }
   .to-underline { border-bottom: 2px solid #333; margin: 2px 0; height: 2px; }
   .to-answer-box { height: 28px; border: 1.5px solid #999; border-radius: 3px; margin-top: 2px; }
+</style>"""
+
+# ── Content-block CSS ──────────────────────────────────────────────────────
+# Blocks are layout-agnostic: they render the same in `classic` and `journal`.
+# Appended to every packet; rules are namespaced so nothing here can affect the
+# historical worksheet types above.
+
+_BLOCK_CSS = """\
+<style>
+  /* Story panel */
+  .fx-story {
+    position: relative; border-radius: 5px; padding: 9px 12px 9px 34px;
+    font-size: 10pt; line-height: 1.6; margin-bottom: 10px;
+    background: #fdfbf6; border: 1.5px solid #e6dcc8; border-left-width: 5px;
+    break-inside: avoid;
+  }
+  .fx-story::before {
+    content: "\\1F43E"; position: absolute; left: 9px; top: 8px;
+    font-size: 13pt; opacity: 0.65;
+  }
+  .fx-story .fx-who {
+    font-weight: bold; font-size: 8.5pt; text-transform: uppercase;
+    letter-spacing: 0.09em; color: #8a7a55; display: block; margin-bottom: 3px;
+  }
+  .fx-story p { margin-bottom: 6px; }
+  .fx-story p:last-child { margin-bottom: 0; }
+
+  /* Hands-on card */
+  .fx-doing {
+    border: 2px dashed #b9b9b9; border-radius: 6px;
+    padding: 8px 11px 8px 34px; position: relative; background: #fafafa;
+    font-size: 9.5pt; margin-bottom: 10px; break-inside: avoid;
+  }
+  .fx-doing::before {
+    content: "\\270B"; position: absolute; left: 10px; top: 7px;
+    font-size: 13pt; opacity: 0.6;
+  }
+  .fx-doing-label {
+    font-size: 8pt; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.09em; color: #666; display: block; margin-bottom: 2px;
+  }
+
+  /* Note / teacher aside */
+  .fx-note {
+    border-left: 4px solid #cbd5e1; background: #f8fafc;
+    padding: 6px 10px; font-size: 9pt; color: #475569;
+    margin-bottom: 9px; border-radius: 0 4px 4px 0;
+  }
+
+  /* Logo badge — a real vehicle-make logo with a small caption */
+  .fx-logo-badge {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 3px;
+    border: 1.5px solid; border-radius: 6px; padding: 6px 14px; margin-bottom: 10px;
+    background: #fff; break-inside: avoid;
+  }
+  .fx-logo-img { height: 0.55in; width: auto; max-width: 2.2in; object-fit: contain; }
+  .fx-logo-cap {
+    font-size: 7.5pt; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #666;
+  }
+
+  /* Numbered tasks */
+  .fx-task { display: flex; gap: 9px; margin-bottom: 11px; break-inside: avoid; }
+  .fx-badge {
+    flex: 0 0 0.26in; height: 0.26in; border-radius: 50%; color: #fff;
+    font-size: 9.5pt; font-weight: bold; display: flex;
+    align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .fx-task-body { flex: 1; min-width: 0; }
+  .fx-task-prompt { font-size: 10pt; font-weight: bold; margin-bottom: 4px; line-height: 1.35; }
+  .fx-task-detail { font-size: 9.5pt; color: #444; margin-bottom: 4px; }
+
+  /* Warm-up / speed math */
+  .fx-drill { margin-bottom: 11px; break-inside: avoid; }
+  .fx-drill-head {
+    display: flex; align-items: baseline; gap: 8px;
+    border-bottom: 1.5px solid; padding-bottom: 2px; margin-bottom: 6px;
+  }
+  .fx-drill-title { font-size: 11pt; font-weight: bold; }
+  .fx-drill-inst { font-size: 8.5pt; color: #666; font-style: italic; flex: 1; }
+  .fx-timer {
+    border: 1.5px solid #999; border-radius: 4px; padding: 1px 8px;
+    font-size: 8pt; color: #555; white-space: nowrap;
+  }
+  .fx-drill-grid { display: grid; gap: 7px 12px; }
+  .fx-drill-item {
+    display: flex; align-items: baseline; gap: 5px;
+    font-size: 10.5pt; padding: 3px 0;
+  }
+  .fx-drill-num { font-size: 8pt; color: #999; flex: 0 0 auto; min-width: 0.15in; }
+  .fx-drill-q { flex: 0 1 auto; white-space: nowrap; }
+  .fx-drill-blank {
+    flex: 1 1 0.45in; min-width: 0.35in; border-bottom: 1.5px solid #777; height: 0.19in;
+  }
+  .fx-drill-box {
+    flex: 0 0 0.42in; height: 0.3in; border: 1.5px solid #777; border-radius: 3px;
+  }
+
+  /* Comparison pairs */
+  .fx-cmp-grid { display: grid; gap: 10px 18px; margin-bottom: 10px; }
+  .fx-cmp {
+    display: flex; align-items: center; gap: 7px;
+    border-bottom: 1px solid #e8e8e8; padding-bottom: 5px;
+  }
+  .fx-cmp-side {
+    flex: 1; text-align: center; font-size: 11.5pt; font-weight: bold;
+  }
+  .fx-cmp-box {
+    flex: 0 0 0.36in; height: 0.28in; border: 1.5px solid #777; border-radius: 3px;
+  }
+
+  /* Fraction strips */
+  .fx-strips { margin-bottom: 10px; }
+  .fx-strip-row { display: flex; align-items: center; gap: 8px; margin-bottom: 0.09in; }
+  .fx-strip-label { font-size: 8.5pt; color: #555; flex: 0 0 0.85in; text-align: right; }
+  .fx-strip { display: flex; border: 1.5px solid #111; break-inside: avoid; }
+  .fx-strip > span {
+    flex: 1 1 0; border-right: 1px dashed #444;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8.5pt; font-weight: bold;
+  }
+  .fx-strip > span:last-child { border-right: none; }
+
+  /* Fraction circles */
+  .fx-circles { display: flex; flex-wrap: wrap; gap: 0.26in; margin-bottom: 8px; }
+  .fx-circle-cell { text-align: center; }
+  .fx-circle { border-radius: 50%; border: 1.75px solid #111; }
+  .fx-caption { font-size: 8.5pt; color: #555; margin-top: 3px; }
+
+  /* Area-model grids */
+  .fx-areas { display: flex; flex-wrap: wrap; gap: 0.18in; margin-bottom: 8px; }
+  .fx-area { display: grid; border: 1.75px solid #111; }
+  .fx-area div { border: 0.5px solid #777; }
+
+  /* Number line */
+  .fx-nl-wrap { margin-bottom: 12px; break-inside: avoid; }
+  .fx-nl-prompt { font-size: 9.5pt; margin-bottom: 14px; }
+  .fx-nl { position: relative; border-top: 2px solid #111; height: 0.42in; display: flex; }
+  .fx-nl-tick { flex: 1 1 0; position: relative; }
+  .fx-nl-tick::before {
+    content: ""; position: absolute; left: 0; top: 0;
+    width: 1.5px; height: 0.15in; background: #111;
+  }
+  .fx-nl-tick:last-child::after {
+    content: ""; position: absolute; right: 0; top: 0;
+    width: 1.5px; height: 0.15in; background: #111;
+  }
+  .fx-nl-lab {
+    position: absolute; top: 0.17in; left: 0; transform: translateX(-50%);
+    font-size: 8.5pt; white-space: nowrap;
+  }
+  .fx-nl-lab.end { left: auto; right: 0; transform: translateX(50%); }
+
+  /* Heart bar */
+  .fx-hearts { display: flex; gap: 0.04in; margin-bottom: 6px; }
+  .fx-heart { flex: 1 1 0; border: 1.5px solid #7f1d1d; display: flex; }
+  .fx-heart span { flex: 1 1 0; border-right: 1px dotted #7f1d1d; }
+  .fx-heart span:last-child { border-right: none; }
+  .fx-heart span.on { background: #fca5a5; }
+
+  /* Colour key */
+  .fx-key { font-size: 9.5pt; line-height: 1.85; }
+  .fx-sw {
+    display: inline-block; width: 11px; height: 11px; border: 1px solid #444;
+    vertical-align: -1px; margin-right: 5px;
+  }
+  .fx-row { display: flex; gap: 0.3in; align-items: center; margin: 6px 0 2px; flex-wrap: wrap; }
+
+  /* Calibration ruler */
+  .fx-ruler { height: 0.42in; border: 1.5px solid #111; display: flex; margin-bottom: 3px; }
+  .fx-ruler div {
+    flex: 1 1 0; border-right: 1px solid #111; font-size: 7.5pt;
+    display: flex; align-items: flex-end; justify-content: flex-end; padding-right: 2px;
+  }
+  .fx-ruler div:last-child { border-right: none; }
+
+  /* Cut-out cards */
+  .fx-cards { display: grid; gap: 6px; margin-bottom: 8px; }
+  .fx-card {
+    border: 1.5px dashed #666; border-radius: 4px; padding: 8px 4px;
+    text-align: center; font-size: 12pt; font-weight: bold; background: #fff;
+  }
+
+  /* Rich text sections (teacher guides, answer keys) */
+  .fx-rt { margin-bottom: 11px; break-inside: avoid; }
+  .fx-rt-head {
+    font-size: 11pt; font-weight: bold; border-bottom: 1.5px solid;
+    padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .fx-rt p { font-size: 9.5pt; line-height: 1.55; margin-bottom: 5px; }
+  .fx-rt ul { margin: 0 0 5px 18px; }
+  .fx-rt li { font-size: 9.5pt; line-height: 1.5; margin-bottom: 2px; }
+  .fx-rt-table { border-collapse: collapse; width: 100%; margin-bottom: 4px; }
+  .fx-rt-table th {
+    text-align: left; vertical-align: top; font-size: 9pt; font-weight: bold;
+    padding: 3px 8px 3px 0; width: 1.5in; border-bottom: 1px solid #e5e5e5;
+  }
+  .fx-rt-table td {
+    font-size: 9.5pt; padding: 3px 0; border-bottom: 1px solid #e5e5e5;
+  }
+
+  /* Cut line */
+  .fx-cutline { border-top: 2px dashed #aaa; margin: 12px 0; position: relative; height: 0; }
+  .fx-cutline::before {
+    content: "\\2702"; position: absolute; left: 0; top: -9px;
+    background: #fff; padding-right: 5px; font-size: 11pt; color: #999;
+  }
 </style>"""
 
 _HTML_WRAPPER = """\
@@ -1469,6 +1754,413 @@ def _render_pictograph(data: dict, primary: str, light: str) -> str:
 """
 
 
+# ── Content blocks (layout-agnostic) ───────────────────────────────────────
+#
+# These are composable page fragments rather than whole worksheets: a journal
+# page is assembled from several of them.  They carry no day header of their
+# own — the layout supplies that.
+
+
+def _render_story_panel(data: dict, primary: str, light: str) -> str:
+    """Narrative panel — the recurring-character beat that opens each day."""
+    who = data.get("who", "")
+    text = data.get("text", "")
+    paras = [p.strip() for p in text.split("\n\n") if p.strip()]
+    who_html = f'<span class="fx-who">{_h(who)}</span>' if who else ""
+    body = "".join(f"<p>{_h(p)}</p>" for p in paras)
+    return f'<div class="fx-story">{who_html}{body}</div>'
+
+
+def _render_doing_card(data: dict, primary: str, light: str) -> str:
+    """Hands-on / outdoor activity, styled so it reads as not-desk-work."""
+    label = data.get("label", "Go and do")
+    text = data.get("text", "")
+    return (
+        f'<div class="fx-doing"><span class="fx-doing-label">{_h(label)}</span>' f"{_h(text)}</div>"
+    )
+
+
+def _render_note_box(data: dict, primary: str, light: str) -> str:
+    return f'<div class="fx-note">{_h(data.get("text", ""))}</div>'
+
+
+def _render_logo_badge(data: dict, primary: str, light: str) -> str:
+    """
+    A real vehicle-make logo with a small caption underneath — e.g. "Today's
+    Truck: Peterbilt". ``src`` is expected to be a data URI the caller builds
+    from a locally-embedded asset (never a remote/user-supplied URL).
+    """
+    src = data.get("src", "")
+    alt = data.get("alt", "")
+    caption = data.get("caption", "")
+    cap_html = f'<div class="fx-logo-cap">{_h(caption)}</div>' if caption else ""
+    return (
+        f'<div class="fx-logo-badge" style="border-color:{primary};">'
+        f'<img src="{_h(src)}" alt="{_h(alt)}" class="fx-logo-img">'
+        f"{cap_html}</div>"
+    )
+
+
+def _render_cut_line(data: dict, primary: str, light: str) -> str:
+    return '<div class="fx-cutline"></div>'
+
+
+def _render_task_list(data: dict, primary: str, light: str) -> str:
+    """Numbered tasks. Each task may embed a figure block via ``figure``."""
+    tasks = data.get("tasks", [])
+    start = int(data.get("start_number", 1))
+    out = []
+    for i, task in enumerate(tasks, start):
+        prompt = task.get("prompt", "")
+        detail = task.get("detail", "")
+        detail_html = f'<div class="fx-task-detail">{_h(detail)}</div>' if detail else ""
+
+        fig_html = ""
+        figure = task.get("figure")
+        if figure:
+            fig_html = _render_block(figure.get("kind", ""), figure.get("data", {}), primary, light)
+
+        answer = ""
+        if task.get("response_lines"):
+            answer = _answer_lines(int(task["response_lines"]))
+
+        out.append(
+            f'<div class="fx-task">'
+            f'<div class="fx-badge" style="background:{primary};">{i}</div>'
+            f'<div class="fx-task-body">'
+            f'<div class="fx-task-prompt">{_h(prompt)}</div>'
+            f"{detail_html}{fig_html}{answer}"
+            f"</div></div>"
+        )
+    return "".join(out)
+
+
+def _render_speed_math(data: dict, primary: str, light: str) -> str:
+    """
+    Warm-up / speed drill: a dense grid of short problems with answer slots.
+
+    ``title`` defaults to empty so the block doubles as a bare problem grid inside
+    a numbered task; pass one explicitly for a standalone warm-up.
+    """
+    title = data.get("title", "")
+    instructions = data.get("instructions", "")
+    problems = data.get("problems", [])
+    columns = int(data.get("columns", 4))
+    answer_style = data.get("answer_style", "blank")  # "blank" | "box"
+    timer = data.get("timer", "")
+
+    timer_html = f'<div class="fx-timer">{_h(timer)}</div>' if timer else ""
+    inst_html = f'<div class="fx-drill-inst">{_h(instructions)}</div>' if instructions else ""
+    slot_cls = "fx-drill-box" if answer_style == "box" else "fx-drill-blank"
+
+    # Head is suppressed entirely when unlabelled, so the block can be reused as a
+    # bare problem grid inside a numbered task without printing an empty rule.
+    head_html = ""
+    if title or instructions or timer:
+        head_html = (
+            f'<div class="fx-drill-head" style="border-color:{primary};">'
+            f'<div class="fx-drill-title" style="color:{primary};">{_h(title)}</div>'
+            f"{inst_html}{timer_html}</div>"
+        )
+
+    items = []
+    for i, prob in enumerate(problems, 1):
+        text = prob.get("q", "") if isinstance(prob, dict) else str(prob)
+        items.append(
+            f'<div class="fx-drill-item">'
+            f'<span class="fx-drill-num">{i}.</span>'
+            f'<span class="fx-drill-q">{_h(text)}</span>'
+            f'<span class="{slot_cls}"></span>'
+            f"</div>"
+        )
+
+    return (
+        f'<div class="fx-drill">{head_html}'
+        f'<div class="fx-drill-grid" style="grid-template-columns:repeat({columns},1fr);">'
+        f'{"".join(items)}</div></div>'
+    )
+
+
+def _render_fraction_strips(data: dict, primary: str, light: str) -> str:
+    """
+    Fraction strip kit.  Equal division is done by ``flex: 1 1 0`` so the
+    browser splits the strip exactly — no arithmetic, no rounding drift.
+    """
+    strips = data.get("strips", [])
+    width_in = float(data.get("width_in", 6.0))
+    height_in = float(data.get("height_in", 0.44))
+    show_labels = data.get("show_labels", True)
+
+    rows = []
+    for strip in strips:
+        denom = int(strip.get("denominator", 1))
+        label = strip.get("label", "")
+        shade = set(strip.get("shade", []))
+        color = strip.get("color", "")
+        piece_label = strip.get("piece_label")
+        if piece_label is None:
+            piece_label = f"1/{denom}" if show_labels and denom <= 8 else ""
+
+        cells = []
+        for idx in range(denom):
+            bg = ""
+            if idx in shade and color:
+                bg = f"background:{color};"
+            elif color and strip.get("fill_all"):
+                bg = f"background:{color};"
+            cells.append(f'<span style="{bg}">{_h(piece_label)}</span>')
+
+        label_html = f'<div class="fx-strip-label">{_h(label)}</div>' if label else ""
+        rows.append(
+            f'<div class="fx-strip-row">{label_html}'
+            f'<div class="fx-strip" style="width:{width_in}in;height:{height_in}in;">'
+            f'{"".join(cells)}</div></div>'
+        )
+    return f'<div class="fx-strips">{"".join(rows)}</div>'
+
+
+def _render_fraction_circles(data: dict, primary: str, light: str) -> str:
+    """Circles divided into equal wedges via conic-gradient (360/n degree stops)."""
+    circles = data.get("circles", [])
+    size_in = float(data.get("size_in", 1.5))
+
+    cells = []
+    for circ in circles:
+        parts = max(1, int(circ.get("parts", 1)))
+        caption = circ.get("caption", "")
+        shaded = int(circ.get("shaded", 0))
+        shade_color = circ.get("shade_color", "#dbeafe")
+
+        wedge = 360.0 / parts
+        spokes = f"repeating-conic-gradient(#111 0 0.7deg, transparent 0.7deg {wedge:g}deg)"
+        if shaded > 0:
+            stop = wedge * shaded
+            fill = f"conic-gradient({shade_color} 0 {stop:g}deg, #fff {stop:g}deg 360deg)"
+        else:
+            fill = "conic-gradient(#fff 0 360deg)"
+
+        cap = f'<div class="fx-caption">{_h(caption)}</div>' if caption else ""
+        cells.append(
+            f'<div class="fx-circle-cell">'
+            f'<div class="fx-circle" style="width:{size_in}in;height:{size_in}in;'
+            f'background:{spokes},{fill};"></div>{cap}</div>'
+        )
+    return f'<div class="fx-circles">{"".join(cells)}</div>'
+
+
+def _render_fraction_area(data: dict, primary: str, light: str) -> str:
+    """
+    Area/region models — a square partitioned by CSS grid.
+
+    ``cols``/``rows`` give an equal partition.  ``cols_spec``/``rows_spec`` take a
+    list of relative weights instead (e.g. ``[3, 1, 1, 1]``) to produce a shape cut
+    into the right *number* of parts that are deliberately **not** equal — the
+    distractors needed to test whether a student is checking for equal parts rather
+    than just counting pieces.
+    """
+    grids = data.get("grids", [])
+    size_in = float(data.get("size_in", 1.9))
+
+    cells = []
+    for grid in grids:
+        cols_spec = grid.get("cols_spec")
+        rows_spec = grid.get("rows_spec")
+        cols = max(1, int(grid.get("cols", 2)))
+        rows = max(1, int(grid.get("rows", 2)))
+
+        if cols_spec:
+            col_css = " ".join(f"{float(w):g}fr" for w in cols_spec)
+            cols = len(cols_spec)
+        else:
+            col_css = f"repeat({cols},1fr)"
+        if rows_spec:
+            row_css = " ".join(f"{float(w):g}fr" for w in rows_spec)
+            rows = len(rows_spec)
+        else:
+            row_css = f"repeat({rows},1fr)"
+
+        shaded = set(grid.get("shaded", []))
+        color = grid.get("shade_color", "#ede9fe")
+        caption = grid.get("caption", "")
+
+        squares = "".join(
+            f'<div style="background:{color};"></div>' if i in shaded else "<div></div>"
+            for i in range(cols * rows)
+        )
+        cap = f'<div class="fx-caption">{_h(caption)}</div>' if caption else ""
+        cells.append(
+            f"<div>"
+            f'<div class="fx-area" style="width:{size_in}in;height:{size_in}in;'
+            f"grid-template-columns:{col_css};"
+            f'grid-template-rows:{row_css};">{squares}</div>{cap}</div>'
+        )
+    return f'<div class="fx-areas">{"".join(cells)}</div>'
+
+
+def _render_fraction_number_line(data: dict, primary: str, light: str) -> str:
+    """0-to-1 number lines partitioned into equal fractional steps."""
+    lines = data.get("lines", [])
+    width_in = float(data.get("width_in", 6.0))
+
+    out = []
+    for line in lines:
+        denom = max(1, int(line.get("denominator", 2)))
+        prompt = line.get("prompt", "")
+        show_labels = line.get("show_labels", True)
+        end_label = line.get("end_label", "1")
+        start_label = line.get("start_label", "0")
+
+        ticks = []
+        for i in range(denom):
+            lab = ""
+            if show_labels:
+                text = start_label if i == 0 else f"{i}/{denom}"
+                lab = f'<div class="fx-nl-lab">{_h(text)}</div>'
+            end = ""
+            if i == denom - 1 and show_labels:
+                end = f'<div class="fx-nl-lab end">{_h(end_label)}</div>'
+            ticks.append(f'<div class="fx-nl-tick">{lab}{end}</div>')
+
+        prompt_html = f'<div class="fx-nl-prompt">{_h(prompt)}</div>' if prompt else ""
+        out.append(
+            f'<div class="fx-nl-wrap">{prompt_html}'
+            f'<div class="fx-nl" style="width:{width_in}in;">{"".join(ticks)}</div></div>'
+        )
+    return "".join(out)
+
+
+def _render_heart_bar(data: dict, primary: str, light: str) -> str:
+    """Themed half-unit bar: N hearts, each split in two."""
+    hearts = int(data.get("hearts", 5))
+    filled = int(data.get("filled_halves", 0))
+    width_in = float(data.get("width_in", 5.0))
+    height_in = float(data.get("height_in", 0.4))
+    caption = data.get("caption", "")
+
+    cells = []
+    for i in range(hearts):
+        left = "on" if filled >= i * 2 + 1 else ""
+        right = "on" if filled >= i * 2 + 2 else ""
+        cells.append(
+            f'<div class="fx-heart" style="height:{height_in}in;">'
+            f'<span class="{left}"></span><span class="{right}"></span></div>'
+        )
+    cap = f'<div class="fx-caption">{_h(caption)}</div>' if caption else ""
+    return f'<div class="fx-hearts" style="width:{width_in}in;">{"".join(cells)}</div>{cap}'
+
+
+def _render_color_key(data: dict, primary: str, light: str) -> str:
+    """Colour-by-fraction key: swatch + fraction + colour name."""
+    entries = data.get("entries", [])
+    rows = []
+    for entry in entries:
+        frac = entry.get("fraction", "")
+        name = entry.get("color_name", "")
+        hexv = entry.get("hex", "#ffffff")
+        rows.append(
+            f'<div><span class="fx-sw" style="background:{hexv};"></span>'
+            f"<b>{_h(frac)}</b> &rarr; {_h(name)}</div>"
+        )
+    return f'<div class="fx-key">{"".join(rows)}</div>'
+
+
+def _render_color_task(data: dict, primary: str, light: str) -> str:
+    """A figure plus its colour key, side by side."""
+    figure = data.get("figure", {})
+    fig_html = _render_block(figure.get("kind", ""), figure.get("data", {}), primary, light)
+    key_html = _render_color_key({"entries": data.get("entries", [])}, primary, light)
+    return f'<div class="fx-row">{fig_html}{key_html}</div>'
+
+
+def _render_calibration_ruler(data: dict, primary: str, light: str) -> str:
+    """Printed ruler for verifying the page printed at 100% scale."""
+    inches = int(data.get("inches", 6))
+    note = data.get(
+        "note",
+        "Check this against a real ruler. If it is not exactly "
+        f"{inches} inches long, reprint at 100% (Actual Size) with "
+        '"Fit to page" turned OFF — otherwise the pieces will not match.',
+    )
+    ticks = "".join(f"<div>{i}</div>" for i in range(1, inches + 1))
+    return (
+        f'<div class="fx-ruler" style="width:{inches}in;">{ticks}</div>'
+        f'<div class="fx-note">{_h(note)}</div>'
+    )
+
+
+def _render_compare_pairs(data: dict, primary: str, light: str) -> str:
+    """
+    Grid of ``left [ ] right`` comparison prompts.
+
+    Written as a real grid rather than a run-on text line so the pairs stay
+    visually separate — a string like "3/8 ___ 5/8   2/6 ___ 5/6" collapses its
+    whitespace in HTML and reads as one continuous blob.
+    """
+    pairs = data.get("pairs", [])
+    columns = int(data.get("columns", 3))
+    items = []
+    for pair in pairs:
+        left = pair.get("left", "") if isinstance(pair, dict) else str(pair)
+        right = pair.get("right", "") if isinstance(pair, dict) else ""
+        items.append(
+            f'<div class="fx-cmp">'
+            f'<span class="fx-cmp-side">{_h(left)}</span>'
+            f'<span class="fx-cmp-box"></span>'
+            f'<span class="fx-cmp-side">{_h(right)}</span>'
+            f"</div>"
+        )
+    return (
+        f'<div class="fx-cmp-grid" style="grid-template-columns:repeat({columns},1fr);">'
+        f'{"".join(items)}</div>'
+    )
+
+
+def _render_rich_text(data: dict, primary: str, light: str) -> str:
+    """
+    Headed prose sections with optional bullets and key/value rows — the
+    workhorse block for teacher guides and answer keys.
+    """
+    sections = data.get("sections", [])
+    out = []
+    for sec in sections:
+        heading = sec.get("heading", "")
+        text = sec.get("text", "")
+        bullets = sec.get("bullets", [])
+        rows = sec.get("rows", [])
+
+        head_html = ""
+        if heading:
+            head_html = (
+                f'<div class="fx-rt-head" style="color:{primary};'
+                f'border-color:{primary};">{_h(heading)}</div>'
+            )
+
+        body = ""
+        for para in (p.strip() for p in text.split("\n\n")):
+            if para:
+                body += f"<p>{_h(para)}</p>"
+        if bullets:
+            items = "".join(f"<li>{_h(b)}</li>" for b in bullets)
+            body += f"<ul>{items}</ul>"
+        if rows:
+            trs = "".join(
+                f"<tr><th>{_h(r.get('k', ''))}</th><td>{_h(r.get('v', ''))}</td></tr>" for r in rows
+            )
+            body += f'<table class="fx-rt-table">{trs}</table>'
+
+        out.append(f'<div class="fx-rt">{head_html}{body}</div>')
+    return "".join(out)
+
+
+def _render_cut_cards(data: dict, primary: str, light: str) -> str:
+    """Grid of cut-apart cards (number-line pegs, fraction cards)."""
+    cards = data.get("cards", [])
+    cols = int(data.get("columns", 6))
+    tiles = "".join(f'<div class="fx-card">{_h(c)}</div>' for c in cards)
+    return (
+        f'<div class="fx-cards" style="grid-template-columns:repeat({cols},1fr);">' f"{tiles}</div>"
+    )
+
 def _svg_clock(hour: float, minute: int, missing: str | None, starter: bool = False) -> str:
     """Inline-SVG analog clock face (prints crisply, no image assets).
 
@@ -1625,7 +2317,7 @@ def _render_ten_frame(data: dict, primary: str, light: str) -> str:
             proof = f'<div class="tf-proof-label">Make ten:</div>{key_lines}'
         else:
             proof = (
-                f'<div class="tf-proof-label">Make ten:</div>'
+                '<div class="tf-proof-label">Make ten:</div>'
                 + _answer_lines(equation_lines)
             )
         cards_html += (
@@ -1928,6 +2620,8 @@ _NL_CSS = """\
   .nl-label { font-size: 10pt; fill: #222; text-anchor: middle; }
   .nl-blank { fill: white; stroke: #777; stroke-width: 1.5; }
   .nl-mark { }
+  .nl-jump { fill: none; stroke-width: 2.2; }
+  .nl-jump-label { font-size: 10pt; font-weight: bold; fill: #222; text-anchor: middle; }
 </style>"""
 
 _SM_CSS = """\
@@ -2363,7 +3057,7 @@ def _free_line() -> str:
 def _spacing_line(letter: str) -> str:
     """Spacing practice row of '__  __' starter blanks (PIL line 4)."""
     pairs = "".join(
-        f"<span>__&nbsp;&nbsp;__</span>" for _ in range(8)
+        "<span>__&nbsp;&nbsp;__</span>" for _ in range(8)
     )
     return (
         f'<div class="abc-practice-label">Write {_h(letter)} {_h(letter.lower())} '
@@ -2426,7 +3120,7 @@ def _render_alphabet(data: dict, primary: str, light: str) -> str:
     )
 
     words = (
-        f'<div class="abc-words"><div class="abc-words-grid">'
+        '<div class="abc-words"><div class="abc-words-grid">'
         + _words_column(
             f"Words that start with {letter}", starting_words, primary, light
         )
@@ -2703,6 +3397,12 @@ def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
     ``start`` to ``end`` (inclusive), numeric labels below each tick,
     blank write-in boxes for hidden positions (unless ``show_answers``),
     and filled marks above ``mark_positions`` ticks.
+
+    Optional ``jumps`` — a list of ``{"from": a, "to": b, "label": str}`` —
+    draws an arrowed hop arc above the line for each entry (forward or
+    backward), used to model addition and subtraction as movement. Set
+    ``hop_space: True`` to reserve the same headroom with no arcs drawn, so
+    the student has room to draw their own hops.
     """
     start = float(_task_get(task, "start", 0))
     end = float(_task_get(task, "end", 10))
@@ -2719,11 +3419,15 @@ def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
     if len(positions) < 2:
         return ""
 
+    jumps = [j for j in (_task_get(task, "jumps", []) or []) if isinstance(j, dict)]
+
+    # Hop arcs need headroom above the axis.
+    arc_room = 36.0 if jumps or _task_get(task, "hop_space", False) else 0.0
     W = 760.0
-    H = 88.0
+    H = 88.0 + arc_room
     pad_x = 18.0
-    line_y = 40.0
-    label_y = 78.0
+    line_y = 40.0 + arc_room
+    label_y = 78.0 + arc_room
     mark_r = 6.0
 
     x1, x2 = pad_x, W - pad_x
@@ -2771,6 +3475,39 @@ def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
             parts.append(
                 f'<text class="nl-label" x="{tx:.2f}" y="{label_y:.1f}">'
                 f"{_h(_fmt_num(pos))}</text>"
+            )
+
+    def x_of(value: float) -> float:
+        return x1 + (value - start) / step * spacing
+
+    for jump in jumps:
+        a = float(jump.get("from", start))
+        b = float(jump.get("to", start))
+        if a == b:
+            continue
+        ax, bx = x_of(a), x_of(b)
+        top = line_y - 10
+        lift = min(arc_room + 4, 22 + abs(bx - ax) * 0.18)
+        cx, cy = (ax + bx) / 2, top - lift * 2  # quadratic control point
+        parts.append(
+            f'<path class="nl-jump" d="M{ax:.2f},{top:.1f} '
+            f'Q{cx:.2f},{cy:.1f} {bx:.2f},{top:.1f}" stroke="{primary}"/>'
+        )
+        # Arrowhead along the curve's end tangent (end minus control point).
+        tx, ty = bx - cx, top - cy
+        norm = math.hypot(tx, ty) or 1.0
+        ux, uy = tx / norm, ty / norm
+        px, py = -uy, ux
+        parts.append(
+            f'<polygon fill="{primary}" points="{bx:.2f},{top:.1f} '
+            f"{bx - 9 * ux + 4.5 * px:.2f},{top - 9 * uy + 4.5 * py:.1f} "
+            f'{bx - 9 * ux - 4.5 * px:.2f},{top - 9 * uy - 4.5 * py:.1f}"/>'
+        )
+        label = jump.get("label")
+        if label:
+            parts.append(
+                f'<text class="nl-jump-label" x="{cx:.2f}" y="{top - lift - 4:.1f}">'
+                f"{_h(label)}</text>"
             )
 
     parts.append("</svg>")
@@ -2989,7 +3726,423 @@ def _render_two_operand(data: dict, primary: str, light: str) -> str:
 """
 
 
+# ── Letter (incoming letter / reply / envelope) ────────────────────────────
+
+_LETTER_CSS = """\
+<style>
+  .lt-card { position: relative; border: 2px solid; border-radius: 6px; padding: 12px 18px 10px; margin: 6px 0 12px; font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', serif; font-size: 12pt; line-height: 1.55; page-break-inside: avoid; break-inside: avoid; }
+  .lt-card.parchment { background: #f7edd3; border-color: #b9975b; box-shadow: inset 0 0 18px rgba(150, 110, 40, 0.18); }
+  .lt-place { text-align: right; padding-right: 40px; font-style: italic; font-size: 10pt; color: #555; margin-bottom: 4px; }
+  .lt-greeting, .lt-closing { font-style: italic; }
+  .lt-body p { margin: 0 0 7px; text-indent: 1.5em; }
+  .lt-signoff { margin-left: 55%; margin-top: 4px; }
+  .lt-signature { font-weight: bold; font-style: italic; font-size: 13pt; }
+  .lt-seal { position: absolute; top: -12px; right: -10px; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d64545, #8f1414 70%); color: #f7d9a8; font-weight: bold; font-size: 18pt; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,.45); font-family: Georgia, serif; }
+  .lt-reply { margin-top: 4px; }
+  .lt-reply-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; color: #666; margin-bottom: 2px; }
+  .lt-write { font-size: 13pt; margin: 6px 0 2px; }
+  .lt-line { position: relative; border-bottom: 1.5px solid #9a9a9a; height: 34px; }
+  .lt-starter { position: absolute; left: 1.5em; bottom: 3px; color: #9a9a9a; font-size: 12.5pt; }
+  .lt-closing-row { display: flex; justify-content: flex-end; gap: 14px; align-items: baseline; margin-top: 12px; font-size: 11.5pt; }
+  .lt-closing-row .lt-choice { border: 1.5px solid #bbb; border-radius: 12px; padding: 0 9px; font-style: italic; }
+  .lt-sign-line { margin-left: 55%; border-bottom: 1.5px solid #9a9a9a; height: 34px; margin-top: 4px; }
+  .lt-sign-hint { margin-left: 55%; font-size: 8.5pt; color: #888; }
+  .lt-extras { display: flex; gap: 12px; margin-top: 12px; page-break-inside: avoid; break-inside: avoid; }
+  .lt-box { flex: 1; border: 1.5px dashed; border-radius: 5px; padding: 6px 10px; }
+  .lt-box-title { font-size: 9.5pt; font-weight: bold; margin-bottom: 4px; }
+  .lt-tile { display: inline-block; border: 1px solid #999; border-radius: 3px; padding: 1px 7px; margin: 2px 4px 2px 0; font-size: 11pt; background: #fff; }
+  .lt-check { font-size: 10.5pt; margin: 2px 0; }
+  .lt-check-box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid #333; margin-right: 7px; vertical-align: -1px; }
+  .lt-envelope { break-before: page; page-break-before: always; }
+  .lt-env-svg { width: 100%; height: auto; display: block; }
+  .lt-env-svg text { font-family: 'Trebuchet MS', Arial, sans-serif; }
+  @media screen { .lt-envelope { border-top: 2px dashed #bbb; margin-top: 0.4in; padding-top: 0.3in; } }
+</style>"""
+
+
+def _svg_envelope(to_text: str, from_text: str, primary: str) -> str:
+    """Cut-and-fold envelope: solid outline to cut, dashed lines to fold.
+
+    The printed centre panel is the envelope front (stamp, From, To); the four
+    flaps fold BACK, away from the printed side, so the address stays visible.
+    """
+    outline = (
+        "170,10 570,10 630,200 730,230 730,570 630,600 "
+        "590,860 150,860 110,600 10,570 10,230 110,200"
+    )
+    folds = [(110, 200, 630, 200), (630, 200, 630, 600), (630, 600, 110, 600), (110, 600, 110, 200)]
+    parts = [
+        '<svg class="lt-env-svg" viewBox="0 0 740 870" xmlns="http://www.w3.org/2000/svg" '
+        'role="img" aria-label="Cut-out envelope with fold lines">',
+        f'<polygon points="{outline}" fill="#fff" stroke="#222" stroke-width="2.5"/>',
+    ]
+    for x1, y1, x2, y2 in folds:
+        parts.append(
+            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#888" '
+            f'stroke-width="1.6" stroke-dasharray="9 6"/>'
+        )
+
+    def label(x: float, y: float, text: str, rotate: int = 0, size: int = 13) -> str:
+        rot = f' transform="rotate({rotate} {x} {y})"' if rotate else ""
+        return (
+            f'<text x="{x}" y="{y}" font-size="{size}" fill="#888" text-anchor="middle"{rot}>'
+            f"{_h(text)}</text>"
+        )
+
+    parts += [
+        label(370, 105, "TOP FLAP: fold back last and seal it shut", size=14),
+        label(370, 740, "BOTTOM FLAP: fold back, then glue the edges", size=14),
+        label(60, 400, "fold back", rotate=-90),
+        label(680, 400, "fold back", rotate=90),
+        # Stamp box
+        f'<rect x="538" y="216" width="76" height="90" fill="none" stroke="{primary}" '
+        f'stroke-width="2" stroke-dasharray="5 4"/>',
+        label(576, 256, "draw a", size=12),
+        label(576, 272, "stamp", size=12),
+        # From (top-left)
+        f'<text x="128" y="234" font-size="14" font-weight="bold" fill="{primary}">From:</text>',
+        '<line x1="178" y1="236" x2="400" y2="236" stroke="#999" stroke-width="1.3"/>',
+        '<line x1="128" y1="266" x2="400" y2="266" stroke="#999" stroke-width="1.3"/>',
+        # To (centre)
+        f'<text x="230" y="420" font-size="18" font-weight="bold" fill="{primary}">To:</text>',
+        '<line x1="268" y1="422" x2="560" y2="422" stroke="#999" stroke-width="1.5"/>',
+        '<line x1="230" y1="467" x2="560" y2="467" stroke="#999" stroke-width="1.5"/>',
+        '<line x1="230" y1="512" x2="560" y2="512" stroke="#999" stroke-width="1.5"/>',
+    ]
+    if from_text:
+        parts.append(f'<text x="182" y="230" font-size="14" fill="#333">{_h(from_text)}</text>')
+    if to_text:
+        parts.append(f'<text x="274" y="416" font-size="17" fill="#333">{_h(to_text)}</text>')
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def _render_letter(data: dict, primary: str, light: str) -> str:
+    """Render a letter worksheet: an incoming letter, a reply frame, or both.
+
+    Fields (all optional except that at least one of incoming/reply should be present):
+      style: "plain" (default) or "parchment" (tinted card with a wax seal)
+      incoming: {place_date, greeting, body (paragraphs split on blank lines),
+                 closing, signature, seal}  — or a plain string used as the body
+      reply: {greeting, paragraphs: [{starter, lines}], closing_options, signature_line}
+      word_bank: spelling-helper words; checklist: self-edit items rendered as checkboxes
+      envelope: true, or {to, from} to pre-print either line; adds a cut-and-fold
+                envelope on its own printed page
+    """
+    title = data.get("title", "Letter")
+    day_label = data.get("day_label", "")
+    style = data.get("style", "plain")
+    incoming = data.get("incoming")
+    reply = data.get("reply")
+    word_bank = data.get("word_bank", []) or []
+    checklist = data.get("checklist", []) or []
+    envelope = data.get("envelope")
+
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    instructions = _h(data.get("instructions", "Read the letter, then write a letter back."))
+
+    incoming_html = ""
+    if incoming:
+        if isinstance(incoming, str):
+            incoming = {"body": incoming}
+        parchment = style == "parchment"
+        card_style = "" if parchment else f"background:{light};border-color:{primary};"
+        signature = incoming.get("signature", "")
+        seal_html = ""
+        if parchment:
+            seal_char = incoming.get("seal") or (signature[:1] if signature else "✦")
+            seal_html = f'<div class="lt-seal">{_h(seal_char)}</div>'
+        place = incoming.get("place_date")
+        paras = [p.strip() for p in str(incoming.get("body", "")).split("\n\n") if p.strip()]
+        body_html = "".join(f"<p>{_h(p)}</p>" for p in paras)
+        greeting = incoming.get("greeting")
+        closing = incoming.get("closing")
+        incoming_html = (
+            f'<div class="lt-card{" parchment" if parchment else ""}" style="{card_style}">'
+            f"{seal_html}"
+            + (f'<div class="lt-place">{_h(place)}</div>' if place else "")
+            + (f'<div class="lt-greeting">{_h(greeting)}</div>' if greeting else "")
+            + f'<div class="lt-body">{body_html}</div>'
+            + '<div class="lt-signoff">'
+            + (f'<div class="lt-closing">{_h(closing)}</div>' if closing else "")
+            + (f'<div class="lt-signature">{_h(signature)}</div>' if signature else "")
+            + "</div></div>"
+        )
+
+    reply_html = ""
+    if reply:
+        greeting = reply.get("greeting", "Dear ________________,")
+        rows = ""
+        for para in reply.get("paragraphs", []) or [{"lines": 6}]:
+            starter = para.get("starter", "") if isinstance(para, dict) else str(para)
+            n_lines = max(1, int(para.get("lines", 2) if isinstance(para, dict) else 2))
+            first = f'<span class="lt-starter">{_h(starter)}</span>' if starter else ""
+            rows += f'<div class="lt-line">{first}</div>'
+            rows += '<div class="lt-line"></div>' * (n_lines - 1)
+        closing_opts = reply.get("closing_options", []) or []
+        closing_html = ""
+        if closing_opts:
+            choices = "".join(f'<span class="lt-choice">{_h(c)}</span>' for c in closing_opts)
+            closing_html = f'<div class="lt-closing-row"><span>Circle one:</span>{choices}</div>'
+        sign_html = ""
+        if reply.get("signature_line", True):
+            sign_html = (
+                '<div class="lt-sign-line"></div><div class="lt-sign-hint">sign your name</div>'
+            )
+        reply_html = (
+            f'<div class="lt-reply">'
+            f'<div class="lt-reply-label" style="color:{primary};">Your letter</div>'
+            f'<div class="lt-write">{_h(greeting)}</div>'
+            f"{rows}{closing_html}{sign_html}</div>"
+        )
+
+    extras = ""
+    if word_bank:
+        tiles = "".join(f'<span class="lt-tile">{_h(w)}</span>' for w in word_bank)
+        extras += (
+            f'<div class="lt-box" style="border-color:{primary};">'
+            f'<div class="lt-box-title" style="color:{primary};">Words to help you spell</div>'
+            f"{tiles}</div>"
+        )
+    if checklist:
+        items = "".join(
+            f'<div class="lt-check"><span class="lt-check-box"></span>{_h(c)}</div>'
+            for c in checklist
+        )
+        extras += (
+            f'<div class="lt-box" style="border-color:{primary};">'
+            f'<div class="lt-box-title" style="color:{primary};">Check your letter</div>'
+            f"{items}</div>"
+        )
+    extras_html = f'<div class="lt-extras">{extras}</div>' if extras else ""
+
+    envelope_html = ""
+    if envelope:
+        env = envelope if isinstance(envelope, dict) else {}
+        envelope_html = (
+            f'<div class="lt-envelope">'
+            f'<div class="ws-title" style="color:{primary};border-bottom-color:{primary};">'
+            f"Make an Envelope</div>"
+            f'<div class="ws-instructions">&#9986; Cut along the solid line. Fold the four flaps '
+            f"BACK on the dashed lines, side flaps first. Glue the bottom flap, tuck your letter "
+            f"inside, and seal the top. (Fold your letter in half the long way, then in thirds, "
+            f"so it fits.)</div>"
+            f'{_svg_envelope(env.get("to", ""), env.get("from", ""), primary)}'
+            f"</div>"
+        )
+
+    return f"""{_LETTER_CSS}
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{incoming_html}
+{reply_html}
+{extras_html}
+{envelope_html}
+"""
+
+
 # ── Dispatch table ─────────────────────────────────────────────────────────
+
+
+def _shape_svg(shape_type: str, color: str, size: int = 84, flipped: bool = False) -> str:
+    """Return an inline <svg> drawing one real CSS/SVG-proportioned plane figure."""
+    stroke = 'stroke="#222" stroke-width="4" stroke-linejoin="round"'
+    if shape_type == "circle":
+        inner = f'<circle cx="50" cy="50" r="42" fill="{color}" {stroke}/>'
+    elif shape_type == "square":
+        inner = f'<rect x="10" y="10" width="80" height="80" fill="{color}" {stroke}/>'
+    elif shape_type == "rectangle":
+        inner = f'<rect x="4" y="24" width="92" height="52" fill="{color}" {stroke}/>'
+    elif shape_type == "triangle":
+        inner = f'<polygon points="50,8 92,90 8,90" fill="{color}" {stroke}/>'
+    else:
+        inner = ""
+    tr = ' style="transform:scaleX(-1);"' if flipped else ""
+    return f'<svg viewBox="0 0 100 100" width="{size}" height="{size}"{tr}>{inner}</svg>'
+
+
+def _render_shape_id(data: dict, primary: str, light: str) -> str:
+    """Real CSS/SVG-drawn plane figures: naming gallery, attribute count, attribute
+    sort, or a mirror-image matching puzzle. Data keys: title, instructions, mode
+    ("gallery" | "attributes" | "sort" | "mirror_match"), shapes, word_bank, categories.
+    """
+    title = data.get("title", "Shapes")
+    day_label = data.get("day_label", "")
+    mode = data.get("mode", "gallery")
+    shapes = data.get("shapes", [])
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    instructions = _h(data.get("instructions", "Look at each shape."))
+
+    body = ""
+    if mode == "gallery":
+        cards = ""
+        for sh in shapes:
+            svg = _shape_svg(sh["type"], sh.get("color", light))
+            label = sh.get("label")
+            label_html = (
+                f'<div class="shid-label-filled">{_h(label)}</div>'
+                if label
+                else '<div class="shid-blank"></div>'
+            )
+            cards += (
+                f'<div class="shid-card" style="border-color:{primary};">{svg}{label_html}</div>'
+            )
+        bank_html = ""
+        word_bank = data.get("word_bank")
+        if word_bank:
+            tiles = "".join(f'<div class="ws-tile">{_h(w)}</div>' for w in word_bank)
+            bank_html = (
+                '<div class="ws-tile-bank"><div class="ws-tile-bank-label">Word bank</div>'
+                f'<div class="ws-tiles">{tiles}</div></div>'
+            )
+        body = f'<div class="shid-gallery">{cards}</div>{bank_html}'
+    elif mode == "attributes":
+        cards = ""
+        for sh in shapes:
+            svg = _shape_svg(sh["type"], sh.get("color", light), size=78)
+            cards += (
+                f'<div class="shid-card" style="border-color:{primary};">{svg}'
+                '<div class="shid-attr-row">Sides: ____&nbsp;&nbsp; Corners: ____</div></div>'
+            )
+        body = f'<div class="shid-gallery">{cards}</div>'
+    elif mode == "pattern":
+        cards = ""
+        for sh in shapes:
+            if sh.get("blank"):
+                cards += (
+                    f'<div class="shid-card shid-pattern-blank" style="border-color:{primary};">'
+                    "?</div>"
+                )
+            else:
+                svg = _shape_svg(sh["type"], sh.get("color", light), size=72)
+                cards += f'<div class="shid-card" style="border-color:{primary};">{svg}</div>'
+        body = f'<div class="shid-gallery">{cards}</div>'
+    elif mode == "sort":
+        letters = "ABCDEFGHIJ"
+        bank_items = ""
+        for i, sh in enumerate(shapes):
+            svg = _shape_svg(sh["type"], sh.get("color", light), size=56)
+            bank_items += f'<div class="shid-bank-item">{svg}<div class="shid-letter">{letters[i]}</div></div>'
+        categories = data.get("categories", [])
+        cat_html = ""
+        for c in categories:
+            cat_html += (
+                f'<div class="ws-category" style="border-color:{primary};">'
+                f'<div class="ws-category-label">{_h(c)}</div>'
+                '<div class="shid-write-line">Letters: ______________</div>'
+                "</div>"
+            )
+        n_cols = max(1, len(categories))
+        body = (
+            f'<div class="shid-bank-row">{bank_items}</div>'
+            f'<div class="word-sort-categories" style="grid-template-columns:repeat({n_cols},1fr);">'
+            f"{cat_html}</div>"
+        )
+    elif mode == "mirror_match":
+        rows_html = ""
+        for row in shapes:
+            ref = _shape_svg(row["type"], row.get("color", light), size=60)
+            opts = ""
+            for opt in row.get("options", []):
+                opt_svg = _shape_svg(
+                    opt["type"],
+                    opt.get("color", row.get("color", light)),
+                    size=60,
+                    flipped=opt.get("flipped", False),
+                )
+                opts += f'<div class="shid-mirror-opt">{opt_svg}</div>'
+            rows_html += (
+                f'<div class="shid-mirror-row"><div class="shid-mirror-ref">{ref}</div>'
+                f'<div class="shid-mirror-eq">=</div><div class="shid-mirror-opts">{opts}</div></div>'
+            )
+        body = rows_html
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{body}
+"""
+
+
+def _render_picture_sequence(data: dict, primary: str, light: str) -> str:
+    """Ordered-step cards with a blank number box for the student to fill in.
+    Data keys: title, instructions, steps (list of {emoji, text}, pre-shuffled by the caller).
+    """
+    title = data.get("title", "Put It In Order")
+    day_label = data.get("day_label", "")
+    steps = data.get("steps", [])
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    instructions = _h(
+        data.get("instructions", "Write 1, 2, 3... in the boxes to put these in order.")
+    )
+
+    cards = ""
+    for st in steps:
+        cards += (
+            f'<div class="pseq-card" style="border-color:{primary};">'
+            '<div class="pseq-number-box"></div>'
+            f'<div class="pseq-emoji">{_h(st.get("emoji", ""))}</div>'
+            f'<div class="pseq-text">{_h(st.get("text", ""))}</div>'
+            "</div>"
+        )
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+<div class="pseq-row">{cards}</div>
+"""
+
+
+def _render_mirror_message(data: dict, primary: str, light: str) -> str:
+    """A CSS-mirrored ('transform: scaleX(-1)') letter activity. Data keys: title,
+    instructions, mode ("intro" | "trace"), letters (intro mode), phrase + reveal_note (trace mode).
+    """
+    title = data.get("title", "Mirror Message")
+    day_label = data.get("day_label", "")
+    mode = data.get("mode", "trace")
+    dh = _day_header(day_label, title, primary) if day_label else ""
+    instructions = _h(data.get("instructions", ""))
+
+    if mode == "intro":
+        items = ""
+        for ch in data.get("letters", []):
+            items += (
+                '<div class="mm-intro-pair">'
+                f'<div class="mm-intro-normal">{_h(ch)}</div>'
+                '<div class="mm-intro-arrow">&rarr;</div>'
+                f'<div class="mm-intro-mirrored" style="border-color:{primary};color:{primary};">'
+                f"{_h(ch)}</div></div>"
+            )
+        body = f'<div class="mm-intro-row">{items}</div>'
+    else:
+        boxes = ""
+        for ch in data.get("phrase", ""):
+            if ch == " ":
+                boxes += '<div class="mm-space"></div>'
+            else:
+                boxes += (
+                    f'<div class="mm-box" style="border-color:{primary};">'
+                    f'<span class="mm-letter">{_h(ch)}</span></div>'
+                )
+        body = f'<div class="mm-trace-row">{boxes}</div>'
+        reveal = data.get("reveal_note")
+        if reveal:
+            body += f'<div class="mm-reveal-note">{_h(reveal)}</div>'
+
+    return f"""
+{dh}
+{_title_block(title, primary)}
+{_name_date()}
+<div class="ws-instructions">{instructions}</div>
+{body}
+"""
+
 
 _RENDERERS = {
     "readingWorksheet": _render_reading,
@@ -3006,6 +4159,28 @@ _RENDERERS = {
     "tenFrameWorksheet": _render_ten_frame,
     "barGraphWorksheet": _render_bar_graph,
     "pictographWorksheet": _render_pictograph,
+    "shapeIdWorksheet": _render_shape_id,
+    "pictureSequenceWorksheet": _render_picture_sequence,
+    "mirrorMessageWorksheet": _render_mirror_message,
+    # Composable content blocks (see "Content blocks" above)
+    "storyPanel": _render_story_panel,
+    "doingCard": _render_doing_card,
+    "noteBox": _render_note_box,
+    "cutLine": _render_cut_line,
+    "taskList": _render_task_list,
+    "speedMath": _render_speed_math,
+    "fractionStrips": _render_fraction_strips,
+    "fractionCircles": _render_fraction_circles,
+    "fractionArea": _render_fraction_area,
+    "fractionNumberLine": _render_fraction_number_line,
+    "heartBar": _render_heart_bar,
+    "colorKey": _render_color_key,
+    "colorTask": _render_color_task,
+    "calibrationRuler": _render_calibration_ruler,
+    "cutCards": _render_cut_cards,
+    "richText": _render_rich_text,
+    "comparePairs": _render_compare_pairs,
+    "logoBadge": _render_logo_badge,
     "vennDiagramWorksheet": _render_venn_diagram,
     "handwritingWorksheet": _render_handwriting,
     "pixelCopyWorksheet": _render_pixel_copy,
@@ -3016,11 +4191,21 @@ _RENDERERS = {
     "numberLineWorksheet": _render_number_line,
     "labeledDiagramWorksheet": _render_labeled_diagram,
     "twoOperandWorksheet": _render_two_operand,
+    "letterWorksheet": _render_letter,
     "mathWorksheet": _render_two_operand,  # legacy PIL math → HTML two-operand
 }
 
 #: Worksheet kinds that have an HTML renderer.
 HTML_SUPPORTED_KINDS: frozenset[str] = frozenset(_RENDERERS)
+
+
+def _render_block(kind: str, data: dict, primary: str, light: str) -> str:
+    """Render one block by kind, returning '' for unknown kinds."""
+    renderer = _RENDERERS.get(kind)
+    if renderer is None:
+        logger.warning("render_page: unknown block kind %r skipped", kind)
+        return ""
+    return renderer(data, primary, light)
 
 
 def render_worksheet_html(kind: str, data: dict, day_label: str = "") -> str | None:
@@ -3034,12 +4219,38 @@ def render_worksheet_html(kind: str, data: dict, day_label: str = "") -> str | N
     return renderer(enriched, primary, light)
 
 
+def render_page(
+    blocks: list[tuple[str, dict]],
+    meta: dict | None = None,
+    layout: str = "classic",
+) -> str:
+    """
+    Render a sequence of ``(kind, data)`` blocks into one page fragment, wrapped
+    in the named layout's chrome.
+
+    ``meta`` carries layout-level page data (title, subtitle, day_index, status);
+    see ``worksheet_layouts`` for the recognised keys.  Unknown block kinds are
+    skipped rather than raising, so a typo degrades to a missing block instead of
+    a failed run.
+    """
+    meta = dict(meta or {})
+    day_label = meta.get("day_label", "")
+    primary, light = get_day_palette(day_label)
+    inner = "".join(_render_block(kind, data, primary, light) for kind, data in blocks)
+    return get_layout(layout).render_page(inner, meta, primary, light)
+
+
 def build_print_packet_html(
     pages: list[tuple[str, str]],
     packet_title: str = "Weekly Worksheets",
+    layout: str = "classic",
 ) -> str:
     """
     Assemble a full printable HTML document from a list of (day_label, html_fragment) tuples.
+
+    ``layout`` selects the page-chrome stylesheet to include alongside the base
+    CSS.  Block CSS is always included; it is namespaced under ``.fx-`` so it
+    cannot affect the historical worksheet types.
 
     Opens the browser print dialog automatically when loaded.
     """
@@ -3053,4 +4264,9 @@ def build_print_packet_html(
     # Auto-trigger print dialog; close tab after printing if opened as popup
     body += '\n<script>window.addEventListener("load", () => window.print());</script>'
 
-    return _HTML_WRAPPER.format(title=_h(packet_title), css=_CSS, body=body)
+    css = _CSS + "\n" + _BLOCK_CSS
+    layout_css = get_layout(layout).css
+    if layout_css:
+        css += "\n" + layout_css
+
+    return _HTML_WRAPPER.format(title=_h(packet_title), css=css, body=body)
