@@ -9,6 +9,7 @@ import os
 import sys
 import sqlite3
 import json
+import random
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
@@ -106,9 +107,9 @@ def get_filtered_standards(
         query += f" AND standard_id NOT IN ({placeholders})"
         params.extend(mastered_standards)
 
-    # Add limit
-    query += " LIMIT ?"
-    params.append(limit)
+    # NOTE: no SQL LIMIT here on purpose. We fetch all matching rows so the
+    # category-aware selection below can distribute picks across categories;
+    # a SQL LIMIT would truncate to the first N rows (typically one category).
 
     # Step h: Execute query and fetch results
     cursor.execute(query, params)
@@ -127,5 +128,109 @@ def get_filtered_standards(
 
     conn.close()
 
-    # Step i: Return the list of standard dictionaries
-    return results
+    # Step i: Expand and diversify across categories, then apply the limit
+    expanded = _expand_standards(results)
+    return _diversify_by_category(expanded, limit)
+
+
+def _expand_standards(rows: list) -> list:
+    """
+    Expand raw standards rows into individual standards.
+
+    Some sources (e.g. Virginia English SOLs) are ingested as one row per
+    grade-level document, with the json_blob containing a list of
+    ``categories`` each holding multiple standards. Expand those documents
+    into one entry per standard, tagging each with its category title, so
+    downstream consumers see individual standards. Rows that already
+    represent a single standard are passed through unchanged.
+    """
+    expanded = []
+    for row in rows:
+        try:
+            blob = json.loads(row.get("json_blob") or "{}")
+        except (json.JSONDecodeError, TypeError):
+            blob = {}
+
+        categories = blob.get("categories")
+        if not isinstance(categories, list):
+            expanded.append(row)
+            continue
+
+        for category in categories:
+            category_title = category.get("title") or category.get("id") or "General"
+            for standard in category.get("standards", []) or []:
+                description = standard.get("description")
+                substandards = standard.get("substandards") or []
+                if description is None and substandards:
+                    description = " ".join(
+                        str(s.get("description", "")).strip() for s in substandards
+                    ).strip()
+                expanded.append(
+                    {
+                        "standard_id": standard.get("id"),
+                        "source": row.get("source"),
+                        "subject": row.get("subject"),
+                        "grade_level": row.get("grade_level"),
+                        "description": description,
+                        "json_blob": json.dumps(
+                            {
+                                "category": category_title,
+                                "parent_id": blob.get("id"),
+                                **{
+                                    k: v
+                                    for k, v in standard.items()
+                                    if k not in ("id", "description")
+                                },
+                            }
+                        ),
+                    }
+                )
+    return expanded
+
+
+def _category_of(row: dict) -> str:
+    """Return the category label for a standard row (blank if unknown)."""
+    try:
+        blob = json.loads(row.get("json_blob") or "{}")
+    except (json.JSONDecodeError, TypeError):
+        return ""
+    for key in ("category", "category_title", "strand", "domain"):
+        value = blob.get(key)
+        if value:
+            return str(value)
+    return ""
+
+
+def _diversify_by_category(rows: list, limit: int) -> list:
+    """
+    Select up to ``limit`` standards spread across categories.
+
+    Standards are grouped by category, shuffled within each group, then
+    interleaved round-robin so consecutive picks come from different
+    categories. Without this, the first N standards of a single category
+    (e.g. 'Foundations for Reading') dominate every weekly plan.
+    """
+    if len(rows) <= limit:
+        return rows
+
+    groups: dict[str, list] = {}
+    for row in rows:
+        groups.setdefault(_category_of(row) or "General", []).append(row)
+
+    for group in groups.values():
+        random.shuffle(group)
+
+    # Round-robin across categories; keep category order stable modulo the
+    # shuffle above so results vary run to run within each category.
+    selected = []
+    queues = list(groups.values())
+    while queues and len(selected) < limit:
+        next_queues = []
+        for queue in queues:
+            if queue and len(selected) < limit:
+                selected.append(queue.pop())
+            if queue:
+                next_queues.append(queue)
+        queues = next_queues
+
+    return selected

@@ -11,7 +11,7 @@ import json
 
 
 # Feedback rating constants
-MASTERY_RATINGS = {"NOT_STARTED", "DEVELOPING", "MASTERED", "BENCHED"}
+MASTERY_RATINGS = {"NOT_STARTED", "DEVELOPING", "MASTERED", "BENCHED", "STRUGGLING"}
 QUANTITY_RATINGS = {-2, -1, 0, 1, 2}
 
 # Configuration constants
@@ -28,8 +28,10 @@ def validate_mastery_feedback(mastery_feedback: dict[str, str]) -> None:
         mastery_feedback: Dictionary mapping standard_id to rating
 
     Raises:
-        ValueError: If any rating is invalid
+        ValueError: If feedback is empty or any rating is invalid
     """
+    if not mastery_feedback:
+        raise ValueError("Mastery feedback must not be empty")
     for standard_id, rating in mastery_feedback.items():
         if rating not in MASTERY_RATINGS:
             raise ValueError(
@@ -91,6 +93,12 @@ def process_mastery_feedback(
         # Update cooldown and lists based on rating
         if rating == "NOT_STARTED":
             # Reset - needs immediate re-introduction
+            mastered.discard(standard_id)
+            developing.add(standard_id)
+            metadata["cooldown_weeks"] = 0
+
+        elif rating == "STRUGGLING":
+            # Needs more practice — same reset as NOT_STARTED, immediate retry
             mastered.discard(standard_id)
             developing.add(standard_id)
             metadata["cooldown_weeks"] = 0

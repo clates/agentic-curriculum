@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, Button, Badge } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
 import { useEnrichedStudents, useWeeklyPacketsStats, usePendingPackets } from '@/lib/hooks';
@@ -97,7 +98,7 @@ export default function Dashboard() {
           <div className="mb-8">
             <div className="flex items-center space-x-3">
               <div className="bg-primary-200 h-12 w-12 rounded-full"></div>
-              <h2 className="text-foreground text-2xl font-semibold">Welcome back, Sarah!</h2>
+              <h2 className="text-foreground text-2xl font-semibold">Welcome back!</h2>
             </div>
           </div>
 
@@ -276,9 +277,11 @@ export default function Dashboard() {
 
                       if (hasPendingPacket) {
                         return (
-                          <Button variant="primary" size="md" className="w-full">
-                            Submit Feedback
-                          </Button>
+                          <Link href="/plans" className="w-full block">
+                            <Button variant="primary" size="md" className="w-full">
+                              Submit Feedback
+                            </Button>
+                          </Link>
                         );
                       } else {
                         return (

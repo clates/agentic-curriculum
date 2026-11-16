@@ -181,14 +181,15 @@ def test_task_figure_is_rendered_inline():
     assert "fx-circle" in html
 
 
-def test_unknown_block_kind_is_skipped_not_fatal():
-    """A typo should drop one block, not fail the whole week generation."""
+def test_unknown_block_kind_is_skipped_not_fatal(caplog):
+    """A typo should drop one block, not fail the whole week generation — but say so."""
     html = render_page(
         [("noteBox", {"text": "kept"}), ("nopeNotAKind", {})],
         {"day_label": "Monday"},
         layout="journal",
     )
     assert "kept" in html
+    assert "nopeNotAKind" in caplog.text
 
 
 # ============ Escaping ============

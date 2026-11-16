@@ -19,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from packet_store import save_weekly_packet  # noqa: E402
-from ingest_standards import create_database  # noqa: E402
+from ingest_standards import STANDARDS_DIR, create_database, ingest_standards_from_json  # noqa: E402
 
 
 def _db_path() -> str:
@@ -91,11 +91,13 @@ def create_packet(student_id: str, packet_id: str) -> None:
 
 
 def init_db() -> None:
-    """Reset the test DB to a clean state (delete file and recreate schema)."""
+    """Reset the test DB to a clean state: fresh schema plus the real standards data."""
     db = _db_path()
     if os.path.exists(db):
         os.remove(db)
     create_database()
+    # Real standards, so the progress map and plan generation have a curriculum to work with.
+    ingest_standards_from_json(STANDARDS_DIR)
     from packet_store import ensure_schema  # noqa: E402
 
     ensure_schema()

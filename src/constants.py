@@ -41,6 +41,7 @@ EVALUATION_STATUSES: list[str] = [
     "DEVELOPING",
     "MASTERED",
     "BENCHED",
+    "STRUGGLING",
 ]
 
 
