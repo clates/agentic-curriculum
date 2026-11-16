@@ -8,10 +8,14 @@ Grade K–1 | Math | Causal Arc:
 Narrator: Digit the Dragon — a friendly math dragon who breathes number-shaped
 fire and helps Christopher discover clever strategies for arithmetic.
 
-Output: single printable HTML document — arithmetic_week_series/arithmetic_week.html
+Output (arithmetic_week_series/):
+  arithmetic_week.html                 (student packet)
+  arithmetic_week_teacher_guide.html   (answer keys, discussion guidance, misconceptions)
 """
 
-import os, random, sys
+import os
+import random
+import sys
 from pathlib import Path
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -38,8 +42,9 @@ def generate_arithmetic_week_series():
     # Problem generation helpers
     # ═══════════════════════════════════════════════════════════════════════
 
-    def _gen_addition_pairs(num: int, *, min_sum: int = 4, max_sum: int = 20,
-                            min_operand: int = 2) -> list[dict]:
+    def _gen_addition_pairs(
+        num: int, *, min_sum: int = 4, max_sum: int = 20, min_operand: int = 2
+    ) -> list[dict]:
         """Generate unique addition pairs within constraints."""
         pairs: set[tuple[int, int]] = set()
         while len(pairs) < num:
@@ -50,8 +55,9 @@ def generate_arithmetic_week_series():
                 pairs.add((a, b))
         return [{"operand_one": a, "operand_two": b, "operator": "+"} for a, b in pairs]
 
-    def _gen_subtraction_pairs(num: int, *, min_answer: int = 0,
-                               max_start: int = 20, min_operand: int = 2) -> list[dict]:
+    def _gen_subtraction_pairs(
+        num: int, *, min_answer: int = 0, max_start: int = 20, min_operand: int = 2
+    ) -> list[dict]:
         """Generate unique subtraction pairs where result >= min_answer."""
         pairs: set[tuple[int, int]] = set()
         while len(pairs) < num:
@@ -78,10 +84,31 @@ def generate_arithmetic_week_series():
 
     def _gen_multiplication_pairs(num: int) -> list[dict]:
         """Generate simple multiplication (×1, ×2, ×5, ×10) with products ≤ 20."""
-        allowed = [(1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
-                   (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8), (2, 9), (2, 10),
-                   (5, 2), (5, 3), (5, 4),
-                   (10, 1), (10, 2)]
+        allowed = [
+            (1, 2),
+            (1, 3),
+            (1, 4),
+            (1, 5),
+            (1, 6),
+            (1, 7),
+            (1, 8),
+            (1, 9),
+            (1, 10),
+            (2, 2),
+            (2, 3),
+            (2, 4),
+            (2, 5),
+            (2, 6),
+            (2, 7),
+            (2, 8),
+            (2, 9),
+            (2, 10),
+            (5, 2),
+            (5, 3),
+            (5, 4),
+            (10, 1),
+            (10, 2),
+        ]
         # Filter products ≤ 20
         valid = [(a, b) for a, b in allowed if a * b <= 20 and a * b >= 1]
         chosen = random.sample(valid, min(num, len(valid)))
@@ -90,8 +117,23 @@ def generate_arithmetic_week_series():
     def _gen_ten_frame_pairs(num: int) -> list[dict]:
         """Generate ten-frame addition pairs: some sum to 10, some bridge 10."""
         make_ten_pairs = [(3, 7), (4, 6), (5, 5), (8, 2), (1, 9), (6, 4), (7, 3), (9, 1), (2, 8)]
-        bridge_ten_pairs = [(8, 5), (7, 6), (9, 4), (6, 7), (5, 8), (8, 7), (9, 5), (7, 5),
-                            (9, 6), (8, 6), (7, 7), (9, 3), (8, 4), (9, 8), (6, 8)]
+        bridge_ten_pairs = [
+            (8, 5),
+            (7, 6),
+            (9, 4),
+            (6, 7),
+            (5, 8),
+            (8, 7),
+            (9, 5),
+            (7, 5),
+            (9, 6),
+            (8, 6),
+            (7, 7),
+            (9, 3),
+            (8, 4),
+            (9, 8),
+            (6, 8),
+        ]
 
         # Pick half make-ten, half bridge-ten
         n_make = min(num // 2, len(make_ten_pairs))
@@ -152,37 +194,59 @@ def generate_arithmetic_week_series():
                 "'Then let us begin with the most important skill: MAKING TEN!'"
             ),
             "vocabulary": [
-                {"term": "make ten",
-                 "definition": "A strategy where you combine numbers to reach 10 first, "
-                               "because 10 is easy to add to. Example: 8 + 5 = 8 + 2 + 3 = 10 + 3 = 13."},
-                {"term": "ten-frame",
-                 "definition": "A rectangle with 10 boxes (2 rows of 5) used to see numbers "
-                               "and practice making ten."},
-                {"term": "number bond",
-                 "definition": "A way to break a number into two parts. "
-                               "Example: 10 can be 7 and 3, or 6 and 4, or 5 and 5."},
-                {"term": "split",
-                 "definition": "To break a number into smaller parts. "
-                               "In 8 + 5, we split 5 into 2 + 3 to make ten."},
-                {"term": "strategy",
-                 "definition": "A clever plan or trick for solving a problem. "
-                               "Making ten is a strategy!"},
+                {
+                    "term": "make ten",
+                    "definition": "A strategy where you combine numbers to reach 10 first, "
+                    "because 10 is easy to add to. Example: 8 + 5 = 8 + 2 + 3 = 10 + 3 = 13.",
+                },
+                {
+                    "term": "ten-frame",
+                    "definition": "A rectangle with 10 boxes (2 rows of 5) used to see numbers "
+                    "and practice making ten.",
+                },
+                {
+                    "term": "number bond",
+                    "definition": "A way to break a number into two parts. "
+                    "Example: 10 can be 7 and 3, or 6 and 4, or 5 and 5.",
+                },
+                {
+                    "term": "split",
+                    "definition": "To break a number into smaller parts. "
+                    "In 8 + 5, we split 5 into 2 + 3 to make ten.",
+                },
+                {
+                    "term": "strategy",
+                    "definition": "A clever plan or trick for solving a problem. "
+                    "Making ten is a strategy!",
+                },
             ],
             "questions": [
-                {"prompt": "What is the make-ten strategy? Explain it in your own words "
-                           "using an example (like 9 + 4).", "response_lines": 3},
-                {"prompt": "How many number bonds can you write for 10? List at least 4 "
-                           "different pairs that make 10.", "response_lines": 3},
-                {"prompt": "Digit says 'ten is a magic number.' Why is making ten so "
-                           "helpful when adding bigger numbers?", "response_lines": 2},
-                {"prompt": "LET'S DISCUSS: Can you use the make-ten strategy for "
-                           "subtraction too? How would you solve 13 − 5 using making ten?",
-                 "response_lines": 0},
+                {
+                    "prompt": "What is the make-ten strategy? Explain it in your own words "
+                    "using an example (like 9 + 4).",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "How many number bonds can you write for 10? List at least 4 "
+                    "different pairs that make 10.",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "Digit says 'ten is a magic number.' Why is making ten so "
+                    "helpful when adding bigger numbers?",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "LET'S DISCUSS: Can you use the make-ten strategy for "
+                    "subtraction too? How would you solve 13 − 5 using making ten?",
+                    "response_lines": 0,
+                },
             ],
         },
         "Monday",
     )
 
+    mon_frames = _gen_ten_frame_pairs(8)
     add(
         "tenFrameWorksheet",
         {
@@ -195,7 +259,7 @@ def generate_arithmetic_week_series():
                 "STEP 3: Write the make-ten proof on the lines.\n\n"
                 "Example: 8 + 5 → Move 2 red dots → 8 + 2 = 10, 10 + 3 = 13"
             ),
-            "problems": _gen_ten_frame_pairs(8),
+            "problems": mon_frames,
             "equation_lines": 2,
         },
         "Monday",
@@ -244,39 +308,64 @@ def generate_arithmetic_week_series():
                 "• One number is 8 or 9 → MAKE TEN"
             ),
             "vocabulary": [
-                {"term": "counting on",
-                 "definition": "Starting from the bigger number and counting up. "
-                               "For 4 + 9: start at 9, count 10, 11, 12, 13. Answer: 13."},
-                {"term": "doubles",
-                 "definition": "Adding the same number twice: 3 + 3 = 6, 7 + 7 = 14. "
-                               "Memorize these to solve faster!"},
-                {"term": "near-doubles",
-                 "definition": "Using a known double to solve a nearby fact. "
-                               "6 + 7 = ? 6 + 6 = 12, so 6 + 7 = 13 (one more)."},
-                {"term": "strategy choice",
-                 "definition": "Picking the fastest tool for each problem. "
-                               "Look at the numbers and decide!"},
-                {"term": "efficient",
-                 "definition": "Getting the right answer with the least amount of work. "
-                               "Good mathematicians are efficient."},
+                {
+                    "term": "counting on",
+                    "definition": "Starting from the bigger number and counting up. "
+                    "For 4 + 9: start at 9, count 10, 11, 12, 13. Answer: 13.",
+                },
+                {
+                    "term": "doubles",
+                    "definition": "Adding the same number twice: 3 + 3 = 6, 7 + 7 = 14. "
+                    "Memorize these to solve faster!",
+                },
+                {
+                    "term": "near-doubles",
+                    "definition": "Using a known double to solve a nearby fact. "
+                    "6 + 7 = ? 6 + 6 = 12, so 6 + 7 = 13 (one more).",
+                },
+                {
+                    "term": "strategy choice",
+                    "definition": "Picking the fastest tool for each problem. "
+                    "Look at the numbers and decide!",
+                },
+                {
+                    "term": "efficient",
+                    "definition": "Getting the right answer with the least amount of work. "
+                    "Good mathematicians are efficient.",
+                },
             ],
             "questions": [
-                {"prompt": "Solve 5 + 9 using counting on. Write 'start at ___, count ___, ___, ___, ___' "
-                           "and then write the answer.", "response_lines": 2},
-                {"prompt": "Write all the doubles from 1+1 to 10+10 with their answers. "
-                           "Which ones do you already know by heart?", "response_lines": 4},
-                {"prompt": "Use near-doubles to solve: 5 + 6 = ? and 4 + 5 = ? "
-                           "Show which double helped you each time.", "response_lines": 3},
-                {"prompt": "Solve 8 + 7 using make-ten. Write each step: "
-                           "8 + 2 = ___, then 10 + ___ = ___.", "response_lines": 2},
-                {"prompt": "LET'S DISCUSS: Look at 3 + 8. Which power-up would YOU pick "
-                           "and why? Is there more than one right answer?",
-                 "response_lines": 0},
+                {
+                    "prompt": "Solve 5 + 9 using counting on. Write 'start at ___, count ___, ___, ___, ___' "
+                    "and then write the answer.",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "Write all the doubles from 1+1 to 10+10 with their answers. "
+                    "Which ones do you already know by heart?",
+                    "response_lines": 4,
+                },
+                {
+                    "prompt": "Use near-doubles to solve: 5 + 6 = ? and 4 + 5 = ? "
+                    "Show which double helped you each time.",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "Solve 8 + 7 using make-ten. Write each step: "
+                    "8 + 2 = ___, then 10 + ___ = ___.",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "LET'S DISCUSS: Look at 3 + 8. Which power-up would YOU pick "
+                    "and why? Is there more than one right answer?",
+                    "response_lines": 0,
+                },
             ],
         },
         "Tuesday",
     )
 
+    tue_add = _gen_addition_pairs(20)
     add(
         "twoOperandWorksheet",
         {
@@ -290,7 +379,7 @@ def generate_arithmetic_week_series():
                 "Write the STRATEGY you used above each problem (C for count-on, "
                 "D for doubles, N for near-doubles, M for make-ten)."
             ),
-            "problems": _gen_addition_pairs(20),
+            "problems": tue_add,
         },
         "Tuesday",
     )
@@ -311,8 +400,8 @@ def generate_arithmetic_week_series():
             ),
             "passage": (
                 "Digit landed on Christopher's desk with a THUMP. 'Yesterday we ADDED. "
-                                "Today we take AWAY! But do not worry — subtraction and addition are "
-                                "best friends. They are two sides of the same coin!'\n\n"
+                "Today we take AWAY! But do not worry — subtraction and addition are "
+                "best friends. They are two sides of the same coin!'\n\n"
                 "He swished his tail and three new power-ups appeared.\n\n"
                 "POWER-UP 1 — COUNTING BACK (the Slide):\n"
                 "Start at the big number and slide backward. For 11 − 3, start at 11 "
@@ -338,41 +427,65 @@ def generate_arithmetic_week_series():
                 "• Subtracting from a teen number (13−, 14−, 15−) → MAKE TEN to subtract"
             ),
             "vocabulary": [
-                {"term": "counting back",
-                 "definition": "Starting from the big number and counting down. "
-                               "For 9 − 3: count 8, 7, 6. Answer: 6."},
-                {"term": "think addition",
-                 "definition": "Turning subtraction into a missing-addend addition. "
-                               "15 − 7 = ? becomes 7 + ? = 15. If 7 + 8 = 15, then 15 − 7 = 8."},
-                {"term": "fact family",
-                 "definition": "A group of four related facts using the same three numbers. "
-                               "Example: 5, 8, 13 → 5+8=13, 8+5=13, 13−5=8, 13−8=5."},
-                {"term": "make ten to subtract",
-                 "definition": "Subtract in two steps: first get down to 10, then subtract "
-                               "the rest. 14 − 6 = 14 − 4 − 2 = 10 − 2 = 8."},
-                {"term": "regrouping",
-                 "definition": "When you do not have enough in the ones place, you borrow "
-                               "from the tens place. We will learn this tomorrow!"},
+                {
+                    "term": "counting back",
+                    "definition": "Starting from the big number and counting down. "
+                    "For 9 − 3: count 8, 7, 6. Answer: 6.",
+                },
+                {
+                    "term": "think addition",
+                    "definition": "Turning subtraction into a missing-addend addition. "
+                    "15 − 7 = ? becomes 7 + ? = 15. If 7 + 8 = 15, then 15 − 7 = 8.",
+                },
+                {
+                    "term": "fact family",
+                    "definition": "A group of four related facts using the same three numbers. "
+                    "Example: 5, 8, 13 → 5+8=13, 8+5=13, 13−5=8, 13−8=5.",
+                },
+                {
+                    "term": "make ten to subtract",
+                    "definition": "Subtract in two steps: first get down to 10, then subtract "
+                    "the rest. 14 − 6 = 14 − 4 − 2 = 10 − 2 = 8.",
+                },
+                {
+                    "term": "regrouping",
+                    "definition": "When you do not have enough in the ones place, you borrow "
+                    "from the tens place. We will learn this tomorrow!",
+                },
             ],
             "questions": [
-                {"prompt": "Solve 12 − 3 using counting back. Write the numbers "
-                           "you say as you count back.", "response_lines": 2},
-                {"prompt": "Use think-addition to solve 16 − 9. Write: '9 + ? = 16, "
-                           "so 16 − 9 = ?'", "response_lines": 2},
-                {"prompt": "Use make-ten to subtract: 14 − 6. Write each step: "
-                           "14 − 4 = ___, then 10 − ___ = ___.", "response_lines": 2},
-                {"prompt": "Write the COMPLETE fact family for 6, 7, and 13. "
-                           "You should have two addition facts and two subtraction facts.",
-                 "response_lines": 3},
-                {"prompt": "LET'S DISCUSS: Which strategy do you like best for "
-                           "subtraction — counting back, think-addition, or make-ten? "
-                           "Why does it work well for you?",
-                 "response_lines": 0},
+                {
+                    "prompt": "Solve 12 − 3 using counting back. Write the numbers "
+                    "you say as you count back.",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "Use think-addition to solve 16 − 9. Write: '9 + ? = 16, "
+                    "so 16 − 9 = ?'",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "Use make-ten to subtract: 14 − 6. Write each step: "
+                    "14 − 4 = ___, then 10 − ___ = ___.",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "Write the COMPLETE fact family for 6, 7, and 13. "
+                    "You should have two addition facts and two subtraction facts.",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "LET'S DISCUSS: Which strategy do you like best for "
+                    "subtraction — counting back, think-addition, or make-ten? "
+                    "Why does it work well for you?",
+                    "response_lines": 0,
+                },
             ],
         },
         "Wednesday",
     )
 
+    wed_sub = _gen_subtraction_pairs(20)
     add(
         "twoOperandWorksheet",
         {
@@ -385,7 +498,7 @@ def generate_arithmetic_week_series():
                 "Write the strategy letter above each problem "
                 "(B for count Back, A for think Addition, T for make Ten)."
             ),
-            "problems": _gen_subtraction_pairs(20),
+            "problems": wed_sub,
         },
         "Wednesday",
     )
@@ -407,7 +520,7 @@ def generate_arithmetic_week_series():
             "passage": (
                 "Digit balanced a tower of 10 blocks on his snout. 'Look, Christopher! "
                 "One tower of ten is the same as ten single blocks. Watch what happens "
-                                "when we need to subtract but do not have enough ones!'\n\n"
+                "when we need to subtract but do not have enough ones!'\n\n"
                 "He wrote 14 − 6 on the board. 'Fourteen has 1 ten and 4 ones. "
                 "I need to subtract 6 ones. But I only have 4 ones! 4 is less than 6, "
                 "so I CANNOT subtract yet. I need to BORROW!'\n\n"
@@ -424,7 +537,7 @@ def generate_arithmetic_week_series():
                 "    ───────\n"
                 "      0   8         (14 − 6 = 8 ✓)\n\n"
                 "'This is called REGROUPING,' said Digit. 'You regroup 1 ten into 10 ones "
-                                "when the ones place does not have enough. Let us try another!'\n\n"
+                "when the ones place does not have enough. Let us try another!'\n\n"
                 "    17 − 9:\n"
                 "    7 ones − 9 ones → NOT ENOUGH! Borrow 1 ten.\n"
                 "    17 becomes 0 tens + 17 ones.  17 − 9 = 8 ✓\n\n"
@@ -438,36 +551,59 @@ def generate_arithmetic_week_series():
                 "  18 − 5 → 8 ones vs 5 ones → 8 > 5 → no regrouping needed"
             ),
             "vocabulary": [
-                {"term": "regrouping",
-                 "definition": "Changing 1 ten into 10 ones when you do not have "
-                               "enough ones to subtract. Also called 'borrowing.'"},
-                {"term": "borrow",
-                 "definition": "Taking 1 ten from the tens place and turning it into "
-                               "10 ones. You 'borrow' strength from the tens!"},
-                {"term": "tens place",
-                 "definition": "The left digit in a two-digit number. In 14, the 1 "
-                               "means '1 ten' and sits in the tens place."},
-                {"term": "ones place",
-                 "definition": "The right digit in a two-digit number. In 14, the 4 "
-                               "means '4 ones' and sits in the ones place."},
-                {"term": "place value",
-                 "definition": "The value of a digit based on its position. In 15, "
-                               "the 1 is worth 10 and the 5 is worth 5."},
+                {
+                    "term": "regrouping",
+                    "definition": "Changing 1 ten into 10 ones when you do not have "
+                    "enough ones to subtract. Also called 'borrowing.'",
+                },
+                {
+                    "term": "borrow",
+                    "definition": "Taking 1 ten from the tens place and turning it into "
+                    "10 ones. You 'borrow' strength from the tens!",
+                },
+                {
+                    "term": "tens place",
+                    "definition": "The left digit in a two-digit number. In 14, the 1 "
+                    "means '1 ten' and sits in the tens place.",
+                },
+                {
+                    "term": "ones place",
+                    "definition": "The right digit in a two-digit number. In 14, the 4 "
+                    "means '4 ones' and sits in the ones place.",
+                },
+                {
+                    "term": "place value",
+                    "definition": "The value of a digit based on its position. In 15, "
+                    "the 1 is worth 10 and the 5 is worth 5.",
+                },
             ],
             "questions": [
-                {"prompt": "Look at 13 − 5. Do you need to regroup? How do you know? "
-                           "Then solve it with regrouping.", "response_lines": 3},
-                {"prompt": "Look at 17 − 4. Do you need to regroup? How do you know? "
-                           "Then solve it.", "response_lines": 3},
-                {"prompt": "Solve 15 − 8 using regrouping. Show your work step by step: "
-                           "write the tens and ones before and after borrowing.",
-                 "response_lines": 4},
-                {"prompt": "What does 'borrow 1 ten' mean? Where does that ten go? "
-                           "Explain in your own words.", "response_lines": 3},
-                {"prompt": "LET'S DISCUSS: Why can't you just 'flip the numbers' and "
-                           "subtract the smaller from the bigger (like 6 − 4 instead of "
-                           "4 − 6)? What would happen to the answer?",
-                 "response_lines": 0},
+                {
+                    "prompt": "Look at 13 − 5. Do you need to regroup? How do you know? "
+                    "Then solve it with regrouping.",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "Look at 17 − 4. Do you need to regroup? How do you know? "
+                    "Then solve it.",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "Solve 15 − 8 using regrouping. Show your work step by step: "
+                    "write the tens and ones before and after borrowing.",
+                    "response_lines": 4,
+                },
+                {
+                    "prompt": "What does 'borrow 1 ten' mean? Where does that ten go? "
+                    "Explain in your own words.",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "LET'S DISCUSS: Why can't you just 'flip the numbers' and "
+                    "subtract the smaller from the bigger (like 6 − 4 instead of "
+                    "4 − 6)? What would happen to the answer?",
+                    "response_lines": 0,
+                },
             ],
         },
         "Thursday",
@@ -494,60 +630,38 @@ def generate_arithmetic_week_series():
         "Thursday",
     )
 
+    # (prompt, start, end, line_start, line_end) — the answer is never marked or printed;
+    # the student draws the hops in the reserved space above the line.
+    nl_problems = [
+        ("12 − 4 = ?  (Jump back 4 spaces from 12 — count back!)", 12, 4, 6, 14),
+        ("15 − 6 = ?  (Jump back 6: first to 10, then 1 more)", 15, 6, 7, 17),
+        ("17 − 8 = ?  (Make ten: 17 − 7 = 10, then 1 more)", 17, 8, 7, 19),
+        ("11 − 5 = ?  (Jump back 1 to reach 10, then 4 more)", 11, 5, 4, 13),
+        ("14 − 7 = ?  (Use doubles: 7 + 7 = 14)", 14, 7, 5, 16),
+        ("16 − 9 = ?  (Make ten: 16 − 6 = 10, then 3 more)", 16, 9, 5, 18),
+        ("13 − 8 = ?  (Think addition: 8 + ? = 13)", 13, 8, 3, 15),
+    ]
     add(
         "numberLineWorksheet",
         {
             "title": "Thursday: Subtraction on the Number Line",
             "instructions": (
-                "Each number line shows subtraction by jumping backward. "
-                "Fill in the missing numbers on each number line, then "
-                "write the answer to the subtraction problem.\n\n"
-                "Follow the JUMP arrows to see how subtraction works — "
-                "each jump back subtracts a little bit at a time!"
+                "Each problem starts at the dot. Draw your jumps BACKWARD above the line — "
+                "one big hop down to 10, then the rest — and land on the answer. "
+                "Write the answer to the subtraction problem.\n\n"
+                "Each jump back subtracts a little bit at a time!"
             ),
             "tasks": [
                 {
-                    "prompt": "12 − 4 = ?  (Jump back 4 spaces from 12 — count back!)",
-                    "start": 6, "end": 14, "step": 1,
+                    "prompt": prompt,
+                    "start": lo,
+                    "end": hi,
+                    "step": 1,
                     "hidden_positions": [],
-                    "mark_positions": [12, 8],
-                },
-                {
-                    "prompt": "15 − 6 = ?  (Jump back 6: first to 10, then 4 more)",
-                    "start": 7, "end": 17, "step": 1,
-                    "hidden_positions": [],
-                    "mark_positions": [15, 9],
-                },
-                {
-                    "prompt": "17 − 8 = ?  (Make ten: 17 − 7 = 10, then 10 − 1 = 9)",
-                    "start": 7, "end": 19, "step": 1,
-                    "hidden_positions": [],
-                    "mark_positions": [17, 9],
-                },
-                {
-                    "prompt": "11 − 5 = ?  (Regroup: 11 = 10 + 1, then subtract 5)",
-                    "start": 4, "end": 13, "step": 1,
-                    "hidden_positions": [],
-                    "mark_positions": [11, 6],
-                },
-                {
-                    "prompt": "14 − 7 = ?  (Use doubles: 7 + 7 = 14, so 14 − 7 = 7)",
-                    "start": 5, "end": 16, "step": 1,
-                    "hidden_positions": [],
-                    "mark_positions": [14, 7],
-                },
-                {
-                    "prompt": "16 − 9 = ?  (Make ten: 16 − 6 = 10, then 10 − 3 = 7)",
-                    "start": 5, "end": 18, "step": 1,
-                    "hidden_positions": [],
-                    "mark_positions": [16, 7],
-                },
-                {
-                    "prompt": "13 − 8 = ?  (Think addition: 8 + ? = 13, so 8 + 5 = 13, answer = 5)",
-                    "start": 3, "end": 15, "step": 1,
-                    "hidden_positions": [],
-                    "mark_positions": [13, 5],
-                },
+                    "mark_positions": [a],
+                    "hop_space": True,
+                }
+                for prompt, a, _b, lo, hi in nl_problems
             ],
         },
         "Thursday",
@@ -586,7 +700,7 @@ def generate_arithmetic_week_series():
                 "This is the easiest one of all.\n\n"
                 "'Let me show you a SECRET,' Digit whispered. 'Multiplication is "
                 "commutative — that is a fancy word meaning you can SWITCH the numbers "
-                                "and get the same answer! 3 × 4 = 12 and 4 × 3 = 12. Less to memorize!'\n\n"
+                "and get the same answer! 3 × 4 = 12 and 4 × 3 = 12. Less to memorize!'\n\n"
                 "ARRAYS — A Visual Way to See Multiplication:\n"
                 "  3 × 4 looks like this:\n"
                 "  • • • •\n"
@@ -601,44 +715,68 @@ def generate_arithmetic_week_series():
                 "GATEWAY facts. Master these first, and harder facts become easier!"
             ),
             "vocabulary": [
-                {"term": "multiplication",
-                 "definition": "A shortcut for adding the same number many times. "
-                               "3 × 4 means '3 groups of 4' or 4 + 4 + 4 = 12."},
-                {"term": "groups of",
-                 "definition": "The meaning of the × symbol. 5 × 2 = five groups of two, "
-                               "which is 2 + 2 + 2 + 2 + 2 = 10."},
-                {"term": "array",
-                 "definition": "A rectangle of rows and columns that shows multiplication. "
-                               "3 rows of 4 dots shows 3 × 4 = 12."},
-                {"term": "skip counting",
-                 "definition": "Counting by the same number over and over. "
-                               "By 2s: 2, 4, 6, 8, 10... This IS multiplication!"},
-                {"term": "commutative",
-                 "definition": "You can switch the order of numbers in multiplication "
-                               "and get the same answer. 3 × 5 = 5 × 3 = 15."},
+                {
+                    "term": "multiplication",
+                    "definition": "A shortcut for adding the same number many times. "
+                    "3 × 4 means '3 groups of 4' or 4 + 4 + 4 = 12.",
+                },
+                {
+                    "term": "groups of",
+                    "definition": "The meaning of the × symbol. 5 × 2 = five groups of two, "
+                    "which is 2 + 2 + 2 + 2 + 2 = 10.",
+                },
+                {
+                    "term": "array",
+                    "definition": "A rectangle of rows and columns that shows multiplication. "
+                    "3 rows of 4 dots shows 3 × 4 = 12.",
+                },
+                {
+                    "term": "skip counting",
+                    "definition": "Counting by the same number over and over. "
+                    "By 2s: 2, 4, 6, 8, 10... This IS multiplication!",
+                },
+                {
+                    "term": "commutative",
+                    "definition": "You can switch the order of numbers in multiplication "
+                    "and get the same answer. 3 × 5 = 5 × 3 = 15.",
+                },
             ],
             "questions": [
-                {"prompt": "What does multiplication mean? Explain 4 × 3 using the words "
-                           "'groups of' and write it as repeated addition.",
-                 "response_lines": 3},
-                {"prompt": "Skip-count by 2s from 2 to 20. Write each number. "
-                           "Now skip-count by 5s from 5 to 50.", "response_lines": 3},
-                {"prompt": "Draw an array for 2 × 5 (2 rows of 5 dots). How many dots total? "
-                           "Now draw the array for 5 × 2. How many dots? "
-                           "What do you notice?", "response_lines": 4},
-                {"prompt": "Solve: 3 × 10 = ? and 7 × 1 = ? and 6 × 2 = ? and 4 × 5 = ? "
-                           "Which was easiest? Which was hardest? Why?", "response_lines": 4},
-                {"prompt": "LET'S DISCUSS: This week you learned making ten, addition "
-                           "strategies, subtraction strategies, regrouping, and multiplication. "
-                           "Which new skill do you feel MOST confident about? "
-                           "Which one do you want to practice more?",
-                 "response_lines": 0},
+                {
+                    "prompt": "What does multiplication mean? Explain 4 × 3 using the words "
+                    "'groups of' and write it as repeated addition.",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "Skip-count by 2s from 2 to 20. Write each number. "
+                    "Now skip-count by 5s from 5 to 50.",
+                    "response_lines": 3,
+                },
+                {
+                    "prompt": "Draw an array for 2 × 5 (2 rows of 5 dots). How many dots total? "
+                    "Now draw the array for 5 × 2. How many dots? "
+                    "What do you notice?",
+                    "response_lines": 4,
+                },
+                {
+                    "prompt": "Solve: 3 × 10 = ? and 7 × 1 = ? and 6 × 2 = ? and 4 × 5 = ? "
+                    "Which was easiest? Which was hardest? Why?",
+                    "response_lines": 4,
+                },
+                {
+                    "prompt": "LET'S DISCUSS: This week you learned making ten, addition "
+                    "strategies, subtraction strategies, regrouping, and multiplication. "
+                    "Which new skill do you feel MOST confident about? "
+                    "Which one do you want to practice more?",
+                    "response_lines": 0,
+                },
             ],
         },
         "Friday",
     )
 
     # Friday Practice 1: Multiplication problems
+    fri_mult = _gen_multiplication_pairs(20)
     add(
         "twoOperandWorksheet",
         {
@@ -651,16 +789,14 @@ def generate_arithmetic_week_series():
                 "• ×10: Add a ZERO to the end\n\n"
                 "Draw dots or an array below any problem that feels tricky!"
             ),
-            "problems": _gen_multiplication_pairs(20),
+            "problems": fri_mult,
         },
         "Friday",
     )
 
     # Friday Practice 2: Mixed Speed Drill
     speed_problems = (
-        _gen_addition_pairs(6) +
-        _gen_subtraction_pairs(6) +
-        _gen_multiplication_pairs(4)
+        _gen_addition_pairs(6) + _gen_subtraction_pairs(6) + _gen_multiplication_pairs(4)
     )
     random.shuffle(speed_problems)
 
@@ -711,8 +847,8 @@ def generate_arithmetic_week_series():
                 "turning subtraction into missing-addend addition), and make-ten to "
                 "subtract (stepping down to 10 first).\n\n"
                 "THURSDAY — Regrouping / Borrowing: The place-value understanding "
-                "behind borrowing from the tens place. Focused on the \"check the ones "
-                "place first\" rule: is the top ones digit smaller than the bottom? "
+                'behind borrowing from the tens place. Focused on the "check the ones '
+                'place first" rule: is the top ones digit smaller than the bottom? '
                 "Then regroup. Number lines reinforced the visual model of subtraction "
                 "as jumping backward.\n\n"
                 "FRIDAY — Multiplication Introduction: Multiplication as repeated "
@@ -739,32 +875,48 @@ def generate_arithmetic_week_series():
                 "to numbers up to 100 using the same strategies."
             ),
             "vocabulary": [
-                {"term": "Strongest strategy this week",
-                 "definition": "(Fill in — which strategy did Christopher use most naturally?)"},
-                {"term": "Needs more practice",
-                 "definition": "(Fill in — which strategy or concept needs reinforcement?)"},
-                {"term": "Next week suggestion",
-                 "definition": "Word problems with strategy choice, or extending to "
-                               "numbers up to 100 using the same strategies."},
+                {
+                    "term": "Strongest strategy this week",
+                    "definition": "(Fill in — which strategy did Christopher use most naturally?)",
+                },
+                {
+                    "term": "Needs more practice",
+                    "definition": "(Fill in — which strategy or concept needs reinforcement?)",
+                },
+                {
+                    "term": "Next week suggestion",
+                    "definition": "Word problems with strategy choice, or extending to "
+                    "numbers up to 100 using the same strategies.",
+                },
             ],
             "questions": [
-                {"prompt": "Overall comfort with the week's strategies — how well did "
-                           "Christopher engage with the material? "
-                           "(1 = struggled throughout, 5 = strong grasp of all concepts)",
-                 "response_lines": 1},
-                {"prompt": "Which day's lesson generated the most curiosity or questions?",
-                 "response_lines": 2},
-                {"prompt": "By Friday, could Christopher independently choose an "
-                           "appropriate strategy for different problem types, or did "
-                           "he need prompting?", "response_lines": 2},
-                {"prompt": "How did the speed drill go on Friday? Was the 3-minute "
-                           "target appropriate for Christopher's pace?",
-                 "response_lines": 2},
-                {"prompt": "Does Christopher show understanding of multiplication as "
-                           "'groups of'? Can he draw an array for a simple fact like 3 × 4?",
-                 "response_lines": 2},
-                {"prompt": "Topics or strategies to revisit next week:",
-                 "response_lines": 2},
+                {
+                    "prompt": "Overall comfort with the week's strategies — how well did "
+                    "Christopher engage with the material? "
+                    "(1 = struggled throughout, 5 = strong grasp of all concepts)",
+                    "response_lines": 1,
+                },
+                {
+                    "prompt": "Which day's lesson generated the most curiosity or questions?",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "By Friday, could Christopher independently choose an "
+                    "appropriate strategy for different problem types, or did "
+                    "he need prompting?",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "How did the speed drill go on Friday? Was the 3-minute "
+                    "target appropriate for Christopher's pace?",
+                    "response_lines": 2,
+                },
+                {
+                    "prompt": "Does Christopher show understanding of multiplication as "
+                    "'groups of'? Can he draw an array for a simple fact like 3 × 4?",
+                    "response_lines": 2,
+                },
+                {"prompt": "Topics or strategies to revisit next week:", "response_lines": 2},
             ],
         },
         "Friday",
@@ -775,14 +927,241 @@ def generate_arithmetic_week_series():
     # ═══════════════════════════════════════════════════════════════════════
 
     html = build_print_packet_html(
-        pages, packet_title="Arithmetic Strategies Week — Addition, Subtraction & Multiplication for Christopher"
+        pages,
+        packet_title="Arithmetic Strategies Week — Addition, Subtraction & Multiplication for Christopher",
     )
     out_path = output_dir / "arithmetic_week.html"
     out_path.write_text(html, encoding="utf-8")
 
+    # ═══════════════════════════════════════════════════════════════════════
+    # Teacher guide — answer keys are computed from the problem lists above,
+    # so they always match the packet.
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def _answer(p: dict) -> int:
+        a, b, op = p["operand_one"], p["operand_two"], p["operator"]
+        return a + b if op == "+" else a - b if op == "−" else a * b
+
+    def _fact(p: dict) -> str:
+        return f'{p["operand_one"]} {p["operator"]} {p["operand_two"]} = {_answer(p)}'
+
+    def _key(items: list[str]) -> str:
+        return "".join(f"<li>{item}</li>" for item in items)
+
+    def _frame_proof(p: dict) -> str:
+        a, b = p["addend_a"], p["addend_b"]
+        if a + b == 10:
+            return f"{a} + {b} = 10 (all {b} red dots fill the frame)"
+        need = 10 - a
+        return f"{a} + {b} &rarr; move {need}: {a} + {need} = 10, 10 + {b - need} = {a + b}"
+
+    def _regroup_tag(p: dict) -> str:
+        return "R" if p["operand_one"] % 10 < p["operand_two"] % 10 else "N"
+
+    keys = {
+        "MON_FRAMES": _key([_frame_proof(p) for p in mon_frames]),
+        "TUE_ADD": _key([_fact(p) for p in tue_add]),
+        "WED_SUB": _key([_fact(p) for p in wed_sub]),
+        "THU_SUB": _key([f"{_fact(p)} &nbsp;<strong>{_regroup_tag(p)}</strong>" for p in all_sub]),
+        "THU_NL": _key([f"{a} − {b} = {a - b}" for _, a, b, _lo, _hi in nl_problems]),
+        "FRI_MULT": _key([_fact(p) for p in fri_mult]),
+        "FRI_SPEED": _key([_fact(p) for p in speed_problems]),
+    }
+
+    TEACHER_GUIDE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Arithmetic Strategies Week — Teacher Guide</title>
+  <style>
+    @page { size: letter; margin: 0.5in 0.6in; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 11pt; color: #111; line-height: 1.55; }
+    @media screen { body { background: #b0b0b0; padding: 24px; } .page { background: white; max-width: 7.5in; margin: 0 auto 28px; padding: 0.45in 0.5in; box-shadow: 0 4px 18px rgba(0,0,0,.28); min-height: 10.3in; } }
+    @media print { body { background: white; padding: 0; } .page { padding: 0; box-shadow: none; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    .page { page-break-after: always; break-after: page; }
+    .page:last-child { page-break-after: avoid; break-after: avoid; }
+    h1 { font-size: 18pt; color: #1d4ed8; border-bottom: 3px solid #1d4ed8; padding-bottom: 5px; margin-bottom: 12px; }
+    h2 { font-size: 13pt; color: #fff; background: #1d4ed8; padding: 5px 10px; border-radius: 3px; margin: 14px 0 6px; }
+    h2.tue { background: #15803d; }
+    h2.wed { background: #7c3aed; }
+    h2.thu { background: #c2410c; }
+    h2.fri { background: #0f766e; }
+    h3 { font-size: 10.5pt; font-weight: bold; color: #444; margin: 8px 0 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+    p, li { font-size: 10pt; margin-bottom: 5px; }
+    ul, ol { padding-left: 18px; margin-bottom: 8px; }
+    ol.cols { columns: 3; column-gap: 18px; }
+    ol.cols li { margin-bottom: 2px; break-inside: avoid; }
+    .answer-box { background: #f0f4ff; border-left: 4px solid #1d4ed8; padding: 6px 10px; margin: 4px 0 10px; border-radius: 0 4px 4px 0; font-size: 10pt; }
+    .answer-box.tue { background: #f0fff4; border-color: #15803d; }
+    .answer-box.wed { background: #f5f0ff; border-color: #7c3aed; }
+    .answer-box.thu { background: #fff7f0; border-color: #c2410c; }
+    .answer-box.fri { background: #f0fff8; border-color: #0f766e; }
+    .misconception { background: #fff3cd; border-left: 4px solid #d97706; padding: 6px 10px; margin: 4px 0 8px; border-radius: 0 4px 4px 0; font-size: 10pt; }
+    .extension { background: #e8f5e9; border-left: 4px solid #15803d; padding: 6px 10px; margin: 4px 0 8px; border-radius: 0 4px 4px 0; font-size: 10pt; }
+    .discuss { background: #fce7f3; border-left: 4px solid #9d174d; padding: 6px 10px; margin: 4px 0 8px; border-radius: 0 4px 4px 0; font-size: 10pt; }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <h1>Arithmetic Strategies Week &mdash; Teacher / Parent Guide</h1>
+  <p><strong>Audience:</strong> Christopher, age 6, K&ndash;1 &nbsp;|&nbsp; <strong>Narrator:</strong> Digit the Dragon</p>
+  <p><strong>Causal Arc:</strong> Making ten &rarr; Addition strategies to 20 &rarr; Subtraction strategies to 20 &rarr; Regrouping &rarr; Multiplication as repeated addition</p>
+  <p><strong>Materials:</strong> 10&ndash;20 small counters (blocks, crackers, pennies), a few rubber bands or cups for bundling tens, and a timer for Friday.</p>
+
+  <h2>Monday &mdash; Making Ten &amp; Number Bonds</h2>
+  <h3>Answer Key &mdash; Reading Questions</h3>
+  <div class="answer-box">
+    <p><strong>Q1 (Make ten, 9 + 4):</strong> 9 needs 1 more to make 10, so split 4 into 1 + 3. 9 + 1 = 10, then 10 + 3 = 13. Accept any example that splits the second number to reach 10 first.</p>
+    <p><strong>Q2 (Bonds for 10):</strong> 0+10, 1+9, 2+8, 3+7, 4+6, 5+5 (and their turnarounds). Four or more correct pairs is full credit.</p>
+    <p><strong>Q3 (Why ten helps):</strong> Adding to 10 is easy &mdash; 10 + 3 is just &ldquo;thirteen&rdquo; with no counting. Our numbers are built from tens.</p>
+  </div>
+  <h3>Ten-Frame Answer Key</h3>
+  <div class="answer-box"><ol>{{MON_FRAMES}}</ol></div>
+  <h3>LET'S DISCUSS Guidance</h3>
+  <div class="discuss">
+    <p><em>&ldquo;How would you solve 13 &minus; 5 using making ten?&rdquo;</em> Take 3 away to land on 10 (13 &minus; 3 = 10), then take the 2 that are still owed: 10 &minus; 2 = 8. This previews Wednesday &mdash; a fumbled answer today is fine.</p>
+  </div>
+  <h3>Misconceptions to Watch</h3>
+  <div class="misconception">
+    <p>Counting all from 1 instead of using the frame. If he recounts the full blue frame every time, cover it and ask &ldquo;how many are under my hand?&rdquo; until a full frame reads as &ldquo;ten&rdquo; at a glance.</p>
+  </div>
+  <h3>Extension Activity</h3>
+  <div class="extension">
+    <p>Make-10 Go Fish: use cards Ace&ndash;9; instead of matching pairs, ask for the card that makes 10 with one in your hand (&ldquo;Do you have a 3?&rdquo; to go with a 7).</p>
+  </div>
+
+  <h2 class="tue">Tuesday &mdash; Addition Power-Ups</h2>
+  <h3>Answer Key &mdash; Reading Questions</h3>
+  <div class="answer-box tue">
+    <p><strong>Q1 (Count on, 5 + 9):</strong> Start at 9, count 10, 11, 12, 13, 14. Answer: 14.</p>
+    <p><strong>Q2 (Doubles):</strong> 1+1=2, 2+2=4, 3+3=6, 4+4=8, 5+5=10, 6+6=12, 7+7=14, 8+8=16, 9+9=18, 10+10=20.</p>
+    <p><strong>Q3 (Near-doubles):</strong> 5 + 6 = 11 (5 + 5 = 10, one more); 4 + 5 = 9 (4 + 4 = 8, one more).</p>
+    <p><strong>Q4 (Make ten, 8 + 7):</strong> 8 + 2 = 10, then 10 + 5 = 15.</p>
+  </div>
+  <h3>Addition Practice Answer Key</h3>
+  <div class="answer-box tue"><ol class="cols">{{TUE_ADD}}</ol>
+  <p><em>Strategy letters: accept any letter he can justify. Several facts fit more than one power-up.</em></p></div>
+  <h3>LET'S DISCUSS Guidance</h3>
+  <div class="discuss">
+    <p><em>&ldquo;Which power-up would you pick for 3 + 8?&rdquo;</em> Count on from 8 (9, 10, 11) and make ten (8 + 2 + 1) both work &mdash; 11. Yes, there is more than one right answer; the point is that he chooses on purpose.</p>
+  </div>
+  <h3>Misconceptions to Watch</h3>
+  <div class="misconception">
+    <p>Off-by-one when counting on: saying &ldquo;9, 10, 11&rdquo; for 9 + 3 (counting the starting number). The starting number is already &ldquo;in the bag&rdquo; &mdash; the first word he says should be the next number.</p>
+  </div>
+  <h3>Extension Activity</h3>
+  <div class="extension">
+    <p>Doubles dice: roll one die, say the double out loud, then roll again and race to the near-double (roll 6 &rarr; &ldquo;6 + 6 = 12, so 6 + 7 = 13&rdquo;).</p>
+  </div>
+</div>
+
+<div class="page">
+  <h2 class="wed">Wednesday &mdash; Subtraction Superpowers</h2>
+  <h3>Answer Key &mdash; Reading Questions</h3>
+  <div class="answer-box wed">
+    <p><strong>Q1 (Count back, 12 &minus; 3):</strong> 11, 10, 9. Answer: 9.</p>
+    <p><strong>Q2 (Think addition, 16 &minus; 9):</strong> 9 + 7 = 16, so 16 &minus; 9 = 7.</p>
+    <p><strong>Q3 (Make ten, 14 &minus; 6):</strong> 14 &minus; 4 = 10, then 10 &minus; 2 = 8.</p>
+    <p><strong>Q4 (Fact family 6, 7, 13):</strong> 6 + 7 = 13, 7 + 6 = 13, 13 &minus; 6 = 7, 13 &minus; 7 = 6.</p>
+  </div>
+  <h3>Subtraction Practice Answer Key</h3>
+  <div class="answer-box wed"><ol class="cols">{{WED_SUB}}</ol></div>
+  <h3>LET'S DISCUSS Guidance</h3>
+  <div class="discuss">
+    <p>Any favorite is fine if he can say why. Nudge toward think-addition for big subtractions: counting back 9 steps is slow and error-prone, while &ldquo;9 + ? = 16&rdquo; reuses Tuesday's facts.</p>
+  </div>
+  <h3>Misconceptions to Watch</h3>
+  <div class="misconception">
+    <p>Counting back including the start (&ldquo;12, 11, 10&rdquo; for 12 &minus; 3 gives 10). Same fix as Tuesday: the first word said is one less than the start.</p>
+  </div>
+  <h3>Extension Activity</h3>
+  <div class="extension">
+    <p>Fact-family triangles: write 6, 7 and 13 at the corners of a paper triangle. Cover any corner with a thumb and ask for the hidden number &mdash; it works for adding and subtracting.</p>
+  </div>
+
+  <h2 class="thu">Thursday &mdash; Borrowing from the Tens</h2>
+  <h3>Answer Key &mdash; Reading Questions</h3>
+  <div class="answer-box thu">
+    <p><strong>Q1 (13 &minus; 5):</strong> Yes &mdash; 3 ones is less than 5. Regroup to 0 tens and 13 ones: 13 &minus; 5 = 8.</p>
+    <p><strong>Q2 (17 &minus; 4):</strong> No &mdash; 7 ones is more than 4. 17 &minus; 4 = 13.</p>
+    <p><strong>Q3 (15 &minus; 8):</strong> Before: 1 ten, 5 ones. After borrowing: 0 tens, 15 ones. 15 &minus; 8 = 7.</p>
+    <p><strong>Q4 (Borrow 1 ten):</strong> The ten is broken into 10 ones and moved into the ones place, so nothing is lost &mdash; it is the same amount, grouped differently.</p>
+  </div>
+  <h3>Regrouping Practice Answer Key</h3>
+  <div class="answer-box thu"><ol class="cols">{{THU_SUB}}</ol>
+  <p><em>R = regroup (top ones digit smaller than the bottom), N = no regrouping.</em></p></div>
+  <h3>Number Line Answer Key</h3>
+  <div class="answer-box thu"><ol class="cols">{{THU_NL}}</ol>
+  <p><em>Look for a hop down to 10 first, then a second hop for the rest. One hop per step is also correct, just slower.</em></p></div>
+  <h3>LET'S DISCUSS Guidance</h3>
+  <div class="discuss">
+    <p>Flipping 14 &minus; 6 into &ldquo;6 &minus; 4 = 2&rdquo; in the ones gives 12, but 14 &minus; 6 is really 8. Check with counters: start with 14, take 6 &mdash; 12 are not left. The order matters in subtraction, unlike addition.</p>
+  </div>
+  <h3>Misconceptions to Watch</h3>
+  <div class="misconception">
+    <p>Regrouping when it is not needed (18 &minus; 5), or flipping the ones digits. Formal column regrouping is a grade-2 skill; at this age the goal is the <em>idea</em> that a ten can be opened into ten ones. If the column notation confuses him, stay with bundled counters.</p>
+  </div>
+  <h3>Extension Activity</h3>
+  <div class="extension">
+    <p>Bundle and break: rubber-band 10 sticks into a bundle and add 4 loose sticks. Ask him to give you 6. He has to break the bundle &mdash; that moment is regrouping.</p>
+  </div>
+</div>
+
+<div class="page">
+  <h2 class="fri">Friday &mdash; Multiplication Magic (Capstone)</h2>
+  <h3>Answer Key &mdash; Reading Questions</h3>
+  <div class="answer-box fri">
+    <p><strong>Q1 (4 &times; 3):</strong> 4 groups of 3: 3 + 3 + 3 + 3 = 12.</p>
+    <p><strong>Q2 (Skip-counting):</strong> 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 and 5, 10, 15, 20, 25, 30, 35, 40, 45, 50.</p>
+    <p><strong>Q3 (Arrays):</strong> 2 &times; 5 = 10 and 5 &times; 2 = 10 &mdash; the same dots turned sideways. Switching the order gives the same answer.</p>
+    <p><strong>Q4:</strong> 3 &times; 10 = 30, 7 &times; 1 = 7, 6 &times; 2 = 12, 4 &times; 5 = 20. &ldquo;Easiest/hardest&rdquo; is a personal answer.</p>
+  </div>
+  <h3>Multiplication Practice Answer Key</h3>
+  <div class="answer-box fri"><ol class="cols">{{FRI_MULT}}</ol></div>
+  <h3>Speed Drill Answer Key</h3>
+  <div class="answer-box fri"><ol class="cols">{{FRI_SPEED}}</ol>
+  <p><em>Three minutes is a stretch goal, not a pass mark. Note which operation slowed him down &mdash; that is next week's warm-up.</em></p></div>
+  <h3>LET'S DISCUSS Guidance</h3>
+  <div class="discuss">
+    <p>Let him rank the week's five skills. Whatever he names as &ldquo;want to practice more&rdquo; is worth a 5-minute warm-up each day next week.</p>
+  </div>
+  <h3>Misconceptions to Watch</h3>
+  <div class="misconception">
+    <p>Reading &times; as + (2 &times; 5 = 7), especially on the mixed speed drill. Have him read each sign aloud before solving, and ask &ldquo;how many groups? how many in each?&rdquo;</p>
+  </div>
+  <h3>Extension Activity</h3>
+  <div class="extension">
+    <p>Egg-carton arrays: put 2 counters in each cup of one row, then ask how many are in 3 cups, 4 cups, 5 cups. Write each as both repeated addition and multiplication.</p>
+  </div>
+
+  <hr style="margin: 18px 0; border-color: #ccc;">
+  <h2>Week Summary</h2>
+  <ol style="padding-left: 20px; font-size: 10pt; line-height: 2;">
+    <li><strong>Monday:</strong> Ten is the anchor &mdash; number bonds for 10 and the make-ten split.</li>
+    <li><strong>Tuesday:</strong> Choosing among count-on, doubles, near-doubles and make-ten.</li>
+    <li><strong>Wednesday:</strong> Subtraction as the reverse of addition &mdash; count back, think addition, make ten.</li>
+    <li><strong>Thursday:</strong> A ten can be opened into ten ones (regrouping), shown on a number line.</li>
+    <li><strong>Friday:</strong> Multiplication as equal groups and skip-counting; a mixed review drill.</li>
+  </ol>
+  <p style="margin-top: 10px;">By Friday, Christopher should make ten without counters, choose an addition strategy on purpose, solve teen subtraction with think-addition, and explain &times; as &ldquo;groups of.&rdquo;</p>
+</div>
+
+</body>
+</html>"""
+    for name, value in keys.items():
+        TEACHER_GUIDE = TEACHER_GUIDE.replace("{{" + name + "}}", value)
+    assert "{{" not in TEACHER_GUIDE
+    guide_path = output_dir / "arithmetic_week_teacher_guide.html"
+    guide_path.write_text(TEACHER_GUIDE, encoding="utf-8")
+
     print("\n✅ Successfully generated Arithmetic Strategies Week.")
     print(f"Student packet:  {out_path}")
-    print(f"  {len(pages)} pages — open the packet in a browser and print (dialog opens automatically)\n")
+    print(f"Teacher guide:   {guide_path}")
+    print(
+        f"  {len(pages)} pages — open the packet in a browser and print (dialog opens automatically)\n"
+    )
     print("  Pages:")
     labels = [
         "Mon p1 — Reading: Making Ten & Number Bonds (Meet Digit the Dragon)",
