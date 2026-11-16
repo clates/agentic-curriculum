@@ -1,6 +1,6 @@
 # Worksheet Request Schema
 
-This document defines the JSON contract that daily lesson plan generators use to ask the post-processing agent for printable worksheets. Each lesson day may describe zero, one, or many resource requests. When the `resources` field contains a worksheet payload, the orchestrator has enough information to call the helpers in `src/worksheets.py` followed by the renderers in `src/worksheet_renderer.py`.
+This document defines the JSON contract that daily lesson plan generators use to ask the post-processing agent for printable worksheets. Each lesson day may describe zero, one, or many resource requests. When the `resources` field contains a worksheet payload, the orchestrator has enough information to call the helpers in `src/worksheets.py` followed by the renderers in `src/worksheet_html_renderer.py`.
 
 ## Response Envelope
 

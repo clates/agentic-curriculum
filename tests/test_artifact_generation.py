@@ -1,22 +1,21 @@
 import src.agent as agent
 from src.worksheet_requests import WorksheetArtifactPlan
-from src.worksheets import generate_two_operand_math_worksheet
 
 
 def _make_math_plan():
-    worksheet = generate_two_operand_math_worksheet(
-        problems=[{"operand_one": 2, "operand_two": 3, "operator": "+"}],
-        title="Warm-Up",
-    )
+    """Return a twoOperandWorksheet plan with html_data for HTML rendering."""
     return WorksheetArtifactPlan(
-        kind="mathWorksheet",
-        worksheet=worksheet,
+        kind="twoOperandWorksheet",
+        html_data={
+            "title": "Warm-Up",
+            "problems": [{"operand_one": 2, "operand_two": 3, "operator": "+"}],
+        },
         filename_hint="warmup",
         metadata={},
     )
 
 
-def test_render_artifacts_creates_png_and_pdf(tmp_path, monkeypatch):
+def test_render_artifacts_creates_html_artifact(tmp_path, monkeypatch):
     plan = _make_math_plan()
     monkeypatch.setattr(agent, "ARTIFACTS_DIR", tmp_path / "artifacts")
     monkeypatch.setattr(agent, "PROJECT_ROOT", tmp_path)
@@ -26,9 +25,9 @@ def test_render_artifacts_creates_png_and_pdf(tmp_path, monkeypatch):
     )
 
     assert errors == []
-    assert "mathWorksheet" in artifact_map
-    artifact_paths = {entry["type"]: entry["path"] for entry in artifact_map["mathWorksheet"]}
-    assert "png" in artifact_paths and "pdf" in artifact_paths
+    assert "twoOperandWorksheet" in artifact_map
+    artifact_paths = {entry["type"]: entry["path"] for entry in artifact_map["twoOperandWorksheet"]}
+    assert "html" in artifact_paths
     for rel_path in artifact_paths.values():
         expected = tmp_path / rel_path
         assert expected.exists()
@@ -39,19 +38,16 @@ def test_render_artifacts_records_errors(tmp_path, monkeypatch):
     monkeypatch.setattr(agent, "ARTIFACTS_DIR", tmp_path / "artifacts")
     monkeypatch.setattr(agent, "PROJECT_ROOT", tmp_path)
 
-    def fail_png(_worksheet, _path):
-        raise ValueError("png boom")
+    # Replace render_worksheet_html with a failing function
+    def fail_html(kind, data, day_label=""):
+        raise ValueError("html boom")
 
-    monkeypatch.setattr(agent, "render_worksheet_to_image", fail_png)
+    monkeypatch.setattr(agent, "render_worksheet_html", fail_html)
 
     artifact_map, errors = agent._render_worksheet_artifacts(
         "plan_demo", "Tuesday", [plan], generation_logger=None
     )
 
-    # PDF should still render even if PNG fails.
-    assert "mathWorksheet" in artifact_map
-    pdf_entries = [entry for entry in artifact_map["mathWorksheet"] if entry["type"] == "pdf"]
-    assert pdf_entries
-    assert errors and any(err["kind"] == "mathWorksheet" for err in errors)
-    for entry in pdf_entries:
-        assert (tmp_path / entry["path"]).exists()
+    # Should record the error
+    assert errors
+    assert any(err["kind"] == "twoOperandWorksheet" for err in errors)

@@ -63,7 +63,7 @@ jobs:
 
   e2e-tests:
     name: E2E Tests (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright chromium does not support ubuntu 26.04 yet
 
     steps:
       - name: Checkout code

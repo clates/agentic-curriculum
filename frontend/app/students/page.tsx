@@ -194,9 +194,9 @@ export default function StudentsPage() {
               return (
                 <div
                   key={student.student_id}
-                  className="flex items-center justify-between rounded-lg bg-white p-6 shadow-sm"
+                  className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6"
                 >
-                  <div className="flex items-center space-x-4">
+                  <div className="flex min-w-0 items-center space-x-4">
                     {metadata?.avatar_url ? (
                       <img
                         src={metadata.avatar_url}
@@ -216,7 +216,7 @@ export default function StudentsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="secondary"
                       size="sm"

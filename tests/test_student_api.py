@@ -292,3 +292,25 @@ class TestDeleteStudentEndpoint:
         """DELETE /student/{id} returns 404 for non-existent student."""
         response = test_client.delete("/student/nonexistent")
         assert response.status_code == 404
+
+
+def test_delete_student_propagates_non_missing_table_errors(tmp_path, monkeypatch):
+    """Only a missing weekly_packets table is ignored; other DB errors must surface."""
+    import db_utils
+
+    db_path = tmp_path / "view.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute("CREATE TABLE student_profiles (student_id TEXT PRIMARY KEY)")
+    conn.execute("INSERT INTO student_profiles VALUES ('s1')")
+    # A view can't be deleted from, so this raises an OperationalError that is not "no such table".
+    conn.execute("CREATE VIEW weekly_packets AS SELECT student_id FROM student_profiles")
+    conn.commit()
+    conn.close()
+    monkeypatch.setattr(db_utils, "DB_FILE", str(db_path))
+
+    with pytest.raises(sqlite3.OperationalError, match="view"):
+        db_utils.delete_student("s1")
+
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("SELECT COUNT(*) FROM student_profiles").fetchone()[0] == 1
+    conn.close()

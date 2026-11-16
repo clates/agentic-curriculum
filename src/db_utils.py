@@ -12,7 +12,19 @@ import sqlite3
 # Always resolve the DB path relative to the project root so uvicorn reloads
 # or different working directories don't create duplicate SQLite files.
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
+
+
+def get_db_path() -> str:
+    """Single source of truth for the SQLite DB location.
+
+    Reads CURRICULUM_DB_PATH at call time (the container sets it to a volume path),
+    defaulting to <project root>/curriculum.db.
+    """
+    return os.environ.get("CURRICULUM_DB_PATH") or os.path.join(PROJECT_ROOT, "curriculum.db")
+
+
+# Import-time snapshot kept for modules/tests that import DB_FILE directly.
+DB_FILE = get_db_path()
 
 # Cache for column existence check to avoid repeated PRAGMA queries
 _metadata_column_cache: dict[str, bool] = {}
@@ -250,8 +262,12 @@ def delete_student(student_id: str) -> bool:
 
     Returns:
         True if the student was deleted, False if not found
+
+    Raises:
+        sqlite3.OperationalError: if the database is locked after timeout
     """
     conn = sqlite3.connect(DB_FILE)
+    conn.execute("PRAGMA busy_timeout = 5000")  # 5s timeout instead of hanging forever
     conn.execute("PRAGMA foreign_keys = ON")
     cursor = conn.cursor()
 
@@ -260,15 +276,22 @@ def delete_student(student_id: str) -> bool:
         # worksheet_artifacts, and packet_feedback automatically.
         # weekly_packets may not exist in minimal test DBs, so ignore if absent.
         try:
-            cursor.execute("DELETE FROM weekly_packets WHERE student_id = ?", (student_id,))
-        except sqlite3.OperationalError:
-            pass
+            cursor.execute(
+                "DELETE FROM weekly_packets WHERE student_id = ?",
+                (student_id,),
+            )
+        except sqlite3.OperationalError as e:
+            if "no such table" not in str(e):
+                raise
         cursor.execute(
             "DELETE FROM student_profiles WHERE student_id = ?",
             (student_id,),
         )
         conn.commit()
         return cursor.rowcount > 0
+    except sqlite3.OperationalError:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 

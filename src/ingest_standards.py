@@ -141,14 +141,19 @@ def insert_dummy_student():
         }
     )
 
+    # Only insert if student doesn't already exist (avoid overwriting real data)
     cursor.execute(
-        """
-        INSERT OR REPLACE INTO student_profiles 
-        (student_id, progress_blob, plan_rules_blob, metadata_blob)
-        VALUES (?, ?, ?, ?)
-    """,
-        (student_id, progress_blob, plan_rules_blob, metadata_blob),
+        "SELECT 1 FROM student_profiles WHERE student_id = ?", (student_id,)
     )
+    if cursor.fetchone() is None:
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO student_profiles 
+            (student_id, progress_blob, plan_rules_blob, metadata_blob)
+            VALUES (?, ?, ?, ?)
+        """,
+            (student_id, progress_blob, plan_rules_blob, metadata_blob),
+        )
 
     conn.commit()
     conn.close()
