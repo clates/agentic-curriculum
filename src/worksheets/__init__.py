@@ -153,6 +153,23 @@ from .frayer_model import (
     generate_frayer_model_worksheet,
 )
 
+# Error audit ("Bug Hunt") worksheet components
+from .error_audit import (
+    ErrorAuditSpecimen,
+    ErrorAuditWorksheet,
+    generate_error_audit_worksheet,
+    decimal_stack_rows,
+    FIX_MODES,
+)
+
+
+# Ten-frame ("Make Ten") worksheet components
+from .ten_frame import (
+    TenFrameProblem,
+    TenFrameWorksheet,
+    generate_ten_frame_worksheet,
+)
+
 
 # Factory for creating worksheets from JSON payloads
 from .factory import WorksheetFactory
@@ -243,6 +260,16 @@ __all__ = [
     "FrayerModelEntry",
     "FrayerModelWorksheet",
     "generate_frayer_model_worksheet",
+    # Error audit ("Bug Hunt")
+    "ErrorAuditSpecimen",
+    "ErrorAuditWorksheet",
+    "generate_error_audit_worksheet",
+    "decimal_stack_rows",
+    "FIX_MODES",
+    # Ten-frame ("Make Ten")
+    "TenFrameProblem",
+    "TenFrameWorksheet",
+    "generate_ten_frame_worksheet",
     # Factory
     "WorksheetFactory",
 ]

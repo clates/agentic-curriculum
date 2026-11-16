@@ -59,6 +59,17 @@ RUN useradd -m -u 1000 appuser
 # Ensure application files are owned by the non-root user
 RUN chown -R appuser:appuser /app
 
+# Build metadata, surfaced by GET /version (pass via --build-arg)
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+ARG RELEASE_TAG=unknown
+ENV GIT_SHA=${GIT_SHA} \
+    BUILD_TIME=${BUILD_TIME} \
+    RELEASE_TAG=${RELEASE_TAG}
+LABEL org.opencontainers.image.revision=${GIT_SHA} \
+      org.opencontainers.image.created=${BUILD_TIME} \
+      org.opencontainers.image.source="https://github.com/clates/agentic-curriculum"
+
 # Expose only frontend port (backend is proxied through Next.js API routes)
 EXPOSE 3000
 
@@ -71,13 +82,16 @@ set -e
 # Start cron daemon (reads /etc/cron.d/curriculum, jobs run as appuser)
 cron
 
-# Seed the database only if it doesn't exist yet
+# Always seed/update standards on startup (idempotent — INSERT OR REPLACE).
+# Add or update JSON files in standards_data/ and redeploy to pick up changes.
 DB_PATH="${CURRICULUM_DB_PATH:-/app/curriculum.db}"
-if [ ! -f "$DB_PATH" ]; then
-  echo "Database not found at $DB_PATH — seeding..."
-  su -s /bin/bash appuser -c "PYTHONPATH=/app/src python /app/src/ingest_standards.py"
-else
-  echo "Database found at $DB_PATH — skipping seed."
+echo "Seeding curriculum database at $DB_PATH..."
+su -s /bin/bash appuser -c "PYTHONPATH=/app/src python /app/src/ingest_standards.py"
+
+# Run standards migration if present (for ID renames, splits, etc.)
+if [ -f /app/src/migrate_standards.py ]; then
+  echo "Running standards migration..."
+  su -s /bin/bash appuser -c "PYTHONPATH=/app/src python /app/src/migrate_standards.py"
 fi
 
 # Start backend in background (as appuser)

@@ -15,10 +15,17 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
+  // Journeys tell the product's story (e2e/journeys/1-5); the app shell is checked on every
+  // form factor a parent might use.
   projects: [
     {
-      name: 'chromium',
+      name: 'desktop',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'mobile',
+      use: { ...devices['Pixel 7'] },
+      testMatch: 'app-shell.spec.ts',
     },
   ],
 
