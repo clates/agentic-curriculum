@@ -5,6 +5,11 @@ FastAPI application for serving student data from curriculum.db
 """
 
 from __future__ import annotations
+
+import sqlite3
+import subprocess
+
+from agent import generate_weekly_plan
 from packet_store import (
     get_artifact_for_student,
     get_packet_feedback,
@@ -13,9 +18,9 @@ from packet_store import (
     list_weekly_packets,
     save_packet_feedback,
 )
-from agent import generate_weekly_plan
 from trio_generator import generate_trio_for_student
 from db_utils import (
+    get_db_path,
     create_student,
     delete_student,
     get_student_profile,
@@ -224,6 +229,40 @@ def health_check():
     return {"status": "ok"}
 
 
+def _resolve_git_sha() -> str:
+    """Return GIT_SHA from the environment, else `git rev-parse HEAD`, else "unknown"."""
+    sha = os.environ.get("GIT_SHA", "").strip()
+    if sha and sha != "unknown":
+        return sha
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parent,
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+        candidate = out.stdout.strip()
+        if out.returncode == 0 and len(candidate) == 40:
+            return candidate
+    except Exception:
+        pass
+    return "unknown"
+
+
+@app.get("/version")
+def get_version():
+    """Report which build is running (set via GIT_SHA/BUILD_TIME/RELEASE_TAG at image build)."""
+    sha = _resolve_git_sha()
+    return {
+        "sha": sha,
+        "short_sha": sha[:7] if sha != "unknown" else "unknown",
+        "build_time": os.environ.get("BUILD_TIME") or None,
+        "release_tag": os.environ.get("RELEASE_TAG") or None,
+    }
+
+
 @app.get("/system/options", response_model=SystemOptionsResponse)
 def get_system_options():
     """
@@ -341,8 +380,15 @@ def delete_student_endpoint(student_id: str):
 
     Raises:
         HTTPException: 404 if student not found
+        HTTPException: 503 if database is locked
     """
-    deleted = delete_student(student_id)
+    try:
+        deleted = delete_student(student_id)
+    except sqlite3.OperationalError as e:
+        raise HTTPException(
+            status_code=503,
+            detail="Database temporarily unavailable — please retry",
+        ) from e
 
     if not deleted:
         raise HTTPException(status_code=404, detail="Student not found")
@@ -663,6 +709,10 @@ def submit_packet_feedback(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+    # Verify packet exists before processing feedback
+    if get_weekly_packet(student_id, packet_id) is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+
     # Get current student profile
     profile = get_student_profile(student_id)
     if not profile:
@@ -741,7 +791,7 @@ def get_curriculum_graph(subject: str, prune: bool = False):
     """
     Retrieve the full structural dependency graph for a subject.
     """
-    graph = load_from_db(str(PROJECT_ROOT / "curriculum.db"), subject)
+    graph = load_from_db(get_db_path(), subject)
     return graph.export_for_visualization(prune=prune)
 
 
@@ -757,5 +807,5 @@ def get_student_progress_map(student_id: str, subject: str, prune: bool = True):
     progress = json.loads(profile["progress_blob"] or "{}")
     mastered = progress.get("mastered_standards", [])
 
-    graph = load_from_db(str(PROJECT_ROOT / "curriculum.db"), subject)
+    graph = load_from_db(get_db_path(), subject)
     return graph.export_for_visualization(mastered, prune=prune)

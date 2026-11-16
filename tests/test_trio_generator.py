@@ -60,11 +60,23 @@ def test_get_grade_level_from_most_recent_packet():
         assert trio_generator._get_grade_level("s1") == 3
 
 
-def test_get_grade_level_defaults_to_one_when_no_packets():
+def test_get_grade_level_defaults_to_zero_when_no_packets():
     with patch("trio_generator.list_weekly_packets", return_value=([], False)):
-        assert trio_generator._get_grade_level("s1") == 1
+        assert trio_generator._get_grade_level("s1") == 0
 
 
 def test_get_grade_level_uses_metadata_fallback_when_no_packets():
     with patch("trio_generator.list_weekly_packets", return_value=([], False)):
         assert trio_generator._get_grade_level("s1", metadata_fallback={"grade_level": 4}) == 4
+
+
+def test_get_grade_level_empty_metadata_dict_falls_back_to_zero():
+    """An empty metadata dict ({}) must not be treated as falsy — grade must default to 0."""
+    with patch("trio_generator.list_weekly_packets", return_value=([], False)):
+        assert trio_generator._get_grade_level("s1", metadata_fallback={}) == 0
+
+
+def test_get_grade_level_kindergarten_metadata_returns_zero():
+    """metadata_fallback with grade_level=0 (Kindergarten) must return 0, not 1."""
+    with patch("trio_generator.list_weekly_packets", return_value=([], False)):
+        assert trio_generator._get_grade_level("s1", metadata_fallback={"grade_level": 0}) == 0
