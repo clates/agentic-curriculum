@@ -1,0 +1,11 @@
+{
+  "lesson_plan": {
+    "objective": "Stub {{day}} objective: practise {{subject}} with a known, canned lesson.",
+    "materials_needed": [],
+    "procedure": [
+      "Stub {{day}} step 1: warm up (10 min)",
+      "Stub {{day}} step 2: guided practice (30 min)",
+      "Stub {{day}} step 3: wrap up (10 min)"
+    ]
+  }
+}

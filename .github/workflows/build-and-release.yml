@@ -39,6 +39,7 @@ jobs:
         run: |
           TAG="auto-$(date -u +'%Y%m%d-%H%M%S')"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "build_time=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -51,6 +52,10 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            BUILD_TIME=${{ steps.release_tag.outputs.build_time }}
+            RELEASE_TAG=${{ steps.release_tag.outputs.tag }}
           tags: |
             ${{ env.IMAGE_NAME }}:${{ steps.release_tag.outputs.tag }}
             ${{ env.IMAGE_NAME }}:latest

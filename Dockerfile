@@ -59,6 +59,17 @@ RUN useradd -m -u 1000 appuser
 # Ensure application files are owned by the non-root user
 RUN chown -R appuser:appuser /app
 
+# Build metadata, surfaced by GET /version (pass via --build-arg)
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+ARG RELEASE_TAG=unknown
+ENV GIT_SHA=${GIT_SHA} \
+    BUILD_TIME=${BUILD_TIME} \
+    RELEASE_TAG=${RELEASE_TAG}
+LABEL org.opencontainers.image.revision=${GIT_SHA} \
+      org.opencontainers.image.created=${BUILD_TIME} \
+      org.opencontainers.image.source="https://github.com/clates/agentic-curriculum"
+
 # Expose only frontend port (backend is proxied through Next.js API routes)
 EXPOSE 3000
 

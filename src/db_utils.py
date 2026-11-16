@@ -12,7 +12,19 @@ import sqlite3
 # Always resolve the DB path relative to the project root so uvicorn reloads
 # or different working directories don't create duplicate SQLite files.
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
+
+
+def get_db_path() -> str:
+    """Single source of truth for the SQLite DB location.
+
+    Reads CURRICULUM_DB_PATH at call time (the container sets it to a volume path),
+    defaulting to <project root>/curriculum.db.
+    """
+    return os.environ.get("CURRICULUM_DB_PATH") or os.path.join(PROJECT_ROOT, "curriculum.db")
+
+
+# Import-time snapshot kept for modules/tests that import DB_FILE directly.
+DB_FILE = get_db_path()
 
 # Cache for column existence check to avoid repeated PRAGMA queries
 _metadata_column_cache: dict[str, bool] = {}

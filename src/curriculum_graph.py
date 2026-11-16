@@ -278,7 +278,15 @@ class CASEGraphV2:
 
 
 def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGraphV2:
+    import logging
+    import os
     import sqlite3
+
+    log = logging.getLogger(__name__)
+    # sqlite3.connect silently creates a missing file; never do that here.
+    if db_path != ":memory:" and not os.path.exists(db_path):
+        log.error("load_from_db: database file not found: %s", db_path)
+        raise FileNotFoundError(f"curriculum database not found: {db_path}")
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -314,7 +322,13 @@ def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGra
                 }
             )
     except sqlite3.OperationalError:
-        pass  # standards table not present
+        log.error("load_from_db: 'standards' table missing in %s", db_path)
+    if not standards_items:
+        log.error(
+            "load_from_db: no standards found for subject=%r in %s (wrong DB path?)",
+            subject_keyword,
+            db_path,
+        )
 
     # 2. Try CASE data (may fail if tables don't exist)
     start_nodes: list[str] = []
@@ -396,6 +410,7 @@ def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGra
 
 
 if __name__ == "__main__":
-    DB_PATH = "curriculum.db"
-    graph = load_from_db(DB_PATH, "Math")
+    from db_utils import get_db_path
+
+    graph = load_from_db(get_db_path(), "Math")
     print(f"Loaded fallback graph with {len(graph.graph.nodes)} nodes.")
