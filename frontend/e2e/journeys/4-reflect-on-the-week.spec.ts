@@ -4,6 +4,10 @@
  * After teaching the week, the parent records how it went: how well the child mastered it and
  * whether the workload was right. They can revise that for a while, then it locks. The feedback
  * shows up on the child's progress map.
+ *
+ * Submitting feedback also starts background generation of the next plans (served by the LLM stub),
+ * which adds a pending card, i.e. a heading, for that student. So once feedback exists, locate the
+ * completed week by its table row and the pending week by its heading; never by name alone.
  */
 import { test, expect } from '../fixtures/test';
 import { createStudent, createPacket, submitFeedback, backdateFeedback } from '../fixtures/api';
