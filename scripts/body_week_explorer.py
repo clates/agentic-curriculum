@@ -4,8 +4,12 @@ Body Explorer — the interactive companion to the Body Team Week packet.
 ``build_html()`` returns one self-contained HTML file (inline SVG + JS, no network, no
 dependencies). A simplified front-view body the student can pan and zoom, with one scene per
 day of the week — lungs, heart, digestion, liver and kidneys, brain — plus a Whole Team view.
-Rudy the Red Blood Cell rides the bloodstream the whole time, and the Sprint toggle speeds the
-heart, breathing and Rudy together.
+
+Circulation model: every trip is heart → lungs → heart → one body part (head, an arm or a leg)
+→ U-turn in the capillaries → heart. Cells turn bright red only at the lungs and dark red only
+at the U-turn, and the drawn vessels are generated from the same routes the cells ride, so the
+picture and the motion can't disagree. Bright cells carry a white oxygen "backpack" they drop at
+the U-turn; dark cells carry a gray carbon-dioxide "trash" bubble they drop at the lungs.
 
 Open ``body_explorer.html#tue`` (mon/tue/wed/thu/fri/team) to start on a given day.
 Emitted by ``generate_body_week_series.py``; not meant to be run on its own.
@@ -24,77 +28,93 @@ EXPLORER_HTML = """<!DOCTYPE html>
   .app { display: flex; height: 100vh; }
   .stage-wrap { position: relative; flex: 1; min-width: 0; overflow: hidden;
     background: radial-gradient(circle at 50% 40%, #1e3a5f, #0b1220); }
+  .stage-wrap.light { background: radial-gradient(circle at 50% 40%, #ffffff, #dbeafe); }
   svg#stage { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
   svg#stage.dragging { cursor: grabbing; }
-  button { font: inherit; font-weight: bold; border: none; border-radius: 10px; padding: 8px 12px;
-    cursor: pointer; background: #fff; color: #0f172a; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+  button { font: inherit; font-weight: bold; border: none; border-radius: 10px; padding: 9px 13px;
+    cursor: pointer; background: #fff; color: #0f172a; box-shadow: 0 2px 6px rgba(0,0,0,.35); font-size: 16px; }
   button:focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }
   .days { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
   .days button { color: #fff; }
   .days button[aria-pressed="true"] { outline: 3px solid #fde047; outline-offset: 1px; transform: translateY(1px); }
   .zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-  .zoom button { width: 46px; height: 46px; font-size: 20px; padding: 0; }
-  .toggles { position: absolute; left: 10px; bottom: 54px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .zoom button { width: 48px; height: 48px; font-size: 22px; padding: 0; }
+  .toggles { position: absolute; left: 10px; bottom: 56px; right: 70px; display: flex; flex-wrap: wrap; gap: 6px; }
   .toggles button.on { background: #fde047; }
-  .readout { position: absolute; left: 10px; bottom: 10px; background: rgba(255,255,255,.92);
-    border-radius: 10px; padding: 7px 11px; font-size: 14px; font-weight: bold; }
-  .toast { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); background: #fde047;
-    padding: 8px 16px; border-radius: 999px; font-weight: bold; opacity: 0; transition: opacity .35s;
+  .readout { position: absolute; left: 10px; bottom: 10px; background: rgba(255,255,255,.94);
+    border-radius: 10px; padding: 7px 12px; font-size: 16px; font-weight: bold; }
+  .toast { position: absolute; top: 66px; left: 50%; transform: translateX(-50%); background: #fde047;
+    padding: 9px 18px; border-radius: 999px; font-weight: bold; font-size: 17px; opacity: 0; transition: opacity .35s;
     pointer-events: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
   .toast.show { opacity: 1; }
-  .panel { width: 370px; background: #fff; overflow-y: auto; padding: 16px 18px 24px;
-    border-left: 6px solid var(--accent); }
-  .panel h1 { font-size: 13px; margin: 0 0 4px; color: #64748b; text-transform: uppercase; letter-spacing: .08em; }
-  .panel h2 { font-size: 22px; margin: 0 0 6px; color: var(--accent); }
-  .panel h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #475569; margin: 16px 0 6px; }
-  .rudy-says { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; }
-  .rudy-says svg { flex: 0 0 48px; }
-  .bubble { background: #fee2e2; border-radius: 12px; padding: 8px 12px; font-size: 15px; line-height: 1.4; }
-  .panel ul { padding-left: 20px; margin: 0; font-size: 15px; line-height: 1.45; }
-  .panel li { margin-bottom: 4px; }
-  .card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; font-size: 15px; line-height: 1.45; }
-  .card b { color: var(--accent); font-size: 17px; }
-  .card .crew { display: inline-block; font-size: 12px; font-weight: bold; color: #fff; background: var(--accent);
-    border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: 2px; }
-  .legend { font-size: 13px; color: #475569; line-height: 1.6; margin-top: 10px; }
-  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; margin-right: 4px; }
-  .extra { margin-top: 12px; }
-  .meter { height: 14px; border-radius: 7px; background: #e2e8f0; overflow: hidden; margin: 6px 0; }
+  .panel { width: 400px; background: #fff; overflow-y: auto; padding: 18px 20px 26px;
+    border-left: 8px solid var(--accent); font-size: 18px; }
+  .panel h1 { font-size: 14px; margin: 0 0 4px; color: #64748b; text-transform: uppercase; letter-spacing: .08em; }
+  .panel h2 { font-size: 28px; margin: 0 0 6px; color: var(--accent); }
+  .panel h3 { font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: #334155; margin: 18px 0 6px; }
+  .rudy-says { display: flex; gap: 12px; align-items: flex-start; margin: 12px 0; }
+  .rudy-says svg { flex: 0 0 60px; }
+  .bubble { background: #fee2e2; border-radius: 14px; padding: 10px 14px; font-size: 22px; line-height: 1.35; }
+  .panel ul { padding-left: 22px; margin: 0; line-height: 1.45; }
+  .panel li { margin-bottom: 6px; }
+  .card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; line-height: 1.45; }
+  .card b { color: var(--accent); font-size: 21px; }
+  .card .crew { display: inline-block; font-size: 13px; font-weight: bold; color: #fff; background: var(--accent);
+    border-radius: 999px; padding: 2px 9px; margin-left: 8px; vertical-align: 3px; }
+  .key { margin-top: 12px; line-height: 1.5; }
+  .key div { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+  .key svg { flex: 0 0 34px; }
+  .extra { margin-top: 14px; }
+  .meter { height: 18px; border-radius: 9px; background: #e2e8f0; overflow: hidden; margin: 6px 0; }
   .meter > div { height: 100%; background: #38bdf8; transition: width .3s; }
   .game { border: 2px dashed #94a3b8; border-radius: 12px; padding: 10px; text-align: center; }
   .ruler-box { position: relative; height: 330px; width: 140px; margin: 6px auto; overflow: hidden; }
   .ruler { position: absolute; left: 50px; top: 0; width: 38px; height: 180px; border: 2px solid #92400e;
     border-radius: 3px; background: repeating-linear-gradient(to top, #fde68a 0 5px, #b45309 5px 6px); }
-  .ruler span { position: absolute; left: 3px; font-size: 11px; font-weight: bold; color: #451a03;
+  .ruler span { position: absolute; left: 3px; font-size: 12px; font-weight: bold; color: #451a03;
     background: #fde68a; padding: 0 2px; transform: translateY(50%); }
   .hand { position: absolute; left: 44px; top: 162px; font-size: 42px; line-height: 1; pointer-events: none; }
-  #gameMsg { font-size: 15px; min-height: 42px; margin: 6px 0; }
-  #tries { text-align: left; font-size: 14px; }
+  #gameMsg { min-height: 48px; margin: 6px 0; }
+  #tries { text-align: left; }
+  details.teacher { margin-top: 22px; border-top: 2px solid #e2e8f0; padding-top: 10px; font-size: 15px; color: #334155; }
+  details.teacher summary { cursor: pointer; font-weight: bold; font-size: 16px; }
+  details.teacher p { margin: 8px 0; line-height: 1.5; }
   .organ { transition: opacity .5s; }
-  .organ.dim { opacity: .16; }
-  .label { font-size: 15px; font-weight: bold; fill: #fff; paint-order: stroke; stroke: #0f172a; stroke-width: 4px;
-    stroke-linejoin: round; pointer-events: none; transition: opacity .4s; }
-  .worldtext { font-size: 22px; font-weight: bold; fill: #fde047; paint-order: stroke; stroke: #0f172a;
+  .organ.dim { opacity: .14; }
+  .organ.hidden { display: none; }
+  .lbl { transition: opacity .4s; pointer-events: none; }
+  .lbl text { font-size: 18px; font-weight: bold; fill: #fff; paint-order: stroke; stroke: #0f172a; stroke-width: 4px; stroke-linejoin: round; }
+  .lbl line { stroke: #e2e8f0; stroke-width: 1.6; }
+  .lbl circle { fill: #e2e8f0; stroke: #0f172a; stroke-width: 1; }
+  .light .lbl text { fill: #0f172a; stroke: #fff; }
+  .light .lbl line { stroke: #334155; }
+  .light .lbl circle { fill: #334155; stroke: #fff; }
+  .worldtext { font-size: 26px; font-weight: bold; fill: #fde047; paint-order: stroke; stroke: #0f172a;
     stroke-width: 5px; pointer-events: none; }
   @media (max-width: 820px) {
+    .app { flex-direction: column; height: auto; }
+    .stage-wrap { height: 64vh; flex: none; }
+    .panel { width: auto; border-left: none; border-top: 8px solid var(--accent); }
     button { font-size: 13px; padding: 6px 9px; border-radius: 8px; }
     .zoom button { width: 38px; height: 38px; font-size: 18px; }
     .toggles { right: 58px; bottom: 46px; }
     .readout { font-size: 12px; padding: 5px 8px; }
-    .app { flex-direction: column; height: auto; }
-    .stage-wrap { height: 64vh; flex: none; }
-    .panel { width: auto; border-left: none; border-top: 6px solid var(--accent); }
+    .bubble { font-size: 19px; }
   }
 </style>
 </head>
 <body>
 <div class="app">
-<div class="stage-wrap">
-<svg id="stage" viewBox="0 0 600 1000" preserveAspectRatio="xMidYMid meet" role="img"
+<div class="stage-wrap" id="stageWrap">
+<svg id="stage" viewBox="-160 0 920 1000" preserveAspectRatio="xMidYMid meet" role="img"
      aria-label="A simplified human body. Drag to look around, scroll or pinch to zoom, tap an organ to learn its job.">
   <defs>
     <filter id="glow" x="-1" y="-1" width="3" height="3">
       <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="rudyGlow" x="-1" y="-1" width="3" height="3">
+      <feGaussianBlur stdDeviation="5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
     <clipPath id="bladderClip"><ellipse cx="300" cy="708" rx="26" ry="18"/></clipPath>
@@ -118,43 +138,11 @@ EXPLORER_HTML = """<!DOCTYPE html>
             fill="#f6d7bf" stroke="#c08a68" stroke-width="3"/>
       <rect x="272" y="180" width="56" height="64" rx="12" fill="#f6d7bf"/>
       <ellipse cx="300" cy="112" rx="72" ry="86" fill="#f6d7bf" stroke="#c08a68" stroke-width="3"/>
-      <path d="M 296 140 Q 300 150 304 140" fill="none" stroke="#c08a68" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M 284 165 Q 300 175 316 165" fill="none" stroke="#b45309" stroke-width="3" stroke-linecap="round"/>
     </g>
 
-    <!-- Nerves: brain to every part of the body -->
-    <g class="organ" data-organ="nerves">
-      <g stroke="#facc15" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M 300 150 L 300 690"/>
-        <path d="M 300 280 L 205 300 L 140 600"/>
-        <path d="M 300 280 L 395 300 L 460 600"/>
-        <path d="M 300 690 L 262 720 L 252 960"/>
-        <path d="M 300 690 L 338 720 L 348 960"/>
-        <path d="M 300 420 L 230 450"/><path d="M 300 420 L 370 450"/>
-        <path d="M 300 560 L 240 590"/><path d="M 300 560 L 360 590"/>
-      </g>
-    </g>
-
-    <!-- Blood vessels: arteries (bright red) and veins (dark red) -->
-    <g class="organ" data-organ="vessels" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <g stroke="#991b1b" stroke-width="5">
-        <path d="M 300 400 L 288 470 L 290 690"/>
-        <path d="M 290 690 L 252 725 L 242 960"/>
-        <path d="M 290 690 L 326 728 L 336 962"/>
-        <path d="M 296 382 L 290 200 L 290 135"/>
-        <path d="M 298 362 L 208 312 L 150 605"/>
-        <path d="M 304 362 L 392 312 L 450 605"/>
-      </g>
-      <g stroke="#ef4444" stroke-width="5">
-        <path d="M 312 392 C 306 350 344 345 338 380 L 318 470 L 314 690"/>
-        <path d="M 314 690 L 268 722 L 258 960"/>
-        <path d="M 314 690 L 342 722 L 352 960"/>
-        <path d="M 322 360 L 312 200 L 312 135"/>
-        <path d="M 316 356 L 198 300 L 138 600"/>
-        <path d="M 330 356 L 402 300 L 464 600"/>
-        <path id="renalL" d="M 314 560 L 258 576"/>
-        <path id="renalR" d="M 314 560 L 343 576"/>
-      </g>
+    <!-- Vessels drawn under the organs (generated from the routes in the script) -->
+    <g class="organ" data-organ="vessels" id="vesselsBody" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 314 560 L 258 576 M 314 560 L 343 576" stroke="#ef4444" stroke-width="3"/>
     </g>
 
     <!-- Kidneys sit in the back, behind the gut: dashed outline -->
@@ -165,19 +153,15 @@ EXPLORER_HTML = """<!DOCTYPE html>
             fill="#be123c" stroke="#881337" stroke-width="3" stroke-dasharray="6 3"/>
       <path id="ureterL" d="M 254 598 C 262 640 280 680 292 700" fill="none" stroke="#eab308" stroke-width="4"/>
       <path id="ureterR" d="M 346 598 C 338 640 320 680 308 700" fill="none" stroke="#eab308" stroke-width="4"/>
-    </g>
-
-    <!-- Esophagus: behind the windpipe, lungs and heart -->
-    <g class="organ" data-organ="esophagus">
-      <path id="esoPath" d="M 304 182 L 306 200 L 308 300 C 310 380 312 440 318 470 C 322 490 335 505 345 515"
-            fill="none" stroke="#c98b63" stroke-width="10" stroke-linecap="round"/>
+      <path id="renalL" d="M 314 560 L 258 576" fill="none" stroke="none"/>
+      <path id="renalR" d="M 314 560 L 343 576" fill="none" stroke="none"/>
     </g>
 
     <!-- Liver (body's right = viewer's left) with the gallbladder -->
     <g class="organ" data-organ="liver">
-      <path d="M 200 492 C 230 480 300 480 330 492 C 335 505 322 520 300 528 C 270 545 230 560 210 552 C 198 540 196 510 200 492 Z"
+      <path d="M 196 492 C 230 478 300 478 330 492 C 335 505 322 520 300 528 C 270 545 230 560 210 552 C 196 540 192 510 196 492 Z"
             fill="#9a3412" stroke="#7c2d12" stroke-width="3"/>
-      <ellipse cx="270" cy="540" rx="9" ry="6" fill="#65a30d" stroke="#3f6212" stroke-width="2"/>
+      <ellipse cx="268" cy="538" rx="10" ry="7" fill="#65a30d" stroke="#3f6212" stroke-width="2"/>
       <path id="portalPath" d="M 300 612 C 296 582 285 552 268 528" fill="none" stroke="none"/>
     </g>
 
@@ -191,9 +175,9 @@ EXPLORER_HTML = """<!DOCTYPE html>
 
     <!-- Large intestine frames the small intestine -->
     <g class="organ" data-organ="largeInt">
-      <path id="largePath" d="M 250 690 C 236 690 232 670 232 650 L 232 615 C 232 602 240 597 255 597 L 345 597 C 360 597 368 602 368 615 L 368 655 C 368 680 350 690 330 690 C 318 690 312 700 310 712"
-            fill="none" stroke="#b45309" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M 250 690 C 236 690 232 670 232 650 L 232 615 C 232 602 240 597 255 597 L 345 597 C 360 597 368 602 368 615 L 368 655 C 368 680 350 690 330 690 C 318 690 312 700 310 712"
+            fill="none" stroke="#b45309" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="largePath" d="M 250 690 C 236 690 232 670 232 650 L 232 615 C 232 602 240 597 255 597 L 345 597 C 360 597 368 602 368 615 L 368 655 C 368 680 350 690 330 690 C 318 690 312 700 310 712"
             fill="none" stroke="#f59e0b" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
     </g>
 
@@ -205,44 +189,52 @@ EXPLORER_HTML = """<!DOCTYPE html>
             fill="none" stroke="#f9a8d4" stroke-width="8" stroke-linecap="round"/>
     </g>
 
-    <!-- Bladder, with a fill level clipped to its shape -->
+    <!-- Bladder: pink, with a yellow urine level clipped to its shape -->
     <g class="organ" data-organ="bladder">
-      <ellipse cx="300" cy="708" rx="26" ry="18" fill="#fffbeb"/>
+      <ellipse cx="300" cy="708" rx="26" ry="18" fill="#fdf2f8"/>
       <rect id="bladderFill" x="270" y="726" width="60" height="0" fill="#fde047" clip-path="url(#bladderClip)"/>
-      <ellipse cx="300" cy="708" rx="26" ry="18" fill="none" stroke="#ca8a04" stroke-width="3"/>
+      <ellipse cx="300" cy="708" rx="26" ry="18" fill="none" stroke="#db2777" stroke-width="3"/>
     </g>
 
-    <!-- Windpipe and bronchi -->
+    <!-- Windpipe: grayish-white with rings (blue is avoided on purpose) -->
     <g class="organ" data-organ="windpipe">
-      <path d="M 300 190 L 300 300" stroke="#93c5fd" stroke-width="13" stroke-linecap="round"/>
-      <g stroke="#60a5fa" stroke-width="2">
-        <line x1="294" y1="210" x2="306" y2="210"/><line x1="294" y1="230" x2="306" y2="230"/>
-        <line x1="294" y1="250" x2="306" y2="250"/><line x1="294" y1="270" x2="306" y2="270"/>
+      <path d="M 294 184 L 294 300" stroke="#9ca3af" stroke-width="15" stroke-linecap="round"/>
+      <path d="M 294 184 L 294 300" stroke="#f1f5f9" stroke-width="11" stroke-linecap="round"/>
+      <g stroke="#9ca3af" stroke-width="2">
+        <line x1="288" y1="205" x2="300" y2="205"/><line x1="288" y1="225" x2="300" y2="225"/>
+        <line x1="288" y1="245" x2="300" y2="245"/><line x1="288" y1="265" x2="300" y2="265"/>
+        <line x1="288" y1="285" x2="300" y2="285"/>
       </g>
-      <path d="M 300 300 Q 280 310 262 332 M 300 300 Q 320 310 338 332" fill="none" stroke="#93c5fd" stroke-width="9" stroke-linecap="round"/>
+      <path d="M 294 300 Q 276 310 260 332 M 294 300 Q 314 310 336 332" fill="none" stroke="#9ca3af" stroke-width="11" stroke-linecap="round"/>
+      <path d="M 294 300 Q 276 310 260 332 M 294 300 Q 314 310 336 332" fill="none" stroke="#f1f5f9" stroke-width="7" stroke-linecap="round"/>
     </g>
 
-    <!-- Lungs: body's right lung (viewer's left) is bigger; the left lung has a notch for the heart -->
+    <!-- Lungs: the body's right lung (viewer's left) is bigger with three lobes;
+         the left lung is smaller with a notch where the heart fits -->
     <g class="organ" data-organ="lungs">
       <g id="lungsInner">
-        <path d="M 288 300 C 260 285 215 300 205 350 C 195 400 198 450 205 470 C 235 480 270 475 290 465 C 292 420 292 360 288 300 Z"
-              fill="#fda4af" fill-opacity=".92" stroke="#e11d48" stroke-width="3"/>
-        <path d="M 312 300 C 340 285 385 300 395 350 C 403 400 402 450 395 468 C 375 475 360 474 352 470 C 350 450 335 440 325 430 C 315 410 314 360 312 300 Z"
-              fill="#fda4af" fill-opacity=".92" stroke="#e11d48" stroke-width="3"/>
-        <g fill="none" stroke="#e11d48" stroke-width="1.6" opacity=".7">
-          <path d="M 212 380 L 286 360"/><path d="M 210 430 L 288 420"/><path d="M 392 372 L 318 400"/>
-          <path d="M 262 332 L 250 360 L 236 380 M 250 360 L 258 400 L 248 440 M 258 400 L 272 430"/>
-          <path d="M 338 332 L 352 360 L 368 380 M 352 360 L 350 400 L 362 440 M 350 400 L 380 420"/>
+        <path d="M 286 300 C 258 282 210 296 200 350 C 190 402 194 452 202 472 C 234 482 270 477 290 466 C 292 420 292 360 286 300 Z"
+              fill="#fda4af" stroke="#e11d48" stroke-width="3"/>
+        <path d="M 310 300 C 338 286 378 300 388 350 C 396 398 396 446 390 466 C 374 472 362 472 354 468 C 352 448 340 432 326 424 C 314 405 312 360 310 300 Z"
+              fill="#fda4af" stroke="#e11d48" stroke-width="3"/>
+        <g fill="none" stroke="#e11d48" stroke-width="1.8" opacity=".7">
+          <path d="M 206 382 L 284 360"/><path d="M 204 430 L 288 420"/><path d="M 386 372 L 318 396"/>
         </g>
         <g fill="#fecdd3" stroke="#e11d48" stroke-width="1">
-          <circle cx="236" cy="384" r="4"/><circle cx="243" cy="387" r="4"/><circle cx="238" cy="391" r="4"/>
-          <circle cx="248" cy="444" r="4"/><circle cx="255" cy="446" r="4"/><circle cx="250" cy="451" r="4"/>
-          <circle cx="368" cy="384" r="4"/><circle cx="375" cy="386" r="4"/><circle cx="370" cy="391" r="4"/>
-          <circle cx="362" cy="444" r="4"/><circle cx="369" cy="446" r="4"/><circle cx="364" cy="451" r="4"/>
+          <circle cx="236" cy="372" r="5"/><circle cx="244" cy="376" r="5"/><circle cx="238" cy="381" r="5"/>
+          <circle cx="368" cy="374" r="5"/><circle cx="376" cy="378" r="5"/><circle cx="370" cy="383" r="5"/>
         </g>
       </g>
-      <path id="airL" d="M 300 150 L 300 300 L 262 332 L 250 360 L 238 388" fill="none" stroke="none"/>
-      <path id="airR" d="M 300 150 L 300 300 L 338 332 L 352 360 L 369 388" fill="none" stroke="none"/>
+    </g>
+    <!-- Lung vessels drawn on top of the lungs: dark blood in, bright blood out -->
+    <g class="organ" data-organ="vessels" id="vesselsLung" fill="none" stroke-linecap="round" stroke-linejoin="round"></g>
+
+    <!-- Esophagus: its own tube from the mouth to the stomach, beside the windpipe -->
+    <g class="organ" data-organ="esophagus">
+      <path d="M 304 176 C 312 184 314 196 314 210 L 314 300 C 315 360 316 420 320 462 C 324 490 335 505 345 515"
+            fill="none" stroke="#a16207" stroke-width="13" stroke-linecap="round"/>
+      <path id="esoPath" d="M 304 176 C 312 184 314 196 314 210 L 314 300 C 315 360 316 420 320 462 C 324 490 335 505 345 515"
+            fill="none" stroke="#e7b98f" stroke-width="9" stroke-linecap="round"/>
     </g>
 
     <!-- Heart: middle of the chest, tipped toward the body's left (viewer's right) -->
@@ -259,9 +251,21 @@ EXPLORER_HTML = """<!DOCTYPE html>
       <path id="diaphragmPath" d="M 195 482 Q 300 430 405 482" fill="none" stroke="#ea580c" stroke-width="8" stroke-linecap="round"/>
     </g>
 
-    <!-- Brain and brain stem -->
+    <!-- Nose and mouth: where air and food come in. Thin dashed passages lead to the throat. -->
+    <g class="organ" data-organ="mouth">
+      <path d="M 300 116 L 291 146 Q 300 154 309 146 Z" fill="#efc4a4" stroke="#c08a68" stroke-width="2"/>
+      <ellipse cx="295" cy="148" rx="3.2" ry="2.2" fill="#5b3a29"/><ellipse cx="305" cy="148" rx="3.2" ry="2.2" fill="#5b3a29"/>
+      <ellipse cx="300" cy="170" rx="15" ry="7" fill="#7f1d1d" stroke="#9f1239" stroke-width="2"/>
+      <ellipse cx="300" cy="173" rx="8" ry="3" fill="#f472b6"/>
+      <g fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="3 3">
+        <path d="M 300 150 C 300 160 296 172 294 184"/>
+      </g>
+    </g>
+
+    <!-- Brain and brain stem (the stem sits behind the face: faint, dashed) -->
     <g class="organ" data-organ="brain">
-      <rect x="294" y="126" width="12" height="54" rx="6" fill="#f9a8d4" fill-opacity=".35" stroke="#be185d" stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity=".6"/>
+      <rect x="294" y="126" width="12" height="54" rx="6" fill="#f9a8d4" fill-opacity=".3" stroke="#be185d"
+            stroke-width="1.5" stroke-dasharray="4 3" stroke-opacity=".55"/>
       <ellipse id="brainShape" cx="300" cy="88" rx="58" ry="46" fill="#f9a8d4" stroke="#be185d" stroke-width="3"/>
       <g fill="none" stroke="#be185d" stroke-width="2" stroke-linecap="round" opacity=".75">
         <path d="M 300 44 L 300 132"/>
@@ -273,24 +277,41 @@ EXPLORER_HTML = """<!DOCTYPE html>
 
     <!-- Senses: eyes and ears send messages IN -->
     <g class="organ" data-organ="senses">
-      <ellipse cx="276" cy="128" rx="10" ry="7" fill="#fff" stroke="#334155" stroke-width="2"/>
-      <ellipse cx="324" cy="128" rx="10" ry="7" fill="#fff" stroke="#334155" stroke-width="2"/>
-      <circle cx="276" cy="128" r="4" fill="#1e3a8a"/><circle cx="324" cy="128" r="4" fill="#1e3a8a"/>
+      <ellipse cx="276" cy="126" rx="10" ry="7" fill="#fff" stroke="#334155" stroke-width="2"/>
+      <ellipse cx="324" cy="126" rx="10" ry="7" fill="#fff" stroke="#334155" stroke-width="2"/>
+      <circle cx="276" cy="126" r="4" fill="#1e3a8a"/><circle cx="324" cy="126" r="4" fill="#1e3a8a"/>
       <ellipse cx="229" cy="118" rx="10" ry="18" fill="#f2c4a6" stroke="#c08a68" stroke-width="2.5"/>
       <ellipse cx="371" cy="118" rx="10" ry="18" fill="#f2c4a6" stroke="#c08a68" stroke-width="2.5"/>
-      <path id="eyePath" d="M 276 128 C 283 112 292 100 300 92" fill="none" stroke="none"/>
-      <path id="earPath" d="M 371 118 C 355 108 335 100 305 92" fill="none" stroke="none"/>
-      <path id="handPath" d="M 300 100 L 300 280 L 205 300 L 140 600" fill="none" stroke="none"/>
-      <path id="legPath" d="M 300 100 L 300 690 L 262 720 L 252 960" fill="none" stroke="none"/>
     </g>
 
-    <!-- Rudy's loop: lungs, heart, up to the brain, back, down to the legs, back -->
-    <path id="loopPath" fill="none" stroke="none"
-          d="M 322 415 C 290 405 245 395 240 360 C 236 330 270 320 290 340 C 300 352 308 380 318 400 C 330 380 336 340 318 300 C 312 260 314 200 312 140 C 311 120 296 120 296 140 L 292 300 C 292 340 298 380 318 410 C 316 480 314 560 314 690 C 300 760 262 820 252 940 C 250 955 238 955 238 940 C 245 820 270 760 290 690 C 290 600 292 480 322 415 Z"/>
-    <g id="cells"></g>
+    <!-- Nerves: only shown on Brain day, so yellow never reads as a third kind of blood -->
+    <g class="organ hidden" data-organ="nerves">
+      <path d="M 300 132 L 300 690" stroke="#facc15" stroke-width="7" stroke-linecap="round"/>
+      <g stroke="#facc15" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 300 280 L 205 300 L 140 600"/>
+        <path d="M 300 280 L 395 300 L 460 600"/>
+        <path d="M 300 690 L 262 720 L 252 960"/>
+        <path d="M 300 690 L 338 720 L 348 960"/>
+        <path d="M 300 420 L 230 450"/><path d="M 300 420 L 370 450"/>
+        <path d="M 300 560 L 240 590"/><path d="M 300 560 L 360 590"/>
+      </g>
+    </g>
+
+    <!-- Invisible guide paths for animations -->
+    <g id="guides" fill="none" stroke="none" style="pointer-events:none">
+      <path id="airL" d="M 300 150 C 300 160 296 172 294 184 L 294 300 L 260 332 L 240 376"/>
+      <path id="airR" d="M 300 150 C 300 160 296 172 294 184 L 294 300 L 336 332 L 372 378"/>
+      <path id="eyePath" d="M 276 126 C 283 112 292 100 300 92"/>
+      <path id="earPath" d="M 371 118 C 355 108 335 100 305 92"/>
+      <path id="handPath" d="M 300 100 L 300 280 L 205 300 L 140 600"/>
+      <path id="legPath" d="M 300 100 L 300 690 L 262 720 L 252 960"/>
+    </g>
+    <g id="routes" fill="none" stroke="none" style="pointer-events:none"></g>
+    <g id="cells" style="pointer-events:none"></g>
     <g id="fx" style="pointer-events:none"></g>
+    <g id="rudyLayer"></g>
     <g id="labels"></g>
-    <text id="breathText" class="worldtext" x="232" y="268" text-anchor="middle" opacity="0"></text>
+    <text id="breathText" class="worldtext" x="232" y="290" text-anchor="middle" opacity="0"></text>
   </g>
 </svg>
 <div class="days" id="days" role="toolbar" aria-label="Choose a day"></div>
@@ -312,7 +333,7 @@ EXPLORER_HTML = """<!DOCTYPE html>
   <h1>Rudy's Rounds · Body Explorer</h1>
   <h2 id="dayTitle"></h2>
   <div class="rudy-says">
-    <svg viewBox="-13 -13 26 26" width="48" height="48" aria-hidden="true">
+    <svg viewBox="-13 -13 26 26" width="60" height="60" aria-hidden="true">
       <circle r="12" fill="#dc2626" stroke="#7f1d1d" stroke-width="1.5"/>
       <circle r="6" fill="#b91c1c"/>
       <circle cx="-4" cy="-3" r="2.2" fill="#fff"/><circle cx="4" cy="-3" r="2.2" fill="#fff"/>
@@ -324,15 +345,20 @@ EXPLORER_HTML = """<!DOCTYPE html>
   <h3>Watch it work</h3>
   <ul id="watch"></ul>
   <div class="extra" id="extra"></div>
-  <div class="legend" id="legend">
-    <span class="dot" style="background:#ef4444"></span>Bright red: loaded with oxygen<br>
-    <span class="dot" style="background:#7f1d1d"></span>Dark red: oxygen dropped off (blood is never blue!)
-  </div>
+  <div class="key" id="key"></div>
   <h3>Tap an organ</h3>
   <div class="card" id="info">Tap any organ, or Rudy himself, to see its job.</div>
-  <p class="legend">Drag to look around. Scroll or pinch to zoom. Keys: 1–5 for Monday–Friday, 6 for the
-    whole team, arrows to pan.<br>A simplified model: real organs overlap and sit at different depths.
-    The kidneys (dashed) are in your back.</p>
+  <details class="teacher">
+    <summary>Teacher</summary>
+    <p><button id="lightBtn" aria-pressed="false">☀️ Light background</button></p>
+    <p>Drag to look around. Scroll or pinch to zoom. Keys: 1–5 for Monday–Friday, 6 for the whole team,
+      arrows to pan, + and − to zoom, space to catch in the Ruler Drop.</p>
+    <p>Links that open on one day: add <code>#mon</code>, <code>#tue</code>, <code>#wed</code>, <code>#thu</code>,
+      <code>#fri</code> or <code>#team</code> to the end of the file address.</p>
+    <p>A simplified model: real organs overlap and sit at different depths. The kidneys (dashed) are in the back,
+      and the esophagus really runs behind the windpipe and heart. Each trip in the model is heart → lungs →
+      heart → one body part → heart. Real blood returning to the heart still carries most of its oxygen.</p>
+  </details>
 </aside>
 </div>
 
@@ -341,90 +367,123 @@ EXPLORER_HTML = """<!DOCTYPE html>
 const NS = "http://www.w3.org/2000/svg";
 const $ = (id) => document.getElementById(id);
 const svg = $("stage"), world = $("world"), fx = $("fx"), cellsLayer = $("cells");
-
-const ORGANS = {
-  lungs: { name: "Lungs", crew: "Air Crew", job: "Load oxygen into the blood and send carbon dioxide out.",
-    fact: "Your left lung is a little smaller, to leave room for your heart.", at: [232, 425] },
-  windpipe: { name: "Windpipe", crew: "Air Crew", job: "Carries air from your throat down to your lungs.",
-    fact: "It splits into smaller and smaller tubes, like an upside-down tree.", at: [348, 262], anchor: "start" },
-  diaphragm: { name: "Diaphragm", crew: "Air Crew", job: "Pulls DOWN so air rushes into your lungs.",
-    fact: "Hiccups happen when your diaphragm twitches!", at: [372, 470] },
-  heart: { name: "Heart", crew: "Pump Crew", job: "Pumps blood all over your body.",
-    fact: "It is about the size of your fist, and it never takes a day off.", at: [338, 452] },
-  vessels: { name: "Arteries & Veins", crew: "Pump Crew",
-    job: "Arteries carry blood AWAY from the heart. Veins bring it BACK.",
-    fact: "Blood is always red. Veins only look blue through your skin.", at: [300, 860] },
-  esophagus: { name: "Esophagus", crew: "Fuel Crew", job: "Squeezes food down from your throat to your stomach.",
-    fact: "It squeezes so well that astronauts can swallow upside down in space.", at: [322, 218], anchor: "start" },
-  stomach: { name: "Stomach", crew: "Fuel Crew", job: "Churns food with acid into a thick soup.",
-    fact: "A slimy lining keeps the acid from hurting the stomach itself.", at: [372, 552] },
-  smallInt: { name: "Small intestine", crew: "Fuel Crew", job: "Soaks nutrients from food into the blood.",
-    fact: "A grown-up's is about 20 feet long, all coiled up in the belly.", at: [300, 652] },
-  largeInt: { name: "Large intestine", crew: "Fuel Crew", job: "Soaks up leftover water. Waste leaves the body.",
-    fact: "It is shorter than the small intestine, but wider.", at: [300, 592] },
-  liver: { name: "Liver", crew: "Clean-Up Crew", job: "Cleans harmful stuff out of the blood, stores fuel, and makes bile.",
-    fact: "It is the biggest organ inside your body, and it can grow back! The little green bag is the gallbladder, where bile waits.",
-    at: [248, 512] },
-  kidneys: { name: "Kidneys", crew: "Clean-Up Crew", job: "Filter waste and extra water out of the blood to make urine.",
-    fact: "They sit in your back, one on each side of your spine.", at: [300, 548] },
-  bladder: { name: "Bladder", crew: "Clean-Up Crew", job: "Holds urine until you go to the bathroom.",
-    fact: "It stretches like a balloon as it fills.", at: [300, 752] },
-  brain: { name: "Brain", crew: "Coaching Staff",
-    job: "The Head Coach: gets messages from your senses and tells your body what to do.",
-    fact: "It uses about one fifth of all the oxygen Rudy carries. The brain stem keeps you breathing, even asleep.",
-    at: [300, 30] },
-  nerves: { name: "Spinal cord & nerves", crew: "Coaching Staff",
-    job: "Carry messages between your brain and your body.",
-    fact: "Messages zip along some nerves faster than a race car.", at: [150, 660] },
-  senses: { name: "Eyes & ears", crew: "Coaching Staff", job: "Send messages about the world IN to your brain.",
-    fact: "Your eyes collect light, but it's your brain that figures out what you're seeing.",
-    at: [386, 122], anchor: "start" },
-  rudy: { name: "Rudy the Red Blood Cell", crew: "Delivery Truck",
-    job: "Carries oxygen from the lungs to every cell in your body.",
-    fact: "Bright red means he's loaded with oxygen. Dark red means he just dropped it off." },
+const mk = (tag, attrs, parent) => {
+  const el = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (parent) parent.appendChild(el);
+  return el;
 };
 
+const ORGANS = {
+  mouth: { name: "Nose & mouth", crew: "Air & Fuel Crews",
+    job: "Air comes in through your nose and mouth. Food comes in through your mouth, where teeth and saliva get to work.",
+    fact: "Hairs and sticky mucus in your nose trap dust before it reaches your lungs." },
+  lungs: { name: "Lungs", crew: "Air Crew", job: "Load oxygen into the blood and send carbon dioxide out.",
+    fact: "Your left lung is smaller and has a notch, to leave room for your heart." },
+  windpipe: { name: "Windpipe", crew: "Air Crew", job: "Carries AIR from your throat down to your lungs.",
+    fact: "Stiff rings keep it open, and it splits into smaller tubes like an upside-down tree." },
+  diaphragm: { name: "Diaphragm", crew: "Air Crew", job: "Pulls DOWN so air rushes into your lungs.",
+    fact: "Hiccups happen when your diaphragm twitches!" },
+  heart: { name: "Heart", crew: "Pump Crew", job: "Pumps blood all over your body.",
+    fact: "It is about the size of your fist. Blood goes through it twice on every trip!" },
+  vessels: { name: "Arteries & veins", crew: "Pump Crew",
+    job: "Arteries carry blood AWAY from the heart. Veins bring it BACK. Tiny capillaries make the U-turn.",
+    fact: "Blood is always red. Veins only look blue through your skin." },
+  esophagus: { name: "Esophagus", crew: "Fuel Crew", job: "Squeezes FOOD down from your mouth to your stomach.",
+    fact: "It is a different tube from the windpipe, and it works even upside down — astronauts swallow in space!" },
+  stomach: { name: "Stomach", crew: "Fuel Crew", job: "Churns food with acid into a thick soup.",
+    fact: "A slimy lining keeps the acid from hurting the stomach itself." },
+  smallInt: { name: "Small intestine", crew: "Fuel Crew", job: "Soaks nutrients from food into the blood.",
+    fact: "A grown-up's is about 20 feet long, all coiled up in the belly." },
+  largeInt: { name: "Large intestine", crew: "Fuel Crew", job: "Soaks up leftover water. Waste leaves the body.",
+    fact: "It is shorter than the small intestine, but wider." },
+  liver: { name: "Liver & gallbladder", crew: "Clean-Up Crew",
+    job: "The liver cleans harmful stuff out of the blood, stores fuel, and makes bile. The little green gallbladder holds the bile.",
+    fact: "The liver is the biggest organ inside your body, and it can grow back!" },
+  kidneys: { name: "Kidneys", crew: "Clean-Up Crew", job: "Filter waste and extra water out of the blood to make urine.",
+    fact: "You have two. They sit in your back, one on each side of your spine." },
+  bladder: { name: "Bladder", crew: "Clean-Up Crew", job: "Holds urine until you go to the bathroom.",
+    fact: "It stretches like a balloon as it fills." },
+  brain: { name: "Brain", crew: "Coaching Staff",
+    job: "The Head Coach: gets messages from your senses and tells your body what to do.",
+    fact: "It uses about one fifth of all the oxygen Rudy carries. The brain stem keeps you breathing, even asleep." },
+  nerves: { name: "Spinal cord & nerves", crew: "Coaching Staff",
+    job: "Carry messages between your brain and your body. The spinal cord runs down your back.",
+    fact: "Messages zip along some nerves faster than a race car." },
+  senses: { name: "Eyes & ears", crew: "Coaching Staff", job: "Send messages about the world IN to your brain.",
+    fact: "Your eyes collect light, but it's your brain that figures out what you're seeing." },
+  rudy: { name: "Rudy the Red Blood Cell", crew: "Delivery Truck",
+    job: "Carries oxygen from the lungs to every part of your body.",
+    fact: "Bright red with a white bubble: carrying oxygen. Dark red with a gray bubble: dropped off some oxygen and is bringing trash gas back to the lungs." },
+};
+
+// Labels live in two columns outside the body, each with a leader line to its organ.
+const LABELS = [
+  { for: "brain", text: "Brain", side: "L", y: 74, t: [262, 82] },
+  { for: "senses", text: "Eye", side: "L", y: 126, t: [266, 126] },
+  { for: "mouth", text: "Nose & mouth", side: "L", y: 168, t: [287, 166] },
+  { for: "windpipe", text: "Windpipe", side: "L", y: 240, t: [288, 240] },
+  { for: "lungs", text: "Lungs", side: "L", y: 392, t: [214, 394] },
+  { for: "liver", text: "Liver", side: "L", y: 496, t: [220, 504] },
+  { for: "liver", text: "Gallbladder", side: "L", y: 540, t: [259, 539] },
+  { for: "kidneys", text: "Kidney", side: "L", y: 584, t: [236, 566] },
+  { for: "largeInt", text: "Large intestine", side: "L", y: 636, t: [232, 636] },
+  { for: "nerves", text: "Spinal cord", side: "L", y: 700, t: [300, 640] },
+  { for: "senses", text: "Ear", side: "R", y: 112, t: [380, 116] },
+  { for: "esophagus", text: "Esophagus", side: "R", y: 222, t: [319, 222] },
+  { for: "vessels", text: "Arteries & veins", side: "R", y: 292, t: [400, 304] },
+  { for: "heart", text: "Heart", side: "R", y: 418, t: [350, 416] },
+  { for: "diaphragm", text: "Diaphragm", side: "R", y: 474, t: [398, 477] },
+  { for: "stomach", text: "Stomach", side: "R", y: 534, t: [394, 536] },
+  { for: "kidneys", text: "Kidney", side: "R", y: 584, t: [366, 566] },
+  { for: "smallInt", text: "Small intestine", side: "R", y: 646, t: [337, 650] },
+  { for: "bladder", text: "Bladder", side: "R", y: 712, t: [326, 708] },
+];
+
 const DAYS = {
-  mon: { tab: "Mon · Lungs", color: "#1d4ed8", title: "Monday · Breathe In!", organs: ["lungs", "windpipe", "diaphragm"],
-    rudy: "This is my first stop! I park by the tiny air sacs and load up on oxygen.",
-    watch: ["Watch the orange diaphragm pull DOWN: air rushes IN.",
-      "Dark-red cells turn bright red in the lungs. That's oxygen getting loaded!",
-      "Blue dots are fresh air coming in. Gray dots are carbon dioxide going out.",
+  mon: { tab: "Mon · Lungs", color: "#1d4ed8", title: "Monday · Breathe In!",
+    organs: ["mouth", "windpipe", "lungs", "diaphragm"],
+    rudy: "This is where I load up! In the lungs I drop my trash gas and pick up fresh oxygen.",
+    watch: ["Air comes in through the nose and mouth, then down the windpipe.",
+      "The orange diaphragm pulls DOWN: air rushes IN.",
+      "Dark cells drop a gray trash bubble and pick up a white oxygen bubble. They turn bright red!",
       "Tap Sprint and watch the breathing speed up."] },
-  tue: { tab: "Tue · Heart", color: "#15803d", title: "Tuesday · The Pump", organs: ["heart", "vessels"], fit: ["heart", "lungs"],
-    rudy: "The heart is my engine! The right side sends me to the lungs. The left side blasts me out to the body.",
+  tue: { tab: "Tue · Heart", color: "#15803d", title: "Tuesday · The Pump", organs: ["heart", "vessels"],
+    fit: ["heart", "lungs"],
+    rudy: "I visit the heart TWICE every trip: once on the way to the lungs, and once on the way out to the body!",
     watch: ["Every squeeze is one heartbeat: lub-dub!",
-      "Bright red blood goes OUT through the arteries. Darker red comes BACK in the veins.",
+      "Bright red blood goes OUT in the arteries. It makes a U-turn in tiny capillaries and comes BACK darker in the veins.",
       "Tap Sprint: the heart AND the lungs speed up together. Teamwork!"] },
   wed: { tab: "Wed · Digestion", color: "#7c3aed", title: "Wednesday · The Fuel Factory",
-    organs: ["esophagus", "stomach", "smallInt", "largeInt"],
+    organs: ["mouth", "esophagus", "stomach", "smallInt", "largeInt"],
     rudy: "Food fuel doesn't ride on me. It floats in the blood river all around me!",
-    watch: ["Follow the brown food bite: mouth, esophagus, stomach.",
+    watch: ["Follow the brown food bite: mouth, then down the esophagus (NOT the windpipe!).",
       "The stomach churns it into a thick soup.",
       "Yellow nutrients soak into the blood in the small intestine.",
       "Blue water drops soak up in the large intestine. The rest is waste."] },
   thu: { tab: "Thu · Clean-Up", color: "#c2410c", title: "Thursday · The Clean-Up Crew", organs: ["liver", "kidneys", "bladder"],
     rudy: "Cells make trash. The liver and kidneys clean my river so it stays safe!",
-    watch: ["Gray waste goes into the kidneys and comes out as yellow urine.",
+    watch: ["Gray waste goes into the two kidneys and comes out as yellow urine.",
       "Watch the bladder fill up like a balloon.",
       "Green sparkles: the liver making harmful stuff safe.",
       "Tap Drink water: more water makes paler pee!"] },
   fri: { tab: "Fri · Brain", color: "#0f766e", title: "Friday · The Head Coach", organs: ["brain", "nerves", "senses"],
     rudy: "My favorite stop! The brain uses about a fifth of all the oxygen I carry.",
-    watch: ["Yellow flashes are messages zipping along the nerves.",
+    watch: ["Yellow lines are NERVES. Yellow flashes are messages zipping along them.",
       "Messages come IN from your eyes and ears, and go OUT to your muscles.",
       "Play the Ruler Drop below: how fast is YOUR brain?"] },
   team: { tab: "Whole Team", color: "#b91c1c", title: "The Whole Body Team", organs: [],
-    rudy: "That's my whole route: lungs, heart, out to the body, and back again, about once a minute!",
-    watch: ["Tap any organ to learn its job.", "Tap Follow Rudy and ride along!",
-      "Tap Sprint to see the whole team speed up at once."] },
+    rudy: "My trip: heart, lungs, heart, out to the body, and back to the heart. I make it in less than a minute!",
+    watch: ["Find Rudy: the big glowing cell with a face.", "Tap any organ to learn its job.",
+      "Tap Follow Rudy and ride along!", "Tap Sprint to see the whole team speed up at once."] },
 };
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "team"];
 
-const state = { day: "team", sprint: false, follow: false, labels: true, bpm: 90, brpm: 20,
+const state = { day: "team", sprint: false, follow: false, labels: false, bpm: 90, brpm: 20,
   beat: 0, breath: 0, hydration: 0.35, bladder: 0.25, sceneT: 0, acc: {} };
 
 // ---------- Camera: pan / zoom / fly ----------
+const VB = { x: -160, w: 920, h: 1000 }, CX = VB.x + VB.w / 2, CY = 500;
 const cam = { x: 0, y: 0, s: 1 };
 let camAnim = null;
 function applyCam() {
@@ -443,20 +502,25 @@ function zoomAt(px, py, f) {
 }
 function flyTo(target, ms = 900) { camAnim = { from: { ...cam }, to: target, t0: performance.now(), ms }; }
 function fitBox(b) {
-  const pad = 36;
-  const s = clampS(Math.min(600 / (b.width + 2 * pad), 1000 / (b.height + 2 * pad)));
-  const sf = s * 0.9;
-  return { s: sf, x: 300 - sf * (b.x + b.width / 2), y: 525 - sf * (b.y + b.height / 2) };
+  const pad = 24, top = 70;  // leave room for the day buttons
+  const s = clampS(Math.min(VB.w / (b.width + 2 * pad), (VB.h - top) / (b.height + 2 * pad)));
+  return { s, x: CX - s * (b.x + b.width / 2), y: (VB.h + top) / 2 - s * (b.y + b.height / 2) };
 }
-function organBox(names) {
+function unionBox(els) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  names.forEach((n) => {
-    const b = document.querySelector(`[data-organ="${n}"]`).getBBox();
+  els.forEach((el) => {
+    const b = el.getBBox(); if (!b.width && !b.height) return;
     x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height);
   });
   return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
 }
-const WHOLE = { s: 0.9, x: 30, y: 72 };
+function viewFor(names, withLabels) {
+  const els = [];
+  names.forEach((n) => document.querySelectorAll(`.organ[data-organ="${n}"]`).forEach((e) => els.push(e)));
+  if (withLabels) names.forEach((n) => document.querySelectorAll(`.lbl[data-for="${n}"]`).forEach((e) => els.push(e)));
+  return fitBox(unionBox(els));
+}
+let WHOLE = null;
 
 const ptrs = new Map();
 let pinchDist = null, downAt = null, moved = 0;
@@ -503,15 +567,15 @@ svg.addEventListener("wheel", (e) => {
   const p = toSvg(e.clientX, e.clientY);
   zoomAt(p.x, p.y, Math.exp(-e.deltaY * 0.0015));
 }, { passive: false });
-$("zoomIn").onclick = () => { camAnim = null; zoomAt(300, 500, 1.3); };
-$("zoomOut").onclick = () => { camAnim = null; zoomAt(300, 500, 1 / 1.3); };
+$("zoomIn").onclick = () => { camAnim = null; zoomAt(CX, CY, 1.3); };
+$("zoomOut").onclick = () => { camAnim = null; zoomAt(CX, CY, 1 / 1.3); };
 $("zoomReset").onclick = () => { setFollow(false); flyTo(WHOLE); };
 
 // ---------- UI ----------
 let toastTimer = null;
 function toast(msg) {
   const t = $("toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
 }
 function showOrgan(key) {
   const o = ORGANS[key]; if (!o) return;
@@ -522,45 +586,56 @@ function setFollow(on) {
   state.follow = on;
   $("followBtn").classList.toggle("on", on); $("followBtn").setAttribute("aria-pressed", on);
 }
+function setPressed(id, on) { $(id).classList.toggle("on", on); $(id).setAttribute("aria-pressed", on); }
 $("followBtn").onclick = () => { setFollow(!state.follow); if (!state.follow) flyTo(dayView()); };
 $("sprintBtn").onclick = () => {
-  state.sprint = !state.sprint;
-  $("sprintBtn").classList.toggle("on", state.sprint); $("sprintBtn").setAttribute("aria-pressed", state.sprint);
+  state.sprint = !state.sprint; setPressed("sprintBtn", state.sprint);
   $("sprintBtn").textContent = state.sprint ? "🛋️ Rest" : "🏃 Sprint!";
   toast(state.sprint ? "Sprinting! Heart and lungs speed up together." : "Resting. Everything slows back down.");
 };
-$("labelsBtn").onclick = () => {
-  state.labels = !state.labels;
-  $("labelsBtn").classList.toggle("on", state.labels); $("labelsBtn").setAttribute("aria-pressed", state.labels);
-  updateLabels();
+$("labelsBtn").onclick = () => { state.labels = !state.labels; updateLabels(); };
+$("lightBtn").onclick = () => {
+  const on = $("stageWrap").classList.toggle("light"); setPressed("lightBtn", on);
 };
 
 DAY_KEYS.forEach((k, i) => {
-  const b = document.createElement("button");
-  b.textContent = DAYS[k].tab; b.style.background = DAYS[k].color; b.dataset.day = k;
-  b.title = `Key ${i + 1}`; b.onclick = () => selectDay(k);
-  $("days").appendChild(b);
+  const btn = document.createElement("button");
+  btn.textContent = DAYS[k].tab; btn.style.background = DAYS[k].color; btn.dataset.day = k;
+  btn.title = `Key ${i + 1}`; btn.onclick = () => selectDay(k);
+  $("days").appendChild(btn);
 });
 
-for (const [key, o] of Object.entries(ORGANS)) {
-  if (!o.at) continue;
-  const t = document.createElementNS(NS, "text");
-  t.setAttribute("class", "label"); t.setAttribute("x", o.at[0]); t.setAttribute("y", o.at[1]);
-  t.setAttribute("text-anchor", o.anchor || "middle"); t.dataset.for = key; t.textContent = o.name;
-  $("labels").appendChild(t);
+for (const L of LABELS) {
+  const g = mk("g", { class: "lbl", "data-for": L.for }, $("labels"));
+  const left = L.side === "L", tx = left ? 92 : 508;
+  mk("line", { x1: tx + (left ? 4 : -4), y1: L.y - 6, x2: L.t[0], y2: L.t[1] }, g);
+  mk("circle", { cx: L.t[0], cy: L.t[1], r: 3.5 }, g);
+  const t = mk("text", { x: tx, y: L.y, "text-anchor": left ? "end" : "start" }, g);
+  t.textContent = L.text;
 }
 function updateLabels() {
+  setPressed("labelsBtn", state.labels);
   const focus = DAYS[state.day].organs;
-  document.querySelectorAll("#labels text").forEach((t) => {
-    const show = state.labels && (state.day === "team" || focus.includes(t.dataset.for));
-    t.setAttribute("opacity", show ? 1 : 0);
+  document.querySelectorAll("#labels .lbl").forEach((g) => {
+    const f = g.dataset.for;
+    const show = state.labels && (state.day === "team" ? f !== "nerves" : focus.includes(f));
+    g.setAttribute("opacity", show ? 1 : 0);
   });
 }
 function dayView() {
   const d = DAYS[state.day];
-  const f = d.fit || d.organs;
-  return f.length ? fitBox(organBox(f)) : WHOLE;
+  if (!d.organs.length) return WHOLE;
+  return viewFor(d.fit || d.organs, true);
 }
+
+const KEY_ITEMS = {
+  cells: `<div><svg viewBox="-12 -12 24 24" width="34" height="34"><circle r="8" fill="#ef4444" stroke="#fecaca" stroke-width="1.5"/><circle cx="7" cy="-7" r="4.5" fill="#fff" stroke="#475569"/></svg>
+    <span>Bright red + white bubble: carrying <b>oxygen</b></span></div>
+    <div><svg viewBox="-12 -12 24 24" width="34" height="34"><circle r="8" fill="#7f1d1d" stroke="#fecaca" stroke-width="1.5"/><circle cx="7" cy="-7" r="4.5" fill="#9ca3af" stroke="#334155"/></svg>
+    <span>Dark red + gray bubble: dropped off some oxygen, bringing <b>trash gas</b> back to the lungs. Never blue!</span></div>`,
+  nerves: `<div><svg viewBox="0 0 24 24" width="34" height="34"><path d="M 2 12 L 22 12" stroke="#facc15" stroke-width="5" stroke-linecap="round"/></svg>
+    <span>Yellow lines: <b>nerves</b> (they carry messages, not blood)</span></div>`,
+};
 
 function selectDay(key) {
   state.day = key; state.sceneT = 0; state.acc = {};
@@ -568,15 +643,18 @@ function selectDay(key) {
   document.documentElement.style.setProperty("--accent", d.color);
   document.querySelectorAll("#days button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.day === key));
   document.querySelectorAll(".organ").forEach((g) => {
-    g.classList.toggle("dim", d.organs.length > 0 && !d.organs.includes(g.dataset.organ));
+    const o = g.dataset.organ;
+    g.classList.toggle("dim", d.organs.length > 0 && !d.organs.includes(o));
+    if (o === "nerves") g.classList.toggle("hidden", key !== "fri");
   });
   $("dayTitle").textContent = d.title;
   $("rudySays").textContent = d.rudy;
   $("watch").innerHTML = d.watch.map((w) => `<li>${w}</li>`).join("");
-  $("legend").style.display = ["mon", "tue", "team"].includes(key) ? "" : "none";
-  cellsLayer.setAttribute("opacity", ["mon", "tue", "team"].includes(key) ? 1 : 0.35);
+  $("key").innerHTML = (["mon", "tue", "team"].includes(key) ? KEY_ITEMS.cells : "") + (key === "fri" ? KEY_ITEMS.nerves : "");
+  cellsLayer.setAttribute("opacity", ["mon", "tue", "team"].includes(key) ? 1 : 0.3);
   $("breathText").setAttribute("opacity", 0);
-  clearParticles(); bolus.setAttribute("opacity", 0);
+  clearParticles(); bolus.setAttribute("opacity", 0); $("stomachInner").removeAttribute("transform");
+  state.labels = key !== "team";
   buildExtra(key); updateLabels();
   setFollow(false); flyTo(dayView());
   if (location.hash !== "#" + key) history.replaceState(null, "", "#" + key);
@@ -585,10 +663,9 @@ function selectDay(key) {
 // ---------- Particles ----------
 const parts = [];
 function spawn(o) {
-  const c = document.createElementNS(NS, "circle");
-  c.setAttribute("r", o.r || 4); c.setAttribute("fill", o.color || "#fff");
+  const c = mk("circle", { r: o.r || 4, fill: o.color || "#fff" }, fx);
+  if (o.stroke) { c.setAttribute("stroke", o.stroke); c.setAttribute("stroke-width", 1); }
   if (o.glow) c.setAttribute("filter", "url(#glow)");
-  fx.appendChild(c);
   const p = { ...o, el: c, t: 0, len: o.path ? o.path.getTotalLength() : 0 };
   parts.push(p); placePart(p, 0); return p;
 }
@@ -620,74 +697,142 @@ function mix(a, b, k) {
   return "rgb(" + pa.map((v, i) => Math.round(v + (pb[i] - v) * k)).join(",") + ")";
 }
 
-// ---------- Blood cells and Rudy on the loop ----------
-const loop = $("loopPath"), LOOP_LEN = loop.getTotalLength();
-function nearestLen(x, y, from = 0) {
-  let best = from, bd = Infinity;
-  for (let l = from; l <= LOOP_LEN; l += 2) {
-    const p = loop.getPointAtLength(l); const d = (p.x - x) ** 2 + (p.y - y) ** 2;
+// ---------- Circulation: routes, drawn vessels, cells, Rudy ----------
+// Every route starts and ends at the heart. Pulmonary routes leave the right side (312,410) and
+// return to the left side (326,400); body routes leave the left side and return to the right.
+const ROUTES = {
+  pulmL: { kind: "pulm", turn: [238, 378], d: "M 312 410 C 290 402 258 396 246 384 C 234 372 238 358 252 360 C 268 364 300 390 326 400" },
+  pulmR: { kind: "pulm", turn: [372, 380], d: "M 312 410 C 326 386 350 366 366 368 C 382 372 382 392 368 396 C 352 400 338 401 326 400" },
+  head: { kind: "sys", w: 0.2, turn: [301, 124],
+    d: "M 326 400 C 332 380 330 360 324 340 L 324 150 C 324 118 278 118 278 150 L 278 340 C 280 372 296 396 312 410" },
+  armL: { kind: "sys", w: 0.15, turn: [144, 612],
+    d: "M 326 400 C 328 376 320 362 310 356 L 198 300 L 136 598 C 132 618 152 620 154 604 L 210 314 L 300 366 C 306 386 308 400 312 410" },
+  armR: { kind: "sys", w: 0.15, turn: [458, 612],
+    d: "M 326 400 C 330 376 334 362 340 356 L 402 300 L 466 598 C 470 618 450 620 448 604 L 390 314 L 304 366 C 306 386 308 400 312 410" },
+  legL: { kind: "sys", w: 0.25, turn: [250, 970],
+    d: "M 326 400 C 324 430 318 450 318 470 L 314 690 L 268 722 L 258 958 C 256 976 240 976 242 958 L 252 725 L 290 690 L 288 470 C 290 440 300 420 312 410" },
+  legR: { kind: "sys", w: 0.25, turn: [344, 970],
+    d: "M 326 400 C 324 430 318 450 318 470 L 314 690 L 342 722 L 352 958 C 354 976 338 976 336 958 L 326 728 L 290 690 L 288 470 C 290 440 300 420 312 410" },
+};
+for (const [name, r] of Object.entries(ROUTES)) {
+  r.el = mk("path", { d: r.d, id: "route-" + name }, $("routes"));
+  r.len = r.el.getTotalLength();
+  let best = 0, bd = Infinity;
+  for (let l = 0; l <= r.len; l += 2) {
+    const p = r.el.getPointAtLength(l); const d = (p.x - r.turn[0]) ** 2 + (p.y - r.turn[1]) ** 2;
     if (d < bd) { bd = d; best = l; }
   }
-  return best / LOOP_LEN;
+  r.turnAt = best;
 }
-const F_LUNG = nearestLen(240, 360), F_BRAIN = nearestLen(304, 122);
-const F_HEART2 = nearestLen(318, 410, F_BRAIN * LOOP_LEN), F_LEG = nearestLen(245, 952, F_HEART2 * LOOP_LEN);
-const oxygenated = (f) => (f > F_LUNG && f < F_BRAIN) || (f > F_HEART2 && f < F_LEG);
+const BRIGHT = "#ef4444", DARK = "#7f1d1d";
+// Draw each route as two colours split at its turn point, so vessels show the loop and the U-turn.
+function polyline(r, a, b) {
+  const pts = [];
+  for (let l = a; l < b; l += 3) { const p = r.el.getPointAtLength(l); pts.push(`${p.x.toFixed(1)},${p.y.toFixed(1)}`); }
+  const p = r.el.getPointAtLength(b); pts.push(`${p.x.toFixed(1)},${p.y.toFixed(1)}`);
+  return "M " + pts.join(" L ");
+}
+for (const r of Object.values(ROUTES)) {
+  const parent = r.kind === "pulm" ? $("vesselsLung") : $("vesselsBody");
+  const w = r.kind === "pulm" ? 4 : 5;
+  const first = r.kind === "pulm" ? DARK : BRIGHT, second = r.kind === "pulm" ? BRIGHT : "#991b1b";
+  mk("path", { d: polyline(r, 0, r.turnAt), stroke: first, "stroke-width": w }, parent);
+  mk("path", { d: polyline(r, r.turnAt, r.len), stroke: second, "stroke-width": w }, parent);
+  // capillary U-turn
+  mk("path", { d: polyline(r, Math.max(0, r.turnAt - 14), Math.min(r.len, r.turnAt + 14)), stroke: "#c026d3",
+    "stroke-width": 2.5, "stroke-dasharray": "2 2" }, parent);
+}
+const BODY_ROUTES = Object.entries(ROUTES).filter(([, r]) => r.kind === "sys");
+function pickBody() {
+  let x = Math.random();
+  for (const [name, r] of BODY_ROUTES) { x -= r.w; if (x <= 0) return name; }
+  return BODY_ROUTES[0][0];
+}
+const pickLung = () => (Math.random() < 0.55 ? "pulmL" : "pulmR");
+// oxygenated: bright after the lungs' turn point, dark after a body route's U-turn
+const isBright = (c) => (ROUTES[c.route].kind === "pulm" ? c.pos >= ROUTES[c.route].turnAt : c.pos < ROUTES[c.route].turnAt);
 
-const N_CELLS = 22, cells = [];
-for (let i = 0; i < N_CELLS; i++) {
-  if (i === 0) {
-    const g = document.createElementNS(NS, "g"); g.dataset.organ = "rudy"; g.style.cursor = "pointer";
-    g.innerHTML = '<circle r="11" class="body" stroke="#450a0a" stroke-width="1.5"/>' +
-      '<circle cx="-4" cy="-3" r="2.6" fill="#fff"/><circle cx="4" cy="-3" r="2.6" fill="#fff"/>' +
-      '<circle cx="-4" cy="-3" r="1.2" fill="#111"/><circle cx="4" cy="-3" r="1.2" fill="#111"/>' +
-      '<path d="M -4 4 Q 0 7.5 4 4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>';
-    cellsLayer.appendChild(g); cells.push({ el: g, off: 0, rudy: true });
+const N_CELLS = 28, cells = [];
+function makeCell(rudy) {
+  const g = mk("g", {}, rudy ? $("rudyLayer") : cellsLayer);
+  if (rudy) {
+    g.dataset.organ = "rudy"; g.style.cursor = "pointer";
+    g.innerHTML = '<circle r="17" class="body" stroke="#fff" stroke-width="2.5" filter="url(#rudyGlow)"/>' +
+      '<circle cx="-6" cy="-4" r="4" fill="#fff"/><circle cx="6" cy="-4" r="4" fill="#fff"/>' +
+      '<circle cx="-6" cy="-4" r="1.9" fill="#111"/><circle cx="6" cy="-4" r="1.9" fill="#111"/>' +
+      '<path d="M -6 6 Q 0 11 6 6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<g class="pack" transform="translate(17 -17)"><circle r="11" stroke="#334155" stroke-width="1.5"/>' +
+      '<text text-anchor="middle" y="4" font-size="10" font-weight="bold" fill="#0f172a"></text></g>';
   } else {
-    const c = document.createElementNS(NS, "circle"); c.setAttribute("r", 5);
-    c.setAttribute("stroke", "#450a0a"); c.setAttribute("stroke-width", 1); c.style.pointerEvents = "none";
-    cellsLayer.appendChild(c); cells.push({ el: c, off: i / N_CELLS });
+    g.innerHTML = '<circle r="6" class="body" stroke="#fecaca" stroke-width="1.2"/>' +
+      '<circle class="pack" cx="5.5" cy="-5.5" r="3" stroke="#334155" stroke-width=".8"/>';
   }
+  return g;
 }
-let loopPos = 0, rudyXY = [322, 415];
+for (let i = 0; i < N_CELLS; i++) {
+  const rudy = i === 0;
+  const route = rudy ? "pulmL" : i % 3 === 0 ? pickLung() : pickBody();
+  const c = { el: makeCell(rudy), rudy, route, pos: rudy ? 0 : Math.random() * ROUTES[route].len, flips: [] };
+  cells.push(c);
+}
+let rudyXY = [322, 415];
+function speed() { return 70 * (state.bpm / 90); }  // length units per second
 function updateBlood(dt) {
-  loopPos = (loopPos + dt * (state.bpm / 90) / 16) % 1;
+  const showFx = ["mon", "tue", "team"].includes(state.day);
   for (const c of cells) {
-    const f = (loopPos + c.off) % 1;
-    const p = loop.getPointAtLength(f * LOOP_LEN);
-    const col = oxygenated(f) ? "#ef4444" : "#7f1d1d";
-    if (c.rudy) {
-      c.el.setAttribute("transform", `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
-      c.el.querySelector(".body").setAttribute("fill", col); rudyXY = [p.x, p.y];
-    } else {
-      c.el.setAttribute("cx", p.x.toFixed(1)); c.el.setAttribute("cy", p.y.toFixed(1)); c.el.setAttribute("fill", col);
+    const before = isBright(c);
+    c.pos += speed() * dt;
+    let r = ROUTES[c.route];
+    if (c.pos >= r.len) {
+      c.pos -= r.len;
+      c.route = r.kind === "pulm" ? pickBody() : pickLung();
+      r = ROUTES[c.route];
     }
+    const p = r.el.getPointAtLength(c.pos);
+    const bright = isBright(c);
+    if (bright !== before) {
+      c.flips.push({ route: c.route, at: c.pos, turnAt: r.turnAt });
+      if (c.flips.length > 6) c.flips.shift();
+      if (showFx || c.rudy) {
+        if (bright) spawn({ from: [p.x, p.y], to: [p.x + 10, p.y - 40], dur: 1.2, r: 3.5, color: "#9ca3af", stroke: "#334155", fade: true });
+        else spawn({ from: [p.x, p.y], to: [p.x + (Math.random() - 0.5) * 30, p.y - 18], dur: 1.0, r: 3.5, color: "#fff", stroke: "#334155", fade: true, grow: 0.6 });
+      }
+    }
+    c.el.setAttribute("transform", `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
+    c.el.querySelector(".body").setAttribute("fill", bright ? BRIGHT : DARK);
+    const pack = c.el.querySelector(".pack");
+    if (c.rudy) {
+      pack.querySelector("circle").setAttribute("fill", bright ? "#fff" : "#9ca3af");
+      pack.querySelector("text").textContent = bright ? "O₂" : "CO₂";
+      rudyXY = [p.x, p.y];
+    } else pack.setAttribute("fill", bright ? "#fff" : "#9ca3af");
   }
+  every("trail", 0.05, dt, () => spawn({ from: rudyXY, to: rudyXY, dur: 0.6, r: 7, color: "#fca5a5", fade: true }));
 }
 
 // ---------- Heart and breathing (always running) ----------
 let lubDubShown = 0;
 function onBeat() {
   if (state.day !== "tue") return;
-  const t = document.createElementNS(NS, "text");
-  t.setAttribute("class", "worldtext"); t.setAttribute("x", 372); t.setAttribute("y", 392);
-  t.style.fontSize = "18px"; t.textContent = lubDubShown++ % 2 ? "dub!" : "lub-dub!";
-  fx.appendChild(t); setTimeout(() => t.remove(), 450);
+  const t = mk("text", { class: "worldtext", x: 372, y: 392 }, fx);
+  t.style.fontSize = "20px"; t.textContent = lubDubShown++ % 2 ? "dub!" : "lub-dub!";
+  setTimeout(() => t.remove(), 450);
 }
+const bodyAnim = { heartScale: 1.45, lungScale: 1 };
 function animateBody() {
   const b = state.beat, squeeze = b < 0.2 ? Math.sin((b / 0.2) * Math.PI) : 0;
-  $("heartInner").setAttribute("transform", `translate(322 415) rotate(-35) scale(${(1.45 * (1 - 0.09 * squeeze)).toFixed(3)})`);
+  bodyAnim.heartScale = 1.45 * (1 - 0.1 * squeeze);
+  $("heartInner").setAttribute("transform", `translate(322 415) rotate(-35) scale(${bodyAnim.heartScale.toFixed(3)})`);
   const inh = 0.5 - 0.5 * Math.cos(2 * Math.PI * state.breath);
+  bodyAnim.lungScale = 1 + 0.075 * inh;
   $("lungsInner").setAttribute("transform",
-    `translate(300 300) scale(${(1 + 0.045 * inh).toFixed(3)} ${(1 + 0.075 * inh).toFixed(3)}) translate(-300 -300)`);
+    `translate(300 300) scale(${(1 + 0.045 * inh).toFixed(3)} ${bodyAnim.lungScale.toFixed(3)}) translate(-300 -300)`);
   $("diaphragmPath").setAttribute("d", `M 195 ${(482 + 10 * inh).toFixed(1)} Q 300 ${(430 + 34 * inh).toFixed(1)} 405 ${(482 + 10 * inh).toFixed(1)}`);
-  return inh;
 }
 
 // ---------- Day scenes ----------
-const bolus = document.createElementNS(NS, "circle");
-bolus.setAttribute("r", 9); bolus.setAttribute("stroke", "#451a03"); bolus.setAttribute("stroke-width", 1.5);
-bolus.setAttribute("opacity", 0); $("world").insertBefore(bolus, cellsLayer);
+const bolus = mk("circle", { r: 9, stroke: "#451a03", "stroke-width": 1.5, opacity: 0 });
+world.insertBefore(bolus, cellsLayer);
 const PATHS = Object.fromEntries(["esoPath", "smallPath", "largePath", "airL", "airR", "renalL", "renalR",
   "ureterL", "ureterR", "portalPath", "eyePath", "earPath", "handPath", "legPath"].map((id) => [id, $(id)]));
 const lenOf = Object.fromEntries(Object.entries(PATHS).map(([k, p]) => [k, p.getTotalLength()]));
@@ -698,11 +843,11 @@ function sceneMon(dt) {
   const txt = $("breathText");
   txt.textContent = inhaling ? "Breathe in!" : "Breathe out!";
   txt.setAttribute("opacity", 1);
-  const rate = 0.12 * (20 / state.brpm);
-  every("air", rate, dt, () => {
+  every("air", 0.12 * (20 / state.brpm), dt, () => {
     const side = Math.random() < 0.5 ? "airL" : "airR";
-    if (inhaling) spawn({ path: PATHS[side], dur: 1.1 * (20 / state.brpm) * 1.6, r: 4, color: "#7dd3fc", fade: false });
-    else spawn({ path: PATHS[side], rev: true, dur: 1.1 * (20 / state.brpm) * 1.6, r: 4, color: "#94a3b8" });
+    const dur = 1.8 * (20 / state.brpm);
+    if (inhaling) spawn({ path: PATHS[side], dur, r: 4, color: "#e0f2fe", stroke: "#0369a1" });
+    else spawn({ path: PATHS[side], rev: true, dur, r: 4, color: "#9ca3af", stroke: "#334155" });
   });
 }
 
@@ -733,9 +878,7 @@ function sceneWed(dt) {
 function urineColor() { return mix("#ca8a04", "#fef08a", state.hydration); }
 function sceneThu(dt) {
   state.hydration = Math.max(0, state.hydration - dt * 0.025);
-  const fill = Math.min(1, state.bladder);
-  const h = 36 * fill;
-  const bf = $("bladderFill");
+  const h = 36 * Math.min(1, state.bladder), bf = $("bladderFill");
   bf.setAttribute("y", (726 - h).toFixed(1)); bf.setAttribute("height", h.toFixed(1)); bf.setAttribute("fill", urineColor());
   const m = $("hydroMeter"); if (m) m.style.width = Math.round(state.hydration * 100) + "%";
   every("waste", 0.45, dt, () => {
@@ -756,9 +899,9 @@ function brainFlash() {
   setTimeout(() => b.setAttribute("fill", "#f9a8d4"), 220);
 }
 function signal(inPath, outPath) {
-  spawn({ path: PATHS[inPath], dur: 0.35, r: 5, color: "#fde047", glow: true, then: () => {
+  spawn({ path: PATHS[inPath], dur: 0.35, r: 6, color: "#fde047", glow: true, then: () => {
     brainFlash();
-    spawn({ path: PATHS[outPath], dur: 0.6, r: 5, color: "#fde047", glow: true });
+    spawn({ path: PATHS[outPath], dur: 0.6, r: 6, color: "#fde047", glow: true });
   } });
 }
 function sceneFri(dt) {
@@ -771,9 +914,9 @@ function buildExtra(key) {
   const ex = $("extra"); ex.innerHTML = ""; clearTimeout(game.timer); game.mode = "idle";
   if (key === "thu") {
     ex.innerHTML = '<button id="drinkBtn">💧 Drink water</button>' +
-      '<div class="legend">Water in your body:</div><div class="meter"><div id="hydroMeter"></div></div>' +
-      '<div class="legend">Pale yellow pee = plenty of water. Dark yellow = drink up!</div>';
-    $("drinkBtn").onclick = () => { state.hydration = Math.min(1, state.hydration + 0.35); toast("Glug, glug! 💧 The kidneys have more water to wash waste away."); };
+      '<div>Water in your body:</div><div class="meter"><div id="hydroMeter"></div></div>' +
+      '<div>Pale yellow pee = plenty of water. Dark yellow = drink up!</div>';
+    $("drinkBtn").onclick = () => { state.hydration = Math.min(1, state.hydration + 0.35); toast("Glug, glug! 💧 More water to wash the waste away."); };
   }
   if (key === "fri") {
     const marks = [0, 5, 10, 15, 20, 25, 30].map((cm) => `<span style="bottom:${cm * 6}px">${cm}</span>`).join("");
@@ -786,10 +929,7 @@ function buildExtra(key) {
   }
 }
 function setRuler(cm) { const r = $("ruler"); if (r) r.style.transform = `translateY(${(cm * 6).toFixed(1)}px)`; }
-function renderTries() {
-  const el = $("tries"); if (!el) return;
-  el.innerHTML = game.tries.map((t) => `<li>${t}</li>`).join("");
-}
+function renderTries() { const el = $("tries"); if (el) el.innerHTML = game.tries.map((t) => `<li>${t}</li>`).join(""); }
 function gamePress() {
   const btn = $("gameBtn"), msg = $("gameMsg");
   if (game.mode === "idle") {
@@ -823,8 +963,8 @@ document.addEventListener("keydown", (e) => {
   const step = 40;
   if (e.key === "ArrowLeft") cam.x += step; else if (e.key === "ArrowRight") cam.x -= step;
   else if (e.key === "ArrowUp") cam.y += step; else if (e.key === "ArrowDown") cam.y -= step;
-  else if (e.key === "+" || e.key === "=") zoomAt(300, 500, 1.25);
-  else if (e.key === "-") zoomAt(300, 500, 0.8);
+  else if (e.key === "+" || e.key === "=") zoomAt(CX, CY, 1.25);
+  else if (e.key === "-") zoomAt(CX, CY, 0.8);
   else if (e.key === " " && state.day === "fri") { e.preventDefault(); gamePress(); return; }
   else return;
   camAnim = null; setFollow(false); applyCam();
@@ -847,7 +987,7 @@ function frame(now) {
   updateParticles(dt); updateGame();
   if (state.follow) {
     camAnim = null;
-    const s = 3, tx = 300 - s * rudyXY[0], ty = 500 - s * rudyXY[1], k = Math.min(1, dt * 4);
+    const s = 3, tx = CX - s * rudyXY[0], ty = CY - s * rudyXY[1], k = Math.min(1, dt * 4);
     cam.s += (s - cam.s) * k; cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k; applyCam();
   } else if (camAnim) {
     const j = Math.min(1, (now - camAnim.t0) / camAnim.ms), e = j < 0.5 ? 2 * j * j : 1 - (-2 * j + 2) ** 2 / 2;
@@ -858,7 +998,11 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
+// The whole body fills the height; labels sit in the side columns.
+WHOLE = fitBox({ x: 90, y: 26, width: 420, height: 955 });
 applyCam();
+// Read-only hook for automated checks (cell colour flips, heart/lung timing).
+window.__explorer = { state, cells, ROUTES, bodyAnim };
 const startDay = location.hash.slice(1);
 selectDay(DAY_KEYS.includes(startDay) ? startDay : "team");
 window.addEventListener("hashchange", () => {

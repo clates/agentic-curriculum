@@ -651,8 +651,10 @@ def generate_body_week_series():
                 "your heart, so I race around faster. The fuel your gut packed into the blood "
                 "this morning keeps your muscles going. Your liver and kidneys keep cleaning "
                 "up the extra waste. Touchdown!\n\n"
-                "That's my route: lungs, heart, out to the body, and back again, about once "
-                "every minute, all day and all night. Thanks for riding along, teammate!"
+                "That's my route: heart, lungs, back to the heart, out to the body, and back to "
+                "the heart again. I visit the heart twice on every trip, and I make the whole "
+                "trip in less than a minute, all day and all night. Thanks for riding along, "
+                "teammate!"
             ),
             "vocabulary": shuffled(
                 [
@@ -773,7 +775,7 @@ def generate_body_week_series():
     fri_route_text = (
         "My name is Rudy, and I am a red blood [cell]. I start my trip in the [lungs], "
         "where I load up on [oxygen]. Then the [heart] squeezes and pumps me out through "
-        "the [arteries]. I drop off oxygen to cells all over the body.\n"
+        "the [arteries]. I drop off some of my oxygen to cells all over the body.\n"
         "The blood river I ride in also carries fuel. Food gets broken down in the "
         "[stomach], and the nutrients soak into the blood in the [small intestine].\n"
         "Cells make waste, so the [liver] and the [kidneys] clean the blood. The whole time, "
@@ -983,7 +985,7 @@ def generate_body_week_series():
   </div>
   <h3>Misconceptions to Watch</h3>
   <div class="misconception">
-    <p>&ldquo;Blood in veins is blue.&rdquo; Blood is always red: bright red with oxygen, darker red without. Veins look blue because of how light passes through skin. Also, the heart is near the middle of the chest, only tipped left, not far to the side.</p>
+    <p>&ldquo;Blood in veins is blue.&rdquo; Blood is always red: bright red when full of oxygen, darker red after dropping some off (it still carries most of it). Veins look blue because of how light passes through skin. Also, the heart is near the middle of the chest, only tipped left, not far to the side.</p>
   </div>
   <h3>Extension Activity</h3>
   <div class="extension">
@@ -1082,7 +1084,7 @@ def generate_body_week_series():
     <li><strong>Thursday:</strong> The liver and kidneys clean the blood; urine and the bladder.</li>
     <li><strong>Friday:</strong> The brain coaches the team through nerves; senses in, commands out; automatic jobs.</li>
   </ol>
-  <p style="margin-top: 10px;">By Friday he should be able to trace Rudy's loop (lungs &rarr; heart &rarr; body &rarr; back) and name what each crew adds to or removes from the blood.</p>
+  <p style="margin-top: 10px;">By Friday he should be able to trace Rudy's loop (heart &rarr; lungs &rarr; heart &rarr; body &rarr; heart: two visits to the heart every trip) and name what each crew adds to or removes from the blood.</p>
 </div>
 
 </body>
