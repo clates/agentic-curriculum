@@ -26,6 +26,8 @@ structures that perform specific functions) and teaches it at 2nd–3rd grade de
 Output: body_week_series/
   body_week.html                (student packet)
   body_week_teacher_guide.html  (materials, answer keys, discussion guidance, misconceptions)
+  body_explorer.html            (interactive pan-and-zoom body, one animated scene per day;
+                                 built by scripts/body_week_explorer.py)
 """
 
 import os
@@ -37,7 +39,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("src"))
+sys.path.insert(0, os.path.abspath("scripts"))
 
+from body_week_explorer import build_html as build_explorer_html
 from worksheet_html_renderer import build_print_packet_html, render_worksheet_html
 
 # Seeds every shuffle (vocabulary, matching, sequencing, word banks), so the packet and the
@@ -929,6 +933,7 @@ def generate_body_week_series():
   <p><strong>Causal arc:</strong> Lungs load oxygen &rarr; the heart pumps it everywhere &rarr; the gut loads food fuel &rarr; the liver and kidneys clean the blood &rarr; the brain coaches the whole team</p>
   <p><strong>Standards:</strong> VA.SCIENCE.1.1.5 a&ndash;b (structures perform specific functions; needs for air, food and water), K.k.5.a (senses &harr; body structures), 2.2.1 / 3.3.1 (models, measuring, data), VA.MATH.2.2.15 (bar graphs). Virginia's K&ndash;3 standards have no organ-systems standard, so this week teaches 1.1.5 at 2nd&ndash;3rd grade depth.</p>
   <p><strong>Accuracy note for the parent:</strong> red blood cells carry oxygen (and some carbon dioxide), not food. The passages keep that straight: fuel and waste travel in the blood &ldquo;river&rdquo; Rudy rides in, not on Rudy.</p>
+  <p><strong>Interactive companion:</strong> open <code>body_explorer.html</code> (same folder) in any browser or on a tablet. Each day has a button that flies to that day&rsquo;s organ and animates its job; <em>Sprint</em> speeds the heart and lungs together, and Friday has an on-screen Ruler Drop. A good fit for the end of the reading block, after the demo.</p>
   <h3>Materials for the week</h3>
   <ul>
     <li><strong>Mon:</strong> a plastic water bottle (16&ndash;20 oz), 2 balloons, scissors, a rubber band, a timer</li>
@@ -1087,10 +1092,13 @@ def generate_body_week_series():
     assert "{{" not in TEACHER_GUIDE
     guide_path = output_dir / "body_week_teacher_guide.html"
     guide_path.write_text(TEACHER_GUIDE, encoding="utf-8")
+    explorer_path = output_dir / "body_explorer.html"
+    explorer_path.write_text(build_explorer_html(), encoding="utf-8")
 
     print(f"Generated {len(pages)} pages -> {output_dir}/")
     print(f"Student packet: {out_path}")
     print(f"Teacher guide:  {guide_path}")
+    print(f"Body explorer:  {explorer_path}")
     labels = [
         "Mon p1 — Reading: Meet Rudy — Breathe In! (lungs, diaphragm)",
         "Mon p2 — Cause & Effect: The Breathing Chain",
