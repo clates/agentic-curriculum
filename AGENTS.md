@@ -61,6 +61,37 @@ Stick strictly to **CVC** (Cat, Pig), **CCVC** (Snow, Frog), and **CVCC** (Raft,
 | `two_operand` | `twoOperandWorksheet` | ✓ | ✓ |
 | `error_audit` | `errorAuditWorksheet` | ✓ | ✓ |
 | `ten_frame` | `tenFrameWorksheet` | ✓ | ✓ |
+| — | `letterWorksheet` | ✓ | — |
+
+### `letterWorksheet` (HTML-only)
+A letter the student reads, a frame for writing back, or both, plus an optional cut-and-fold
+envelope on its own printed page. Every block is optional:
+
+```python
+add("letterWorksheet", {
+    "title": "A Letter from Tobin",
+    "style": "parchment",            # "plain" (default; day-palette card) or "parchment" (wax seal)
+    "incoming": {                    # or a plain string used as the body
+        "place_date": "Rogue Encampment, Day 3",
+        "greeting": "Dear Hero,",
+        "body": "Paragraph one.\n\nParagraph two.",   # paragraphs split on blank lines
+        "closing": "Your friend,",
+        "signature": "Tobin",        # parchment seal shows its first letter (override: "seal")
+    },
+    "reply": {
+        "greeting": "Dear ________,",
+        "paragraphs": [{"starter": "I think you should choose the", "lines": 2}],
+        "closing_options": ["Your friend,", "From,"],   # rendered as circle-one choices
+        "signature_line": True,
+    },
+    "word_bank": ["Tobin", "because"],                  # spelling helpers
+    "checklist": ["I started each sentence with a capital letter."],  # self-edit checkboxes
+    "envelope": {"to": "Tobin"},     # or True; pre-prints the To/From lines when given
+}, "Wednesday")
+```
+
+The checklist is where conventions practice lives (capitals, end punctuation, a comma after the
+greeting, spelling checks). Add new editing skills as checklist items, not renderer changes.
 
 ### Critical data-format difference: `feature_matrix`
 The **HTML renderer** expects `items` as a **list of plain strings** (row labels). The **PIL factory** expects `items` as a list of dicts with `name` and `checked_properties` keys. Mixing these up produces broken output with no error.
