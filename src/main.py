@@ -36,6 +36,7 @@ from feedback_processor import (
     validate_quantity_feedback,
 )
 from feedback_models import FeedbackResponse, SubmitFeedbackRequest
+from feedback_service import FeedbackError, apply_feedback
 from curriculum_graph import load_from_db
 from migrations import apply_migrations
 from this_week import this_week_cards
@@ -701,6 +702,33 @@ def print_weekly_packet(student_id: str, packet_id: str):
     return HTMLResponse(content=build_print_packet_html(pages, title))
 
 
+def _submit_feedback_v2(
+    student_id: str,
+    packet_id: str,
+    request: SubmitFeedbackRequest,
+    background_tasks: BackgroundTasks,
+) -> None:
+    """v2: check_results or quick_rating (+ workload), applied transactionally and idempotently."""
+    if get_weekly_packet(student_id, packet_id) is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+    if not get_student_profile(student_id):
+        raise HTTPException(status_code=404, detail="Student not found")
+    try:
+        outcome = apply_feedback(
+            student_id,
+            packet_id,
+            check_results=request.check_results,
+            quick_rating=request.quick_rating,
+            workload=request.workload,
+        )
+    except FeedbackError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    if outcome.changed:  # an exact repeat must not re-trigger plan generation
+        background_tasks.add_task(generate_trio_for_student, student_id)
+
+
 @app.post("/students/{student_id}/weekly-packets/{packet_id}/feedback", status_code=204)
 def submit_packet_feedback(
     student_id: str,
@@ -719,6 +747,10 @@ def submit_packet_feedback(
     Raises:
         HTTPException: 400 for validation errors, 404 if packet not found
     """
+    if request.is_v2:
+        _submit_feedback_v2(student_id, packet_id, request, background_tasks)
+        return
+
     mastery_feedback = request.mastery_feedback
     quantity_feedback = request.quantity_feedback
 
@@ -758,7 +790,9 @@ def submit_packet_feedback(
         )
 
     if mastery_feedback:
-        progress_blob = process_mastery_feedback(progress_blob, mastery_feedback, feedback_date)
+        progress_blob = process_mastery_feedback(
+            progress_blob, mastery_feedback, feedback_date, packet_id=packet_id
+        )
 
     if quantity_feedback is not None:
         plan_rules_blob = process_quantity_feedback(

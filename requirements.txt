@@ -22,3 +22,6 @@ networkx>=3.0,<4.0
 black>=24.4.0,<25.0.0
 pre-commit>=3.6.0,<4.0.0
 ruff>=0.6.0,<1.0.0
+
+# Validating week.v1.schema.json in tests
+jsonschema>=4.0.0,<5.0.0
