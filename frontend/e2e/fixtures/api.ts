@@ -86,3 +86,8 @@ export async function submitFeedback(
 export function backdateFeedback(packetId: string, isoTimestamp: string): void {
   seedScript('backdate_feedback', packetId, isoTimestamp);
 }
+
+/** Give the child a progress record: two skills going well, one shaky, one needing work. */
+export function seedProgress(studentId: string): void {
+  seedScript('set_progress', studentId);
+}

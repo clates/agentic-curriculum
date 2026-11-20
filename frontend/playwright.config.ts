@@ -21,12 +21,12 @@ export default defineConfig({
     {
       name: 'desktop',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: 'parent-shell.spec.ts',
+      testIgnore: ['parent-shell.spec.ts', 'parent/**'],
     },
     {
       name: 'mobile',
       use: { ...devices['Pixel 7'] },
-      testMatch: ['app-shell.spec.ts', 'parent-shell.spec.ts'],
+      testMatch: ['app-shell.spec.ts', 'parent-shell.spec.ts', 'parent/**/*.spec.ts'],
     },
   ],
 
