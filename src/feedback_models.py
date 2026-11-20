@@ -28,3 +28,5 @@ class FeedbackResponse(BaseModel):
     completed_at: str
     mastery_feedback: dict[str, str] | None = None
     quantity_feedback: int | None = None
+    check_results: dict[str, str] | None = None
+    quick_rating: str | None = None
