@@ -15,7 +15,6 @@ SRC = str(Path(__file__).resolve().parents[1] / "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from tests.factories import build_weekly_plan  # noqa: E402
 
 PID = "plan_journey"
 STANDARDS = {
@@ -32,6 +31,24 @@ CHECKS = [
 JARGON = re.compile(r"VA\.|MASTERED|STRUGGLING|DEVELOPING|standard|mastery", re.I)
 
 
+def _week_with_checks(checks):
+    from tests.weekdoc_fixtures import minimal_week
+
+    week = minimal_week()
+    week["prep_checks"] = [
+        {
+            "id": c["id"],
+            "day": "Monday",
+            "standard_id": c["standard_id"],
+            "kind": "oral",
+            "prompt": "Ask.",
+            "pass_criteria": "Gets it.",
+        }
+        for c in checks
+    ]
+    return week
+
+
 @pytest.fixture()
 def api(tmp_path, monkeypatch):
     db = tmp_path / "journey.db"
@@ -42,6 +59,8 @@ def api(tmp_path, monkeypatch):
         "agent",
         "main",
         "feedback_service",
+        "week_store",
+        "src.week_store",
         "src.packet_store",
         "src.db_utils",
         "src.agent",
@@ -70,9 +89,10 @@ def api(tmp_path, monkeypatch):
     )
     conn.commit()
     conn.close()
-    plan = build_weekly_plan(plan_id=PID, student_id="stu_throwaway")
-    plan["prep_checks"] = CHECKS
-    store.save_weekly_packet(plan)
+    sys.modules["week_store"] = importlib.import_module("src.week_store")
+    sys.modules["week_store"].save_week(
+        "stu_throwaway", PID, _week_with_checks(CHECKS), grade_level=2, week_of="2026-01-05"
+    )
     triggers = []
     monkeypatch.setattr(main, "generate_trio_for_student", lambda sid: triggers.append(sid))
     return TestClient(main.app), triggers
