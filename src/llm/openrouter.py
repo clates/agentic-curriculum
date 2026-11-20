@@ -68,7 +68,11 @@ class OpenRouterProvider:
         if request.response_format is not None:
             payload["response_format"] = request.response_format
         # Ask OpenRouter to report cost in the usage block; other endpoints ignore it.
-        payload["extra_body"] = {"usage": {"include": True}, **request.extra_body}
+        payload["extra_body"] = {
+            "usage": {"include": True},
+            **self.settings.routing,
+            **request.extra_body,
+        }
         payload["timeout"] = request.timeout_s or DEFAULT_TIMEOUT_S
 
         started = time.monotonic()

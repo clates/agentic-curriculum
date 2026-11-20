@@ -11,6 +11,7 @@ from typing import Any, Callable
 from .config import TaskConfig, task_config
 from .errors import LLMError
 from .ledger import CostCaps, Ledger, UsageContext, check_cap
+from .redact import install_log_redaction
 from .openrouter import OpenRouterProvider
 from .retry import RetryPolicy, complete_with_retry
 from .settings import ProviderSettings
@@ -31,6 +32,7 @@ class LLMClient:
         ledger: Ledger | None = None,
         caps: CostCaps | None = None,
     ) -> None:
+        install_log_redaction()
         self.provider = provider
         self.ledger = ledger
         self._caps = caps

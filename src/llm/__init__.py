@@ -10,3 +10,5 @@ from .config import TaskConfig, known_tasks, task_config
 from .structured import StructuredResult, extract_json, generate_structured
 from .retry import RetryPolicy, complete_with_retry
 from .ledger import CostCaps, InMemoryLedger, Ledger, SqliteLedger, UsageContext
+from .redact import install_log_redaction, redact
+from .settings import privacy_mode, routing_preferences

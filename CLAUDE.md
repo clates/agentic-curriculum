@@ -37,7 +37,8 @@ and a frontend test server on port 3002 — it never touches `curriculum.db` or 
 ## Architecture map
 
 - `src/main.py` — FastAPI app; students, weekly packets, feedback, artifacts endpoints
-- `src/agent.py` — OpenAI-driven weekly plan generation (needs `OPENAI_API_KEY`)
+- `src/llm/` — model layer (OpenRouter provider, per-task models in `models.json`, retry/fallback, structured output, usage ledger and caps, key redaction)
+- `src/agent.py` — LLM-driven weekly plan generation through `src/llm` (needs `OPENROUTER_API_KEY`)
 - `src/trio_generator.py` — generates 3 plans per student post-feedback; NTFY notify via `src/ntfy.py`
 - `src/worksheet_html_renderer.py` — HTML print-packet engine (preferred for printables)
 - `src/worksheet_html_renderer.py` — HTML engine (all 24 types, browser-printable)
