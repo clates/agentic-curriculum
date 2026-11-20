@@ -15,6 +15,7 @@ export interface ChildCard {
   pick_deadline: string | null;
   print_deadline: string | null;
   packet_id: string | null;
+  feedback_packet_id: string | null;
 }
 
 export function useThisWeek() {

@@ -46,6 +46,16 @@ def _first_name(metadata_blob: str | None) -> str:
     return name.split(" ")[0] if name else "Your child"
 
 
+def _feedback_packet_id(conn: sqlite3.Connection, family_id: str, student_id: str) -> str | None:
+    """The most recent finished week for this child: what the Friday check-in is about."""
+    row = conn.execute(
+        "SELECT packet_id FROM weekly_packets WHERE family_id=? AND student_id=? "
+        "AND status='ready' ORDER BY week_of DESC, created_at DESC LIMIT 1",
+        (family_id, student_id),
+    ).fetchone()
+    return row[0] if row else None
+
+
 def this_week_cards(conn: sqlite3.Connection, family_id: str, today: date) -> dict:
     """One card per child. A child with no plan yet gets one created (idempotent)."""
     conn.row_factory = sqlite3.Row
@@ -71,6 +81,7 @@ def this_week_cards(conn: sqlite3.Connection, family_id: str, today: date) -> di
                 "pick_deadline": plan.pick_deadline,
                 "print_deadline": plan.print_deadline,
                 "packet_id": plan.packet_id,
+                "feedback_packet_id": _feedback_packet_id(conn, family_id, kid["student_id"]),
             }
         )
     return {"children": cards}

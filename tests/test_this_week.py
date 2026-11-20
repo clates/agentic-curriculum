@@ -120,3 +120,18 @@ def test_endpoint_returns_cards(tmp_path, monkeypatch):
         body = client.get("/this-week").json()
     assert body["children"][0]["first_name"] == "Kit"
     assert body["children"][0]["next_action"] == "check_in"
+
+
+def test_check_in_points_at_the_latest_finished_week(conn):
+    for pid, week in (("old", "2026-01-05"), ("new", "2026-01-12")):
+        conn.execute(
+            "INSERT INTO weekly_packets (packet_id, student_id, grade_level, subject, week_of, "
+            "status, payload_json, created_at, updated_at, family_id) "
+            "VALUES (?, 'stu_1', 2, 'Math', ?, 'ready', '{}', 'x', 'x', 'fam_local')",
+            (pid, week),
+        )
+    conn.commit()
+    cards = this_week_cards(conn, "fam_local", date(2026, 1, 20))["children"]
+    by_id = {c["student_id"]: c for c in cards}
+    assert by_id["stu_1"]["feedback_packet_id"] == "new"
+    assert by_id["stu_2"]["feedback_packet_id"] is None
