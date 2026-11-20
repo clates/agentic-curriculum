@@ -71,6 +71,18 @@ def create_database():
     print(f"Database '{DB_FILE}' created successfully with tables.")
 
 
+def is_flat_standard(record) -> bool:
+    """A real standard: a dict with a string id, subject and description, and an integer grade
+    (K is 0). Container documents with nested ``categories`` fail this and are skipped."""
+    if not isinstance(record, dict):
+        return False
+    return (
+        all(isinstance(record.get(k), str) and record[k].strip() for k in ("id", "subject", "description"))
+        and isinstance(record.get("grade"), int)
+        and not isinstance(record.get("grade"), bool)
+    )
+
+
 def ingest_standards_from_json(directory):
     """Read all JSON files from the specified directory and ingest into standards table."""
     conn = sqlite3.connect(DB_FILE)
@@ -84,7 +96,13 @@ def ingest_standards_from_json(directory):
         conn.close()
         return
 
+    # Earlier versions inserted grade-container documents (no description or source) as if they
+    # were standards. Purge those leftovers so existing databases heal on re-ingest.
+    cursor.execute("DELETE FROM standards WHERE description IS NULL AND source IS NULL")
+    purged = cursor.rowcount
+
     total_inserted = 0
+    skipped = 0
     for json_file in json_files:
         print(f"Processing: {json_file}")
         try:
@@ -93,6 +111,9 @@ def ingest_standards_from_json(directory):
 
             # Ingest each standard from the file
             for standard in standards:
+                if not is_flat_standard(standard):
+                    skipped += 1  # nested grade-container or malformed record, not a standard
+                    continue
                 standard_id = standard.get("id")
                 source = standard.get("source")
                 subject = standard.get("subject")
@@ -117,7 +138,10 @@ def ingest_standards_from_json(directory):
 
     conn.commit()
     conn.close()
-    print(f"Ingested {total_inserted} standards into the database.")
+    print(
+        f"Ingested {total_inserted} standards into the database "
+        f"({skipped} non-standard records skipped, {purged} stale rows purged)."
+    )
 
 
 def insert_dummy_student():
