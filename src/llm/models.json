@@ -18,11 +18,11 @@
   "tasks": {
     "scaffold": {
       "temperature": 0.7,
-      "max_tokens": 2048
+      "max_tokens": 3000
     },
     "lesson": {
       "temperature": 0.7,
-      "max_tokens": 4096
+      "max_tokens": 8000
     },
     "outline": {
       "temperature": 0.7,

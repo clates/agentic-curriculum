@@ -24,6 +24,8 @@ class ProviderSettings:
         env = os.environ if env is None else env
         key = env.get("OPENROUTER_API_KEY") or env.get("OPENAI_API_KEY")
         if not key:
-            raise LLMConfigError("OPENROUTER_API_KEY environment variable not set")
+            raise LLMConfigError(
+                "OPENROUTER_API_KEY environment variable not set (legacy OPENAI_API_KEY also works)"
+            )
         base = env.get("LLM_BASE_URL") or env.get("OPENAI_BASE_URL") or OPENROUTER_BASE_URL
         return cls(api_key=key, base_url=base)

@@ -45,6 +45,7 @@ def _assert_loopback(host) -> None:
 
 @pytest.fixture(autouse=True)
 def _hermetic_network(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     monkeypatch.setenv("OPENAI_API_KEY", "pytest-not-a-real-key")
     monkeypatch.setenv("OPENAI_BASE_URL", f"{UNROUTABLE_LOCAL_URL}/v1")
     monkeypatch.setenv("OPENAI_MODEL", "pytest-stub")

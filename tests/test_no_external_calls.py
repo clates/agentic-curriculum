@@ -38,23 +38,27 @@ def _source_files():
 
 
 def test_exactly_one_openai_client_and_it_honours_base_url():
+    """The only SDK client is the OpenRouter provider; agent.py and everyone else go through it."""
     constructions = []
     for path in _source_files():
         text = path.read_text(encoding="utf-8")
         for match in re.finditer(r"\bOpenAI\(", text):
             constructions.append((path.name, text[: match.start()].count("\n") + 1))
-    # agent.py is migrated onto src/llm in M1.6a, after which only the provider remains.
-    assert sorted(name for name, _ in constructions) == [
-        "agent.py",
-        "openrouter.py",
-    ], f"expected OpenAI( only in agent.py and llm/openrouter.py, found: {constructions}"
+    assert [name for name, _ in constructions] == [
+        "openrouter.py"
+    ], f"expected exactly one OpenAI( construction, in src/llm/openrouter.py, found: {constructions}"
 
+    provider = (SRC / "llm" / "openrouter.py").read_text(encoding="utf-8")
+    assert re.search(r"OpenAI\(\s*api_key=[^)]*base_url=settings\.base_url", provider)
+    settings = (SRC / "llm" / "settings.py").read_text(encoding="utf-8")
+    for name in ("LLM_BASE_URL", "OPENAI_BASE_URL", "OPENROUTER_API_KEY", "OPENAI_API_KEY"):
+        assert f'"{name}"' in settings
+
+
+def test_agent_has_no_direct_sdk_or_completion_calls():
     agent = (SRC / "agent.py").read_text(encoding="utf-8")
-    assert 'os.environ.get("OPENAI_BASE_URL"' in agent
-    assert re.search(
-        r"OpenAI\(\s*api_key=[^)]*base_url=base_url", agent
-    ), "the OpenAI client must be built with base_url taken from OPENAI_BASE_URL"
-    assert 'os.environ.get("OPENAI_API_KEY")' in agent
+    assert "chat.completions" not in agent and "import openai" not in agent
+    assert "from openai" not in agent
 
 
 def test_no_other_llm_sdk_or_hardcoded_llm_host():

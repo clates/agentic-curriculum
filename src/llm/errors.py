@@ -14,8 +14,8 @@ class LLMError(Exception):
         self.attempts = attempts
 
 
-class LLMConfigError(LLMError):
-    """Missing or invalid configuration (no API key, unknown task)."""
+class LLMConfigError(LLMError, ValueError):
+    """Missing or invalid configuration (no API key, unknown task). Also a ValueError."""
 
 
 class LLMAuthError(LLMError):
