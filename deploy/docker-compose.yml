@@ -1,0 +1,17 @@
+# Production compose file. Lives at /srv/curriculum/docker-compose.yml on the server.
+# deploy.sh fetches the copy for the commit being deployed and sets IMAGE.
+services:
+  app:
+    image: ${IMAGE:?IMAGE is set by deploy.sh}
+    restart: unless-stopped
+    # Bound to localhost only. Nothing is exposed to the internet until accounts exist;
+    # reach it over Tailscale (tailscale serve) or an SSH tunnel.
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file: .env # secrets (OPENAI_API_KEY); never committed
+    environment:
+      CURRICULUM_DB_PATH: /data/curriculum.db
+    volumes:
+      - /srv/curriculum/data:/data # SQLite database
+      - /srv/curriculum/artifacts:/app/artifacts # generated worksheets and packets
+      - /srv/curriculum/logs:/app/logs
