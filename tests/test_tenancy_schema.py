@@ -46,7 +46,7 @@ def _seed_pre_tenancy(path):
 def test_existing_rows_backfill_to_fam_local(tmp_path):
     db = tmp_path / "x.db"
     _seed_pre_tenancy(db)
-    assert 2 in apply_migrations(db)
+    assert apply_migrations(db)[0] == 2  # later migrations (0004 week_documents...) follow
     conn = _conn(db)
     for table in (
         "student_profiles",

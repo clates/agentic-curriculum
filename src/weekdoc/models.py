@@ -17,6 +17,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
+from .kinds import item_refs
+
 SCHEMA_VERSION = 1
 STUDENT_NAME_TOKEN = "{{student_name}}"
 
@@ -55,9 +57,17 @@ class Worksheet(_Strict):
     answers: list[Answer] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def _data_not_empty(self) -> "Worksheet":
+    def _typed_and_non_empty(self) -> "Worksheet":
         if not self.data:
             raise ValueError(f"worksheet {self.id!r} ({self.kind}) has empty data")
+        # Unknown kinds raise UnknownKindError (a ValueError), so they surface as validation
+        # errors rather than being skipped at render time.
+        valid_refs = {r.ref for r in item_refs(self.kind, self.data)}
+        for a in self.answers:
+            if a.item_ref not in valid_refs:
+                raise ValueError(
+                    f"worksheet {self.id!r}: answer for unknown item_ref {a.item_ref!r}"
+                )
         return self
 
 
@@ -112,6 +122,7 @@ class GuideSummary(_Strict):
 
 class TeacherGuide(_Strict):
     title: Text
+    html_title: Text | None = Field(default=None, description="<title> tag; defaults to title.")
     meta: list[tuple[Text, Text]] = Field(
         default_factory=list, description="Label/value pairs shown under the title."
     )
