@@ -18,6 +18,7 @@ from .client import LLMClient, default_client
 from .config import max_repairs as configured_max_repairs
 from .config import structured_mode
 from .errors import StructuredOutputError
+from .ledger import UsageContext
 from .types import Completion
 
 T = TypeVar("T", bound=BaseModel)
@@ -94,6 +95,7 @@ def generate_structured(
     *,
     client: LLMClient | None = None,
     max_repairs: int | None = None,
+    usage: UsageContext | None = None,
 ) -> StructuredResult[T]:
     client = client or default_client()
     budget = configured_max_repairs(client._env) if max_repairs is None else max_repairs
@@ -110,7 +112,9 @@ def generate_structured(
             }
         )
 
-    completions = [client.complete(task, msgs, response_format=_response_format(model_cls, mode))]
+    completions = [
+        client.complete(task, msgs, response_format=_response_format(model_cls, mode), usage=usage)
+    ]
     parsed, error = _try_parse(completions[0].text, model_cls)
     errors: list[str] = []
     while parsed is None:
