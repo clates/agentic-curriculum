@@ -37,6 +37,7 @@ from feedback_processor import (
 )
 from feedback_models import FeedbackResponse, SubmitFeedbackRequest
 from curriculum_graph import load_from_db
+from progress_summary import build_progress_summary
 from worksheet_html_renderer import build_print_packet_html
 
 import json
@@ -811,3 +812,42 @@ def get_student_progress_map(student_id: str, subject: str, prune: bool = True):
 
     graph = load_from_db(get_db_path(), subject)
     return graph.export_for_visualization(mastered, prune=prune)
+
+
+def _standards_lookup(standard_ids: set[str]) -> dict[str, dict[str, Any]]:
+    """Subject and description for the given standard ids (missing ids are simply absent)."""
+    if not standard_ids:
+        return {}
+    ids = sorted(standard_ids)
+    out: dict[str, dict[str, Any]] = {}
+    conn = sqlite3.connect(get_db_path())
+    try:
+        for i in range(0, len(ids), 500):
+            chunk = ids[i : i + 500]
+            marks = ",".join("?" * len(chunk))
+            for sid, subject, description in conn.execute(
+                f"SELECT standard_id, subject, description FROM standards "  # noqa: S608
+                f"WHERE standard_id IN ({marks})",
+                chunk,
+            ):
+                out[sid] = {"subject": subject, "description": description}
+    except sqlite3.OperationalError:
+        return out  # no standards table (minimal DB): fall back to generic skill names
+    finally:
+        conn.close()
+    return out
+
+
+@app.get("/students/{student_id}/progress-summary")
+def get_student_progress_summary(student_id: str):
+    """How a child is doing, in plain words: solid, shaky, needs work, due for review."""
+    profile = get_student_profile(student_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student not found")
+    progress = json.loads(profile["progress_blob"] or "{}")
+    metadata = json.loads(profile.get("metadata_blob") or "{}")
+    ids = set(progress.get("mastered_standards", [])) | set(
+        progress.get("developing_standards", [])
+    )
+    ids |= set((progress.get("standard_metadata") or {}).keys())
+    return build_progress_summary(metadata.get("name"), progress, _standards_lookup(ids))
