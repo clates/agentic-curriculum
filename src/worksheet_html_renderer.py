@@ -2161,6 +2161,56 @@ def _render_cut_cards(data: dict, primary: str, light: str) -> str:
         f'<div class="fx-cards" style="grid-template-columns:repeat({cols},1fr);">' f"{tiles}</div>"
     )
 
+# ── Parent Prep Sheet (prepCheckList) ──────────────────────────────────────
+
+_PREP_CSS = """\
+<style>
+  .pc-intro { font-size: 10.5pt; margin: 4px 0 10px; color: #333; }
+  .pc-card { border: 1.5px solid; border-radius: 6px; padding: 7px 11px; margin: 0 0 9px; page-break-inside: avoid; break-inside: avoid; }
+  .pc-top { font-size: 8.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .pc-prompt { font-size: 11pt; margin-bottom: 3px; }
+  .pc-good { font-size: 10pt; color: #333; margin-bottom: 5px; }
+  .pc-good b { font-weight: bold; }
+  .pc-ticks { display: flex; gap: 22px; font-size: 10.5pt; }
+  .pc-box { display: inline-block; width: 13px; height: 13px; border: 1.5px solid #333; margin-right: 6px; vertical-align: -2px; }
+</style>"""
+
+PREP_RESULT_LABELS = ("Got it", "Shaky", "Missed")
+
+
+def _render_prep_check_list(data: dict, primary: str, light: str) -> str:
+    """
+    Parent Prep Sheet: one card per check with the day, kind, what to ask or do, what a good
+    answer sounds like, and Got it / Shaky / Missed tick boxes the parent fills in.
+
+    ``checks`` items: ``{day, kind, prompt, pass_criteria}`` (extra keys such as ``id`` or
+    ``standard_id`` are ignored here; they matter for stored results, not for paper).
+    """
+    title = data.get("title", "Parent Prep Sheet")
+    intro = data.get("instructions", "")
+    checks = data.get("checks", []) or []
+
+    cards = []
+    for check in checks:
+        day_primary, _ = get_day_palette(str(check.get("day", "")))
+        ticks = "".join(
+            f'<span><span class="pc-box"></span>{_h(label)}</span>' for label in PREP_RESULT_LABELS
+        )
+        cards.append(
+            f'<div class="pc-card" style="border-color:{day_primary};">'
+            f'<div class="pc-top" style="color:{day_primary};">'
+            f'{_h(check.get("day", ""))} &middot; {_h(check.get("kind", ""))}</div>'
+            f'<div class="pc-prompt">{_h(check.get("prompt", ""))}</div>'
+            f'<div class="pc-good"><b>A good answer sounds like:</b> '
+            f'{_h(check.get("pass_criteria", ""))}</div>'
+            f'<div class="pc-ticks">{ticks}</div>'
+            f"</div>"
+        )
+
+    intro_html = f'<div class="pc-intro">{_h(intro)}</div>' if intro else ""
+    return f"{_PREP_CSS}\n{_title_block(title, primary)}\n{intro_html}{''.join(cards)}"
+
+
 def _svg_clock(hour: float, minute: int, missing: str | None, starter: bool = False) -> str:
     """Inline-SVG analog clock face (prints crisply, no image assets).
 
@@ -4192,6 +4242,7 @@ _RENDERERS = {
     "labeledDiagramWorksheet": _render_labeled_diagram,
     "twoOperandWorksheet": _render_two_operand,
     "letterWorksheet": _render_letter,
+    "prepCheckList": _render_prep_check_list,
     "mathWorksheet": _render_two_operand,  # legacy PIL math → HTML two-operand
 }
 
