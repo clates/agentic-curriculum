@@ -79,3 +79,28 @@ def task_config(task: str, env=None, path: Path | None = None) -> TaskConfig:
 
 def known_tasks(path: Path | None = None) -> list[str]:
     return sorted(_load(path or DEFAULT_FILE).get("tasks", {}))
+
+
+def structured_mode(model: str, env=None, path: Path | None = None) -> str:
+    """'json_schema' where the model is known to support schema mode, else 'json_object'.
+
+    LLM_STRUCTURED_MODE=json_schema|json_object forces one mode for every model.
+    """
+    env = os.environ if env is None else env
+    forced = env.get("LLM_STRUCTURED_MODE")
+    if forced in ("json_schema", "json_object"):
+        return forced
+    prefixes = _load(path or Path(env.get("LLM_MODELS_FILE") or DEFAULT_FILE)).get(
+        "json_schema_models", []
+    )
+    return "json_schema" if any(model.startswith(p) for p in prefixes) else "json_object"
+
+
+def max_repairs(env=None, path: Path | None = None) -> int:
+    env = os.environ if env is None else env
+    raw = env.get("LLM_MAX_REPAIRS")
+    if raw:
+        return _num(raw, int, "LLM_MAX_REPAIRS")
+    return int(
+        _load(path or Path(env.get("LLM_MODELS_FILE") or DEFAULT_FILE)).get("max_repairs", 2)
+    )
