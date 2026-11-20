@@ -1865,7 +1865,10 @@ def _render_speed_math(data: dict, primary: str, light: str) -> str:
 
     items = []
     for i, prob in enumerate(problems, 1):
-        text = prob.get("q", "") if isinstance(prob, dict) else str(prob)
+        if isinstance(prob, dict) and "q" not in prob and {"a", "op", "b"} <= prob.keys():
+            text = f"{prob['a']} {prob['op']} {prob['b']} ="  # typed hosted form (WeekDoc)
+        else:
+            text = prob.get("q", "") if isinstance(prob, dict) else str(prob)
         items.append(
             f'<div class="fx-drill-item">'
             f'<span class="fx-drill-num">{i}.</span>'
