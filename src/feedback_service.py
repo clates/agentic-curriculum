@@ -14,10 +14,10 @@ import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from typing import Any, Callable
+from typing import Any
 
 try:
-    from . import packet_store
+    from . import packet_store, week_store
     from .check_mastery import map_check_results, normalize_result
     from .feedback_processor import (
         process_mastery_feedback,
@@ -28,6 +28,7 @@ try:
     )
 except ImportError:  # imported as a top-level module (src/ on sys.path)
     import packet_store
+    import week_store
     from check_mastery import map_check_results, normalize_result
     from feedback_processor import (
         process_mastery_feedback,
@@ -54,22 +55,12 @@ class FeedbackOutcome:
     derived_mastery: dict[str, str]
 
 
-def _prep_checks_from_payload(payload: dict[str, Any]) -> list[Any]:
-    return [SimpleNamespace(**c) for c in (payload.get("prep_checks") or [])]
-
-
 def load_prep_checks(student_id: str, packet_id: str) -> list[Any]:
-    """Prep checks (objects with ``id`` and ``standard_id``) for a stored packet.
-
-    Interface for M2.6: once storage for structured weeks lands, ``packet_store`` exposes
-    ``get_prep_checks(student_id, packet_id)`` backed by the derived prep_checks index and it is
-    used here. Until then, fall back to a ``prep_checks`` list inside the stored payload.
-    """
-    getter: Callable[..., list[Any]] | None = getattr(packet_store, "get_prep_checks", None)
-    if getter is not None:
-        return list(getter(student_id, packet_id))
-    packet = packet_store.get_weekly_packet(student_id, packet_id)
-    return _prep_checks_from_payload((packet or {}).get("payload") or {})
+    """Prep checks (objects with ``id`` and ``standard_id``) from the M2.6 derived check index."""
+    return [
+        SimpleNamespace(id=row["check_id"], standard_id=row["standard_id"], day=row["day"])
+        for row in week_store.list_prep_checks(student_id, packet_id)
+    ]
 
 
 def _packet_standard_ids(student_id: str, packet_id: str, checks: list[Any]) -> list[str]:
