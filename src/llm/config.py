@@ -66,7 +66,10 @@ def task_config(task: str, env=None, path: Path | None = None) -> TaskConfig:
         raw = env.get(f"LLM_{name.upper()}_{key}")
         return _num(raw, cast, f"LLM_{name.upper()}_{key}") if raw else merged.get(name)
 
-    fallback = env.get(f"LLM_FALLBACK_MODEL_{key}") or merged.get("fallback_model")
+    # An explicitly empty LLM_FALLBACK_MODEL_<TASK> disables the fallback.
+    fallback = env.get(f"LLM_FALLBACK_MODEL_{key}")
+    if fallback is None:
+        fallback = merged.get("fallback_model")
     return TaskConfig(
         task=task,
         model=model,
