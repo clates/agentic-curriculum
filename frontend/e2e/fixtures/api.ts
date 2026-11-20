@@ -89,6 +89,13 @@ export function backdateFeedback(packetId: string, isoTimestamp: string): void {
 
 /** Seed the child's week plan in a given loop state: awaiting_feedback, outlining, awaiting_pick,
  * authoring, ready, printed or expired. */
-export function seedPlan(studentId: string, status: string, weekStart = '2026-01-05'): void {
+// The default week is far in the future so the seeded plan is always the child's latest, even if a
+// parallel spec's page load already created a plan for the real upcoming week.
+export function seedPlan(studentId: string, status: string, weekStart = '2099-01-05'): void {
   seedScript('create_plan', studentId, status, weekStart);
+}
+
+/** Seed a finished structured week with ten check-by-check prompts for the child. */
+export function seedWeek(studentId: string, packetId: string): void {
+  seedScript('create_week', studentId, packetId);
 }

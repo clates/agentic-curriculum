@@ -38,7 +38,7 @@ def upcoming_week_start(today: date) -> str:
     return monday.isoformat()
 
 
-def _first_name(metadata_blob: str | None) -> str:
+def first_name_of(metadata_blob: str | None) -> str:
     try:
         name = (json.loads(metadata_blob or "{}").get("name") or "").strip()
     except (ValueError, AttributeError):
@@ -72,7 +72,7 @@ def this_week_cards(conn: sqlite3.Connection, family_id: str, today: date) -> di
         cards.append(
             {
                 "student_id": kid["student_id"],
-                "first_name": _first_name(kid["metadata_blob"]),
+                "first_name": first_name_of(kid["metadata_blob"]),
                 "plan_id": plan.plan_id,
                 "week_start": plan.week_start,
                 "next_action": NEXT_ACTION[plan.status],

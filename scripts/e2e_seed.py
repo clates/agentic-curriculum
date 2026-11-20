@@ -5,11 +5,13 @@ CLI seed helper for Playwright E2E tests.
 Usage:
   python scripts/e2e_seed.py create_packet <student_id> <packet_id>
   python scripts/e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>
+  python scripts/e2e_seed.py create_week <student_id> <packet_id>
   python scripts/e2e_seed.py create_plan <student_id> <loop_status> [week_start]
 
 The DB path is controlled by CURRICULUM_DB_PATH (same env var the backend uses).
 """
 
+import json
 import os
 import sqlite3
 import sys
@@ -93,6 +95,16 @@ def create_packet(student_id: str, packet_id: str) -> None:
     }
     save_weekly_packet(plan, status="ready")
     print(f"created packet {packet_id} for student {student_id}")
+
+
+def create_week(student_id: str, packet_id: str) -> None:
+    """Seed a ready structured week (the weather-week fixture, 10 prep checks)."""
+    import week_store  # noqa: E402
+
+    fixture = PROJECT_ROOT / "tests" / "fixtures" / "weekdoc" / "weather_week.json"
+    week = json.loads(fixture.read_text(encoding="utf-8"))
+    week_store.save_week(student_id, packet_id, week, grade_level=0, week_of="2026-01-06")
+    print(f"created structured week {packet_id} for student {student_id}")
 
 
 def init_db() -> None:
@@ -208,6 +220,12 @@ if __name__ == "__main__":
             print("Usage: e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>")
             sys.exit(1)
         backdate_feedback(sys.argv[2], sys.argv[3])
+
+    elif cmd == "create_week":
+        if len(sys.argv) != 4:
+            print("Usage: e2e_seed.py create_week <student_id> <packet_id>")
+            sys.exit(1)
+        create_week(sys.argv[2], sys.argv[3])
 
     elif cmd == "create_plan":
         if len(sys.argv) not in (4, 5):

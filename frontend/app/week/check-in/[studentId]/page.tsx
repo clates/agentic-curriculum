@@ -4,12 +4,15 @@ import Link from 'next/link';
 import { use } from 'react';
 import { copy } from '@/lib/copy';
 import { useThisWeek } from '@/lib/thisWeek';
+import { usePrepChecks } from '@/lib/checkIn';
 import { EmptyState, QueryState, primaryButton } from '@/components/parent/states';
 import { QuickCheckIn } from '@/components/parent/QuickCheckIn';
 
 export default function CheckInPage({ params }: { params: Promise<{ studentId: string }> }) {
   const { studentId } = use(params);
   const query = useThisWeek();
+  const card0 = query.data?.find((k) => k.student_id === studentId);
+  const checks = usePrepChecks(studentId, card0?.feedback_packet_id);
   const back = (
     <Link href="/week" className={primaryButton}>
       {copy.checkIn.back}
@@ -38,11 +41,23 @@ export default function CheckInPage({ params }: { params: Promise<{ studentId: s
               {copy.checkIn.title(card.first_name)}
             </h1>
             {card.feedback_packet_id ? (
-              <QuickCheckIn
-                studentId={card.student_id}
-                packetId={card.feedback_packet_id}
-                firstName={card.first_name}
-              />
+              <>
+                <QuickCheckIn
+                  studentId={card.student_id}
+                  packetId={card.feedback_packet_id}
+                  firstName={card.first_name}
+                />
+                {checks.data && checks.data.length > 0 ? (
+                  <p className="mt-6 text-center">
+                    <Link
+                      href={`/week/check-in/${card.student_id}/by-check`}
+                      className="text-primary-700 inline-block py-2 underline"
+                    >
+                      {copy.byCheck.useChecks}
+                    </Link>
+                  </p>
+                ) : null}
+              </>
             ) : (
               <EmptyState
                 title={copy.checkIn.nothingTitle}

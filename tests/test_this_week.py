@@ -135,3 +135,41 @@ def test_check_in_points_at_the_latest_finished_week(conn):
     by_id = {c["student_id"]: c for c in cards}
     assert by_id["stu_1"]["feedback_packet_id"] == "new"
     assert by_id["stu_2"]["feedback_packet_id"] is None
+
+
+def test_check_cards_endpoint_uses_first_name_and_hides_standards(tmp_path, monkeypatch):
+    import importlib
+    import sys
+    from pathlib import Path
+
+    db = tmp_path / "c.db"
+    monkeypatch.setenv("CURRICULUM_DB_PATH", str(db))
+    src = str(Path(__file__).resolve().parents[1] / "src")
+    sys.path.insert(0, src)
+    for name in ("db_utils", "packet_store", "week_store", "main", "prep_check_cards", "this_week"):
+        sys.modules.pop(name, None)
+    importlib.import_module("db_utils")
+    ws = importlib.import_module("week_store")
+    fixture = Path(__file__).parent / "fixtures" / "weekdoc" / "weather_week.json"
+    week = json.loads(fixture.read_text(encoding="utf-8"))
+    week["prep_checks"][0]["prompt"] = "Ask {{student_name}}: where does weather energy come from?"
+    apply_migrations(db)
+    c = sqlite3.connect(db)
+    c.execute(
+        "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob, metadata_blob) "
+        "VALUES ('kid','{}','{}',?)",
+        (json.dumps({"name": "Kit Smith"}),),
+    )
+    c.commit()
+    c.close()
+    ws.save_week("kid", "pk1", week, grade_level=0, week_of="2026-01-05")
+    from main import app
+
+    with TestClient(app) as client:
+        body = client.get("/students/kid/weekly-packets/pk1/checks").json()
+        assert client.get("/students/kid/weekly-packets/nope/checks").status_code == 404
+        assert client.get("/students/ghost/weekly-packets/pk1/checks").status_code == 404
+    assert len(body["checks"]) == 10
+    first = body["checks"][0]
+    assert first["prompt"].startswith("Ask Kit:") and "Smith" not in first["prompt"]
+    assert set(first) == {"check_id", "day", "prompt", "pass_criteria"}
