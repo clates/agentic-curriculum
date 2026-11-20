@@ -43,9 +43,11 @@ def test_exactly_one_openai_client_and_it_honours_base_url():
         text = path.read_text(encoding="utf-8")
         for match in re.finditer(r"\bOpenAI\(", text):
             constructions.append((path.name, text[: match.start()].count("\n") + 1))
-    assert [name for name, _ in constructions] == [
-        "agent.py"
-    ], f"expected exactly one OpenAI( construction in src/agent.py, found: {constructions}"
+    # agent.py is migrated onto src/llm in M1.6a, after which only the provider remains.
+    assert sorted(name for name, _ in constructions) == [
+        "agent.py",
+        "openrouter.py",
+    ], f"expected OpenAI( only in agent.py and llm/openrouter.py, found: {constructions}"
 
     agent = (SRC / "agent.py").read_text(encoding="utf-8")
     assert 'os.environ.get("OPENAI_BASE_URL"' in agent
@@ -59,7 +61,9 @@ def test_no_other_llm_sdk_or_hardcoded_llm_host():
     offenders = []
     for path in _source_files():
         text = path.read_text(encoding="utf-8")
-        if OTHER_LLM_SDK_PATTERN.search(text) or HARDCODED_LLM_HOST_PATTERN.search(text):
+        # src/llm/settings.py is the one place that names the default provider host.
+        host_hit = HARDCODED_LLM_HOST_PATTERN.search(text) and path.name != "settings.py"
+        if OTHER_LLM_SDK_PATTERN.search(text) or host_hit:
             offenders.append(path.name)
     assert not offenders, f"unexpected LLM SDK / hardcoded LLM host in: {offenders}"
 
