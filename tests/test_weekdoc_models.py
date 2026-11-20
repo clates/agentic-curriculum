@@ -60,7 +60,7 @@ def _mutated(fn):
         (lambda d: d["days"].append(dict(d["days"][0])), "duplicate day"),
         (lambda d: d.update(schema_version=2), "Input should be 1"),
         (lambda d: d.update(surprise=1), "Extra inputs"),
-        (lambda d: d["packet_title"].__class__ and d.update(packet_title="Hi {{kid}}"), "unknown"),
+        (lambda d: d.update(packet_title="Hi {{kid}}"), "unknown"),
         (
             lambda d: d["teacher_guide"]["days"][0]["blocks"].append({"style": "answer"}),
             "at least one paragraph",
