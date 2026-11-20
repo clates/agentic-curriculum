@@ -290,6 +290,20 @@
           "title": "Days",
           "type": "array"
         },
+        "html_title": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "<title> tag; defaults to title.",
+          "title": "Html Title"
+        },
         "meta": {
           "description": "Label/value pairs shown under the title.",
           "items": {

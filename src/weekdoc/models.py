@@ -122,6 +122,7 @@ class GuideSummary(_Strict):
 
 class TeacherGuide(_Strict):
     title: Text
+    html_title: Text | None = Field(default=None, description="<title> tag; defaults to title.")
     meta: list[tuple[Text, Text]] = Field(
         default_factory=list, description="Label/value pairs shown under the title."
     )
