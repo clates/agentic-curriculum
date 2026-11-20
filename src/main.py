@@ -736,7 +736,9 @@ def submit_packet_feedback(
         )
 
     if mastery_feedback:
-        progress_blob = process_mastery_feedback(progress_blob, mastery_feedback, feedback_date)
+        progress_blob = process_mastery_feedback(
+            progress_blob, mastery_feedback, feedback_date, packet_id=packet_id
+        )
 
     if quantity_feedback is not None:
         plan_rules_blob = process_quantity_feedback(
