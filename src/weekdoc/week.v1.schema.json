@@ -1,0 +1,477 @@
+{
+  "$defs": {
+    "Answer": {
+      "additionalProperties": false,
+      "description": "One answer-key entry, addressed by the item it answers (D3).",
+      "properties": {
+        "answer": {
+          "minLength": 1,
+          "title": "Answer",
+          "type": "string"
+        },
+        "item_ref": {
+          "description": "Address of the question/slot this answers, e.g. 'questions.0'.",
+          "minLength": 1,
+          "title": "Item Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item_ref",
+        "answer"
+      ],
+      "title": "Answer",
+      "type": "object"
+    },
+    "Day": {
+      "additionalProperties": false,
+      "properties": {
+        "day": {
+          "enum": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ],
+          "title": "Day",
+          "type": "string"
+        },
+        "standards": {
+          "items": {
+            "pattern": "^[A-Z0-9]+(\\.[A-Za-z0-9_-]+)+$",
+            "type": "string"
+          },
+          "title": "Standards",
+          "type": "array"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "worksheets": {
+          "items": {
+            "$ref": "#/$defs/Worksheet"
+          },
+          "minItems": 1,
+          "title": "Worksheets",
+          "type": "array"
+        }
+      },
+      "required": [
+        "day",
+        "title",
+        "worksheets"
+      ],
+      "title": "Day",
+      "type": "object"
+    },
+    "GuideBlock": {
+      "additionalProperties": false,
+      "description": "A heading, or a styled callout of paragraphs, in a teacher-guide day.",
+      "properties": {
+        "heading": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Heading"
+        },
+        "paragraphs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Paragraphs",
+          "type": "array"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "enum": [
+                "answer",
+                "misconception",
+                "extension",
+                "discuss"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Style"
+        }
+      },
+      "title": "GuideBlock",
+      "type": "object"
+    },
+    "GuideDay": {
+      "additionalProperties": false,
+      "properties": {
+        "blocks": {
+          "items": {
+            "$ref": "#/$defs/GuideBlock"
+          },
+          "minItems": 1,
+          "title": "Blocks",
+          "type": "array"
+        },
+        "day": {
+          "enum": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ],
+          "title": "Day",
+          "type": "string"
+        },
+        "page_break_before": {
+          "default": false,
+          "title": "Page Break Before",
+          "type": "boolean"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "day",
+        "title",
+        "blocks"
+      ],
+      "title": "GuideDay",
+      "type": "object"
+    },
+    "GuideSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "closing": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Closing"
+        },
+        "heading": {
+          "minLength": 1,
+          "title": "Heading",
+          "type": "string"
+        },
+        "intro": {
+          "minLength": 1,
+          "title": "Intro",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "heading",
+        "intro",
+        "items"
+      ],
+      "title": "GuideSummary",
+      "type": "object"
+    },
+    "PrepCheck": {
+      "additionalProperties": false,
+      "description": "A parent-run check, emitted as data so results can be recorded per check (D4).",
+      "properties": {
+        "day": {
+          "enum": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ],
+          "title": "Day",
+          "type": "string"
+        },
+        "id": {
+          "description": "Stable per packet; feedback results key on it.",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "quiz",
+            "oral",
+            "review",
+            "activity",
+            "observation"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "pass_criteria": {
+          "description": "What a good answer sounds like, in plain words.",
+          "minLength": 1,
+          "title": "Pass Criteria",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "What the parent asks or does.",
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "standard_id": {
+          "pattern": "^[A-Z0-9]+(\\.[A-Za-z0-9_-]+)+$",
+          "title": "Standard Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "day",
+        "standard_id",
+        "kind",
+        "prompt",
+        "pass_criteria"
+      ],
+      "title": "PrepCheck",
+      "type": "object"
+    },
+    "TeacherGuide": {
+      "additionalProperties": false,
+      "properties": {
+        "arc": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Arc"
+        },
+        "days": {
+          "items": {
+            "$ref": "#/$defs/GuideDay"
+          },
+          "minItems": 1,
+          "title": "Days",
+          "type": "array"
+        },
+        "meta": {
+          "description": "Label/value pairs shown under the title.",
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "minLength": 1,
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Meta",
+          "type": "array"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GuideSummary"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "days"
+      ],
+      "title": "TeacherGuide",
+      "type": "object"
+    },
+    "Worksheet": {
+      "additionalProperties": false,
+      "description": "One printable page (or block) in a day.",
+      "properties": {
+        "answers": {
+          "items": {
+            "$ref": "#/$defs/Answer"
+          },
+          "title": "Answers",
+          "type": "array"
+        },
+        "data": {
+          "additionalProperties": true,
+          "description": "Renderer data dict for this kind.",
+          "title": "Data",
+          "type": "object"
+        },
+        "id": {
+          "description": "Stable within the packet; item refs and checks hang off it.",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Renderer kind, camelCase, e.g. 'readingWorksheet'.",
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "data"
+      ],
+      "title": "Worksheet",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/clates/agentic-curriculum/week.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "arc": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Arc"
+    },
+    "days": {
+      "items": {
+        "$ref": "#/$defs/Day"
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "title": "Days",
+      "type": "array"
+    },
+    "grade_band": {
+      "minLength": 1,
+      "title": "Grade Band",
+      "type": "string"
+    },
+    "narrator": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Narrator"
+    },
+    "packet_title": {
+      "minLength": 1,
+      "title": "Packet Title",
+      "type": "string"
+    },
+    "prep_checks": {
+      "items": {
+        "$ref": "#/$defs/PrepCheck"
+      },
+      "minItems": 1,
+      "title": "Prep Checks",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "subject": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Subject"
+    },
+    "teacher_guide": {
+      "$ref": "#/$defs/TeacherGuide"
+    },
+    "theme": {
+      "minLength": 1,
+      "title": "Theme",
+      "type": "string"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "packet_title",
+    "theme",
+    "grade_band",
+    "days",
+    "prep_checks",
+    "teacher_guide"
+  ],
+  "title": "WeekDoc v1",
+  "type": "object"
+}
