@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from dataclasses import replace
 from typing import Any, Callable
 
 from .config import TaskConfig, task_config
@@ -47,10 +48,17 @@ class LLMClient:
         *,
         response_format: dict[str, Any] | None = None,
         usage: UsageContext | None = None,
+        model: str | None = None,
     ) -> Completion:
         """Run one task. ``usage`` names who is billed; with a ledger it is checked against the
-        family cap before any request is made, and the call is recorded afterwards."""
+        family cap before any request is made, and the call is recorded afterwards.
+
+        ``model`` overrides the task's model for this call only (used by the taste-test harness);
+        an explicit model never silently falls back to another one.
+        """
         cfg = self.config(task)
+        if model:
+            cfg = replace(cfg, model=model, fallback_model=None)
         ctx = usage or UsageContext()
         env = self._env if self._env is not None else os.environ
         if self.ledger is not None:
