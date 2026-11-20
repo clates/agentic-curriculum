@@ -21,8 +21,8 @@ def minimal_week() -> dict:
                     "worksheets": [
                         {
                             "id": "mon-note",
-                            "kind": "noteBox",
-                            "data": {"text": "Hello {{student_name}}"},
+                            "kind": "storyPanel",
+                            "data": {"who": "Zara", "text": "Hello {{student_name}}"},
                         }
                     ],
                 }
