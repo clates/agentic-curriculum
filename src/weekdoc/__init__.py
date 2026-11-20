@@ -1,7 +1,7 @@
 """Structured weeks (WeekDoc): models, hosted-kind registry, storage, rendering."""
 
 from .kinds import HOSTED_KINDS, ItemRef, UnknownKindError, item_refs  # noqa: F401
-from . import kinds_classification, kinds_comprehension  # noqa: F401  (register kinds)
+from . import kinds_classification, kinds_comprehension, kinds_ordered  # noqa: F401
 from .models import (  # noqa: F401
     SCHEMA_VERSION,
     STUDENT_NAME_TOKEN,
