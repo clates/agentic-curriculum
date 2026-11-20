@@ -27,11 +27,19 @@ CHECKS = [
 def env(tmp_path, monkeypatch):
     db = tmp_path / "v2.db"
     monkeypatch.setenv("CURRICULUM_DB_PATH", str(db))
-    for name in list(sys.modules):
-        if name in ("packet_store", "db_utils", "agent", "main", "feedback_service") or (
-            name.startswith("src.") and name != "src.migrations"
-        ):
-            sys.modules.pop(name, None)
+    for name in (
+        "packet_store",
+        "db_utils",
+        "agent",
+        "main",
+        "feedback_service",
+        "src.packet_store",
+        "src.db_utils",
+        "src.agent",
+        "src.main",
+        "src.feedback_service",
+    ):
+        sys.modules.pop(name, None)
     sys.modules["db_utils"] = importlib.import_module("src.db_utils")
     sys.modules["packet_store"] = importlib.import_module("src.packet_store")
     main = importlib.import_module("src.main")
