@@ -38,6 +38,7 @@ from feedback_processor import (
 from feedback_models import FeedbackResponse, SubmitFeedbackRequest
 from curriculum_graph import load_from_db
 from migrations import apply_migrations
+from this_week import this_week_cards
 from worksheet_html_renderer import build_print_packet_html
 
 import json
@@ -312,6 +313,18 @@ def read_student(student_id: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
     return profile
+
+
+@app.get("/this-week")
+def read_this_week():
+    """One card per child with the single next step for the week (M10.4)."""
+    conn = sqlite3.connect(get_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        # AUTH_MODE=none: the one local family until login exists.
+        return this_week_cards(conn, "fam_local", datetime.now(UTC).date())
+    finally:
+        conn.close()
 
 
 @app.get("/students", response_model=list[StudentResponse])

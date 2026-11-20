@@ -5,6 +5,7 @@ CLI seed helper for Playwright E2E tests.
 Usage:
   python scripts/e2e_seed.py create_packet <student_id> <packet_id>
   python scripts/e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>
+  python scripts/e2e_seed.py create_plan <student_id> <loop_status> [week_start]
 
 The DB path is controlled by CURRICULUM_DB_PATH (same env var the backend uses).
 """
@@ -19,7 +20,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from packet_store import save_weekly_packet  # noqa: E402
-from ingest_standards import STANDARDS_DIR, create_database, ingest_standards_from_json  # noqa: E402
+from ingest_standards import (
+    STANDARDS_DIR,
+    create_database,
+    ingest_standards_from_json,
+)  # noqa: E402
 
 
 def _db_path() -> str:
@@ -104,6 +109,69 @@ def init_db() -> None:
     print(f"initialized DB at {db}")
 
 
+_PLAN_PATH = {
+    "awaiting_feedback": [],
+    "outlining": ["feedback_submitted"],
+    "awaiting_pick": ["feedback_submitted", "outlines_ready"],
+    "expired": ["feedback_submitted", "outlines_ready", "pick_expired"],
+    "authoring": ["feedback_submitted", "outlines_ready", "pick_made"],
+    "ready": ["feedback_submitted", "outlines_ready", "pick_made", "authoring_done"],
+    "printed": [
+        "feedback_submitted",
+        "outlines_ready",
+        "pick_made",
+        "authoring_done",
+        "marked_printed",
+    ],
+}
+
+
+def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") -> None:
+    """Create the student's week plan and walk it to ``status`` with legal loop events."""
+    import week_plan as wp  # noqa: E402
+    from loop_state import Event, advance  # noqa: E402
+    from outline_models import OutlineSet  # noqa: E402
+
+    def outline(i, difficulty):
+        return {
+            "option_id": i,
+            "title": f"Option {i}",
+            "hook": "A week to explore",
+            "difficulty": difficulty,
+            "standard_ids": ["VA.MATH.2.1"],
+        }
+
+    conn = sqlite3.connect(_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        plan = wp.create_plan(conn, "fam_local", student_id, week_start)
+        for kind in _PLAN_PATH[status]:
+            payload = {}
+            if kind == "outlines_ready":
+                wp.store_outlines(
+                    conn,
+                    "fam_local",
+                    plan.plan_id,
+                    OutlineSet.model_validate(
+                        {
+                            "options": [
+                                outline("a", "easier"),
+                                outline("b", "on_level"),
+                                outline("c", "stretch"),
+                            ]
+                        }
+                    ),
+                )
+            elif kind == "pick_made":
+                payload = {"option_id": "b"}
+            elif kind == "authoring_done":
+                payload = {"packet_id": f"e2e_{student_id}"}
+            advance(conn, "fam_local", plan.plan_id, Event(kind, payload=payload))
+    finally:
+        conn.close()
+    print(f"plan for {student_id} is {status}")
+
+
 def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
     """Set completed_at on a packet's feedback row to iso_timestamp."""
     db = _db_path()
@@ -140,6 +208,12 @@ if __name__ == "__main__":
             print("Usage: e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>")
             sys.exit(1)
         backdate_feedback(sys.argv[2], sys.argv[3])
+
+    elif cmd == "create_plan":
+        if len(sys.argv) not in (4, 5):
+            print("Usage: e2e_seed.py create_plan <student_id> <loop_status> [week_start]")
+            sys.exit(1)
+        create_plan(*sys.argv[2:])
 
     else:
         print(f"Unknown command: {cmd}")

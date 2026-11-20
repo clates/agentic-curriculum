@@ -86,3 +86,9 @@ export async function submitFeedback(
 export function backdateFeedback(packetId: string, isoTimestamp: string): void {
   seedScript('backdate_feedback', packetId, isoTimestamp);
 }
+
+/** Seed the child's week plan in a given loop state: awaiting_feedback, outlining, awaiting_pick,
+ * authoring, ready, printed or expired. */
+export function seedPlan(studentId: string, status: string, weekStart = '2026-01-05'): void {
+  seedScript('create_plan', studentId, status, weekStart);
+}
