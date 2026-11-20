@@ -88,23 +88,24 @@ def test_outbound_http_only_from_allowlisted_env_driven_modules():
 
 
 def test_hermetic_env_is_applied_to_every_test():
+    assert os.environ["LLM_BASE_URL"].startswith("http://127.0.0.1:")
     assert os.environ["OPENAI_BASE_URL"].startswith("http://127.0.0.1:")
     assert os.environ["NTFY_URL"].startswith("http://127.0.0.1:")
+    assert os.environ["OPENROUTER_API_KEY"] == "pytest-not-a-real-key"
     assert os.environ["OPENAI_API_KEY"] == "pytest-not-a-real-key"
 
 
-def test_unmocked_llm_call_fails_fast_and_locally():
+def test_unmocked_llm_call_fails_fast_and_locally(monkeypatch):
     """With the hermetic env, a forgotten mock means a refused local connection, not a real call."""
     import time
 
-    from openai import APIConnectionError, OpenAI
+    from llm import LLMConnectionError, default_client
 
-    client = OpenAI(
-        api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ["OPENAI_BASE_URL"], max_retries=0
-    )
+    monkeypatch.setenv("LLM_MAX_ATTEMPTS", "1")
+    client = default_client()
     started = time.monotonic()
-    with pytest.raises(APIConnectionError):
-        client.chat.completions.create(model="x", messages=[{"role": "user", "content": "hi"}])
+    with pytest.raises(LLMConnectionError):
+        client.complete("judge", [{"role": "user", "content": "hi"}])
     assert time.monotonic() - started < 5
 
 

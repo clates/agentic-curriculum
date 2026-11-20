@@ -10,6 +10,7 @@ The DB path is controlled by CURRICULUM_DB_PATH (same env var the backend uses).
 """
 
 import os
+import json
 import sqlite3
 import sys
 from pathlib import Path
@@ -19,7 +20,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from packet_store import save_weekly_packet  # noqa: E402
-from ingest_standards import STANDARDS_DIR, create_database, ingest_standards_from_json  # noqa: E402
+from ingest_standards import (
+    STANDARDS_DIR,
+    create_database,
+    ingest_standards_from_json,
+)  # noqa: E402
 
 
 def _db_path() -> str:
@@ -119,6 +124,21 @@ def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
     print(f"backdated feedback for {packet_id} to {iso_timestamp}")
 
 
+def llm_usage(student_id: str) -> None:
+    """Print the llm_usage ledger rows for a student as JSON."""
+    conn = sqlite3.connect(_db_path())
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            "SELECT task, model, prompt_tokens, completion_tokens, cost_usd, status "
+            "FROM llm_usage WHERE student_id = ? ORDER BY created_at",
+            (student_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    print(json.dumps([dict(r) for r in rows]))
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(__doc__)
@@ -140,6 +160,12 @@ if __name__ == "__main__":
             print("Usage: e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>")
             sys.exit(1)
         backdate_feedback(sys.argv[2], sys.argv[3])
+
+    elif cmd == "llm_usage":
+        if len(sys.argv) != 3:
+            print("Usage: e2e_seed.py llm_usage <student_id>")
+            sys.exit(1)
+        llm_usage(sys.argv[2])
 
     else:
         print(f"Unknown command: {cmd}")

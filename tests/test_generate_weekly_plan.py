@@ -164,6 +164,7 @@ def test_llm_entirely_unavailable_still_returns_five_distinct_days(run):
 
 
 def test_missing_api_key_is_a_value_error(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY")
     monkeypatch.delenv("OPENAI_API_KEY")
     with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
         agent.generate_weekly_plan("s1", 3, "Math")
@@ -289,3 +290,30 @@ def test_cost_cap_is_not_swallowed_into_fallback_content(run, monkeypatch):
             "s1", 3, "Math", usage=UsageContext(family_id="fam_x", student_id="s1")
         )
     assert fresh.calls == []  # stopped before any model call
+
+
+def test_legacy_openai_env_names_still_work(monkeypatch):
+    """Self-hosters with only OPENAI_API_KEY / OPENAI_MODEL keep working (M1.6b)."""
+    from llm import default_client
+
+    monkeypatch.delenv("OPENROUTER_API_KEY")
+    monkeypatch.delenv("LLM_BASE_URL")
+    monkeypatch.delenv("LLM_MODEL")
+    monkeypatch.setenv("OPENAI_MODEL", "legacy/model")
+    client = default_client()
+    assert client.provider.settings.api_key == "pytest-not-a-real-key"
+    assert client.provider.settings.base_url.startswith("http://127.0.0.1:")
+    assert client.config("lesson").model == "legacy/model"
+
+
+def test_new_llm_names_override_legacy(monkeypatch):
+    from llm import default_client
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "new-key")
+    monkeypatch.setenv("LLM_BASE_URL", "http://127.0.0.1:1/new")
+    monkeypatch.setenv("OPENAI_MODEL", "legacy/model")
+    monkeypatch.setenv("LLM_MODEL", "new/model")
+    client = default_client()
+    assert client.provider.settings.api_key == "new-key"
+    assert client.provider.settings.base_url == "http://127.0.0.1:1/new"
+    assert client.config("lesson").model == "new/model"
