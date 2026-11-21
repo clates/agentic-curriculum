@@ -24,6 +24,7 @@ from tests.test_weekdoc_kinds_classification import CASES as CLASSIFICATION
 from tests.test_weekdoc_kinds_comprehension import CASES as COMPREHENSION
     samples = {}
 from tests.test_weekdoc_kinds_math import CASES as MATH
+from tests.test_weekdoc_kinds_visual import CASES as VISUAL
 from tests.test_weekdoc_kinds_ordered import CASES as ORDERED
 from tests.test_weekdoc_kinds_visual import SAMPLES as VISUAL
 
