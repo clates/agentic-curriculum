@@ -5,6 +5,7 @@ from . import (  # noqa: F401
     kinds_blocks,
     kinds_classification,
     kinds_comprehension,
+    kinds_fractions,
     kinds_math,
     kinds_ordered,
 )
