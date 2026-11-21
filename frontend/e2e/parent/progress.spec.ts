@@ -2,10 +2,26 @@
  * M10.8: plain-language progress on a phone, against the real API with a seeded child.
  * Has down / working on / coming up, plus the last four weeks. No standard ids on screen.
  */
+import type { Page } from '@playwright/test';
 import { test, expect } from '../fixtures/test';
 import { createStudent, seedProgress } from '../fixtures/api';
 import { expectNoBannedWords, expectNoViolations, uniqueId } from '../fixtures/parent';
 import { shot } from '../fixtures/shots';
+
+/** Open one child's progress. The picker only exists when the family has several children; with
+ * one child that child is already showing, so there is nothing to tap. */
+async function openChild(page: Page, name: string) {
+  const chip = page.getByRole('radio', { name, exact: true });
+  await expect(page.getByRole('heading', { name: 'How it’s going' })).toBeVisible({
+    timeout: 20_000,
+  });
+  await expect(
+    page.getByTestId('progress-sentence').or(page.locator('main h2').first())
+  ).toBeVisible({
+    timeout: 20_000,
+  });
+  if (await chip.count()) await chip.check({ force: true });
+}
 
 async function seedChild(request: Parameters<typeof createStudent>[0], prefix: string) {
   const id = uniqueId(prefix);
@@ -23,8 +39,7 @@ test.describe('How it’s going (real API)', () => {
     seedProgress(id);
 
     await page.goto('/how-its-going');
-    // Several children share the test database: pick ours.
-    await page.getByText(name, { exact: true }).click({ timeout: 20_000 });
+    await openChild(page, name); // several children share the test database: pick ours
 
     await expect(page.getByTestId('progress-sentence')).toContainText(
       `${name} has 2 skills going well`,
@@ -48,7 +63,7 @@ test.describe('How it’s going (real API)', () => {
   test('a child with no history sees what will appear and when', async ({ page, request }) => {
     const { name } = await seedChild(request, 'pn');
     await page.goto('/how-its-going');
-    await page.getByText(name, { exact: true }).click({ timeout: 20_000 });
+    await openChild(page, name);
     await expect(
       page.getByRole('heading', { name: `Nothing to show for ${name} yet` })
     ).toBeVisible();
