@@ -38,8 +38,10 @@ from feedback_processor import (
 from feedback_models import FeedbackResponse, SubmitFeedbackRequest
 from feedback_service import FeedbackError, apply_feedback
 from curriculum_graph import load_from_db
-from progress_summary import build_progress_summary
 from migrations import apply_migrations
+from this_week import this_week_cards, first_name_of
+from prep_check_cards import check_cards
+from progress_summary import build_progress_summary
 from week_store import get_week
 from weekdoc.render import render_packet, render_prep_sheet, render_teacher_guide
 from worksheet_html_renderer import build_print_packet_html
@@ -316,6 +318,30 @@ def read_student(student_id: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
     return profile
+
+
+@app.get("/this-week")
+def read_this_week():
+    """One card per child with the single next step for the week (M10.4)."""
+    conn = sqlite3.connect(get_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        # AUTH_MODE=none: the one local family until login exists.
+        return this_week_cards(conn, "fam_local", datetime.now(UTC).date())
+    finally:
+        conn.close()
+
+
+@app.get("/students/{student_id}/weekly-packets/{packet_id}/checks")
+def read_packet_checks(student_id: str, packet_id: str):
+    """The parent's check-by-check list for a finished week (empty if it has no structured checks)."""
+    profile = get_student_profile(student_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if get_weekly_packet(student_id, packet_id) is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+    first = first_name_of(profile.get("metadata_blob"))
+    return {"checks": check_cards(student_id, packet_id, first)}
 
 
 @app.get("/students", response_model=list[StudentResponse])

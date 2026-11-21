@@ -1,0 +1,37 @@
+/**
+ * Technical terms a parent should never read. Matched as whole words, case-insensitive.
+ * Shared by `scripts/lint-copy.mjs` (reads this list as text) and the browser tests.
+ */
+export const BANNED_WORDS = [
+  'standard',
+  'standards',
+  'mastery',
+  'mastered',
+  'scaffold',
+  'scaffolding',
+  'schema',
+  'llm',
+  'prompt',
+  'prompts',
+  'token',
+  'tokens',
+  'json',
+  'api',
+  'endpoint',
+  'payload',
+  'packet_id',
+  'item_ref',
+  'tenant',
+  'family_id',
+  'null',
+  'undefined',
+  'nan',
+  'exception',
+  'stack trace',
+  'http',
+  '404',
+  '500',
+  'backend',
+  'database',
+  'skill tree',
+] as const;
