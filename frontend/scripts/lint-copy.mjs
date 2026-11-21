@@ -51,7 +51,13 @@ function walk(dir) {
 }
 
 /** Parent screens: the new shell, states and every route/component added for them. */
-const TARGETS = ['lib/copy.ts', 'components/parent', 'app/week', 'app/this-week'];
+const TARGETS = [
+  'lib/copy.ts',
+  'components/parent',
+  'app/week',
+  'app/this-week',
+  'app/how-its-going',
+];
 
 export function targetFiles() {
   const files = [];

@@ -4,6 +4,7 @@ CLI seed helper for Playwright E2E tests.
 
 Usage:
   python scripts/e2e_seed.py create_packet <student_id> <packet_id>
+  python scripts/e2e_seed.py set_progress <student_id>
   python scripts/e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>
   python scripts/e2e_seed.py create_week <student_id> <packet_id>
   python scripts/e2e_seed.py create_plan <student_id> <loop_status> [week_start]
@@ -122,6 +123,48 @@ def init_db() -> None:
     print(f"initialized DB at {db}")
 
 
+def set_progress(student_id: str) -> None:
+    """Give a student a believable progress record from real standards: two going well, one
+    shaky and one needing work, all checked within the last four weeks."""
+    import re
+    from datetime import UTC, datetime, timedelta
+
+    from feedback_processor import process_mastery_feedback  # noqa: E402
+
+    conn = sqlite3.connect(_db_path())
+    try:
+        rows = conn.execute(
+            "SELECT standard_id, description FROM standards WHERE grade_level = 2 "
+            "AND subject IN ('Math', 'Mathematics', 'Science') ORDER BY standard_id"
+        ).fetchall()
+        # Short, plain descriptions only, so the seeded screen reads like real life.
+        clean = [
+            sid
+            for sid, desc in rows
+            if desc
+            and 20 < len(desc) < 90
+            and not re.search(r"standard|schema|api|json", desc, re.I)
+        ]
+        if len(clean) < 4:
+            raise SystemExit("not enough standards to seed progress")
+        a, b, c, d = clean[:4]
+        now = datetime.now(UTC)
+
+        def day(n):
+            return (now - timedelta(days=n)).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+        blob = json.dumps({"mastered_standards": [], "developing_standards": []})
+        blob = process_mastery_feedback(blob, {a: "MASTERED", b: "MASTERED"}, day(9), "e2e_p1")
+        blob = process_mastery_feedback(blob, {c: "DEVELOPING"}, day(3), "e2e_p2")
+        blob = process_mastery_feedback(blob, {d: "STRUGGLING"}, day(2), "e2e_p3")
+        conn.execute(
+            "UPDATE student_profiles SET progress_blob = ? WHERE student_id = ?", (blob, student_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    print(f"progress seeded for {student_id}")
+
 _PLAN_PATH = {
     "awaiting_feedback": [],
     "outlining": ["feedback_submitted"],
@@ -236,6 +279,12 @@ if __name__ == "__main__":
             print("Usage: e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>")
             sys.exit(1)
         backdate_feedback(sys.argv[2], sys.argv[3])
+
+    elif cmd == "set_progress":
+        if len(sys.argv) != 3:
+            print("Usage: e2e_seed.py set_progress <student_id>")
+            sys.exit(1)
+        set_progress(sys.argv[2])
 
     elif cmd == "create_week":
         if len(sys.argv) != 4:

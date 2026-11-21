@@ -88,6 +88,11 @@ export function backdateFeedback(packetId: string, isoTimestamp: string): void {
   seedScript('backdate_feedback', packetId, isoTimestamp);
 }
 
+/** Give the child a progress record: two skills going well, one shaky, one needing work. */
+export function seedProgress(studentId: string): void {
+  seedScript('set_progress', studentId);
+}
+
 /** Seed the child's week plan in a given loop state: awaiting_feedback, outlining, awaiting_pick,
  * authoring, ready, printed or expired. */
 // The default week is far in the future so the seeded plan is always the child's latest, even if a

@@ -8,7 +8,7 @@ import { copy } from '@/lib/copy';
 const TABS = [
   { href: '/week', label: copy.nav.thisWeek, icon: 'M5 4h14v16H5zM5 9h14M9 2v4M15 2v4' },
   {
-    href: '/progress',
+    href: '/how-its-going',
     label: copy.nav.progress,
     icon: 'M4 19V9m6 10V5m6 14v-7m4 7H2',
   },
