@@ -213,19 +213,17 @@ def real_standards_db(tmp_path_factory):
         yield db_path, logic
 
 
-def test_134_precondition_blank_document_rows_exist_and_come_first(real_standards_db):
+def test_134_root_cause_ingestion_no_longer_stores_blank_document_rows(real_standards_db):
     db_path, _ = real_standards_db
     conn = sqlite3.connect(db_path)
     try:
-        blank_first = conn.execute(
-            """SELECT COUNT(*) FROM standards s
-               WHERE TRIM(COALESCE(description, '')) = ''
-                 AND rowid = (SELECT MIN(rowid) FROM standards s2
-                              WHERE s2.subject = s.subject AND s2.grade_level = s.grade_level)"""
+        blank_rows = conn.execute(
+            "SELECT COUNT(*) FROM standards WHERE TRIM(COALESCE(description, '')) = ''"
         ).fetchone()[0]
     finally:
         conn.close()
-    assert blank_first > 0, "the data shape that caused #134 is no longer present; revisit"
+    # M11.4a fixed ingestion; the picker-level guard below stays as defense in depth.
+    assert blank_rows == 0
 
 
 def test_134_no_subject_or_grade_starts_with_a_blank_standard(real_standards_db):
