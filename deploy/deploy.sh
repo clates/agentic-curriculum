@@ -40,12 +40,18 @@ compose up -d --remove-orphans
 
 healthy=""
 for _ in $(seq 1 30); do
-  if curl -fsS -o /dev/null http://127.0.0.1:3000/; then healthy=1; break; fi
+  if curl -fsS -o /dev/null http://127.0.0.1:3000/api/health; then healthy=1; break; fi
   sleep 4
 done
 
 if [[ -n "$healthy" ]]; then
   echo "$SHA" > current_sha
+  # Keep only the new image and the previous one (for rollback). Each image is ~3 GB, and the
+  # plain `image prune` only removes dangling layers, so old tags used to fill the disk.
+  docker images --format '{{.Repository}}:{{.Tag}}' \
+    | grep -F "$IMAGE_REPO:" \
+    | grep -v -F -e "$IMAGE_REPO:$SHA" ${PREV:+-e "$IMAGE_REPO:$PREV"} \
+    | xargs -r docker rmi >/dev/null 2>&1 || true
   docker image prune -f >/dev/null
   echo "deploy ok: $SHA"
   exit 0
