@@ -12,15 +12,16 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 try:  # Prefer package-relative import when available
-    from .db_utils import DB_FILE  # type: ignore
+    from .db_utils import DB_FILE, ensure_student  # type: ignore
     from .migrations import apply_migrations  # type: ignore
 except ImportError:  # Fallback for direct script execution
     sys.path.insert(0, os.path.dirname(__file__))
-    from db_utils import DB_FILE  # type: ignore
+    from db_utils import DB_FILE, ensure_student  # type: ignore
     from migrations import apply_migrations  # type: ignore
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 READY_STATUS = "ready"
+DEFAULT_FAMILY = "fam_local"  # AUTH_MODE=none: the one local family
 
 _SCHEMA_INITIALIZED: str | None = None
 
@@ -231,6 +232,7 @@ def save_weekly_packet(
         raise ValueError("weekly_plan must include plan_id")
 
     with _get_connection() as conn:
+        ensure_student(DEFAULT_FAMILY, weekly_plan.get("student_id"), conn)
         _insert_weekly_packet(conn, weekly_plan, status)
         conn.execute("DELETE FROM daily_lessons WHERE packet_id = ?", (packet_id,))
         _persist_daily_lessons(conn, packet_id, weekly_plan.get("daily_plan", []))

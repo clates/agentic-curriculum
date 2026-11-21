@@ -253,6 +253,47 @@ def update_student(
         conn.close()
 
 
+def ensure_student(family_id: str, student_id: str, conn: sqlite3.Connection | None = None) -> bool:
+    """Make sure a (family_id, student_id) profile row exists; return True if it was created.
+
+    Packets, feedback and plans carry a composite foreign key to student_profiles (migration
+    0008, decision D2), so a packet can only be saved for a student that has a profile. The real
+    save paths (packet_store.save_weekly_packet, week_store.save_week) call this first: when a
+    packet is saved for a student the app has not seen, a minimal profile row (empty progress,
+    empty plan rules and metadata) is created so the save succeeds, and the profile can be
+    filled in later. An existing row is never modified.
+
+    Pass ``conn`` to join the caller's transaction (the caller commits); without it a short
+    transaction of its own is used. The family must already exist (foreign key); a student id
+    that belongs to a different family is not stolen: student_id is the profile primary key, so
+    the insert fails with sqlite3.IntegrityError.
+    """
+    own = conn is None
+    if own:
+        conn = sqlite3.connect(DB_FILE)
+        conn.execute("PRAGMA busy_timeout = 5000")
+        conn.execute("PRAGMA foreign_keys = ON")
+    try:
+        cur = conn.execute(
+            "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob,"
+            " metadata_blob, family_id) SELECT ?, ?, '{}', '{}', ? WHERE NOT EXISTS ("
+            "SELECT 1 FROM student_profiles WHERE family_id = ? AND student_id = ?)",
+            (
+                student_id,
+                json.dumps({"mastered_standards": [], "developing_standards": []}),
+                family_id,
+                family_id,
+                student_id,
+            ),
+        )
+        if own:
+            conn.commit()
+        return cur.rowcount > 0
+    finally:
+        if own:
+            conn.close()
+
+
 def delete_student(student_id: str) -> bool:
     """
     Delete a student profile from the database.

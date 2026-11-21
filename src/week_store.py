@@ -20,10 +20,12 @@ from typing import Any
 
 try:
     from . import packet_store as _ps
+    from .db_utils import ensure_student
     from .weekdoc import WeekDoc, load_week
 except ImportError:  # script/uvicorn context: src/ is on sys.path
     sys.path.insert(0, os.path.dirname(__file__))
     import packet_store as _ps  # type: ignore
+    from db_utils import ensure_student  # type: ignore
     from weekdoc import WeekDoc, load_week  # type: ignore
 
 DEFAULT_FAMILY = "fam_local"
@@ -86,6 +88,7 @@ def save_week(
     conn = _ps._get_connection()
     try:
         with conn:  # one transaction: all three writes or none
+            ensure_student(family_id, student_id, conn)
             cur = conn.execute(
                 """
                 INSERT INTO weekly_packets (packet_id, student_id, grade_level, subject, week_of,
