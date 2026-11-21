@@ -5,7 +5,11 @@ from . import (  # noqa: F401
     kinds_blocks,
     kinds_classification,
     kinds_comprehension,
+<<<<<<< HEAD
     kinds_fractions,
+=======
+    kinds_handwriting,
+>>>>>>> o/m2-9c
     kinds_math,
     kinds_ordered,
 )
