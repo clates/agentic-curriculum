@@ -71,7 +71,8 @@ function completion(model, content) {
     created: Math.floor(Date.now() / 1000),
     model: model ?? 'e2e-stub',
     choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
-    usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+    // Non-zero so the backend's usage ledger (llm_usage) is exercised end to end.
+    usage: { prompt_tokens: 120, completion_tokens: 60, total_tokens: 180, cost: 0.0002 },
   };
 }
 

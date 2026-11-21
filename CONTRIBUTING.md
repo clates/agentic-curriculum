@@ -39,12 +39,12 @@ The E2E suite spawns its own backend on port 8182 against an isolated database
 
 ### Tests never call a real LLM or ntfy
 
-- **pytest**: `tests/conftest.py` sets a fake `OPENAI_API_KEY` and points `OPENAI_BASE_URL` /
+- **pytest**: `tests/conftest.py` sets a fake `OPENROUTER_API_KEY` and points `LLM_BASE_URL` /
   `NTFY_URL` at a dead local port for every test, and blocks non-loopback sockets.
   `tests/test_no_external_calls.py` fails if `src/` gains a second `OpenAI(` client or a new
-  outbound-HTTP module. Mock `agent.OpenAI` with `tests/llm_fakes.FakeOpenAI`.
+  outbound-HTTP module. Fake the model with `tests/llm_fakes.FakeProvider` + `fake_client()`.
 - **E2E**: `global-setup.ts` starts `frontend/e2e/llm-stub/server.mjs` (127.0.0.1:8183, override
-  with `E2E_LLM_STUB_PORT`) and spawns the backend with `OPENAI_*`/`NTFY_URL` forced to it,
+  with `E2E_LLM_STUB_PORT`) and spawns the backend with `LLM_*`/`OPENAI_*`/`NTFY_URL` forced to it,
   overriding your shell. Backend log: `/tmp/playwright-backend.log`; stub log:
   `/tmp/playwright-llm-stub.log`; specs assert on calls with `e2e/fixtures/stub.ts`.
 - **New canned scenario**: edit `frontend/e2e/llm-stub/fixtures/*` (shared with pytest), or add a
@@ -96,7 +96,8 @@ Full rules: [`AGENTS.md` §7](AGENTS.md#7-git-workflow-rules).
 | Path | Responsibility |
 |------|----------------|
 | `src/main.py` | FastAPI app — students, weekly packets, feedback, artifacts |
-| `src/agent.py` | OpenAI-driven weekly plan generation (needs `OPENAI_API_KEY`) |
+| `src/llm/` | Model layer: OpenRouter provider, per-task models, retries, structured output, usage ledger |
+| `src/agent.py` | LLM-driven weekly plan generation via `src/llm` (needs `OPENROUTER_API_KEY`) |
 | `src/trio_generator.py` | Generates 3 candidate plans post-feedback; notifies via `src/ntfy.py` |
 | `src/feedback_processor.py` | Applies mastery/quantity feedback to a student's stored blobs |
 | `src/worksheet_html_renderer.py` | HTML print-packet engine (preferred for printables) |
@@ -123,15 +124,33 @@ Live docs at <http://127.0.0.1:8000/docs> when the server runs; spec in
 **Curriculum** — `GET /curriculum/graph/{subject}`, `GET /students/{id}/progress-map/{subject}`
 **System** — `GET /health`, `GET /system/options`
 
+## Model layer and secrets
+
+All model calls go through `src/llm/` (OpenRouter by default). Tasks (scaffold, lesson, outline,
+author, judge, repair) map to models in `src/llm/models.json`; change a model by editing that file
+or setting `LLM_MODEL_<TASK>`. See `.env.example` for every variable.
+
+- **Key**: `OPENROUTER_API_KEY` (legacy `OPENAI_API_KEY` works). Put it in a git-ignored `.env`
+  or your shell; never commit it. The key is excluded from reprs, scrubbed from error messages
+  and from every log record (`src/llm/redact.py`), and tests assert it never appears in logs.
+- **Privacy routing**: a child's first name, grade, interests and the parent's notes are sent to
+  the provider. `LLM_PRIVACY_ROUTING=strict` restricts OpenRouter to endpoints with zero data
+  retention that do not train on prompts; `no-training` only forbids collection; `off` is the
+  provider default. Unset, it is `strict` when `AGENTIC_HOSTED=1` (the hosted deployment must set
+  this) and `off` for self-hosters.
+- **Spend**: every call is recorded in the `llm_usage` table (ids, tokens, cost, never text).
+  `LLM_CAP_FAMILY_MONTH_USD` stops a family's calls before they are made; unset means unlimited.
+- **Compare models**: `venv/bin/python scripts/taste_test.py --prompt-file p.txt --max-usd 0.50`.
+
 ## Docker
 
 ```bash
 docker build -t agentic-curriculum .
-docker run --rm -p 8000:8000 -e OPENAI_API_KEY="sk-..." agentic-curriculum
+docker run --rm -p 8000:8000 -e OPENROUTER_API_KEY="sk-or-..." agentic-curriculum
 ```
 
 The image builds the Next.js frontend, runs `ingest_standards.py` at build time so `curriculum.db`
-exists before boot, and starts Uvicorn. Optional env vars: `OPENAI_BASE_URL`, `OPENAI_MODEL`.
+exists before boot, and starts Uvicorn. Optional env vars: `LLM_BASE_URL`, `LLM_MODEL` (legacy `OPENAI_BASE_URL` / `OPENAI_MODEL` still work).
 Structured request logs are written to `/app/logs` inside the container. `GET /health` is the
 container healthcheck endpoint.
 

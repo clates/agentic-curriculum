@@ -38,28 +38,36 @@ def _source_files():
 
 
 def test_exactly_one_openai_client_and_it_honours_base_url():
+    """The only SDK client is the OpenRouter provider; agent.py and everyone else go through it."""
     constructions = []
     for path in _source_files():
         text = path.read_text(encoding="utf-8")
         for match in re.finditer(r"\bOpenAI\(", text):
             constructions.append((path.name, text[: match.start()].count("\n") + 1))
     assert [name for name, _ in constructions] == [
-        "agent.py"
-    ], f"expected exactly one OpenAI( construction in src/agent.py, found: {constructions}"
+        "openrouter.py"
+    ], f"expected exactly one OpenAI( construction, in src/llm/openrouter.py, found: {constructions}"
 
+    provider = (SRC / "llm" / "openrouter.py").read_text(encoding="utf-8")
+    assert re.search(r"OpenAI\(\s*api_key=[^)]*base_url=settings\.base_url", provider)
+    settings = (SRC / "llm" / "settings.py").read_text(encoding="utf-8")
+    for name in ("LLM_BASE_URL", "OPENAI_BASE_URL", "OPENROUTER_API_KEY", "OPENAI_API_KEY"):
+        assert f'"{name}"' in settings
+
+
+def test_agent_has_no_direct_sdk_or_completion_calls():
     agent = (SRC / "agent.py").read_text(encoding="utf-8")
-    assert 'os.environ.get("OPENAI_BASE_URL"' in agent
-    assert re.search(
-        r"OpenAI\(\s*api_key=[^)]*base_url=base_url", agent
-    ), "the OpenAI client must be built with base_url taken from OPENAI_BASE_URL"
-    assert 'os.environ.get("OPENAI_API_KEY")' in agent
+    assert "chat.completions" not in agent and "import openai" not in agent
+    assert "from openai" not in agent
 
 
 def test_no_other_llm_sdk_or_hardcoded_llm_host():
     offenders = []
     for path in _source_files():
         text = path.read_text(encoding="utf-8")
-        if OTHER_LLM_SDK_PATTERN.search(text) or HARDCODED_LLM_HOST_PATTERN.search(text):
+        # src/llm/settings.py is the one place that names the default provider host.
+        host_hit = HARDCODED_LLM_HOST_PATTERN.search(text) and path.name != "settings.py"
+        if OTHER_LLM_SDK_PATTERN.search(text) or host_hit:
             offenders.append(path.name)
     assert not offenders, f"unexpected LLM SDK / hardcoded LLM host in: {offenders}"
 
@@ -80,23 +88,24 @@ def test_outbound_http_only_from_allowlisted_env_driven_modules():
 
 
 def test_hermetic_env_is_applied_to_every_test():
+    assert os.environ["LLM_BASE_URL"].startswith("http://127.0.0.1:")
     assert os.environ["OPENAI_BASE_URL"].startswith("http://127.0.0.1:")
     assert os.environ["NTFY_URL"].startswith("http://127.0.0.1:")
+    assert os.environ["OPENROUTER_API_KEY"] == "pytest-not-a-real-key"
     assert os.environ["OPENAI_API_KEY"] == "pytest-not-a-real-key"
 
 
-def test_unmocked_llm_call_fails_fast_and_locally():
+def test_unmocked_llm_call_fails_fast_and_locally(monkeypatch):
     """With the hermetic env, a forgotten mock means a refused local connection, not a real call."""
     import time
 
-    from openai import APIConnectionError, OpenAI
+    from llm import LLMConnectionError, default_client
 
-    client = OpenAI(
-        api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ["OPENAI_BASE_URL"], max_retries=0
-    )
+    monkeypatch.setenv("LLM_MAX_ATTEMPTS", "1")
+    client = default_client()
     started = time.monotonic()
-    with pytest.raises(APIConnectionError):
-        client.chat.completions.create(model="x", messages=[{"role": "user", "content": "hi"}])
+    with pytest.raises(LLMConnectionError):
+        client.complete("judge", [{"role": "user", "content": "hi"}])
     assert time.monotonic() - started < 5
 
 
