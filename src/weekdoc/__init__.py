@@ -2,6 +2,7 @@
 
 from .kinds import HOSTED_KINDS, ItemRef, UnknownKindError, item_refs  # noqa: F401
 from . import (  # noqa: F401
+    kinds_blocks,
     kinds_classification,
     kinds_comprehension,
     kinds_math,
