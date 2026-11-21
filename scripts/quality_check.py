@@ -554,6 +554,7 @@ def run_stage(
     messages: list[dict],
     model_cls: type[BaseModel],
     max_repairs: int,
+    check: Any = None,
 ) -> dict:
     """One generate_structured run; returns per-call stats and per-round validation errors."""
     provider.set_label(label)
@@ -567,6 +568,7 @@ def run_stage(
             client=client,
             max_repairs=max_repairs,
             usage=UsageContext(family_id="quality_check"),
+            check=check,
         )
         parsed = res.parsed
     except StructuredOutputError as exc:
@@ -579,7 +581,7 @@ def run_stage(
     calls = [c for c in provider.calls if c.label == label]
     rounds = []
     for i, c in enumerate(calls):
-        _, err = _try_parse(c.text, model_cls)
+        _, err = _try_parse(c.text, model_cls, check)
         rounds.append(
             {
                 "call": i,
