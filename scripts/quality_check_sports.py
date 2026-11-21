@@ -54,6 +54,54 @@ MODELS = {
     "muse-ember": "meta/muse-ember",
 }
 
+# Vendor-published sampling settings (looked up 2026-11-21). temperature None = send none and let the
+# provider default apply (nothing published, or the API only accepts it with reasoning off).
+# top_p / top_k go out in the request body only where the vendor publishes them.
+SAMPLING: dict[str, dict[str, Any]] = {
+    "hy4": {"temperature": 0.9, "top_p": 1.0, "src": "Hy4 Preview model card (HF)"},
+    "deepseek-v4-flash": {"temperature": 1.0, "top_p": 1.0, "src": "DeepSeek V4 Flash 0731 notes"},
+    "glm-5.3-flash": {"temperature": 1.0, "top_p": 0.95, "src": "docs.z.ai GLM-5.3-Flash guide"},
+    "glm-5.3": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "src": "third-party docs (same family as Flash)",
+    },
+    "qwen3.8-flash": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "src": "Qwen3.8-Flash-Next card, thinking mode (match uncertain)",
+    },
+    "gpt-6-luna": {
+        "temperature": None,
+        "src": "none published; temperature only valid with reasoning off",
+    },
+    "muse-ember": {"temperature": None, "src": "none found"},
+}
+
+
+class SamplingProvider:
+    """Overrides temperature (author AND repair calls) and adds top_p/top_k per model."""
+
+    def __init__(self, inner: Any, by_model: dict[str, dict[str, Any]]) -> None:
+        self._inner = inner
+        self._by_model = by_model
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
+
+    def complete(self, request: Any) -> Any:
+        from dataclasses import replace
+
+        cfg = self._by_model.get(request.model)
+        if cfg is None:
+            return self._inner.complete(request)
+        extra = {**request.extra_body, **{k: cfg[k] for k in ("top_p", "top_k") if k in cfg}}
+        return self._inner.complete(
+            replace(request, temperature=cfg.get("temperature"), extra_body=extra)
+        )
+
+
 STUDENT = {
     "first_name": "Christopher",
     "age": 6,
@@ -171,13 +219,31 @@ def completeness_problem(week: AuthoredWeek) -> str | None:
     return "; ".join(problems[:6]) or None
 
 
-def _ladder(model_id: str) -> list[tuple[str | None, int]]:
-    """(structured mode, max_tokens) attempts; fall down only on request-level provider errors."""
-    return [(None, 64000), ("json_object", 64000), ("json_object", 32000), ("json_object", 16000)]
+def _ladder(max_out: int) -> list[tuple[str | None, int]]:
+    """(structured mode, max_tokens) attempts. The first rung asks for the model's own maximum
+    output (nothing of ours caps it); later rungs fall down only on request-level provider errors.
+    """
+    return [
+        (None, max_out),
+        ("json_object", max_out),
+        ("json_object", max_out // 2),
+        ("json_object", 16000),
+    ]
 
 
-def _stage_with_ladder(model_id, provider, label, messages, model_cls, repairs, check, notes):
-    for rung, (mode, tokens) in enumerate(_ladder(model_id)):
+def model_max_output(out_dir: Path, model_id: str) -> int:
+    """The model's advertised max completion tokens from OpenRouter's list (cached in work/)."""
+    data = json.loads((out_dir / "work" / "models_list.json").read_text())["data"]
+    for m in data:
+        if m["id"] == model_id:
+            return int((m.get("top_provider") or {}).get("max_completion_tokens") or 32000)
+    return 32000
+
+
+def _stage_with_ladder(
+    model_id, provider, label, messages, model_cls, repairs, check, notes, max_out
+):
+    for rung, (mode, tokens) in enumerate(_ladder(max_out)):
         client = make_client(model_id, provider, max_tokens=tokens, structured=mode)
         client._env["LLM_TIMEOUT_S_AUTHOR"] = "1500"
         client._env["LLM_TIMEOUT_S_REPAIR"] = "1500"
@@ -197,7 +263,9 @@ def _stage_with_ladder(model_id, provider, label, messages, model_cls, repairs, 
     return res
 
 
-def author(model_id: str, provider, common: str, samples: dict, max_repairs: int) -> dict:
+def author(
+    model_id: str, provider, common: str, samples: dict, max_repairs: int, max_out: int
+) -> dict:
     notes: list[str] = []
     rec: dict[str, Any] = {"model": model_id, "mode": "menu", "notes": notes, "stages": {}}
     stages = []
@@ -218,6 +286,7 @@ def author(model_id: str, provider, common: str, samples: dict, max_repairs: int
         max_repairs,
         None,
         notes,
+        max_out,
     )
     stages.append(s1)
     rec["stages"]["plan"] = {k: v for k, v in s1.items() if k not in ("parsed", "raw_texts")}
@@ -244,6 +313,7 @@ def author(model_id: str, provider, common: str, samples: dict, max_repairs: int
         max_repairs,
         completeness_problem,
         notes,
+        max_out,
     )
     stages.append(s2)
     rec["stages"]["week"] = {k: v for k, v in s2.items() if k not in ("parsed", "raw_texts")}
@@ -262,6 +332,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     (work / "prompt_common.txt").write_text(common)
     samples = sample_data()
     provider = real_provider(out, args.max_usd)
+    if args.sampling == "recommended":
+        provider = SamplingProvider(provider, {MODELS[k]: v for k, v in SAMPLING.items()})
     keys = [k.strip() for k in args.models.split(",")] if args.models else list(MODELS)
 
     def one(key: str) -> tuple[str, dict]:
@@ -270,7 +342,14 @@ def cmd_run(args: argparse.Namespace) -> int:
             return key, json.loads(path.read_text())
         print(f"== start {key} {MODELS[key]}", flush=True)
         try:
-            rec = author(MODELS[key], provider, common, samples, args.max_repairs)
+            rec = author(
+                MODELS[key],
+                provider,
+                common,
+                samples,
+                args.max_repairs,
+                model_max_output(out, MODELS[key]),
+            )
         except BudgetStop as exc:
             rec = {"model": MODELS[key], "valid": False, "final_error": f"BUDGET STOP: {exc}"}
         except Exception as exc:  # one model's crash must not stop the others
@@ -280,6 +359,11 @@ def cmd_run(args: argparse.Namespace) -> int:
                 "final_error": f"{type(exc).__name__}: {exc}",
             }
         rec["key"] = key
+        rec["sampling"] = (
+            {"mode": "forced", "author_temperature": 0.5, "repair_temperature": 0.0}
+            if args.sampling == "forced"
+            else {"mode": "recommended", **SAMPLING[key]}
+        )
         path.write_text(json.dumps(rec, indent=1, ensure_ascii=False))
         print(
             f"== done {key} valid={rec['valid']} repairs={rec.get('repair_rounds')} "
@@ -347,10 +431,11 @@ def feedback_html(code: str, title: str) -> str:
 
 
 def plan_page_html(code: str, week: dict, plan: dict | None) -> str:
+    sub = lambda t: str(t).replace("{{student_name}}", "Christopher")  # noqa: E731
     body = f"<h1>Packet {html.escape(code)}: week plan</h1>"
-    body += f"<h2>{html.escape(week['title'])}</h2>"
-    body += f"<p><b>Narrator:</b> {html.escape(week['narrator'])}</p>"
-    body += f"<p><b>Arc:</b> {html.escape(week['arc'])}</p>"
+    body += f"<h2>{html.escape(sub(week['title']))}</h2>"
+    body += f"<p><b>Narrator:</b> {html.escape(sub(week['narrator']))}</p>"
+    body += f"<p><b>Arc:</b> {html.escape(sub(week['arc']))}</p>"
     focus = {}
     for d in (plan or {}).get("days", []):
         for w in d["worksheets"]:
@@ -359,12 +444,12 @@ def plan_page_html(code: str, week: dict, plan: dict | None) -> str:
     for d in week["days"]:
         ws = "".join(
             f"<div><code>{html.escape(w['kind'])}</code> &mdash; "
-            f"{html.escape(focus.get(w['id'], w.get('title', '') or ''))}</div>"
+            f"{html.escape(sub(focus.get(w['id'], w.get('title', '') or '')))}</div>"
             for w in d["worksheets"]
         )
         rows += (
             f"<tr><td style='width:14%'><b>{d['day']}</b></td>"
-            f"<td style='width:26%'>{html.escape(d['title'])}</td><td>{ws}</td>"
+            f"<td style='width:26%'>{html.escape(sub(d['title']))}</td><td>{ws}</td>"
             f"<td style='width:18%;font-size:7.5pt'>{html.escape(', '.join(d['standards']))}</td></tr>"
         )
     body += f"<table><tr><th>Day</th><th>Title</th><th>Worksheets (kind: focus)</th><th>Standards</th></tr>{rows}</table>"
@@ -373,7 +458,10 @@ def plan_page_html(code: str, week: dict, plan: dict | None) -> str:
         "Only Monday and Tuesday are printed in this packet.</p>"
     )
     return qc._page_doc(
-        body, f"Plan {code}", extra_css="code{font-size:8.5pt;background:#eee;padding:0 3px}"
+        body,
+        f"Plan {code}",
+        extra_css="code{font-size:7.5pt;background:#eee;padding:0 3px} td,th{font-size:8pt;padding:3px 5px} body{line-height:1.25} h1{font-size:18pt} h2{font-size:12pt}",
+        page_css="@page { size: letter; margin: 0.35in 0.45in; }",
     )
 
 
@@ -395,13 +483,22 @@ def cmd_render(args: argparse.Namespace) -> int:
     rng = random.Random(20261121)
     order = list(recs)
     rng.shuffle(order)
-    codes = {k: "ABCDEFGH"[i] for i, k in enumerate(order)}
+    codes = {k: args.code_prefix + "ABCDEFGH"[i] for i, k in enumerate(order)}
     key_rows = []
     parts: list[Path] = []
     tmp = out / "tmp"
     tmp.mkdir(exist_ok=True)
     db = qc.ensure_db(out)
     with qc.Pdfer() as pdfer:
+        cover = qc._page_doc(
+            "<h1>Sports Reporter Week: blind comparison</h1>"
+            f"<p><b>{html.escape(args.note or 'Same settings for every model.')}</b></p>"
+            "<p>Each packet: week plan, Monday, Tuesday, feedback sheet. "
+            "Model names are in KEY.md; open it after marking.</p>",
+            "cover",
+        )
+        pdfer.pdf(cover, tmp / "cover.pdf")
+        parts.append(tmp / "cover.pdf")
         for k in sorted(order, key=lambda k: codes[k]):
             rec, code = recs[k], codes[k]
             folder = out / f"packet-{code}"
@@ -418,6 +515,8 @@ def cmd_render(args: argparse.Namespace) -> int:
                 "tokens": f"{rec.get('prompt_tokens')}/{rec.get('completion_tokens')}",
                 "notes": rec.get("notes"),
                 "final_error": rec.get("final_error"),
+                "stopped": rec.get("stopped", False),
+                "sampling": rec.get("sampling"),
             }
             slim = {kk: v for kk, v in rec.items() if kk not in ("week_raw", "plan_raw", "week")}
             (folder / "run_record.json").write_text(json.dumps(slim, indent=1))
@@ -462,7 +561,7 @@ def cmd_render(args: argparse.Namespace) -> int:
                 ]
             else:
                 div = qc._page_doc(
-                    f"<h1>Packet {code}</h1><p><b>No valid week produced</b> (bust after repairs).</p>",
+                    f"<h1>Packet {code}</h1><p><b>No valid week produced</b> (bust after repairs, or stopped early: see KEY.md).</p>",
                     "d",
                 )
                 pdfer.pdf(div, tmp / f"div_{code}.pdf")
@@ -488,8 +587,9 @@ def cmd_render(args: argparse.Namespace) -> int:
     lines += ["", f"Total: ${sum((r['cost_usd'] or 0) for r in key_rows):.4f}", ""]
     for r in key_rows:
         lines.append(f"## {r['code']} {r['model']}")
+        lines.append(f"- sampling: {json.dumps(r.get('sampling'))}")
         if not r["valid"]:
-            lines.append(f"BUST: {r['final_error']}")
+            lines.append(("STOPPED: " if r.get("stopped") else "BUST: ") + str(r["final_error"]))
         if r.get("notes"):
             lines += [f"- {n}" for n in r["notes"]]
         if r.get("facts_used"):
@@ -522,6 +622,16 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--max-repairs", type=int, default=4)
             p.add_argument("--max-usd", type=float, default=1e9)
             p.add_argument("--redo", action="store_true")
+            p.add_argument(
+                "--sampling",
+                choices=["forced", "recommended"],
+                default="forced",
+                help="forced = harness defaults (0.5 author / 0.0 repair); "
+                "recommended = each vendor's published settings",
+            )
+        else:
+            p.add_argument("--code-prefix", default="")
+            p.add_argument("--note", default="")
     args = ap.parse_args(argv)
     return {"run": cmd_run, "render": cmd_render}[args.cmd](args)
 
