@@ -37,6 +37,7 @@ from feedback_processor import (
 )
 from feedback_models import FeedbackResponse, SubmitFeedbackRequest
 from curriculum_graph import load_from_db
+from migrations import apply_migrations
 from worksheet_html_renderer import build_print_packet_html
 
 import json
@@ -44,6 +45,7 @@ import logging
 import os
 import sys
 from collections import OrderedDict
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from email.utils import formatdate
 from pathlib import Path
@@ -62,7 +64,14 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-app = FastAPI()
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """Run pending schema migrations before serving requests."""
+    apply_migrations(get_db_path())
+    yield
+
+
+app = FastAPI(lifespan=_lifespan)
 
 
 def _project_root_path() -> Path:

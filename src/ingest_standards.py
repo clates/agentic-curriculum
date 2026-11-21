@@ -13,61 +13,20 @@ import sqlite3
 import json
 import os
 import glob
+import sys
 
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
 STANDARDS_DIR = os.path.join(PROJECT_ROOT, "standards_data")
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from migrations import apply_migrations  # noqa: E402
+
 
 def create_database():
-    """Create the SQLite database and tables if they don't exist."""
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-
-    # Create standards table
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS standards (
-            standard_id TEXT PRIMARY KEY,
-            source TEXT,
-            subject TEXT,
-            grade_level INTEGER,
-            description TEXT,
-            json_blob TEXT
-        )
-    """
-    )
-
-    # Create student_profiles table
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS student_profiles (
-            student_id TEXT PRIMARY KEY,
-            progress_blob TEXT,
-            plan_rules_blob TEXT,
-            metadata_blob TEXT
-        )
-    """
-    )
-
-    # Create packet_feedback table
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS packet_feedback (
-            feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            packet_id TEXT NOT NULL,
-            student_id TEXT NOT NULL,
-            completed_at TEXT NOT NULL,
-            mastery_feedback_blob TEXT,
-            quantity_feedback INTEGER,
-            FOREIGN KEY (student_id) REFERENCES student_profiles(student_id)
-        )
-    """
-    )
-
-    conn.commit()
-    conn.close()
+    """Create the SQLite database and bring its schema up to date via the migration runner."""
+    apply_migrations(DB_FILE)
     print(f"Database '{DB_FILE}' created successfully with tables.")
 
 
