@@ -22,9 +22,11 @@ from src.weekdoc.render import render_packet, render_prep_sheet, render_teacher_
 from tests.test_weekdoc_kinds_blocks import CASES as BLOCKS
 from tests.test_weekdoc_kinds_classification import CASES as CLASSIFICATION
 from tests.test_weekdoc_kinds_comprehension import CASES as COMPREHENSION
-    samples = {}
+from tests.test_weekdoc_kinds_crafts import CASES as CRAFTS
+from tests.test_weekdoc_kinds_fractions import CASES as FRACTIONS
+from tests.test_weekdoc_kinds_graphs import CASES as GRAPHS
+from tests.test_weekdoc_kinds_handwriting import CASES as HANDWRITING
 from tests.test_weekdoc_kinds_math import CASES as MATH
-from tests.test_weekdoc_kinds_visual import CASES as VISUAL
 from tests.test_weekdoc_kinds_ordered import CASES as ORDERED
 from tests.test_weekdoc_kinds_visual import SAMPLES as VISUAL
 
@@ -91,7 +93,18 @@ def test_without_a_name_nothing_leaks_the_token(week):
 
 
 def test_a_week_using_every_hosted_kind_validates_against_the_schema_and_renders():
-    samples = {**COMPREHENSION, **CLASSIFICATION, **ORDERED, **MATH, **BLOCKS, **FRACTIONS, **HANDWRITING, **GRAPHS, **VISUAL}
+    samples = {
+        **COMPREHENSION,
+        **CLASSIFICATION,
+        **ORDERED,
+        **MATH,
+        **BLOCKS,
+        **FRACTIONS,
+        **HANDWRITING,
+        **GRAPHS,
+        **VISUAL,
+        **CRAFTS,
+    }
     samples["storyPanel"] = {"who": "Zara", "text": "A beat."}
     assert set(samples) == set(HOSTED_KINDS), set(HOSTED_KINDS) ^ set(samples)
     worksheets = [

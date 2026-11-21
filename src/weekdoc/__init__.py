@@ -5,15 +5,10 @@ from . import (  # noqa: F401
     kinds_blocks,
     kinds_classification,
     kinds_comprehension,
-<<<<<<< HEAD
-<<<<<<< HEAD
+    kinds_crafts,
     kinds_fractions,
-=======
-    kinds_handwriting,
->>>>>>> o/m2-9c
-=======
     kinds_graphs,
->>>>>>> o/m2-9d
+    kinds_handwriting,
     kinds_math,
     kinds_ordered,
     kinds_visual,
