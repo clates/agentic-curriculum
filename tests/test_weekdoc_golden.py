@@ -25,6 +25,7 @@ from tests.test_weekdoc_kinds_comprehension import CASES as COMPREHENSION
     samples = {}
 from tests.test_weekdoc_kinds_math import CASES as MATH
 from tests.test_weekdoc_kinds_ordered import CASES as ORDERED
+from tests.test_weekdoc_kinds_visual import SAMPLES as VISUAL
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "weekdoc" / "weather_week.json"
@@ -89,7 +90,7 @@ def test_without_a_name_nothing_leaks_the_token(week):
 
 
 def test_a_week_using_every_hosted_kind_validates_against_the_schema_and_renders():
-    samples = {**COMPREHENSION, **CLASSIFICATION, **ORDERED, **MATH, **BLOCKS, **FRACTIONS, **HANDWRITING, **GRAPHS}
+    samples = {**COMPREHENSION, **CLASSIFICATION, **ORDERED, **MATH, **BLOCKS, **FRACTIONS, **HANDWRITING, **GRAPHS, **VISUAL}
     samples["storyPanel"] = {"who": "Zara", "text": "A beat."}
     assert set(samples) == set(HOSTED_KINDS), set(HOSTED_KINDS) ^ set(samples)
     worksheets = [

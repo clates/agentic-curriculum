@@ -16,6 +16,7 @@ from . import (  # noqa: F401
 >>>>>>> o/m2-9d
     kinds_math,
     kinds_ordered,
+    kinds_visual,
 )
 from .models import (  # noqa: F401
     SCHEMA_VERSION,
