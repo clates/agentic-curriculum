@@ -29,47 +29,10 @@ MODULE_NAMES_TO_CLEAR = [
 
 
 def _bootstrap_db(db_path: Path) -> None:
-    conn = sqlite3.connect(db_path)
-    conn.execute(
-        """
-        CREATE TABLE student_profiles (
-            student_id TEXT PRIMARY KEY,
-            progress_blob TEXT,
-            plan_rules_blob TEXT,
-            metadata_blob TEXT
-        )
-    """
-    )
-    conn.execute(
-        """
-        CREATE TABLE weekly_packets (
-            packet_id TEXT PRIMARY KEY,
-            student_id TEXT,
-            grade_level INTEGER,
-            subject TEXT,
-            week_of TEXT,
-            status TEXT,
-            payload_json TEXT,
-            summary_json TEXT,
-            updated_at TEXT,
-            created_at TEXT
-        )
-    """
-    )
-    conn.execute(
-        """
-        CREATE TABLE packet_feedback (
-            feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            packet_id TEXT,
-            student_id TEXT,
-            mastery_feedback_blob TEXT,
-            quantity_feedback INTEGER,
-            completed_at TEXT
-        )
-    """
-    )
-    conn.commit()
-    conn.close()
+    """Build the real schema (numbered migrations), not a hand-rolled copy of it."""
+    from src.migrations import apply_migrations
+
+    apply_migrations(db_path)
 
 
 @pytest.fixture()
@@ -88,7 +51,8 @@ def automation_client(tmp_path, monkeypatch):
 
     conn = sqlite3.connect(db_path)
     conn.execute(
-        "INSERT INTO student_profiles VALUES (?, ?, ?, ?)",
+        "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob, metadata_blob)"
+        " VALUES (?, ?, ?, ?)",
         (
             "s1",
             json.dumps({"mastered_standards": [], "developing_standards": []}),
@@ -97,7 +61,8 @@ def automation_client(tmp_path, monkeypatch):
         ),
     )
     conn.execute(
-        "INSERT INTO weekly_packets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO weekly_packets (packet_id, student_id, grade_level, subject, week_of, status,"
+        " payload_json, summary_json, updated_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             "pkt1",
             "s1",

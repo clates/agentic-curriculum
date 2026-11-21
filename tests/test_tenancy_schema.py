@@ -4,6 +4,7 @@ import sqlite3
 
 import pytest
 
+from src.db_utils import ensure_student
 from src.migrations import apply_migrations
 
 NOW = "2026-01-01T00:00:00Z"
@@ -140,6 +141,8 @@ def test_feedback_family_must_match_packet_family(tmp_path):
     apply_migrations(db)
     conn = _conn(db)
     conn.execute("INSERT INTO family VALUES ('fam_b', 'B', ?)", (NOW,))
+    ensure_student("fam_local", "s", conn)
+    ensure_student("fam_b", "s_b", conn)
     conn.execute(
         "INSERT INTO weekly_packets (packet_id, student_id, grade_level, subject, week_of, status,"
         " payload_json, created_at, updated_at) VALUES ('p','s',1,'M','w','ready','{}',?,?)",
@@ -148,6 +151,6 @@ def test_feedback_family_must_match_packet_family(tmp_path):
     with pytest.raises(sqlite3.IntegrityError):
         conn.execute(
             "INSERT INTO packet_feedback (packet_id, student_id, completed_at, family_id) "
-            "VALUES ('p','s',?, 'fam_b')",
+            "VALUES ('p','s_b',?, 'fam_b')",
             (NOW,),
         )
