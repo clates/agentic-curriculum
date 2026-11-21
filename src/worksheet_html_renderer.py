@@ -3063,7 +3063,8 @@ def _render_pixel_copy(data: dict, primary: str, light: str) -> str:
 
     dh = _day_header(day_label, title, primary) if day_label else ""
 
-    ref_colors = _pc_reference_colors(image_path, grid_size)
+    # Hosted weeks pass a validated ``colors`` matrix (never a path); offline callers don't.
+    ref_colors = data.get("colors") or _pc_reference_colors(image_path, grid_size)
     cell_px = _pc_cell_px(grid_size)
 
     ref_svg = _svg_pixel_grid(ref_colors, grid_size, cell_px)
