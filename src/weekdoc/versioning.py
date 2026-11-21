@@ -29,10 +29,11 @@ class WeekVersionError(ValueError):
 def migrate_week_data(
     raw: dict[str, Any],
     migrations: Mapping[int, Migration] | None = None,
-    current: int = SCHEMA_VERSION,
+    current: int | None = None,
 ) -> dict[str, Any]:
     """Return ``raw`` upgraded to ``current``. Raises WeekVersionError if it cannot be."""
     migrations = MIGRATIONS if migrations is None else migrations
+    current = SCHEMA_VERSION if current is None else current  # read at call time
     version = raw.get("schema_version")
     if isinstance(version, bool) or not isinstance(version, int) or version < 1:
         raise WeekVersionError(f"missing or invalid schema_version: {version!r}")
