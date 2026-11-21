@@ -2,9 +2,9 @@
  * Every This week card either offers a button that leads somewhere real, or no button at all.
  * The button's href is /week/<next_action with '_' -> '-'>/<student id>.
  *
- * Today only /week/check-in/<id> exists. The pick and print screens are not built, so those
- * buttons land on the app's 404. Those tests are marked test.fail with the card that unblocks
- * them: the stream that builds the screen deletes the test.fail line.
+ * The check-in and pick screens exist. The print screen is not built, so its button lands on the
+ * app's 404. That test is marked test.fail with the card that unblocks it: the stream that builds
+ * the screen deletes the test.fail line.
  */
 import { test, expect } from '../fixtures/test';
 import { newChild } from '../fixtures/e2e-hardening';
@@ -34,14 +34,14 @@ const STATES: State[] = [
     action: 'pick',
     button: 'See the ideas',
     segment: 'pick',
-    unbuilt: 'M10.6 pick screen not built: /week/pick/<id> is a 404 today',
+    arrives: /Pick .+ next week/,
   },
   {
     status: 'expired',
     action: 'pick',
     button: 'Get fresh ideas',
     segment: 'pick',
-    unbuilt: 'M10.6 pick screen not built: /week/pick/<id> (Get fresh ideas) is a 404 today',
+    arrives: /Pick .+ next week/,
   },
   { status: 'authoring', action: 'writing', button: null, segment: null },
   {

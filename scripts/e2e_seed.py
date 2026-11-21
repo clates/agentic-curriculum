@@ -8,6 +8,8 @@ Usage:
   python scripts/e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>
   python scripts/e2e_seed.py create_week <student_id> <packet_id>
   python scripts/e2e_seed.py create_plan <student_id> <loop_status> [week_start]
+  python scripts/e2e_seed.py expire_plan <student_id>
+  python scripts/e2e_seed.py loop_events <student_id>
 
 The DB path is controlled by CURRICULUM_DB_PATH (same env var the backend uses).
 """
@@ -165,6 +167,7 @@ def set_progress(student_id: str) -> None:
         conn.close()
     print(f"progress seeded for {student_id}")
 
+
 _PLAN_PATH = {
     "awaiting_feedback": [],
     "outlining": ["feedback_submitted"],
@@ -188,13 +191,35 @@ def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") ->
     from loop_state import Event, advance  # noqa: E402
     from outline_models import OutlineSet  # noqa: E402
 
+    seeded = {
+        "a": (
+            "Gentle Garden Week",
+            "Plant, count and sketch a tiny garden at a calm pace.",
+            "About 15 minutes a day",
+        ),
+        "b": (
+            "Kitchen Math Lab",
+            "Measure, mix and bake your way through real numbers.",
+            "About 25 minutes a day",
+        ),
+        "c": (
+            "Backyard Detectives",
+            "Follow clues outside to answer bigger science questions.",
+            "About 35 minutes a day",
+        ),
+    }
+
     def outline(i, difficulty):
+        title, hook, effort = seeded[i]
         return {
             "option_id": i,
-            "title": f"Option {i}",
-            "hook": "A week to explore",
+            "title": title,
+            "hook": hook,
             "difficulty": difficulty,
             "standard_ids": ["VA.MATH.2.1"],
+            "activities": "Short hands-on tasks each day, with a little reading and writing.",
+            "skills": ["Counting and measuring", "Reading short passages"],
+            "effort": effort,
         }
 
     conn = sqlite3.connect(_db_path())
@@ -226,6 +251,45 @@ def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") ->
     finally:
         conn.close()
     print(f"plan for {student_id} is {status}")
+
+
+def expire_plan(student_id: str) -> None:
+    """Let the child's open ideas run out of time (awaiting_pick -> expired)."""
+    import week_plan as wp  # noqa: E402
+    from loop_state import Event, advance  # noqa: E402
+
+    conn = sqlite3.connect(_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        plan = wp.latest_plan_for_student(conn, "fam_local", student_id)
+        advance(conn, "fam_local", plan.plan_id, Event("pick_expired"))
+    finally:
+        conn.close()
+    print(f"plan for {student_id} expired")
+
+
+def loop_events(student_id: str) -> None:
+    """Print the loop events recorded for the child's latest plan as JSON."""
+    import week_plan as wp  # noqa: E402
+
+    conn = sqlite3.connect(_db_path())
+    try:
+        plan = wp.latest_plan_for_student(conn, "fam_local", student_id)
+        rows = conn.execute(
+            "SELECT event_type, from_status, to_status, payload_json, event_key FROM loop_event "
+            "WHERE plan_id = ? ORDER BY event_id",
+            (plan.plan_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    print(
+        json.dumps(
+            [
+                {"type": t, "from": f, "to": to, "payload": json.loads(p or "{}"), "key": k}
+                for t, f, to, p, k in rows
+            ]
+        )
+    )
 
 
 def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
@@ -291,6 +355,12 @@ if __name__ == "__main__":
             print("Usage: e2e_seed.py create_week <student_id> <packet_id>")
             sys.exit(1)
         create_week(sys.argv[2], sys.argv[3])
+
+    elif cmd == "expire_plan":
+        expire_plan(sys.argv[2])
+
+    elif cmd == "loop_events":
+        loop_events(sys.argv[2])
 
     elif cmd == "create_plan":
         if len(sys.argv) not in (4, 5):

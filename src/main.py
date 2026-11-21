@@ -40,6 +40,7 @@ from feedback_service import FeedbackError, apply_feedback
 from curriculum_graph import load_from_db
 from migrations import apply_migrations
 from this_week import this_week_cards, first_name_of
+import pick_service
 from prep_check_cards import check_cards
 from progress_summary import build_progress_summary
 from week_store import get_week
@@ -954,3 +955,72 @@ def get_student_progress_summary(student_id: str):
     )
     ids |= set((progress.get("standard_metadata") or {}).keys())
     return build_progress_summary(metadata.get("name"), progress, _standards_lookup(ids))
+
+
+# --- Pick one of three (M6.4) and fresh ideas (M6.6) -------------------------------------------
+# AUTH_MODE=none: the one local family until login exists, like /this-week.
+LOCAL_FAMILY_ID = "fam_local"
+
+
+class PickRequest(BaseModel):
+    """Choose one of the three ideas. ``plan_id`` (optional) guards against a stale screen."""
+
+    option: Literal["a", "b", "c"]
+    plan_id: str | None = None
+
+
+class RegenerateRequest(BaseModel):
+    plan_id: str | None = None
+
+
+def _week_plan_call(action):
+    """Run ``action(conn)`` for the local family, turning refusals into plain-language errors."""
+    from llm import LLMError
+
+    conn = sqlite3.connect(get_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA busy_timeout = 5000")
+        return action(conn)
+    except pick_service.PickError as exc:
+        raise HTTPException(
+            status_code=exc.status, detail={"code": exc.code, "message": exc.message}
+        ) from exc
+    except LLMError as exc:
+        logger.warning("outline generation failed: %s", type(exc).__name__)
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "code": "outline_failed",
+                "message": "We couldn’t write new ideas just now. Nothing was lost. "
+                "Please try again.",
+            },
+        ) from exc
+    finally:
+        conn.close()
+
+
+@app.get("/students/{student_id}/week-plan")
+def get_week_plan(student_id: str):
+    """The child's current week plan with its three ideas (no standard ids)."""
+    return _week_plan_call(lambda c: pick_service.get_current(c, LOCAL_FAMILY_ID, student_id))
+
+
+@app.post("/students/{student_id}/week-plan/pick")
+def pick_week_idea(student_id: str, request: PickRequest):
+    """Pick one idea: awaiting_pick -> authoring, and ask for the week to be written.
+
+    The same pick twice is a no-op (200). A different pick once writing has started is 409.
+    """
+    return _week_plan_call(
+        lambda c: pick_service.pick(c, LOCAL_FAMILY_ID, student_id, request.option, request.plan_id)
+    )
+
+
+@app.post("/students/{student_id}/week-plan/regenerate")
+def regenerate_week_ideas(student_id: str, request: RegenerateRequest | None = None):
+    """Fresh ideas (expired or open set), at most two per week plan; 409 at the cap."""
+    plan_id = request.plan_id if request else None
+    return _week_plan_call(
+        lambda c: pick_service.regenerate(c, LOCAL_FAMILY_ID, student_id, plan_id)
+    )

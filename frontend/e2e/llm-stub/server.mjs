@@ -14,6 +14,7 @@
  * Classification is by prompt content (see src/agent.py for the prompts):
  *   scaffold  "weekly lesson plan scaffold"                  -> fixtures/scaffold.json
  *   day       "Create a lesson plan for the following ..."   -> fixtures/day.json
+ *   outline   "OPTIONS_JSON: ..." (and repairs of its bad replies) -> outline.mjs
  * Anything else -> HTTP 500 plus a logged error, never a guess. Specs fail on any such record.
  *
  * Attribution and scenarios ride in the student's `parent_notes` (they appear in every prompt):
@@ -25,6 +26,7 @@ import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isOutlinePrompt, isStubRepair, outlineResponse } from './outline.mjs';
 
 const PORT = Number(process.env.E2E_LLM_STUB_PORT ?? 8183);
 const HOST = '127.0.0.1';
@@ -164,6 +166,14 @@ async function handleChat(req, res) {
         scenario,
       });
       return sendJson(res, 200, completion(body.model, raw));
+    }
+    if (isOutlinePrompt(prompt) || isStubRepair(prompt)) {
+      // Outline prompts and repairs of the stub's own bad outline replies live in outline.mjs.
+      const scenario = /e2e-stub:outline=([\w-]+)/.exec(prompt)?.[1] ?? null;
+      const out = outlineResponse(prompt, meta.student, scenario);
+      record(out.record);
+      if (out.delayMs) await new Promise((r) => setTimeout(r, out.delayMs));
+      return sendJson(res, 200, completion(body.model, out.raw));
     }
     throw new Error('prompt matched no known request type');
   } catch (err) {
