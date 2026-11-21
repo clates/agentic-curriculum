@@ -4,6 +4,7 @@ from .kinds import HOSTED_KINDS, ItemRef, UnknownKindError, item_refs  # noqa: F
 from . import (  # noqa: F401
     kinds_classification,
     kinds_comprehension,
+    kinds_handwriting,
     kinds_math,
     kinds_ordered,
 )
