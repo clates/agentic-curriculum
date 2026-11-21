@@ -6,6 +6,7 @@ from . import (  # noqa: F401
     kinds_comprehension,
     kinds_math,
     kinds_ordered,
+    kinds_visual,
 )
 from .models import (  # noqa: F401
     SCHEMA_VERSION,
