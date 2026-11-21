@@ -148,13 +148,13 @@ sharing get copied into [`examples/`](examples/).
 
 ## Track a student over time
 
-> **This path requires an OpenAI API key.** Progress is recorded *against a generated weekly plan*,
+> **This path requires an OpenRouter API key** (an `OPENAI_API_KEY` for an OpenAI-compatible service also works). Progress is recorded *against a generated weekly plan*,
 > and generating those plans is the one feature that calls a paid API. Everything above is free.
 
 The app learns what your student has and hasn't mastered, and feeds that into the next plan.
 
 ```bash
-export OPENAI_API_KEY="sk-..."
+export OPENROUTER_API_KEY="sk-or-..."   # see .env.example for options
 
 # Terminal 1 — the API
 cd src && ../venv/bin/uvicorn main:app --reload

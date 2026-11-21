@@ -1,7 +1,7 @@
 """
 agent.py
 
-LLM-based agent for generating lesson plans using OpenAI API.
+LLM-based agent for generating lesson plans through the src/llm model layer (OpenRouter).
 """
 
 from datetime import UTC, datetime, timedelta
@@ -13,11 +13,11 @@ import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Callable, cast
-from openai import OpenAI
 from pydantic import ValidationError
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
+from llm import CostCapExceeded, LLMClient, UsageContext, default_client  # noqa: E402
 
 try:  # Prefer package-relative imports when available
     from .db_utils import get_student_profile
@@ -434,9 +434,7 @@ def _render_worksheet_artifacts(
             try:
                 html_content = render_worksheet_html(plan.kind, plan.html_data, day_label)
             except Exception as exc:
-                artifact_errors.append(
-                    {"kind": plan.kind, "format": "html", "message": str(exc)}
-                )
+                artifact_errors.append({"kind": plan.kind, "format": "html", "message": str(exc)})
                 if generation_logger:
                     generation_logger.log_daily_error(day_label, "artifact_render", str(exc))
                 continue
@@ -503,9 +501,9 @@ def _build_day_plan(
     standards_by_id: dict,
     standards: list,
     rules: dict,
-    client: OpenAI,
-    model: str,
+    client: LLMClient,
     plan_id: str,
+    usage: UsageContext | None = None,
     generation_logger: GenerationLogger | None = None,
 ) -> dict:
     """Generate one day's plan inside the thread pool with deterministic fallbacks.
@@ -515,8 +513,8 @@ def _build_day_plan(
         standards_by_id: Lookup of standard_id -> standard metadata.
         standards: List of candidate standards (used for fallback selection).
         rules: Parent preference metadata (materials, notes, etc.).
-        client: Thread-safe OpenAI client instance.
-        model: OpenAI model name.
+        client: Thread-safe LLMClient (task "lesson" picks the model from src/llm/models.json).
+        usage: Who the call is billed to (opaque ids) for the usage ledger.
 
     Returns:
         Dict with `day`, `lesson_plan`, `standard`, `standards`, and `focus` keys.
@@ -549,14 +547,18 @@ def _build_day_plan(
         {"role": "user", "content": prompt},
     ]
     llm_request_payload = {
-        "model": model,
+        "task": "lesson",
+        "model": client.config("lesson").model,
         "messages": messages,
-        "temperature": 0.7,
         "response_format": {"type": "json_object"},
     }
 
     try:
-        response = client.chat.completions.create(**llm_request_payload)
+        response = client.complete(
+            "lesson", messages, response_format={"type": "json_object"}, usage=usage
+        )
+    except CostCapExceeded:
+        raise  # a budget stop is not a model failure: never degrade silently to fallback content
     except Exception as e:
         if generation_logger:
             generation_logger.log_daily_llm_exchange(day, llm_request_payload, error=str(e))
@@ -569,7 +571,7 @@ def _build_day_plan(
             generation_logger.log_daily_llm_exchange(
                 day, llm_request_payload, response.model_dump()
             )
-        response_content = response.choices[0].message.content or "{}"
+        response_content = response.text or "{}"
         try:
             payload = json.loads(response_content)
         except json.JSONDecodeError as e:
@@ -629,7 +631,13 @@ def _build_day_plan(
     return day_payload
 
 
-def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dict:
+def _make_client() -> LLMClient:
+    return default_client()
+
+
+def generate_weekly_plan(
+    student_id: str, grade_level: int, subject: str, *, usage: UsageContext | None = None
+) -> dict:
     """
     Generate a weekly lesson plan for a student using LLM.
 
@@ -643,19 +651,12 @@ def generate_weekly_plan(student_id: str, grade_level: int, subject: str) -> dic
 
     Raises:
         ValueError: If student not found or API key not set
+        CostCapExceeded: If the family's model budget is used up (no fallback content is made)
     """
-    # Check for OpenAI API key
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable not set")
-
-    # Get base URL and model from environment variables with defaults
-    base_url = os.environ.get("OPENAI_BASE_URL", None)
-    model = os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
-
-    # Initialize OpenAI client. The official SDK client is stateless and thread-safe,
-    # so we reuse a single instance across the executor workers below.
-    client = OpenAI(api_key=api_key, base_url=base_url)
+    # Provider/key/model come from src/llm (OPENROUTER_API_KEY, legacy OPENAI_* still honoured).
+    # The client is stateless and thread-safe, so one instance serves all executor workers.
+    client = _make_client()
+    usage = usage or UsageContext(student_id=student_id)
 
     # Get student profile and parse rules
     student_profile = get_student_profile(student_id)
@@ -772,19 +773,23 @@ Respond with a JSON object in this exact format:
         {"role": "user", "content": scaffold_prompt},
     ]
     scaffold_request_payload = {
-        "model": model,
+        "task": "scaffold",
+        "model": client.config("scaffold").model,
         "messages": scaffold_messages,
-        "temperature": 0.7,
         "response_format": {"type": "json_object"},
     }
 
     scaffold_raw_content = ""
     try:
-        scaffold_response = client.chat.completions.create(**scaffold_request_payload)
+        scaffold_response = client.complete(
+            "scaffold", scaffold_messages, response_format={"type": "json_object"}, usage=usage
+        )
         scaffold_dump = scaffold_response.model_dump()
-        scaffold_raw_content = scaffold_response.choices[0].message.content or "{}"
+        scaffold_raw_content = scaffold_response.text or "{}"
         generation_logger.log_weekly_scaffold_exchange(scaffold_request_payload, scaffold_dump)
         weekly_scaffold = json.loads(scaffold_raw_content)
+    except CostCapExceeded:
+        raise
     except json.JSONDecodeError as e:
         print(f"Warning: Failed to parse scaffold JSON: {e}")
         generation_logger.log_weekly_scaffold_content(None, scaffold_raw_content, str(e))
@@ -851,8 +856,8 @@ Respond with a JSON object in this exact format:
                 standards,
                 rules,
                 client,
-                model,
                 plan_id,
+                usage,
                 generation_logger,
             ): idx
             for idx, assignment in enumerate(daily_assignments)
@@ -862,6 +867,8 @@ Respond with a JSON object in this exact format:
             idx = future_map[future]
             try:
                 daily_plan[idx] = future.result()
+            except CostCapExceeded:
+                raise
             except Exception as e:
                 print(f"Warning: Daily plan generation failed for index {idx}: {e}")
                 assignment = daily_assignments[idx]

@@ -41,6 +41,9 @@ from curriculum_graph import load_from_db
 from migrations import apply_migrations
 from this_week import this_week_cards, first_name_of
 from prep_check_cards import check_cards
+from progress_summary import build_progress_summary
+from week_store import get_week
+from weekdoc.render import render_packet, render_prep_sheet, render_teacher_guide
 from worksheet_html_renderer import build_print_packet_html
 
 import json
@@ -52,7 +55,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from email.utils import formatdate
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Response
@@ -664,20 +667,54 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
     )
 
 
+def _student_first_name(student_id: str) -> str | None:
+    """First name only (D9): the name is substituted into print output, nothing else is."""
+    profile = get_student_profile(student_id)
+    try:
+        name = (json.loads(profile["metadata_blob"] or "{}").get("name") or "").strip()
+    except (TypeError, ValueError, KeyError, AttributeError):
+        return None
+    return name.split()[0] if name else None
+
+
 @app.get(
     "/students/{student_id}/weekly-packets/{packet_id}/print",
     response_class=HTMLResponse,
     name="print_weekly_packet",
 )
-def print_weekly_packet(student_id: str, packet_id: str):
+def print_weekly_packet(
+    student_id: str,
+    packet_id: str,
+    doc: Literal["packet", "guide", "prep"] | None = Query(
+        None,
+        description="Structured weeks only: packet (default), guide or prep, rendered on demand.",
+    ),
+):
     """
     Return a single printable HTML document containing all HTML worksheets for
     the packet, ordered Mon–Fri.  Opening this URL in a browser and hitting
     Ctrl+P (or the auto-triggered print dialog) produces a single PDF printout.
+
+    Structured weeks (stored as a WeekDoc) are rendered on demand; ``?doc=`` picks the student
+    packet, the teacher guide or the parent prep sheet. Legacy packets ignore nothing: asking
+    them for ``guide`` or ``prep`` is a 404.
     """
     packet = get_weekly_packet(student_id, packet_id)
     if packet is None:
         raise HTTPException(status_code=404, detail="Packet not found")
+
+    week = get_week(student_id, packet_id)
+    if week is not None:
+        renderers = {
+            "packet": render_packet,
+            "guide": render_teacher_guide,
+            "prep": render_prep_sheet,
+        }
+        return HTMLResponse(
+            content=renderers[doc or "packet"](week, _student_first_name(student_id))
+        )
+    if doc not in (None, "packet"):
+        raise HTTPException(status_code=404, detail="This packet has no structured week")
 
     artifacts = list_packet_artifacts(student_id, packet_id)
     if artifacts is None:
@@ -878,3 +915,42 @@ def get_student_progress_map(student_id: str, subject: str, prune: bool = True):
 
     graph = load_from_db(get_db_path(), subject)
     return graph.export_for_visualization(mastered, prune=prune)
+
+
+def _standards_lookup(standard_ids: set[str]) -> dict[str, dict[str, Any]]:
+    """Subject and description for the given standard ids (missing ids are simply absent)."""
+    if not standard_ids:
+        return {}
+    ids = sorted(standard_ids)
+    out: dict[str, dict[str, Any]] = {}
+    conn = sqlite3.connect(get_db_path())
+    try:
+        for i in range(0, len(ids), 500):
+            chunk = ids[i : i + 500]
+            marks = ",".join("?" * len(chunk))
+            for sid, subject, description in conn.execute(
+                f"SELECT standard_id, subject, description FROM standards "  # noqa: S608
+                f"WHERE standard_id IN ({marks})",
+                chunk,
+            ):
+                out[sid] = {"subject": subject, "description": description}
+    except sqlite3.OperationalError:
+        return out  # no standards table (minimal DB): fall back to generic skill names
+    finally:
+        conn.close()
+    return out
+
+
+@app.get("/students/{student_id}/progress-summary")
+def get_student_progress_summary(student_id: str):
+    """How a child is doing, in plain words: solid, shaky, needs work, due for review."""
+    profile = get_student_profile(student_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student not found")
+    progress = json.loads(profile["progress_blob"] or "{}")
+    metadata = json.loads(profile.get("metadata_blob") or "{}")
+    ids = set(progress.get("mastered_standards", [])) | set(
+        progress.get("developing_standards", [])
+    )
+    ids |= set((progress.get("standard_metadata") or {}).keys())
+    return build_progress_summary(metadata.get("name"), progress, _standards_lookup(ids))

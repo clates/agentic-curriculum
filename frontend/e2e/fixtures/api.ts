@@ -6,14 +6,15 @@ export const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:8182';
 const DB_FILE = process.env.PLAYWRIGHT_DB_FILE ?? '/tmp/playwright-test.db';
 const PROJECT_ROOT = resolve(__dirname, '../../..');
 
-function seedScript(cmd: string, ...args: string[]): void {
+function seedScript(cmd: string, ...args: string[]): string {
   try {
-    execFileSync(
+    return execFileSync(
       `${PROJECT_ROOT}/venv/bin/python`,
       [`${PROJECT_ROOT}/scripts/e2e_seed.py`, cmd, ...args],
       {
         stdio: 'pipe',
         env: { ...process.env, CURRICULUM_DB_PATH: DB_FILE },
+        encoding: 'utf-8',
       }
     );
   } catch (err: unknown) {
@@ -98,4 +99,18 @@ export function seedPlan(studentId: string, status: string, weekStart = '2099-01
 /** Seed a finished structured week with ten check-by-check prompts for the child. */
 export function seedWeek(studentId: string, packetId: string): void {
   seedScript('create_week', studentId, packetId);
+}
+
+export interface LlmUsageRow {
+  task: string;
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  cost_usd: number | null;
+  status: string;
+}
+
+/** Rows the backend's usage ledger wrote for one student (no prompt text is ever stored). */
+export function llmUsage(studentId: string): LlmUsageRow[] {
+  return JSON.parse(seedScript('llm_usage', studentId)) as LlmUsageRow[];
 }

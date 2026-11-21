@@ -13,6 +13,7 @@ The DB path is controlled by CURRICULUM_DB_PATH (same env var the backend uses).
 
 import json
 import os
+import json
 import sqlite3
 import sys
 from pathlib import Path
@@ -199,6 +200,21 @@ def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
     print(f"backdated feedback for {packet_id} to {iso_timestamp}")
 
 
+def llm_usage(student_id: str) -> None:
+    """Print the llm_usage ledger rows for a student as JSON."""
+    conn = sqlite3.connect(_db_path())
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            "SELECT task, model, prompt_tokens, completion_tokens, cost_usd, status "
+            "FROM llm_usage WHERE student_id = ? ORDER BY created_at",
+            (student_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    print(json.dumps([dict(r) for r in rows]))
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(__doc__)
@@ -232,6 +248,12 @@ if __name__ == "__main__":
             print("Usage: e2e_seed.py create_plan <student_id> <loop_status> [week_start]")
             sys.exit(1)
         create_plan(*sys.argv[2:])
+
+    elif cmd == "llm_usage":
+        if len(sys.argv) != 3:
+            print("Usage: e2e_seed.py llm_usage <student_id>")
+            sys.exit(1)
+        llm_usage(sys.argv[2])
 
     else:
         print(f"Unknown command: {cmd}")
