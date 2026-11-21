@@ -1,6 +1,7 @@
 # Secrets
 .env
 .env.*
+!.env.example
 
 # Personal student profile (copy student_profile.example.json to create it).
 # Contains details about a real child — never commit it.

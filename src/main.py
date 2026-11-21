@@ -36,7 +36,14 @@ from feedback_processor import (
     validate_quantity_feedback,
 )
 from feedback_models import FeedbackResponse, SubmitFeedbackRequest
+from feedback_service import FeedbackError, apply_feedback
 from curriculum_graph import load_from_db
+from migrations import apply_migrations
+from this_week import this_week_cards, first_name_of
+from prep_check_cards import check_cards
+from progress_summary import build_progress_summary
+from week_store import get_week
+from weekdoc.render import render_packet, render_prep_sheet, render_teacher_guide
 from worksheet_html_renderer import build_print_packet_html
 
 import json
@@ -44,10 +51,11 @@ import logging
 import os
 import sys
 from collections import OrderedDict
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from email.utils import formatdate
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Response
@@ -62,7 +70,14 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-app = FastAPI()
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """Run pending schema migrations before serving requests."""
+    apply_migrations(get_db_path())
+    yield
+
+
+app = FastAPI(lifespan=_lifespan)
 
 
 def _project_root_path() -> Path:
@@ -303,6 +318,30 @@ def read_student(student_id: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
     return profile
+
+
+@app.get("/this-week")
+def read_this_week():
+    """One card per child with the single next step for the week (M10.4)."""
+    conn = sqlite3.connect(get_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        # AUTH_MODE=none: the one local family until login exists.
+        return this_week_cards(conn, "fam_local", datetime.now(UTC).date())
+    finally:
+        conn.close()
+
+
+@app.get("/students/{student_id}/weekly-packets/{packet_id}/checks")
+def read_packet_checks(student_id: str, packet_id: str):
+    """The parent's check-by-check list for a finished week (empty if it has no structured checks)."""
+    profile = get_student_profile(student_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if get_weekly_packet(student_id, packet_id) is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+    first = first_name_of(profile.get("metadata_blob"))
+    return {"checks": check_cards(student_id, packet_id, first)}
 
 
 @app.get("/students", response_model=list[StudentResponse])
@@ -628,20 +667,54 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
     )
 
 
+def _student_first_name(student_id: str) -> str | None:
+    """First name only (D9): the name is substituted into print output, nothing else is."""
+    profile = get_student_profile(student_id)
+    try:
+        name = (json.loads(profile["metadata_blob"] or "{}").get("name") or "").strip()
+    except (TypeError, ValueError, KeyError, AttributeError):
+        return None
+    return name.split()[0] if name else None
+
+
 @app.get(
     "/students/{student_id}/weekly-packets/{packet_id}/print",
     response_class=HTMLResponse,
     name="print_weekly_packet",
 )
-def print_weekly_packet(student_id: str, packet_id: str):
+def print_weekly_packet(
+    student_id: str,
+    packet_id: str,
+    doc: Literal["packet", "guide", "prep"] | None = Query(
+        None,
+        description="Structured weeks only: packet (default), guide or prep, rendered on demand.",
+    ),
+):
     """
     Return a single printable HTML document containing all HTML worksheets for
     the packet, ordered Mon–Fri.  Opening this URL in a browser and hitting
     Ctrl+P (or the auto-triggered print dialog) produces a single PDF printout.
+
+    Structured weeks (stored as a WeekDoc) are rendered on demand; ``?doc=`` picks the student
+    packet, the teacher guide or the parent prep sheet. Legacy packets ignore nothing: asking
+    them for ``guide`` or ``prep`` is a 404.
     """
     packet = get_weekly_packet(student_id, packet_id)
     if packet is None:
         raise HTTPException(status_code=404, detail="Packet not found")
+
+    week = get_week(student_id, packet_id)
+    if week is not None:
+        renderers = {
+            "packet": render_packet,
+            "guide": render_teacher_guide,
+            "prep": render_prep_sheet,
+        }
+        return HTMLResponse(
+            content=renderers[doc or "packet"](week, _student_first_name(student_id))
+        )
+    if doc not in (None, "packet"):
+        raise HTTPException(status_code=404, detail="This packet has no structured week")
 
     artifacts = list_packet_artifacts(student_id, packet_id)
     if artifacts is None:
@@ -679,6 +752,33 @@ def print_weekly_packet(student_id: str, packet_id: str):
     return HTMLResponse(content=build_print_packet_html(pages, title))
 
 
+def _submit_feedback_v2(
+    student_id: str,
+    packet_id: str,
+    request: SubmitFeedbackRequest,
+    background_tasks: BackgroundTasks,
+) -> None:
+    """v2: check_results or quick_rating (+ workload), applied transactionally and idempotently."""
+    if get_weekly_packet(student_id, packet_id) is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+    if not get_student_profile(student_id):
+        raise HTTPException(status_code=404, detail="Student not found")
+    try:
+        outcome = apply_feedback(
+            student_id,
+            packet_id,
+            check_results=request.check_results,
+            quick_rating=request.quick_rating,
+            workload=request.workload,
+        )
+    except FeedbackError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    if outcome.changed:  # an exact repeat must not re-trigger plan generation
+        background_tasks.add_task(generate_trio_for_student, student_id)
+
+
 @app.post("/students/{student_id}/weekly-packets/{packet_id}/feedback", status_code=204)
 def submit_packet_feedback(
     student_id: str,
@@ -697,6 +797,10 @@ def submit_packet_feedback(
     Raises:
         HTTPException: 400 for validation errors, 404 if packet not found
     """
+    if request.is_v2:
+        _submit_feedback_v2(student_id, packet_id, request, background_tasks)
+        return
+
     mastery_feedback = request.mastery_feedback
     quantity_feedback = request.quantity_feedback
 
@@ -736,7 +840,9 @@ def submit_packet_feedback(
         )
 
     if mastery_feedback:
-        progress_blob = process_mastery_feedback(progress_blob, mastery_feedback, feedback_date)
+        progress_blob = process_mastery_feedback(
+            progress_blob, mastery_feedback, feedback_date, packet_id=packet_id
+        )
 
     if quantity_feedback is not None:
         plan_rules_blob = process_quantity_feedback(
@@ -809,3 +915,42 @@ def get_student_progress_map(student_id: str, subject: str, prune: bool = True):
 
     graph = load_from_db(get_db_path(), subject)
     return graph.export_for_visualization(mastered, prune=prune)
+
+
+def _standards_lookup(standard_ids: set[str]) -> dict[str, dict[str, Any]]:
+    """Subject and description for the given standard ids (missing ids are simply absent)."""
+    if not standard_ids:
+        return {}
+    ids = sorted(standard_ids)
+    out: dict[str, dict[str, Any]] = {}
+    conn = sqlite3.connect(get_db_path())
+    try:
+        for i in range(0, len(ids), 500):
+            chunk = ids[i : i + 500]
+            marks = ",".join("?" * len(chunk))
+            for sid, subject, description in conn.execute(
+                f"SELECT standard_id, subject, description FROM standards "  # noqa: S608
+                f"WHERE standard_id IN ({marks})",
+                chunk,
+            ):
+                out[sid] = {"subject": subject, "description": description}
+    except sqlite3.OperationalError:
+        return out  # no standards table (minimal DB): fall back to generic skill names
+    finally:
+        conn.close()
+    return out
+
+
+@app.get("/students/{student_id}/progress-summary")
+def get_student_progress_summary(student_id: str):
+    """How a child is doing, in plain words: solid, shaky, needs work, due for review."""
+    profile = get_student_profile(student_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Student not found")
+    progress = json.loads(profile["progress_blob"] or "{}")
+    metadata = json.loads(profile.get("metadata_blob") or "{}")
+    ids = set(progress.get("mastered_standards", [])) | set(
+        progress.get("developing_standards", [])
+    )
+    ids |= set((progress.get("standard_metadata") or {}).keys())
+    return build_progress_summary(metadata.get("name"), progress, _standards_lookup(ids))

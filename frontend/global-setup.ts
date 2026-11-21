@@ -101,9 +101,15 @@ export default async function globalSetup(): Promise<void> {
         CURRICULUM_DB_PATH: DB_FILE,
         // Hermetic by construction: these OVERRIDE anything inherited from the developer's shell
         // (a real OpenRouter/OpenAI key, the real ntfy topic). The backend can only reach the stub.
+        LLM_BASE_URL: `${STUB_BASE_URL}/v1`,
+        OPENROUTER_API_KEY: 'e2e-stub-not-a-real-key',
+        LLM_MODEL: 'e2e-stub',
+        // Legacy names pinned too, so an inherited OPENAI_* can never win over the stub.
         OPENAI_BASE_URL: `${STUB_BASE_URL}/v1`,
         OPENAI_API_KEY: 'e2e-stub-not-a-real-key',
         OPENAI_MODEL: 'e2e-stub',
+        // No cap in E2E (self-hoster default).
+        LLM_CAP_FAMILY_MONTH_USD: '',
         NTFY_URL: `${STUB_BASE_URL}/ntfy`,
       },
       detached: true,

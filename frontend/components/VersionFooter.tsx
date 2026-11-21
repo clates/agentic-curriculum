@@ -22,7 +22,7 @@ export function VersionFooter() {
   if (!version?.short_sha) return null;
 
   return (
-    <footer className="py-2 text-center text-xs text-gray-400">
+    <footer className="py-2 text-center text-xs text-neutral-700">
       {version.sha && version.sha !== 'unknown' ? (
         <a href={`${REPO_URL}/commit/${version.sha}`} target="_blank" rel="noreferrer">
           {version.short_sha}
