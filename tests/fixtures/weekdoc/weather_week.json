@@ -1,0 +1,924 @@
+{
+  "schema_version": 1,
+  "title": "Weather Week",
+  "packet_title": "Weather Week — Science for {{student_name}}",
+  "theme": "Weather",
+  "subject": "Science",
+  "grade_band": "K-1",
+  "narrator": "Zara the Zebra Finch",
+  "arc": "Sun's Energy &rarr; Atmosphere &amp; Clouds &rarr; Water Cycle &rarr; Wind &amp; Pressure &rarr; Weather Patterns &amp; Forecasting",
+  "days": [
+    {
+      "day": "Monday",
+      "title": "The Sun Heats Our World",
+      "standards": [
+        "VA.SCIENCE.K.k.8.a",
+        "VA.SCIENCE.1.1.6.a"
+      ],
+      "worksheets": [
+        {
+          "id": "mon-1",
+          "kind": "readingWorksheet",
+          "data": {
+            "title": "Monday: The Sun Heats Our World",
+            "passage_title": "Meet Zara — and Why the Sun Matters!",
+            "instructions": "Before reading: Go outside for two minutes. Stand in the sun, then in the shade. Feel the difference! Come back inside and share what you noticed.",
+            "passage": "Meet Zara the Zebra Finch! Zara is a small speckled bird with an orange beak and a striped tail. Every morning, Zara wakes up on her branch and checks the sky before she flies out to find seeds. 'What will the weather be like today?' she chirps.\n\nZara knows that everything about weather starts with the Sun. The Sun is a giant ball of burning gas far away in space, and it sends energy all the way to Earth as light and heat. When sunlight reaches Earth, it warms the ground, the water, and the air above it. The more directly the Sun shines on a spot, the warmer it gets.\n\nOn a sunny day, Zara feels warm and cozy in the sunlight. The air around her is warmer too, which means the air temperature is high. Temperature tells us how warm or cold the air feels. We measure temperature with a thermometer. When there are no clouds and the Sun shines all day, we call that a clear or sunny day.\n\nBut the Sun's energy does more than just warm us up — it also drives everything else about weather. Without the Sun, there would be no wind, no rain, and no clouds. Every storm, every rainbow, and every gentle breeze on Earth starts with the energy our Sun provides. 'It all begins with the Sun,' Zara tweets to herself as she spreads her wings and soars into the bright blue sky.",
+            "vocabulary": [
+              {
+                "term": "weather",
+                "definition": "What the air outside is like right now — sunny, cloudy, rainy, windy, or snowy."
+              },
+              {
+                "term": "temperature",
+                "definition": "How warm or cold the air is. We measure temperature with a thermometer."
+              },
+              {
+                "term": "thermometer",
+                "definition": "A tool that shows how warm or cold the air is."
+              },
+              {
+                "term": "energy",
+                "definition": "The power the Sun sends to Earth as light and heat."
+              },
+              {
+                "term": "sunny",
+                "definition": "A day with no clouds blocking the Sun, so the sky looks bright blue and clear."
+              }
+            ],
+            "questions": [
+              {
+                "prompt": "Where does all of Earth's weather energy come from?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "What is temperature, and what tool do we use to measure it?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "What did you notice when you stood in the sun vs. the shade before the lesson?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "LET'S DISCUSS: If the Sun suddenly turned off, what do you think would happen to the weather on Earth? Explain your thinking!",
+                "response_lines": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "mon-2",
+          "kind": "wordSortWorksheet",
+          "data": {
+            "title": "Monday: Sunny Days and Cloudy Days — Word Sort",
+            "instructions": "Look at each weather word in the word bank. Write it in the correct box — does it go with Sunny Weather or Cloudy / Rainy Weather?",
+            "categories": [
+              {
+                "label": "Sunny Weather"
+              },
+              {
+                "label": "Cloudy / Rainy Weather"
+              }
+            ],
+            "tiles": [
+              "Bright sky",
+              "Rain puddles",
+              "Warm air",
+              "Gray clouds",
+              "Clear sky",
+              "Thunderstorm",
+              "Rainbows",
+              "Cool shade",
+              "Hot sidewalk",
+              "Wet grass"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "day": "Tuesday",
+      "title": "Clouds and Precipitation",
+      "standards": [
+        "VA.SCIENCE.K.k.9.a"
+      ],
+      "worksheets": [
+        {
+          "id": "tue-1",
+          "kind": "readingWorksheet",
+          "data": {
+            "title": "Tuesday: Clouds and Precipitation",
+            "passage_title": "What Are Clouds Made Of?",
+            "instructions": "Read about clouds with Zara. Then answer the questions below.\n\nOutdoor observation: Look up at the sky today. Are there clouds? Are they fluffy and white, thin and wispy, or flat and gray? Remember what you saw for the feature matrix activity.",
+            "passage": "Zara was zooming through the sky when she flew right through a low, soft cloud. 'It feels like flying through a cold, wet fog!' she chirped in surprise. That is exactly what clouds are — millions of tiny water droplets or ice crystals floating together in the air. Clouds form when warm, wet air rises and cools down. As the air cools, the water vapor in it turns into tiny droplets — that is called condensation. Those droplets clump together to make a cloud.\n\nNot all clouds look the same! Cumulus clouds are the big, puffy, white clouds that look like cotton balls piled up in the sky. They usually mean fair, sunny weather. Stratus clouds are flat, gray sheets that spread out low across the sky like a blanket. They often bring light rain or drizzle. Cirrus clouds are thin, wispy streaks high up in the sky, made of ice crystals. They look like feathers or horse tails.\n\nWhen clouds hold too much water, the water falls back to Earth as precipitation. Precipitation is any form of water that falls from clouds. It can be rain (liquid), snow (frozen flakes), sleet (frozen rain drops), or hail (balls of ice). Zara loves flying after a rain shower — the air smells fresh and clean, and sometimes a beautiful rainbow appears when sunlight shines through the raindrops!",
+            "vocabulary": [
+              {
+                "term": "cloud",
+                "definition": "Millions of tiny water droplets or ice crystals floating together in the air."
+              },
+              {
+                "term": "condensation",
+                "definition": "When water vapor in warm air cools down and turns into tiny droplets — how clouds form."
+              },
+              {
+                "term": "precipitation",
+                "definition": "Any water that falls from clouds to the ground — rain, snow, sleet, or hail."
+              },
+              {
+                "term": "cumulus",
+                "definition": "Puffy, white, cotton-ball clouds — usually mean fair weather."
+              },
+              {
+                "term": "stratus",
+                "definition": "Flat, gray, blanket-like clouds that often bring drizzle or light rain."
+              },
+              {
+                "term": "cirrus",
+                "definition": "Thin, wispy, feathery clouds high in the sky, made of ice crystals."
+              }
+            ],
+            "questions": [
+              {
+                "prompt": "What are clouds made of? How do they form?",
+                "response_lines": 3
+              },
+              {
+                "prompt": "Describe the three cloud types from the passage. Which one usually means good weather?",
+                "response_lines": 3
+              },
+              {
+                "prompt": "Name four types of precipitation. How are rain and snow different?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "LET'S DISCUSS: If you see dark, flat stratus clouds rolling in, what do you think the weather will be like soon? Would you change any plans because of it?",
+                "response_lines": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "tue-2",
+          "kind": "featureMatrixWorksheet",
+          "data": {
+            "title": "Tuesday: Cloud Types — What Do You Know?",
+            "instructions": "Put a check mark in every box that describes each cloud type. Use your reading card to help — look for clues in the passage!",
+            "items": [
+              "Cumulus",
+              "Stratus",
+              "Cirrus"
+            ],
+            "properties": [
+              "Puffy and white",
+              "Flat and gray",
+              "Thin and wispy",
+              "High in the sky",
+              "Low in the sky",
+              "Made of ice crystals",
+              "Brings fair weather",
+              "Brings rain or drizzle"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "day": "Wednesday",
+      "title": "The Water Cycle",
+      "standards": [
+        "VA.SCIENCE.K.k.9.a",
+        "VA.SCIENCE.1.1.7.a"
+      ],
+      "worksheets": [
+        {
+          "id": "wed-1",
+          "kind": "readingWorksheet",
+          "data": {
+            "title": "Wednesday: The Water Cycle",
+            "passage_title": "Water's Amazing Journey — Up and Down, Again and Again",
+            "instructions": "Read about the water cycle with Zara. Then answer the questions below.\n\nHands-on activity: Pour a small puddle of water on the sidewalk in the sun. Check it every 15 minutes. Where does the water go? What happened — was the water cycle at work?",
+            "passage": "Zara watched a rain puddle on the sidewalk every morning for a week. 'The puddle was big on Monday,' she chirped, 'but by Wednesday it was gone! Where did all that water go?' The answer is the water cycle — one of the most important patterns in all of nature.\n\nThe water cycle has three main steps. Step 1 is EVAPORATION. The Sun heats water in puddles, ponds, lakes, rivers, and oceans. That heat turns liquid water into an invisible gas called water vapor, which floats up into the air. This is what happened to Zara's puddle!\n\nStep 2 is CONDENSATION. As the water vapor floats higher into the sky, the air up there is colder. Cold air cannot hold as much water vapor, so the vapor cools down and turns back into tiny liquid droplets. Those droplets clump together — and they form clouds!\n\nStep 3 is PRECIPITATION. When clouds collect enough water droplets, the drops get heavy and fall back to Earth as rain, snow, sleet, or hail. The water soaks into the ground, fills rivers and lakes, and then the whole cycle begins again with evaporation. 'So the water in this puddle,' said Zara with wide eyes, 'might have once been in the ocean, then in a cloud, and now it is back on the ground! And it will do that journey over and over, forever.'",
+            "vocabulary": [
+              {
+                "term": "water cycle",
+                "definition": "The never-ending journey of water from Earth's surface up into the sky and back down again."
+              },
+              {
+                "term": "evaporation",
+                "definition": "When heat turns liquid water into water vapor — an invisible gas that rises into the air."
+              },
+              {
+                "term": "water vapor",
+                "definition": "Water in its gas form — invisible, it rises into the sky when liquid water is heated."
+              },
+              {
+                "term": "condensation",
+                "definition": "When water vapor cools down and turns back into tiny liquid droplets to form clouds."
+              },
+              {
+                "term": "precipitation",
+                "definition": "Water that falls from clouds to the ground — rain, snow, sleet, or hail."
+              }
+            ],
+            "questions": [
+              {
+                "prompt": "What are the three steps of the water cycle? List them in order.",
+                "response_lines": 3
+              },
+              {
+                "prompt": "What is evaporation? What causes it?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "What causes condensation to happen up in the sky?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "Why do the same water molecules keep going through the cycle over and over?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "LET'S DISCUSS: Zara says the water in a puddle might once have been in the ocean. Do you think that is really true? Could water from a cloud over your town have started in the Pacific Ocean?",
+                "response_lines": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "wed-2",
+          "kind": "causeEffectWorksheet",
+          "data": {
+            "title": "Wednesday: Water Cycle — Cause and Effect",
+            "instructions": "Each cause describes something that happens in the water cycle. Write the effect — what happens next? Use your reading card if you need a clue.",
+            "pairs": [
+              {
+                "cause": "The Sun heats a puddle of water on the sidewalk.",
+                "effect": "",
+                "effect_lines": 2
+              },
+              {
+                "cause": "Water vapor rises high into the cold upper air.",
+                "effect": "",
+                "effect_lines": 2
+              },
+              {
+                "cause": "A cloud collects enough water droplets to become heavy.",
+                "effect": "",
+                "effect_lines": 2
+              },
+              {
+                "cause": "Rain falls on a mountain and flows into a river.",
+                "effect": "",
+                "effect_lines": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "day": "Thursday",
+      "title": "Wind and Air Pressure",
+      "standards": [
+        "VA.SCIENCE.1.1.7.a"
+      ],
+      "worksheets": [
+        {
+          "id": "thu-1",
+          "kind": "readingWorksheet",
+          "data": {
+            "title": "Thursday: Wind and Air Pressure",
+            "passage_title": "Why Does the Wind Blow?",
+            "instructions": "Read about wind with Zara. Then answer the questions below.\n\nOutdoor activity: Go outside and lick your finger. Hold it up in the air. The side that feels cooler is the direction the wind is coming FROM. Which direction is the wind blowing today?",
+            "passage": "Zara spread her wings and felt a strong gust of wind. It lifted her higher in the sky without her even flapping! 'Wind is so helpful,' she sang, 'but where does it come from?' The answer starts with temperature.\n\nRemember that the Sun does not heat all parts of Earth equally. Land heats up faster than water, and dark surfaces warm faster than light ones. When a patch of ground gets warm, the air above it gets warm too. Warm air is lighter than cool air, so warm air RISES — like a hot-air balloon. As the warm air rises, it leaves behind an area of lower air pressure. Air pressure is the weight of air pressing down on the ground.\n\nCool air nearby is heavier and has higher pressure. High-pressure air always moves toward low-pressure areas — it rushes in to fill the space left by the rising warm air. THAT rushing movement of air is the WIND. The bigger the difference in pressure, the stronger the wind blows.\n\nWe measure wind with special tools. An anemometer measures wind SPEED — how fast the wind is blowing, in miles per hour. A weather vane shows wind DIRECTION — the direction the wind is coming FROM. If a weather vane points north, the wind is blowing FROM the north (called a north wind). Zara loved riding the warm thermals — rising columns of warm air — that helped her soar across the sky without tiring her wings!",
+            "vocabulary": [
+              {
+                "term": "wind",
+                "definition": "Moving air — caused when high-pressure air rushes into a low-pressure area."
+              },
+              {
+                "term": "air pressure",
+                "definition": "The weight of air pressing down on the ground. Warm air has low pressure; cool air has high pressure."
+              },
+              {
+                "term": "anemometer",
+                "definition": "A weather tool that measures wind speed — how fast the wind is blowing."
+              },
+              {
+                "term": "weather vane",
+                "definition": "A weather tool that spins and points to show the direction the wind is coming from."
+              },
+              {
+                "term": "thermal",
+                "definition": "A rising column of warm air — birds like Zara ride thermals to soar without flapping."
+              }
+            ],
+            "questions": [
+              {
+                "prompt": "What causes wind? Explain in your own words using 'warm air' and 'pressure'.",
+                "response_lines": 3
+              },
+              {
+                "prompt": "What is the difference between an anemometer and a weather vane?",
+                "response_lines": 3
+              },
+              {
+                "prompt": "If the weather vane points south, which direction is the wind blowing FROM?",
+                "response_lines": 1
+              },
+              {
+                "prompt": "Why can Zara soar without flapping when she finds a thermal?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "LET'S DISCUSS: On a hot summer day at the beach, the sand heats up faster than the ocean. Which way do you think the wind blows — from land to sea, or from sea to land? Why?",
+                "response_lines": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "thu-2",
+          "kind": "matchingWorksheet",
+          "data": {
+            "title": "Thursday: Weather Tools and Wind Words — Matching",
+            "instructions": "Draw a line from each weather word or tool on the left to its correct meaning on the right.",
+            "left_items": [
+              "Anemometer",
+              "Weather vane",
+              "Air pressure",
+              "Thermal",
+              "Wind",
+              "High pressure"
+            ],
+            "right_items": [
+              "Measures how fast the wind is blowing",
+              "Points to show where wind comes FROM",
+              "The weight of air pressing on the ground",
+              "A rising column of warm air birds ride",
+              "Moving air caused by pressure differences",
+              "Found where air is cool and heavy"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "day": "Friday",
+      "title": "Weather Patterns and Forecasting (Capstone)",
+      "standards": [
+        "VA.SCIENCE.K.k.9.a",
+        "VA.SCIENCE.1.1.7.a"
+      ],
+      "worksheets": [
+        {
+          "id": "fri-1",
+          "kind": "readingWorksheet",
+          "data": {
+            "title": "Friday: Weather Patterns and Forecasting",
+            "passage_title": "How Do Meteorologists Predict the Weather?",
+            "instructions": "Read the capstone passage with Zara. Then answer the questions.\n\nCapstone activity: Before starting, write down today's weather without looking at a forecast. After the lesson, look up tomorrow's forecast online or on TV. What weather tools helped the meteorologist make that prediction?",
+            "passage": "Zara had been watching the sky all week and she felt like she was getting very good at guessing what the weather would do next. 'I think I am becoming a meteorologist!' she chirped proudly. A meteorologist is a scientist who studies weather and makes forecasts — predictions about what the weather will be like in the future.\n\nMeteorologists have learned that weather follows patterns. A weather pattern is when the same kind of weather happens in the same way, over and over. For example, in many parts of the United States, summer afternoons often bring thunderstorms — because the hot ground heats the air, which rises, forms big storm clouds, and then the rain falls. That is the water cycle and wind working together!\n\nMeteorologists use many special tools to collect data about the weather. A thermometer measures temperature. A rain gauge is a small container that collects and measures how much rain has fallen. An anemometer measures wind speed. A barometer measures air pressure — when pressure drops quickly, a storm is often coming! Weather satellites in space take pictures of clouds over huge areas of Earth, and weather stations on the ground send data to computers every hour.\n\nAll of these measurements are put together into giant computer models that predict how the atmosphere will change over the next few days. That is how meteorologists can tell you whether to bring an umbrella tomorrow. Zara ruffled her feathers and looked at the clouds building in the west. 'I predict rain by evening,' she tweeted — and she was right!",
+            "vocabulary": [
+              {
+                "term": "meteorologist",
+                "definition": "A scientist who studies weather and makes forecasts."
+              },
+              {
+                "term": "forecast",
+                "definition": "A prediction about what the weather will be like in the future."
+              },
+              {
+                "term": "weather pattern",
+                "definition": "Weather that repeats in a predictable way — like summer afternoon thunderstorms."
+              },
+              {
+                "term": "rain gauge",
+                "definition": "A tool that collects and measures how much rain has fallen."
+              },
+              {
+                "term": "barometer",
+                "definition": "A tool that measures air pressure — a quick pressure drop often means a storm is coming."
+              },
+              {
+                "term": "data",
+                "definition": "Measurements and facts collected by weather tools — meteorologists use data to make forecasts."
+              }
+            ],
+            "questions": [
+              {
+                "prompt": "What is a meteorologist? What is a weather forecast?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "Name four weather tools described in the passage. What does each one measure?",
+                "response_lines": 4
+              },
+              {
+                "prompt": "What does it mean for weather to follow a 'pattern'? Give one example from the passage.",
+                "response_lines": 3
+              },
+              {
+                "prompt": "How do all of this week's topics — Sun, clouds, water cycle, and wind — work together to create a thunderstorm? Explain the chain!",
+                "response_lines": 4
+              },
+              {
+                "prompt": "LET'S DISCUSS: If a barometer reading drops sharply in the morning, what should you predict for the afternoon — and would you change any outdoor plans?",
+                "response_lines": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "fri-2",
+          "kind": "treeMapWorksheet",
+          "data": {
+            "title": "Friday: Weather Tools — Tree Map Capstone",
+            "instructions": "Sort each weather word or tool from the word bank into the correct branch. Each item belongs in only one branch — think about what it measures or describes!",
+            "root_label": "Weather Science",
+            "branches": [
+              {
+                "label": "Measuring Tools",
+                "slot_count": 4
+              },
+              {
+                "label": "Water Cycle Steps",
+                "slot_count": 3
+              },
+              {
+                "label": "Cloud Types",
+                "slot_count": 3
+              }
+            ],
+            "columns": 3,
+            "word_bank": [
+              "Thermometer",
+              "Evaporation",
+              "Cumulus",
+              "Rain gauge",
+              "Condensation",
+              "Stratus",
+              "Anemometer",
+              "Precipitation",
+              "Cirrus",
+              "Barometer"
+            ]
+          }
+        },
+        {
+          "id": "fri-3",
+          "kind": "readingWorksheet",
+          "data": {
+            "title": "End-of-Week Parent Feedback — Weather Week",
+            "passage_title": "Week Summary & Teaching Notes for the Parent",
+            "instructions": "Please complete this feedback sheet after the week wraps up. Your notes help shape next week's lessons.",
+            "passage": "This week followed a causal arc through Earth's weather. Monday established that all weather energy comes from the Sun, and introduced the idea of temperature. Tuesday explored how clouds form through condensation and the different types of precipitation. Wednesday traced the full water cycle — evaporation, condensation, precipitation — as a continuous loop powered by the Sun. Thursday explained wind as the movement of air from high pressure to low pressure, caused by unequal heating. Friday pulled everything together with weather patterns and forecasting — how meteorologists use tools and data to predict the weather.\n\nZara the Zebra Finch appeared throughout the week as a friendly narrator, experiencing the weather from a bird's-eye view that gave concrete, relatable examples for each concept.\n\nKey concepts to check for genuine understanding — not just recall:\n1) The Sun is the ultimate energy source for all weather.\n2) Clouds form through condensation, not just 'water in the sky'.\n3) The water cycle is continuous — the same water molecules keep cycling.\n4) Wind is caused by pressure differences, not just 'air moving'.\n5) Meteorologists use multiple tools and look for patterns — forecasting is data-driven.\n\nCommon misconceptions to watch for:\n• 'Rain comes from the ocean' (partially true, but water vapor can come from any liquid water).\n• 'Clouds are made of steam' (they are made of tiny liquid droplets or ice, not steam).\n• 'Wind blows toward the warmer area' (wind blows FROM high pressure INTO low pressure — toward the warmer, less dense air).\n\nSuggested follow-on activities: keep a five-day weather journal; look up the local barometer reading each morning and see if low pressure really does predict rain; watch a TV weather forecast together and identify all the tools and maps used.",
+            "vocabulary": [
+              {
+                "term": "Key Misconception to Watch",
+                "definition": "Clouds are NOT made of steam — they are made of tiny liquid water droplets or ice crystals formed through condensation."
+              },
+              {
+                "term": "Strongest Concept This Week",
+                "definition": "(Fill in after the week — which idea did {{student_name}} grasp best?)"
+              },
+              {
+                "term": "Next Week's Hook",
+                "definition": "Seasons and climate — why do some places get more sun? How does the Sun's angle change throughout the year?"
+              }
+            ],
+            "questions": [
+              {
+                "prompt": "Overall comfort with the week's content — how well did {{student_name}} grasp the concepts? (1 = struggled throughout, 5 = strong grasp of all concepts)",
+                "response_lines": 1
+              },
+              {
+                "prompt": "Which day's lesson generated the most curiosity or questions?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "By Friday, could {{student_name}} explain the full chain: Sun → evaporation → cloud → rain → wind?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "Did any weather events happen during the week (a real rain shower, wind, clouds) that you connected to the lessons in real time?",
+                "response_lines": 2
+              },
+              {
+                "prompt": "Topics or vocabulary to revisit next week:",
+                "response_lines": 2
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "prep_checks": [
+    {
+      "id": "chk-1",
+      "day": "Monday",
+      "standard_id": "VA.SCIENCE.K.k.8.a",
+      "kind": "oral",
+      "prompt": "Ask: where does the energy for weather come from?",
+      "pass_criteria": "Says the Sun, and that it warms the ground, water and air."
+    },
+    {
+      "id": "chk-2",
+      "day": "Monday",
+      "standard_id": "VA.SCIENCE.1.1.6.a",
+      "kind": "review",
+      "prompt": "Have {{student_name}} point to the Sunny and Cloudy / Rainy words on the word sort and say why two of them go together.",
+      "pass_criteria": "Gives a reason that mentions sunlight or clouds, not just 'it just does'."
+    },
+    {
+      "id": "chk-3",
+      "day": "Tuesday",
+      "standard_id": "VA.SCIENCE.K.k.9.a",
+      "kind": "oral",
+      "prompt": "Ask: what are clouds made of?",
+      "pass_criteria": "Says tiny drops of water (or ice), not steam or smoke."
+    },
+    {
+      "id": "chk-4",
+      "day": "Tuesday",
+      "standard_id": "VA.SCIENCE.K.k.9.a",
+      "kind": "quiz",
+      "prompt": "Show a picture of a puffy white cloud and a flat gray one. Ask which cloud brings rain.",
+      "pass_criteria": "Picks the flat gray (stratus) cloud and says rain or drizzle."
+    },
+    {
+      "id": "chk-5",
+      "day": "Wednesday",
+      "standard_id": "VA.SCIENCE.1.1.7.a",
+      "kind": "oral",
+      "prompt": "Ask {{student_name}} to tell the water cycle in three steps.",
+      "pass_criteria": "Names evaporation, condensation and precipitation in order."
+    },
+    {
+      "id": "chk-6",
+      "day": "Wednesday",
+      "standard_id": "VA.SCIENCE.1.1.7.a",
+      "kind": "review",
+      "prompt": "Ask: why does the water cycle keep going round and round?",
+      "pass_criteria": "Says the Sun keeps heating the water, so it keeps rising again."
+    },
+    {
+      "id": "chk-7",
+      "day": "Thursday",
+      "standard_id": "VA.SCIENCE.1.1.7.a",
+      "kind": "quiz",
+      "prompt": "Ask: which tool measures how fast the wind blows, and which shows where it comes from?",
+      "pass_criteria": "Anemometer for speed, weather vane for direction."
+    },
+    {
+      "id": "chk-8",
+      "day": "Thursday",
+      "standard_id": "VA.SCIENCE.1.1.7.a",
+      "kind": "oral",
+      "prompt": "Ask: what makes wind?",
+      "pass_criteria": "Says air moves because some air is warmer or heavier than other air."
+    },
+    {
+      "id": "chk-9",
+      "day": "Friday",
+      "standard_id": "VA.SCIENCE.K.k.9.a",
+      "kind": "quiz",
+      "prompt": "Ask {{student_name}} to name four weather tools.",
+      "pass_criteria": "Any four of thermometer, rain gauge, anemometer, barometer, weather vane."
+    },
+    {
+      "id": "chk-10",
+      "day": "Friday",
+      "standard_id": "VA.SCIENCE.1.1.7.a",
+      "kind": "oral",
+      "prompt": "Ask: start with the Sun and tell me how we get a rainstorm.",
+      "pass_criteria": "Chains Sun, evaporation, cloud, rain in a sensible order."
+    }
+  ],
+  "teacher_guide": {
+    "title": "Weather Week — Teacher / Parent Guide",
+    "html_title": "Weather Week — Teacher Guide",
+    "meta": [
+      [
+        "Theme",
+        "Weather"
+      ],
+      [
+        "Audience",
+        "{{student_name}}, age 6, K–1"
+      ],
+      [
+        "Narrator",
+        "Zara the Zebra Finch"
+      ]
+    ],
+    "arc": "Sun's Energy &rarr; Atmosphere &amp; Clouds &rarr; Water Cycle &rarr; Wind &amp; Pressure &rarr; Weather Patterns &amp; Forecasting",
+    "days": [
+      {
+        "day": "Monday",
+        "title": "The Sun Heats Our World",
+        "page_break_before": false,
+        "blocks": [
+          {
+            "heading": "Answer Key — Reading Questions"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Q1 (Energy source):** All of Earth's weather energy comes from the Sun. It sends light and heat energy to Earth.",
+              "**Q2 (Temperature):** Temperature is how warm or cold the air is. We measure it with a thermometer.",
+              "**Q3 (Outdoor observation):** Personal response — student should note feeling warmer in sunlight and cooler in shade. Guide them to connect this to the passage's explanation of direct sunlight warming surfaces."
+            ]
+          },
+          {
+            "heading": "LET'S DISCUSS Guidance"
+          },
+          {
+            "style": "discuss",
+            "paragraphs": [
+              "*\"If the Sun turned off, what would happen to the weather?\"*",
+              "Expected reasoning: No energy = no evaporation, no wind, no rain. Earth would get very cold very quickly. All weather would stop. There is no single right answer here — encourage logical chaining of causes."
+            ]
+          },
+          {
+            "heading": "Word Sort Answer Key"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Sunny:** Bright sky, Warm air, Clear sky, Rainbows, Hot sidewalk",
+              "**Cloudy/Rainy:** Rain puddles, Gray clouds, Thunderstorm, Cool shade, Wet grass",
+              "*Note: \"Rainbows\" appear after rain (so rainy could be argued) but rainbows require sunlight — accept either category with good reasoning.*"
+            ]
+          },
+          {
+            "heading": "Misconceptions to Watch"
+          },
+          {
+            "style": "misconception",
+            "paragraphs": [
+              "Students often think the Sun \"warms the air directly.\" Emphasize that the Sun first warms the GROUND and WATER, and the ground/water then warms the air above it. This matters for understanding wind formation on Thursday."
+            ]
+          },
+          {
+            "heading": "Extension Activity"
+          },
+          {
+            "style": "extension",
+            "paragraphs": [
+              "Set up two small cups of water in the same spot — one covered with black paper, one uncovered white. Check the temperature of each after 20 minutes of sunlight. Why is the black cup warmer? (Darker surfaces absorb more solar energy.)"
+            ]
+          }
+        ]
+      },
+      {
+        "day": "Tuesday",
+        "title": "Clouds and Precipitation",
+        "page_break_before": false,
+        "blocks": [
+          {
+            "heading": "Answer Key — Reading Questions"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Q1 (Cloud formation):** Clouds are made of millions of tiny water droplets or ice crystals. They form when warm, wet air rises, cools, and the water vapor undergoes condensation — turning into droplets that clump together.",
+              "**Q2 (Cloud types):** Cumulus = puffy, white, fair weather. Stratus = flat, gray, light rain or drizzle. Cirrus = thin, wispy, high up, made of ice. Cumulus usually means good weather.",
+              "**Q3 (Precipitation):** Rain (liquid), snow (frozen flakes), sleet (frozen rain drops), hail (balls of ice). Rain is liquid; snow is solid frozen water crystals — different temperatures cause different forms."
+            ]
+          },
+          {
+            "heading": "Feature Matrix Answer Key"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Cumulus:** Puffy and white ✓, Brings fair weather ✓, Low in the sky ✓",
+              "**Stratus:** Flat and gray ✓, Low in the sky ✓, Brings rain or drizzle ✓",
+              "**Cirrus:** Thin and wispy ✓, High in the sky ✓, Made of ice crystals ✓"
+            ]
+          },
+          {
+            "heading": "LET'S DISCUSS Guidance"
+          },
+          {
+            "style": "discuss",
+            "paragraphs": [
+              "*\"If you see dark stratus clouds rolling in, what will the weather be like?\"*",
+              "Expected: Rain or drizzle is likely soon. Students may want to bring an umbrella, move activities indoors, or cover outdoor plants. The goal is to practice applying cloud-type knowledge to real-world decisions."
+            ]
+          },
+          {
+            "heading": "Misconceptions to Watch"
+          },
+          {
+            "style": "misconception",
+            "paragraphs": [
+              "\"Clouds are made of steam.\" Correct this clearly: clouds are tiny LIQUID droplets (or ice crystals), not steam. Steam is invisible hot water vapor. When you see a visible cloud, condensation has already happened."
+            ]
+          },
+          {
+            "heading": "Extension Activity"
+          },
+          {
+            "style": "extension",
+            "paragraphs": [
+              "Cloud journaling: Print or draw the three cloud types. For three consecutive days, go outside and draw which cloud type you see. Did the clouds correctly predict the weather that followed?"
+            ]
+          }
+        ]
+      },
+      {
+        "day": "Wednesday",
+        "title": "The Water Cycle",
+        "page_break_before": true,
+        "blocks": [
+          {
+            "heading": "Answer Key — Reading Questions"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Q1 (Three steps):** 1) Evaporation — Sun heats water, turns it to vapor. 2) Condensation — vapor rises, cools, forms clouds. 3) Precipitation — water falls as rain/snow/sleet/hail.",
+              "**Q2 (Evaporation):** Evaporation is when heat turns liquid water into invisible water vapor gas. Heat from the Sun causes it.",
+              "**Q3 (Condensation cause):** Higher in the sky, the air is colder. Cold air cannot hold as much water vapor, so the vapor cools and turns back into liquid droplets — condensation.",
+              "**Q4 (Continuous cycle):** The same water keeps cycling because it is never destroyed — it just changes form (liquid → gas → liquid again) and location, driven by the Sun's energy."
+            ]
+          },
+          {
+            "heading": "Cause-and-Effect Answer Key"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Cause 1 → Effect:** The water evaporates — turns into invisible water vapor and rises into the air.",
+              "**Cause 2 → Effect:** The vapor cools down and condenses into tiny water droplets, forming a cloud.",
+              "**Cause 3 → Effect:** The droplets become too heavy and fall as precipitation — rain, snow, sleet, or hail.",
+              "**Cause 4 → Effect:** The water soaks into the ground, refills lakes and rivers, and the water cycle begins again with evaporation."
+            ]
+          },
+          {
+            "heading": "LET'S DISCUSS Guidance"
+          },
+          {
+            "style": "discuss",
+            "paragraphs": [
+              "*\"Could water from a cloud over your town have started in the Pacific Ocean?\"*",
+              "Yes! Winds carry water vapor thousands of miles. Ocean water evaporates, vapor travels inland, condenses into clouds, and falls as rain far from the original source. This is a wonderful real-world demonstration that the water cycle operates at a global scale."
+            ]
+          },
+          {
+            "heading": "Misconceptions to Watch"
+          },
+          {
+            "style": "misconception",
+            "paragraphs": [
+              "Students may think rain \"comes from clouds\" as though clouds are containers that get filled with new water. Clarify that clouds ARE condensed water vapor — the water was already in the atmosphere before the cloud formed."
+            ]
+          },
+          {
+            "heading": "Extension Activity"
+          },
+          {
+            "style": "extension",
+            "paragraphs": [
+              "Mini water cycle in a bag: Put a small amount of water in a sealed clear plastic bag and tape it to a sunny window. Over several hours, watch evaporation (water disappearing from the bottom), condensation (drops on the top of the bag), and \"precipitation\" (drops running back down). Narrate each step as Zara would!"
+            ]
+          }
+        ]
+      },
+      {
+        "day": "Thursday",
+        "title": "Wind and Air Pressure",
+        "page_break_before": false,
+        "blocks": [
+          {
+            "heading": "Answer Key — Reading Questions"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Q1 (Cause of wind):** The Sun heats the ground unevenly. Warm ground heats the air above it. Warm air is lighter and rises, creating a low-pressure area. Nearby cool, heavy high-pressure air rushes in to fill that space — that rushing air is wind.",
+              "**Q2 (Anemometer vs. weather vane):** Anemometer measures wind SPEED (how fast). Weather vane shows wind DIRECTION (which way the wind is coming from).",
+              "**Q3 (Wind direction):** If the weather vane points south, the wind is blowing FROM the south — a south wind.",
+              "**Q4 (Thermal):** A thermal is a column of rising warm air. Zara can spread her wings and let the rising air carry her upward without having to flap — the air does the lifting work."
+            ]
+          },
+          {
+            "heading": "Matching Answer Key"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "Anemometer → Measures how fast the wind is blowing",
+              "Weather vane → Points to show where wind comes FROM",
+              "Air pressure → The weight of air pressing on the ground",
+              "Thermal → A rising column of warm air birds ride",
+              "Wind → Moving air caused by pressure differences",
+              "High pressure → Found where air is cool and heavy"
+            ]
+          },
+          {
+            "heading": "LET'S DISCUSS Guidance"
+          },
+          {
+            "style": "discuss",
+            "paragraphs": [
+              "*\"At the beach, which way does the wind blow — land to sea or sea to land?\"*",
+              "During a hot day, the sand heats faster than the water (land is hotter, lower pressure). The sea air is cooler (higher pressure) and blows toward the lower-pressure land — this is called a sea breeze. Wind blows FROM the sea TO the land. At night, it reverses (land cools faster than sea)."
+            ]
+          },
+          {
+            "heading": "Misconceptions to Watch"
+          },
+          {
+            "style": "misconception",
+            "paragraphs": [
+              "Students often say \"wind blows toward the hot area\" — technically true, but the mechanism is: hot air rises (creating LOW pressure), and wind blows FROM high pressure INTO low pressure. The wind is moving INTO the hot area, but it is the pressure difference that causes the movement, not the heat directly."
+            ]
+          },
+          {
+            "heading": "Extension Activity"
+          },
+          {
+            "style": "extension",
+            "paragraphs": [
+              "Make a simple weather vane: tape a paper arrow to a straw and push the straw into a lump of clay or an eraser. Take it outside and observe which direction the arrow points (it points INTO the wind, showing the wind's source direction). Compare to a weather app to check accuracy."
+            ]
+          }
+        ]
+      },
+      {
+        "day": "Friday",
+        "title": "Weather Patterns and Forecasting (Capstone)",
+        "page_break_before": true,
+        "blocks": [
+          {
+            "heading": "Answer Key — Reading Questions"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Q1 (Meteorologist / Forecast):** A meteorologist is a scientist who studies weather and makes forecasts. A forecast is a prediction about what the weather will be like in the future.",
+              "**Q2 (Four tools):** Thermometer = temperature; Rain gauge = how much rain fell; Anemometer = wind speed; Barometer = air pressure. (Also: weather vane = wind direction; weather satellite = cloud images from space.)",
+              "**Q3 (Weather pattern):** A pattern is weather that repeats predictably. Example from passage: summer afternoons often bring thunderstorms because hot ground heats air → warm air rises → storm clouds form → rain falls.",
+              "**Q4 (Chain: Sun → thunderstorm):** Sun heats the ground → ground heats the air → warm air evaporates water from surfaces → moist warm air rises (wind) → air cools at altitude → condensation forms clouds → water accumulates in cloud → precipitation falls as rain → back to ground. Accept any reasonable causal chain connecting all four topics."
+            ]
+          },
+          {
+            "heading": "Tree Map Answer Key"
+          },
+          {
+            "style": "answer",
+            "paragraphs": [
+              "**Measuring Tools (4):** Thermometer, Rain gauge, Anemometer, Barometer",
+              "**Water Cycle Steps (3):** Evaporation, Condensation, Precipitation",
+              "**Cloud Types (3):** Cumulus, Stratus, Cirrus"
+            ]
+          },
+          {
+            "heading": "LET'S DISCUSS Guidance"
+          },
+          {
+            "style": "discuss",
+            "paragraphs": [
+              "*\"If the barometer drops sharply, what do you predict for the afternoon?\"*",
+              "A rapid drop in air pressure means a low-pressure system is approaching — which typically brings cloudy skies, wind, and rain or storms. Practical decisions: bring an umbrella, move outdoor activities earlier, close windows. This is a great opportunity to check a real barometer app and make a real prediction together."
+            ]
+          },
+          {
+            "heading": "Misconceptions to Watch"
+          },
+          {
+            "style": "misconception",
+            "paragraphs": [
+              "\"Weather forecasts are just guesses.\" Clarify that forecasts are data-driven predictions based on measurements and computer models — they are much more accurate than guessing, especially for 1–3 days out. The more data tools we have, the better the forecast."
+            ]
+          },
+          {
+            "heading": "Extension Activity"
+          },
+          {
+            "style": "extension",
+            "paragraphs": [
+              "Five-day weather journal: Each morning for one week, record temperature, cloud type, wind direction, and precipitation. At the end of the week, look back — can you identify a pattern? Compare your observations to the official forecast each day and score accuracy."
+            ]
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "heading": "Week Summary — Causal Chain",
+      "intro": "The week followed this chain of causes:",
+      "items": [
+        "**Monday:** The Sun provides all weather energy; heats the ground, air, and water.",
+        "**Tuesday:** Heat causes evaporation; rising moist air cools and condenses into clouds; clouds produce precipitation.",
+        "**Wednesday:** The full water cycle — evaporation → condensation → precipitation → repeat.",
+        "**Thursday:** Uneven heating creates pressure differences; air moves from high to low pressure = wind.",
+        "**Friday:** All these forces together create weather patterns; meteorologists measure and predict them."
+      ],
+      "closing": "By Friday, {{student_name}} should be able to trace the path from sunlight on the ground to a rainstorm without prompting — and name at least four weather tools."
+    }
+  }
+}
