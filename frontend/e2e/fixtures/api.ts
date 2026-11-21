@@ -2,7 +2,8 @@ import { APIRequestContext } from '@playwright/test';
 import { execFileSync } from 'child_process';
 import { resolve } from 'path';
 
-export const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:8182';
+export const BACKEND =
+  process.env.BACKEND_URL ?? `http://localhost:${process.env.E2E_BACKEND_PORT ?? 8182}`;
 const DB_FILE = process.env.PLAYWRIGHT_DB_FILE ?? '/tmp/playwright-test.db';
 const PROJECT_ROOT = resolve(__dirname, '../../..');
 

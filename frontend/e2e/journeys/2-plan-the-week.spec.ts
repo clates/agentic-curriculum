@@ -9,6 +9,7 @@
  */
 import { test, expect } from '../fixtures/test';
 import { createStudent, createPacket, llmUsage } from '../fixtures/api';
+import { repeatIdentity } from '../fixtures/e2e-hardening';
 import { stubCalls } from '../fixtures/stub';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -20,7 +21,15 @@ async function submitGenerateDialog(page: Page, grade: string, subject: string) 
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Grade Level').selectOption({ label: grade });
   await dialog.getByLabel('Subject').selectOption({ label: subject });
-  await dialog.getByRole('button', { name: 'Generate Plan', exact: true }).click();
+  // Generation is synchronous on the backend (a scaffold call plus one lesson call per day, then
+  // rendering) and legitimately takes seconds: the backend's own logs show 3-14 s on a busy
+  // machine, longer than any 5 s assertion. Wait for the real condition, the response, and only
+  // then expect the dialog to close.
+  const [response] = await Promise.all([
+    page.waitForResponse((r) => r.url().endsWith('/generate_weekly_plan'), { timeout: 90_000 }),
+    dialog.getByRole('button', { name: 'Generate Plan', exact: true }).click(),
+  ]);
+  expect(response.status(), 'generate_weekly_plan').toBeLessThan(500);
 }
 
 async function openPendingPlan(page: Page, name: string) {
@@ -33,10 +42,13 @@ async function openPendingPlan(page: Page, name: string) {
 
 test.describe('2.1 Generate a week', () => {
   test.describe.configure({ mode: 'serial' });
-  const STUDENT_ID = 'e2e-generate-week-q7r8';
-  const NAME = 'Generate Week Student';
+  const STUDENT_ID_0 = 'e2e-generate-week-q7r8';
+  let STUDENT_ID = STUDENT_ID_0;
+  const NAME_0 = 'Generate Week Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
     await createStudent(request, STUDENT_ID, { name: NAME, birthday: '2017-02-01' });
   });
 
@@ -103,10 +115,13 @@ test.describe('2.1 Generate a week', () => {
 });
 
 test.describe('2.1b A day the model gets wrong', () => {
-  const STUDENT_ID = 'e2e-generate-broken-day-s9t0';
-  const NAME = 'Broken Day Student';
+  const STUDENT_ID_0 = 'e2e-generate-broken-day-s9t0';
+  let STUDENT_ID = STUDENT_ID_0;
+  const NAME_0 = 'Broken Day Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
     await createStudent(request, STUDENT_ID, {
       name: NAME,
       birthday: '2017-04-01',
@@ -155,11 +170,15 @@ test.describe('2.2 A child with no plan yet', () => {
 });
 
 test.describe('2.3 Review a pending week', () => {
-  const STUDENT_ID = 'e2e-feedback-modal-e5f6';
-  const PACKET_ID = `${STUDENT_ID}-pkt-001`;
-  const NAME = 'Detail Modal Student';
+  const STUDENT_ID_0 = 'e2e-feedback-modal-e5f6';
+  let STUDENT_ID = STUDENT_ID_0;
+  let PACKET_ID = `${STUDENT_ID}-pkt-001`;
+  const NAME_0 = 'Detail Modal Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
+    PACKET_ID = `${STUDENT_ID}-pkt-001`;
     await createStudent(request, STUDENT_ID, { name: NAME, birthday: '2018-03-01' });
     await createPacket(request, STUDENT_ID, PACKET_ID);
   });

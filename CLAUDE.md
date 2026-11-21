@@ -32,7 +32,10 @@ venv/bin/python src/ingest_standards.py   # creates curriculum.db (one-time)
 | Generate a week packet | `venv/bin/python scripts/generate_<theme>_week_series.py` | see /generate-week skill |
 
 The E2E suite spawns its own backend on port 8182 with an isolated DB (`/tmp/playwright-test.db`)
-and a frontend test server on port 3002 — it never touches `curriculum.db` or the dev servers.
+and a production-build frontend on port 3002 (`next build` + `next start`, not `next dev`) — it never
+touches `curriculum.db` or the dev servers. Override ports/DB with `E2E_BACKEND_PORT`,
+`E2E_FRONTEND_PORT`, `E2E_LLM_STUB_PORT`, `PLAYWRIGHT_DB_FILE` to run several worktrees at once.
+Coverage and stability notes: `frontend/e2e/COVERAGE.md`.
 
 ## Architecture map
 

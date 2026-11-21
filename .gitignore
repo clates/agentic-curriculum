@@ -62,3 +62,7 @@ playwright-report/
 test-results/
 # Local agent venv (not part of the project env).
 .hermes-venv/
+
+# E2E production builds
+/frontend/.next-e2e-*/
+/frontend/tsconfig.e2e.json

@@ -7,8 +7,10 @@
  */
 import { test, expect } from '../fixtures/test';
 import { createStudent } from '../fixtures/api';
+import { repeatIdentity } from '../fixtures/e2e-hardening';
 
-const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:8182';
+const BACKEND =
+  process.env.BACKEND_URL ?? `http://localhost:${process.env.E2E_BACKEND_PORT ?? 8182}`;
 
 test.describe('1.1 Add a child', () => {
   test('the parent can always find "Add Student"', async ({ page }) => {
@@ -83,15 +85,19 @@ test.describe('1.1 Add a child', () => {
 
   // The birthday is the only age signal the parent gives us, yet the dashboard card shows "—"
   // where grade/age belong and plan generation asks for a grade from scratch every time.
+  // Unblocked by: a grade-from-birthday feature. The dashboard hard-codes grade 0 (TODO in app/dashboard/page.tsx); no card exists yet.
   test.fixme('the dashboard card shows the child’s age-appropriate grade', async () => {});
 });
 
 test.describe('1.2 Correct a child’s details', () => {
   test.describe.configure({ mode: 'serial' });
-  const STUDENT_ID = 'e2e_edit_student_p5q6';
-  const STUDENT_NAME = 'Edit Target Student';
+  const STUDENT_ID_0 = 'e2e_edit_student_p5q6';
+  let STUDENT_ID = STUDENT_ID_0;
+  const STUDENT_NAME_0 = 'Edit Target Student';
+  let STUDENT_NAME = STUDENT_NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: STUDENT_NAME } = repeatIdentity(STUDENT_ID_0, STUDENT_NAME_0));
     await createStudent(request, STUDENT_ID, { name: STUDENT_NAME, birthday: '2018-08-01' });
     // Restore the name in case a previous run renamed it
     await request.put(`${BACKEND}/student/${STUDENT_ID}`, {
@@ -115,19 +121,23 @@ test.describe('1.2 Correct a child’s details', () => {
 
   test('saving a new name updates the list', async ({ page }) => {
     await openEdit(page);
-    await page.getByLabel('Full Name').fill('Renamed Student');
+    const renamed = `Renamed ${STUDENT_NAME}`;
+    await page.getByLabel('Full Name').fill(renamed);
     await page.getByRole('button', { name: 'Update Student' }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    await expect(page.getByText('Renamed Student')).toBeVisible();
+    await expect(page.getByText(renamed)).toBeVisible();
   });
 });
 
 test.describe('1.3 Remove a student', () => {
   test.describe.configure({ mode: 'serial' });
-  const STUDENT_ID = 'e2e_delete_student_r7s8';
-  const STUDENT_NAME = 'Delete Target Student';
+  const STUDENT_ID_0 = 'e2e_delete_student_r7s8';
+  let STUDENT_ID = STUDENT_ID_0;
+  const STUDENT_NAME_0 = 'Delete Target Student';
+  let STUDENT_NAME = STUDENT_NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: STUDENT_NAME } = repeatIdentity(STUDENT_ID_0, STUDENT_NAME_0));
     await createStudent(request, STUDENT_ID, { name: STUDENT_NAME, birthday: '2018-09-01' });
   });
 

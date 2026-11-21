@@ -6,13 +6,18 @@
  */
 import { test, expect } from '../fixtures/test';
 import { createStudent, createPacket } from '../fixtures/api';
+import { repeatIdentity } from '../fixtures/e2e-hardening';
 
 test.describe('3.1 Print the packet', () => {
-  const STUDENT_ID = 'e2e-print-smoke-t9u0';
-  const PACKET_ID = `${STUDENT_ID}-pkt-001`;
-  const NAME = 'Print Smoke Student';
+  const STUDENT_ID_0 = 'e2e-print-smoke-t9u0';
+  let STUDENT_ID = STUDENT_ID_0;
+  let PACKET_ID = `${STUDENT_ID}-pkt-001`;
+  const NAME_0 = 'Print Smoke Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
+    PACKET_ID = `${STUDENT_ID}-pkt-001`;
     await createStudent(request, STUDENT_ID, { name: NAME, birthday: '2018-10-01' });
     await createPacket(request, STUDENT_ID, PACKET_ID);
   });
@@ -35,7 +40,7 @@ test.describe('3.1 Print the packet', () => {
     expect([200, 404]).toContain(res.status());
   });
 
-  // Needs the seed to render real worksheet HTML (src/worksheet_html_renderer.py) so the print
-  // view can be asserted on content: every day present, page breaks, a teacher guide.
-  test.fixme('the printout contains every day’s worksheets', async () => {});
+  // Structured (hosted) weeks are covered by e2e/print/hosted-week-print.spec.ts: every day's
+  // worksheets, the teacher guide and the prep sheet. Legacy packets with rendered HTML artifacts
+  // on disk are still untested here (backend pytest covers them); see e2e/COVERAGE.md.
 });
