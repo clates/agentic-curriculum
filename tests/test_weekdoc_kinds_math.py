@@ -75,8 +75,8 @@ def test_item_refs():
     assert item_refs("speedMath", CASES["speedMath"])[1].prompt == "9 - 2"
 
 
-def test_legacy_math_alias_is_not_hosted():
-    assert "mathWorksheet" not in HOSTED_KINDS
+def test_legacy_math_alias_is_hosted_by_the_graphs_module():
+    assert "mathWorksheet" in HOSTED_KINDS  # registered in kinds_graphs (M2.9d)
 
 
 @pytest.mark.parametrize(
