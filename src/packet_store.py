@@ -443,8 +443,16 @@ def save_packet_feedback(
     packet_id: str,
     mastery_feedback: dict[str, str] | None,
     quantity_feedback: int | None,
-) -> None:
-    """Save feedback for a weekly packet."""
+    *,
+    check_results: dict[str, str] | None = None,
+    quick_rating: str | None = None,
+    derived_mastery: dict[str, str] | None = None,
+) -> int:
+    """Save (insert or replace) the one feedback row for a packet; returns its version.
+
+    ``check_results`` are the raw per-check ticks and stay the source of truth; ``mastery_feedback``
+    is the per-standard rating that was derived and applied. Saving again bumps ``version``.
+    """
     ensure_schema()
 
     conn = _get_connection()
@@ -453,37 +461,41 @@ def save_packet_feedback(
         if not _packet_exists(conn, student_id, packet_id):
             raise ValueError(f"Packet {packet_id} not found for student {student_id}")
 
-        existing = conn.execute(
-            "SELECT feedback_id FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
+        now = _utc_now()
+        conn.execute(
+            """
+            INSERT INTO packet_feedback (
+                packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
+                check_results_json, quick_rating, derived_mastery_json, version, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+            ON CONFLICT(family_id, packet_id) DO UPDATE SET
+                completed_at = excluded.completed_at,
+                mastery_feedback_blob = excluded.mastery_feedback_blob,
+                quantity_feedback = excluded.quantity_feedback,
+                check_results_json = excluded.check_results_json,
+                quick_rating = excluded.quick_rating,
+                derived_mastery_json = excluded.derived_mastery_json,
+                version = packet_feedback.version + 1,
+                updated_at = excluded.updated_at
+            """,
+            (
+                packet_id,
+                student_id,
+                now,
+                _json(mastery_feedback) if mastery_feedback else None,
+                quantity_feedback,
+                _json(check_results) if check_results else None,
+                quick_rating,
+                _json(derived_mastery) if derived_mastery else None,
+                now,
+            ),
+        )
+        version = conn.execute(
+            "SELECT version FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
             (packet_id, student_id),
-        ).fetchone()
-
-        mastery_blob = _json(mastery_feedback) if mastery_feedback else None
-        if existing:
-            conn.execute(
-                """
-                UPDATE packet_feedback SET
-                    completed_at = ?,
-                    mastery_feedback_blob = ?,
-                    quantity_feedback = ?
-                WHERE packet_id = ? AND student_id = ?
-                """,
-                (_utc_now(), mastery_blob, quantity_feedback, packet_id, student_id),
-            )
-        else:
-            conn.execute(
-                """
-                INSERT INTO packet_feedback (
-                    packet_id,
-                    student_id,
-                    completed_at,
-                    mastery_feedback_blob,
-                    quantity_feedback
-                ) VALUES (?, ?, ?, ?, ?)
-                """,
-                (packet_id, student_id, _utc_now(), mastery_blob, quantity_feedback),
-            )
+        ).fetchone()[0]
         conn.commit()
+        return version
     finally:
         conn.close()
 
@@ -496,7 +508,8 @@ def get_packet_feedback(student_id: str, packet_id: str) -> dict[str, Any] | Non
     try:
         row = conn.execute(
             """
-            SELECT packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback
+            SELECT packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
+                   check_results_json, quick_rating, derived_mastery_json, version
             FROM packet_feedback
             WHERE packet_id = ? AND student_id = ?
             LIMIT 1
@@ -509,13 +522,17 @@ def get_packet_feedback(student_id: str, packet_id: str) -> dict[str, Any] | Non
     if row is None:
         return None
 
-    mastery_blob = row["mastery_feedback_blob"]
-    mastery_feedback = json.loads(mastery_blob) if mastery_blob else None
+    def _load(blob: str | None) -> Any:
+        return json.loads(blob) if blob else None
 
     return {
         "packet_id": row["packet_id"],
         "student_id": row["student_id"],
         "completed_at": row["completed_at"],
-        "mastery_feedback": mastery_feedback,
+        "mastery_feedback": _load(row["mastery_feedback_blob"]),
         "quantity_feedback": row["quantity_feedback"],
+        "check_results": _load(row["check_results_json"]),
+        "quick_rating": row["quick_rating"],
+        "derived_mastery": _load(row["derived_mastery_json"]),
+        "version": row["version"],
     }
