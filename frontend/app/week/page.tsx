@@ -1,18 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
-import { studentsApi, parseMetadata } from '@/lib/api';
-import { PARENT_QUERY } from '@/lib/parentQuery';
 import { copy } from '@/lib/copy';
+import { useThisWeek } from '@/lib/thisWeek';
+import { ChildCard } from '@/components/parent/ChildCard';
 import { EmptyState, QueryState, primaryButton } from '@/components/parent/states';
 
 export default function ThisWeekPage() {
-  const query = useQuery({
-    queryKey: ['students'],
-    queryFn: studentsApi.listStudents,
-    ...PARENT_QUERY,
-  });
+  const query = useThisWeek();
 
   return (
     <>
@@ -22,7 +17,7 @@ export default function ThisWeekPage() {
         isLoading={query.isLoading}
         error={query.error}
         data={query.data}
-        isEmpty={(kids) => kids.length === 0}
+        isEmpty={(cards) => cards.length === 0}
         onRetry={() => query.refetch()}
         empty={
           <EmptyState
@@ -36,15 +31,10 @@ export default function ThisWeekPage() {
           />
         }
       >
-        {(kids) => (
-          <ul className="space-y-3">
-            {kids.map((kid) => (
-              <li
-                key={kid.student_id}
-                className="rounded-md border border-neutral-200 bg-white p-4"
-              >
-                {parseMetadata(kid.metadata_blob)?.name ?? ''}
-              </li>
+        {(cards) => (
+          <ul className="space-y-4">
+            {cards.map((card) => (
+              <ChildCard key={card.student_id} card={card} />
             ))}
           </ul>
         )}

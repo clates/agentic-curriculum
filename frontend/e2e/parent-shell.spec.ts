@@ -26,7 +26,7 @@ export async function expectNoBannedWords(page: Page) {
 
 test.describe('Parent shell', () => {
   test('This week shows an empty state with a next step, accessibly', async ({ page }) => {
-    await page.route('**/api/students', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/this-week', (route) => route.fulfill({ json: { children: [] } }));
     await page.goto('/week');
     await expect(page.getByRole('heading', { name: 'No children yet' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Add a child' })).toBeVisible();
@@ -38,9 +38,9 @@ test.describe('Parent shell', () => {
   test('This week shows a loading state, then content', async ({ page }) => {
     let release: () => void = () => {};
     const gate = new Promise<void>((r) => (release = r));
-    await page.route('**/api/students', async (route) => {
+    await page.route('**/api/this-week', async (route) => {
       await gate;
-      await route.fulfill({ json: [] });
+      await route.fulfill({ json: { children: [] } });
     });
     await page.goto('/week');
     await expect(page.getByRole('status')).toContainText('Loading');
@@ -52,8 +52,10 @@ test.describe('Parent shell', () => {
 
   test('This week shows a plain error with a retry that works', async ({ page }) => {
     let fail = true;
-    await page.route('**/api/students', (route) =>
-      fail ? route.fulfill({ status: 500, body: 'boom' }) : route.fulfill({ json: [] })
+    await page.route('**/api/this-week', (route) =>
+      fail
+        ? route.fulfill({ status: 500, body: 'boom' })
+        : route.fulfill({ json: { children: [] } })
     );
     await page.goto('/week');
     await expect(page.locator('main [role="alert"]')).toContainText('We couldn’t load this', {
@@ -70,7 +72,7 @@ test.describe('Parent shell', () => {
   test('the tab bar is at the bottom, marks the current tab and reaches the other tabs', async ({
     page,
   }) => {
-    await page.route('**/api/students', (route) => route.fulfill({ json: [] }));
+    await page.route('**/api/this-week', (route) => route.fulfill({ json: { children: [] } }));
     await page.goto('/week');
     const bar = page.getByTestId('tab-bar');
     await expect(bar).toBeVisible();

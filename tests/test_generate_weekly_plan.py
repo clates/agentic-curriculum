@@ -2,7 +2,7 @@
 
 The fake (tests/llm_fakes.py) serves the same canned fixtures as the Playwright stub, so a
 "Stub Monday objective" means the same thing here and in the E2E journeys. No test in this file
-can reach a real LLM: agent.OpenAI is replaced, and conftest pins OPENAI_BASE_URL to a dead port.
+can reach a real LLM: agent._make_client is replaced, and conftest pins the endpoint to a dead port.
 """
 
 import importlib.util
@@ -17,7 +17,7 @@ SRC = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(SRC))
 
 import agent  # noqa: E402
-from tests.llm_fakes import DAYS, FakeOpenAI  # noqa: E402
+from tests.llm_fakes import DAYS, FakeProvider, fake_client  # noqa: E402
 
 FALLBACK_OVERVIEW = "Weekly plan using standard curriculum progression"
 FALLBACK_PROCEDURE = [
@@ -56,8 +56,8 @@ def run(tmp_path, monkeypatch):
         },
     )
 
-    def _run(fake: FakeOpenAI, *, subject: str = "Math", standards: list | None = None):
-        monkeypatch.setattr(agent, "OpenAI", lambda **_: fake)
+    def _run(fake: FakeProvider, *, subject: str = "Math", standards: list | None = None):
+        monkeypatch.setattr(agent, "_make_client", lambda: fake_client(fake))
         monkeypatch.setattr(
             agent,
             "get_filtered_standards",
@@ -74,7 +74,7 @@ def _objective(day: dict) -> str:
 
 
 def test_happy_path_five_real_days_with_scaffold_overview(run):
-    fake = FakeOpenAI()
+    fake = FakeProvider()
     plan, saved = run(fake)
 
     assert plan["weekly_overview"].startswith("E2E STUB WEEK: Math")
@@ -89,13 +89,13 @@ def test_happy_path_five_real_days_with_scaffold_overview(run):
 
 
 def test_each_day_gets_its_own_standard_from_the_scaffold(run):
-    plan, _ = run(FakeOpenAI())
+    plan, _ = run(FakeProvider())
     ids = [d["standard"]["standard_id"] for d in plan["daily_plan"]]
     assert ids == [f"T.3.{i}" for i in range(1, 6)]
 
 
 def test_invalid_scaffold_json_uses_fallback_scaffold(run):
-    fake = FakeOpenAI(scaffold="this is not json {")
+    fake = FakeProvider(scaffold="this is not json {")
     plan, _ = run(fake)
 
     assert plan["weekly_overview"] == FALLBACK_OVERVIEW
@@ -109,7 +109,7 @@ def test_invalid_scaffold_json_uses_fallback_scaffold(run):
 
 
 def test_scaffold_call_failure_uses_fallback_scaffold(run):
-    plan, _ = run(FakeOpenAI(fail_scaffold=True))
+    plan, _ = run(FakeProvider(fail_scaffold=True))
     assert plan["weekly_overview"] == FALLBACK_OVERVIEW
     assert len(plan["daily_plan"]) == 5
 
@@ -123,7 +123,7 @@ def test_short_scaffold_is_padded_to_five_days(run):
             ],
         }
     )
-    plan, _ = run(FakeOpenAI(scaffold=short))
+    plan, _ = run(FakeProvider(scaffold=short))
     assert plan["weekly_overview"] == "Short week"
     assert len(plan["daily_plan"]) == 5
     assert [d["focus"] for d in plan["daily_plan"][1:]] == ["Additional practice"] * 4
@@ -131,7 +131,7 @@ def test_short_scaffold_is_padded_to_five_days(run):
 
 @pytest.mark.parametrize("bad_day", DAYS)
 def test_one_invalid_day_falls_back_and_the_others_do_not(run, bad_day):
-    fake = FakeOpenAI(broken_days={bad_day})
+    fake = FakeProvider(broken_days={bad_day})
     plan, _ = run(fake)
 
     by_day = {d["day"]: d for d in plan["daily_plan"]}
@@ -146,7 +146,7 @@ def test_one_invalid_day_falls_back_and_the_others_do_not(run, bad_day):
 
 
 def test_a_lesson_call_that_raises_falls_back_only_that_day(run):
-    plan, _ = run(FakeOpenAI(failing_days={"Monday"}))
+    plan, _ = run(FakeProvider(failing_days={"Monday"}))
     by_day = {d["day"]: d for d in plan["daily_plan"]}
     assert by_day["Monday"]["lesson_plan"]["procedure"] == FALLBACK_PROCEDURE
     assert all(
@@ -155,7 +155,7 @@ def test_a_lesson_call_that_raises_falls_back_only_that_day(run):
 
 
 def test_llm_entirely_unavailable_still_returns_five_distinct_days(run):
-    plan, saved = run(FakeOpenAI(fail_everything=True))
+    plan, saved = run(FakeProvider(fail_everything=True))
     assert len(plan["daily_plan"]) == 5
     objectives = [_objective(d) for d in plan["daily_plan"]]
     assert all(o.startswith("Learn about: Standard ") for o in objectives)
@@ -164,8 +164,9 @@ def test_llm_entirely_unavailable_still_returns_five_distinct_days(run):
 
 
 def test_missing_api_key_is_a_value_error(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY")
     monkeypatch.delenv("OPENAI_API_KEY")
-    with pytest.raises(ValueError, match="OPENAI_API_KEY"):
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
         agent.generate_weekly_plan("s1", 3, "Math")
 
 
@@ -244,7 +245,75 @@ def test_134_no_subject_or_grade_starts_with_a_blank_standard(real_standards_db)
 def test_134_llm_down_day_one_is_not_more_generic_than_the_rest(run, real_standards_db):
     _, logic = real_standards_db
     standards = logic.get_filtered_standards("s1", 3, "English", limit=10)
-    plan, _ = run(FakeOpenAI(fail_everything=True), subject="English", standards=standards)
+    plan, _ = run(FakeProvider(fail_everything=True), subject="English", standards=standards)
     objectives = [_objective(d) for d in plan["daily_plan"]]
     assert not any("the assigned topic" in o for o in objectives), objectives
     assert not any(o.strip() == "Learn about:" for o in objectives)
+
+
+# --------------------------------------------------------------------------------------------
+# M1.6a: generation goes through the src/llm provider; usage is billed, caps are not swallowed
+# --------------------------------------------------------------------------------------------
+
+
+def test_generation_records_usage_for_every_call(run, monkeypatch):
+    from llm import InMemoryLedger
+
+    ledger = InMemoryLedger()
+    fake = FakeProvider()
+    run(fake)  # installs the default fake client; replace it with one that has a ledger
+    monkeypatch.setattr(agent, "_make_client", lambda: fake_client(fake, ledger=ledger))
+    agent.generate_weekly_plan("s1", 3, "Math")
+    assert sorted(r["task"] for r in ledger.rows) == ["lesson"] * 5 + ["scaffold"]
+    assert {r["student_id"] for r in ledger.rows} == {"s1"}
+    assert all(r["cost_usd"] == pytest.approx(0.0001) for r in ledger.rows)
+
+
+def test_cost_cap_is_not_swallowed_into_fallback_content(run, monkeypatch):
+    from llm import CostCapExceeded, CostCaps, InMemoryLedger, UsageContext, Usage
+
+    ledger = InMemoryLedger()
+    ledger.record(
+        UsageContext(family_id="fam_x", student_id="s1"),
+        task="lesson",
+        model="m",
+        usage=Usage(cost_usd=5.0),
+        latency_s=0.0,
+        status="ok",
+    )
+    run(FakeProvider())  # installs the DB/standards stubs
+    caps = CostCaps(family_month_usd=1.0)
+    fresh = FakeProvider()
+    monkeypatch.setattr(agent, "_make_client", lambda: fake_client(fresh, ledger=ledger, caps=caps))
+    with pytest.raises(CostCapExceeded):
+        agent.generate_weekly_plan(
+            "s1", 3, "Math", usage=UsageContext(family_id="fam_x", student_id="s1")
+        )
+    assert fresh.calls == []  # stopped before any model call
+
+
+def test_legacy_openai_env_names_still_work(monkeypatch):
+    """Self-hosters with only OPENAI_API_KEY / OPENAI_MODEL keep working (M1.6b)."""
+    from llm import default_client
+
+    monkeypatch.delenv("OPENROUTER_API_KEY")
+    monkeypatch.delenv("LLM_BASE_URL")
+    monkeypatch.delenv("LLM_MODEL")
+    monkeypatch.setenv("OPENAI_MODEL", "legacy/model")
+    client = default_client()
+    assert client.provider.settings.api_key == "pytest-not-a-real-key"
+    assert client.provider.settings.base_url.startswith("http://127.0.0.1:")
+    assert client.config("lesson").model == "legacy/model"
+
+
+def test_new_llm_names_override_legacy(monkeypatch):
+    from llm import default_client
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "new-key")
+    monkeypatch.setenv("LLM_BASE_URL", "http://127.0.0.1:1/new")
+    monkeypatch.setenv("OPENAI_MODEL", "legacy/model")
+    monkeypatch.setenv("LLM_MODEL", "new/model")
+    client = default_client()
+    assert client.provider.settings.api_key == "new-key"
+    assert client.provider.settings.base_url == "http://127.0.0.1:1/new"
+    assert client.config("lesson").model == "new/model"

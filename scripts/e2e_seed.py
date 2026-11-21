@@ -6,12 +6,15 @@ Usage:
   python scripts/e2e_seed.py create_packet <student_id> <packet_id>
   python scripts/e2e_seed.py set_progress <student_id>
   python scripts/e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>
+  python scripts/e2e_seed.py create_week <student_id> <packet_id>
+  python scripts/e2e_seed.py create_plan <student_id> <loop_status> [week_start]
 
 The DB path is controlled by CURRICULUM_DB_PATH (same env var the backend uses).
 """
 
 import json
 import os
+import json
 import sqlite3
 import sys
 from pathlib import Path
@@ -96,6 +99,16 @@ def create_packet(student_id: str, packet_id: str) -> None:
     print(f"created packet {packet_id} for student {student_id}")
 
 
+def create_week(student_id: str, packet_id: str) -> None:
+    """Seed a ready structured week (the weather-week fixture, 10 prep checks)."""
+    import week_store  # noqa: E402
+
+    fixture = PROJECT_ROOT / "tests" / "fixtures" / "weekdoc" / "weather_week.json"
+    week = json.loads(fixture.read_text(encoding="utf-8"))
+    week_store.save_week(student_id, packet_id, week, grade_level=0, week_of="2026-01-06")
+    print(f"created structured week {packet_id} for student {student_id}")
+
+
 def init_db() -> None:
     """Reset the test DB to a clean state: fresh schema plus the real standards data."""
     db = _db_path()
@@ -152,6 +165,68 @@ def set_progress(student_id: str) -> None:
         conn.close()
     print(f"progress seeded for {student_id}")
 
+_PLAN_PATH = {
+    "awaiting_feedback": [],
+    "outlining": ["feedback_submitted"],
+    "awaiting_pick": ["feedback_submitted", "outlines_ready"],
+    "expired": ["feedback_submitted", "outlines_ready", "pick_expired"],
+    "authoring": ["feedback_submitted", "outlines_ready", "pick_made"],
+    "ready": ["feedback_submitted", "outlines_ready", "pick_made", "authoring_done"],
+    "printed": [
+        "feedback_submitted",
+        "outlines_ready",
+        "pick_made",
+        "authoring_done",
+        "marked_printed",
+    ],
+}
+
+
+def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") -> None:
+    """Create the student's week plan and walk it to ``status`` with legal loop events."""
+    import week_plan as wp  # noqa: E402
+    from loop_state import Event, advance  # noqa: E402
+    from outline_models import OutlineSet  # noqa: E402
+
+    def outline(i, difficulty):
+        return {
+            "option_id": i,
+            "title": f"Option {i}",
+            "hook": "A week to explore",
+            "difficulty": difficulty,
+            "standard_ids": ["VA.MATH.2.1"],
+        }
+
+    conn = sqlite3.connect(_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        plan = wp.create_plan(conn, "fam_local", student_id, week_start)
+        for kind in _PLAN_PATH[status]:
+            payload = {}
+            if kind == "outlines_ready":
+                wp.store_outlines(
+                    conn,
+                    "fam_local",
+                    plan.plan_id,
+                    OutlineSet.model_validate(
+                        {
+                            "options": [
+                                outline("a", "easier"),
+                                outline("b", "on_level"),
+                                outline("c", "stretch"),
+                            ]
+                        }
+                    ),
+                )
+            elif kind == "pick_made":
+                payload = {"option_id": "b"}
+            elif kind == "authoring_done":
+                payload = {"packet_id": f"e2e_{student_id}"}
+            advance(conn, "fam_local", plan.plan_id, Event(kind, payload=payload))
+    finally:
+        conn.close()
+    print(f"plan for {student_id} is {status}")
+
 
 def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
     """Set completed_at on a packet's feedback row to iso_timestamp."""
@@ -166,6 +241,21 @@ def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
     finally:
         conn.close()
     print(f"backdated feedback for {packet_id} to {iso_timestamp}")
+
+
+def llm_usage(student_id: str) -> None:
+    """Print the llm_usage ledger rows for a student as JSON."""
+    conn = sqlite3.connect(_db_path())
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            "SELECT task, model, prompt_tokens, completion_tokens, cost_usd, status "
+            "FROM llm_usage WHERE student_id = ? ORDER BY created_at",
+            (student_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+    print(json.dumps([dict(r) for r in rows]))
 
 
 if __name__ == "__main__":
@@ -195,6 +285,24 @@ if __name__ == "__main__":
             print("Usage: e2e_seed.py set_progress <student_id>")
             sys.exit(1)
         set_progress(sys.argv[2])
+
+    elif cmd == "create_week":
+        if len(sys.argv) != 4:
+            print("Usage: e2e_seed.py create_week <student_id> <packet_id>")
+            sys.exit(1)
+        create_week(sys.argv[2], sys.argv[3])
+
+    elif cmd == "create_plan":
+        if len(sys.argv) not in (4, 5):
+            print("Usage: e2e_seed.py create_plan <student_id> <loop_status> [week_start]")
+            sys.exit(1)
+        create_plan(*sys.argv[2:])
+
+    elif cmd == "llm_usage":
+        if len(sys.argv) != 3:
+            print("Usage: e2e_seed.py llm_usage <student_id>")
+            sys.exit(1)
+        llm_usage(sys.argv[2])
 
     else:
         print(f"Unknown command: {cmd}")

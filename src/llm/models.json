@@ -1,0 +1,53 @@
+{
+  "_comment": "Task -> model map. Edit this file (or set LLM_MODEL_<TASK> env vars) to swap a model; no code change. Ids are OpenRouter model ids.",
+  "json_schema_models": [
+    "openai/",
+    "google/",
+    "anthropic/claude-haiku",
+    "anthropic/claude-sonnet",
+    "anthropic/claude-opus"
+  ],
+  "max_repairs": 2,
+  "defaults": {
+    "model": "google/gemini-3.1-flash-lite",
+    "fallback_model": "google/gemini-3.5-flash-lite",
+    "temperature": 0.7,
+    "max_tokens": 4096,
+    "timeout_s": 90
+  },
+  "tasks": {
+    "scaffold": {
+      "temperature": 0.7,
+      "max_tokens": 3000
+    },
+    "lesson": {
+      "temperature": 0.7,
+      "max_tokens": 8000
+    },
+    "outline": {
+      "temperature": 0.7,
+      "max_tokens": 3000
+    },
+    "author": {
+      "model": "google/gemini-3.5-flash",
+      "temperature": 0.5,
+      "max_tokens": 8000,
+      "timeout_s": 180
+    },
+    "judge": {
+      "model": "anthropic/claude-haiku-4.5",
+      "fallback_model": "google/gemini-3.5-flash-lite",
+      "temperature": 0.0,
+      "max_tokens": 1500
+    },
+    "repair": {
+      "temperature": 0.0,
+      "max_tokens": 4096
+    }
+  },
+  "taste_test_models": [
+    "google/gemini-3.1-flash-lite",
+    "anthropic/claude-haiku-4.5",
+    "openai/gpt-5-nano"
+  ]
+}

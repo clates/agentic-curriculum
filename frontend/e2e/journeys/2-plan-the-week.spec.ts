@@ -8,7 +8,7 @@
  * content is known: an "E2E STUB WEEK: ..." overview, "Stub <Day> focus", "Stub <Day> objective".
  */
 import { test, expect } from '../fixtures/test';
-import { createStudent, createPacket } from '../fixtures/api';
+import { createStudent, createPacket, llmUsage } from '../fixtures/api';
 import { stubCalls } from '../fixtures/stub';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -64,6 +64,15 @@ test.describe('2.1 Generate a week', () => {
       expect.arrayContaining(WEEKDAYS)
     );
     expect(calls).toHaveLength(6);
+
+    // The usage ledger saw every call, with the stub's token counts and cost, and no prompt text.
+    const usage = llmUsage(STUDENT_ID);
+    expect(usage.filter((u) => u.task === 'scaffold')).toHaveLength(1);
+    expect(usage.filter((u) => u.task === 'lesson')).toHaveLength(5);
+    for (const row of usage) {
+      expect(row).toMatchObject({ prompt_tokens: 120, completion_tokens: 60, status: 'ok' });
+      expect(row.cost_usd).toBeCloseTo(0.0002, 6);
+    }
   });
 
   // The Day 1 fallback in #134 appears when a lesson call fails or is unusable. With every call

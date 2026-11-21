@@ -13,14 +13,16 @@ from typing import Any, Iterable, Mapping, Sequence
 
 try:  # Prefer package-relative import when available
     from .db_utils import DB_FILE  # type: ignore
+    from .migrations import apply_migrations  # type: ignore
 except ImportError:  # Fallback for direct script execution
     sys.path.insert(0, os.path.dirname(__file__))
     from db_utils import DB_FILE  # type: ignore
+    from migrations import apply_migrations  # type: ignore
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 READY_STATUS = "ready"
 
-_SCHEMA_INITIALIZED = False
+_SCHEMA_INITIALIZED: str | None = None
 
 
 def _utc_now() -> str:
@@ -42,97 +44,13 @@ def _get_connection() -> sqlite3.Connection:
 
 
 def ensure_schema() -> None:
-    """Create packet storage tables if they do not already exist."""
+    """Bring the database schema up to date (runs pending numbered migrations once)."""
     global _SCHEMA_INITIALIZED
-    if _SCHEMA_INITIALIZED:
+    if _SCHEMA_INITIALIZED == DB_FILE:
         return
 
-    statements = [
-        """
-        CREATE TABLE IF NOT EXISTS weekly_packets (
-            packet_id TEXT PRIMARY KEY,
-            student_id TEXT NOT NULL,
-            grade_level INTEGER NOT NULL,
-            subject TEXT NOT NULL,
-            week_of TEXT NOT NULL,
-            status TEXT NOT NULL,
-            weekly_overview TEXT,
-            summary_json TEXT,
-            payload_json TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-        )
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_weekly_packets_student_week
-        ON weekly_packets(student_id, week_of)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_weekly_packets_status
-        ON weekly_packets(status)
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS daily_lessons (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            packet_id TEXT NOT NULL,
-            day_label TEXT NOT NULL,
-            focus TEXT,
-            standards_json TEXT,
-            lesson_plan_json TEXT NOT NULL,
-            resources_json TEXT,
-            worksheet_plans_json TEXT,
-            resource_errors_json TEXT,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY(packet_id) REFERENCES weekly_packets(packet_id) ON DELETE CASCADE,
-            UNIQUE(packet_id, day_label)
-        )
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS worksheet_artifacts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            packet_id TEXT NOT NULL,
-            daily_lesson_id INTEGER NOT NULL,
-            day_label TEXT NOT NULL,
-            kind TEXT NOT NULL,
-            file_format TEXT NOT NULL,
-            file_path TEXT NOT NULL,
-            checksum TEXT,
-            file_size_bytes INTEGER,
-            metadata_json TEXT,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY(packet_id) REFERENCES weekly_packets(packet_id) ON DELETE CASCADE,
-            FOREIGN KEY(daily_lesson_id) REFERENCES daily_lessons(id) ON DELETE CASCADE
-        )
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_artifacts_packet_kind
-        ON worksheet_artifacts(packet_id, kind)
-        """,
-        """
-        CREATE INDEX IF NOT EXISTS idx_daily_lessons_packet
-        ON daily_lessons(packet_id)
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS packet_feedback (
-            feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            packet_id TEXT NOT NULL,
-            student_id TEXT NOT NULL,
-            completed_at TEXT NOT NULL,
-            mastery_feedback_blob TEXT,
-            quantity_feedback INTEGER,
-            FOREIGN KEY(packet_id) REFERENCES weekly_packets(packet_id) ON DELETE CASCADE
-        )
-        """,
-    ]
-
-    conn = _get_connection()
-    try:
-        with conn:
-            for statement in statements:
-                conn.execute(statement)
-    finally:
-        conn.close()
-    _SCHEMA_INITIALIZED = True
+    apply_migrations(DB_FILE)
+    _SCHEMA_INITIALIZED = DB_FILE
 
 
 def _json(value: Any) -> str:
@@ -525,8 +443,16 @@ def save_packet_feedback(
     packet_id: str,
     mastery_feedback: dict[str, str] | None,
     quantity_feedback: int | None,
-) -> None:
-    """Save feedback for a weekly packet."""
+    *,
+    check_results: dict[str, str] | None = None,
+    quick_rating: str | None = None,
+    derived_mastery: dict[str, str] | None = None,
+) -> int:
+    """Save (insert or replace) the one feedback row for a packet; returns its version.
+
+    ``check_results`` are the raw per-check ticks and stay the source of truth; ``mastery_feedback``
+    is the per-standard rating that was derived and applied. Saving again bumps ``version``.
+    """
     ensure_schema()
 
     conn = _get_connection()
@@ -535,37 +461,41 @@ def save_packet_feedback(
         if not _packet_exists(conn, student_id, packet_id):
             raise ValueError(f"Packet {packet_id} not found for student {student_id}")
 
-        existing = conn.execute(
-            "SELECT feedback_id FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
+        now = _utc_now()
+        conn.execute(
+            """
+            INSERT INTO packet_feedback (
+                packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
+                check_results_json, quick_rating, derived_mastery_json, version, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+            ON CONFLICT(family_id, packet_id) DO UPDATE SET
+                completed_at = excluded.completed_at,
+                mastery_feedback_blob = excluded.mastery_feedback_blob,
+                quantity_feedback = excluded.quantity_feedback,
+                check_results_json = excluded.check_results_json,
+                quick_rating = excluded.quick_rating,
+                derived_mastery_json = excluded.derived_mastery_json,
+                version = packet_feedback.version + 1,
+                updated_at = excluded.updated_at
+            """,
+            (
+                packet_id,
+                student_id,
+                now,
+                _json(mastery_feedback) if mastery_feedback else None,
+                quantity_feedback,
+                _json(check_results) if check_results else None,
+                quick_rating,
+                _json(derived_mastery) if derived_mastery else None,
+                now,
+            ),
+        )
+        version = conn.execute(
+            "SELECT version FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
             (packet_id, student_id),
-        ).fetchone()
-
-        mastery_blob = _json(mastery_feedback) if mastery_feedback else None
-        if existing:
-            conn.execute(
-                """
-                UPDATE packet_feedback SET
-                    completed_at = ?,
-                    mastery_feedback_blob = ?,
-                    quantity_feedback = ?
-                WHERE packet_id = ? AND student_id = ?
-                """,
-                (_utc_now(), mastery_blob, quantity_feedback, packet_id, student_id),
-            )
-        else:
-            conn.execute(
-                """
-                INSERT INTO packet_feedback (
-                    packet_id,
-                    student_id,
-                    completed_at,
-                    mastery_feedback_blob,
-                    quantity_feedback
-                ) VALUES (?, ?, ?, ?, ?)
-                """,
-                (packet_id, student_id, _utc_now(), mastery_blob, quantity_feedback),
-            )
+        ).fetchone()[0]
         conn.commit()
+        return version
     finally:
         conn.close()
 
@@ -578,7 +508,8 @@ def get_packet_feedback(student_id: str, packet_id: str) -> dict[str, Any] | Non
     try:
         row = conn.execute(
             """
-            SELECT packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback
+            SELECT packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
+                   check_results_json, quick_rating, derived_mastery_json, version
             FROM packet_feedback
             WHERE packet_id = ? AND student_id = ?
             LIMIT 1
@@ -591,13 +522,17 @@ def get_packet_feedback(student_id: str, packet_id: str) -> dict[str, Any] | Non
     if row is None:
         return None
 
-    mastery_blob = row["mastery_feedback_blob"]
-    mastery_feedback = json.loads(mastery_blob) if mastery_blob else None
+    def _load(blob: str | None) -> Any:
+        return json.loads(blob) if blob else None
 
     return {
         "packet_id": row["packet_id"],
         "student_id": row["student_id"],
         "completed_at": row["completed_at"],
-        "mastery_feedback": mastery_feedback,
+        "mastery_feedback": _load(row["mastery_feedback_blob"]),
         "quantity_feedback": row["quantity_feedback"],
+        "check_results": _load(row["check_results_json"]),
+        "quick_rating": row["quick_rating"],
+        "derived_mastery": _load(row["derived_mastery_json"]),
+        "version": row["version"],
     }

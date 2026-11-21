@@ -89,14 +89,16 @@ The scaffold and five daily plans are assembled into a single weekly plan object
 
 | Setting | Env Var | Default |
 |---|---|---|
-| API key | `OPENAI_API_KEY` | *(required)* |
-| Base URL | `OPENAI_BASE_URL` | OpenAI default |
-| Model | `OPENAI_MODEL` | `gpt-3.5-turbo` |
+| API key | `OPENROUTER_API_KEY` (legacy `OPENAI_API_KEY`) | *(required)* |
+| Base URL | `LLM_BASE_URL` (legacy `OPENAI_BASE_URL`) | OpenRouter |
+| Model | `LLM_MODEL` / `LLM_MODEL_<TASK>` (legacy `OPENAI_MODEL`) | per task in `src/llm/models.json` |
+| Privacy routing | `LLM_PRIVACY_ROUTING` (`strict`/`no-training`/`off`) | `strict` if `AGENTIC_HOSTED=1`, else `off` |
+| Monthly cap per family | `LLM_CAP_FAMILY_MONTH_USD` | unlimited |
 | Parallel workers | `MAX_DAILY_PLAN_THREADS` | `5` |
 
 The system prompt (`src/prompts.py:247–255`) instructs the LLM that it is building content for a **homeschool environment** with one parent and one student, emphasising hands-on, at-home activities.
 
-Temperature is `0.7` for all calls. All calls use `response_format: {"type": "json_object"}` to enforce valid JSON output.
+Temperature and token limits come from `src/llm/models.json` (0.7 for the scaffold and lesson tasks). All calls use `response_format: {"type": "json_object"}` to enforce valid JSON output.
 
 ---
 
