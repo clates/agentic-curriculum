@@ -192,7 +192,7 @@ def graph_values(data: BarGraphData | PictographData) -> dict[str, float]:
     if isinstance(data, BarGraphData):
         if data.values is None:
             raise ValueError("blank bar graph has no values to read")
-        return dict(zip(data.categories, data.values))
+        return dict(zip(data.categories, data.values, strict=True))
     if data.blank:
         raise ValueError("blank pictograph has no values to read")
     return {r.label: r.symbols * data.per_symbol for r in data.rows}  # type: ignore[operator]
