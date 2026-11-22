@@ -125,6 +125,7 @@ export const copy = {
     notYetTitle: 'Not ready to pick yet',
     notYetBody: 'Check in on last week first. The ideas come right after.',
     checkIn: 'Check in',
+    unknownChild: 'We couldn\u2019t find that child',
   },
   print: {
     back: 'Back to this week',
