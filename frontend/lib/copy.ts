@@ -125,6 +125,54 @@ export const copy = {
     notYetTitle: 'Not ready to pick yet',
     notYetBody: 'Check in on last week first. The ideas come right after.',
     checkIn: 'Check in',
+  },
+  print: {
+    back: 'Back to this week',
+    title: (name: string) => `Print ${name}\u2019s week`,
+    intro: (name: string) =>
+      `Print all three, in this order: ${name}\u2019s pages, then your guide, then your prep sheet. Double-sided works well.`,
+    introLegacy: (name: string) => `Print ${name}\u2019s pages. Double-sided works well.`,
+    covers: (range: string) => `Covers ${range}`,
+    printBy: (day: string) => `Print by ${day}`,
+    deadlinePassed: (day: string) =>
+      `The print-by day (${day}) has passed. You can still print it now.`,
+    documentsLabel: 'Documents to print',
+    openToPrint: 'Open to print',
+    newTab: '(opens in a new tab)',
+    docs: {
+      packet: {
+        title: (name: string) => `${name}\u2019s pages`,
+        body: 'The worksheets for each day, Monday to Friday. These go to your child.',
+      },
+      guide: {
+        title: 'Your teacher guide',
+        body: 'The answers and what to say each day. Keep this one for yourself.',
+      },
+      prep: {
+        title: 'Your prep sheet',
+        body: 'What to gather before Monday and a few quick checks to do with your child.',
+      },
+    },
+    legacyNote: 'This older week only has your child\u2019s pages.',
+    confirm: 'I\u2019ve printed it',
+    confirming: 'Saving\u2026',
+    confirmHint: 'Tap this once everything is printed, so we know you\u2019re set.',
+    confirmErrorTitle: 'We couldn\u2019t save that',
+    confirmErrorBody: 'Nothing was lost. Please try again.',
+    doneTitle: 'You\u2019re all set',
+    doneBody: (name: string) => `${name}\u2019s week is printed and ready for Monday.`,
+    alreadyTitle: 'This week is already printed',
+    alreadyBody: 'You can open the documents again if you need another copy.',
+    loadingDocs: 'Loading the documents',
+    docsErrorTitle: 'We couldn\u2019t load the documents',
+    notReadyTitle: 'Nothing to print yet',
+    notReady: {
+      check_in: (name: string) =>
+        `Check in on ${name}\u2019s last week first, and we\u2019ll start the next one.`,
+      writing: (name: string) =>
+        `We\u2019re still writing ${name}\u2019s week. We\u2019ll let you know when it\u2019s ready.`,
+      pick: (name: string) => `Pick ${name}\u2019s next week first, and then it can be printed.`,
+    },
     unknownChild: 'We couldn\u2019t find that child',
   },
   byCheck: {

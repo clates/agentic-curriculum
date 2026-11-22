@@ -44,6 +44,8 @@ import pick_service
 from prep_check_cards import check_cards
 from progress_summary import build_progress_summary
 from week_store import get_week
+from print_week import PlanNotReady, mark_printed, print_info
+from week_plan import PlanNotFound
 from weekdoc.render import render_packet, render_prep_sheet, render_teacher_guide
 from worksheet_html_renderer import build_print_packet_html
 
@@ -345,6 +347,34 @@ def read_packet_checks(student_id: str, packet_id: str):
         raise HTTPException(status_code=404, detail="Packet not found")
     first = first_name_of(profile.get("metadata_blob"))
     return {"checks": check_cards(student_id, packet_id, first)}
+
+
+@app.get("/students/{student_id}/weekly-packets/{packet_id}/print-info")
+def read_print_info(student_id: str, packet_id: str):
+    """Which documents this week can print (structured weeks: packet, guide, prep; legacy: packet)."""
+    packet = get_weekly_packet(student_id, packet_id)
+    if packet is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+    return print_info(student_id, packet_id, packet, get_week(student_id, packet_id))
+
+
+@app.post("/students/{student_id}/week-plans/{plan_id}/printed")
+def mark_week_printed(student_id: str, plan_id: str):
+    """The parent says the week is printed: ready -> printed. Repeating it is harmless (M10.7)."""
+    conn = sqlite3.connect(get_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        # AUTH_MODE=none: the one local family until login exists.
+        return mark_printed(conn, "fam_local", student_id, plan_id)
+    except PlanNotFound:
+        raise HTTPException(status_code=404, detail="Week not found") from None
+    except PlanNotReady as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=f"This week is not ready to print yet (it is {exc.status}).",
+        ) from None
+    finally:
+        conn.close()
 
 
 @app.get("/students", response_model=list[StudentResponse])
