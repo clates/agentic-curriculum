@@ -61,11 +61,22 @@ export async function storedFeedback(
 
 /** The page must not scroll sideways. */
 export async function expectNoHorizontalScroll(page: Page, label = 'page') {
-  const { scrollWidth, clientWidth } = await page.evaluate(() => ({
-    scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth,
-  }));
-  expect(scrollWidth, `${label} scrolls sideways`).toBeLessThanOrEqual(clientWidth);
+  const { scrollWidth, clientWidth, wide } = await page.evaluate(() => {
+    const clientWidth = document.documentElement.clientWidth;
+    const wide = [...document.querySelectorAll('body *')]
+      .map((e) => ({
+        el: `${e.tagName.toLowerCase()}.${String(e.className).slice(0, 60)} "${(e.textContent ?? '').trim().slice(0, 30)}"`,
+        right: Math.round(e.getBoundingClientRect().right),
+      }))
+      .filter((x) => x.right > clientWidth)
+      .slice(0, 8);
+    return { scrollWidth: document.documentElement.scrollWidth, clientWidth, wide };
+  });
+  // Name the elements that stick out, so a failure on another machine (different fonts) is diagnosable.
+  expect(
+    scrollWidth,
+    `${label} scrolls sideways; past the edge: ${JSON.stringify(wide)}`
+  ).toBeLessThanOrEqual(clientWidth);
 }
 
 /**
