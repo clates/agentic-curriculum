@@ -12,12 +12,12 @@ from src import week_plan as wp
 NOW = "2026-01-01T00:00:00Z"
 
 
-def _outline(option_id, difficulty="on_level", ids=("VA.MATH.2.1",)):
+def _outline(option_id, topic="Dinosaurs", ids=("VA.MATH.2.1",)):
     return {
         "option_id": option_id,
         "title": f"Option {option_id}",
         "hook": "A week about dinosaurs",
-        "difficulty": difficulty,
+        "topic": topic,
         "standard_ids": list(ids),
     }
 
@@ -26,9 +26,9 @@ def _set():
     return OutlineSet.model_validate(
         {
             "options": [
-                _outline("a", "easier"),
-                _outline("b", "on_level"),
-                _outline("c", "stretch", ("VA.MATH.2.2", "VA.MATH.2.3")),
+                _outline("a", "Weather"),
+                _outline("b", "Baking"),
+                _outline("c", "Space"),
             ]
         }
     )
@@ -92,7 +92,7 @@ def test_outlines_round_trip(conn):
     plan = wp.create_plan(conn, "fam_local", "stu_1", "2026-01-05")
     wp.store_outlines(conn, "fam_local", plan.plan_id, _set())
     got = wp.get_plan(conn, "fam_local", plan.plan_id)
-    assert got.outlines is not None and got.outlines.get("c").difficulty == "stretch"
+    assert got.outlines is not None and got.outlines.get("c").topic == "Space"
     assert got.outlines_ready_at
 
 
@@ -114,7 +114,7 @@ def test_current_plans_lists_one_per_child(conn):
         lambda d: d["options"][1].update(option_id="a"),  # duplicate id
         lambda d: d["options"][0].update(standard_ids=[]),  # no standards
         lambda d: d["options"][0].update(standard_ids=["X", "X"]),  # repeated standard
-        lambda d: d["options"][0].update(difficulty="hard"),
+        lambda d: d["options"][0].update(topic="x" * 61),
         lambda d: d["options"][0].update(title=""),
         lambda d: d["options"][0].update(extra="nope"),
     ],
@@ -128,3 +128,18 @@ def test_outline_set_rejects_bad_shapes(mutate):
 
 def test_outline_event_note_is_optional():
     assert Outline.model_validate(_outline("a")).event_note is None
+
+
+def test_outlines_stored_with_the_old_difficulty_field_still_load():
+    old = _outline("a")
+    old["difficulty"] = "easier"
+    assert (
+        OutlineSet.model_validate({"options": [old, _outline("b"), _outline("c")]}).get("a").topic
+        == "Dinosaurs"
+    )
+    assert (
+        "difficulty"
+        not in OutlineSet.model_validate(
+            {"options": [old, _outline("b"), _outline("c")]}
+        ).model_dump_json()
+    )

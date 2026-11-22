@@ -10,6 +10,15 @@ import { Navigation } from '@/components/Navigation';
 import { studentsApi, parseMetadata } from '@/lib/api';
 import { useStudents } from '@/lib/hooks';
 
+// "dinosaurs, baking" -> ['dinosaurs', 'baking'] (the weekly topics are built from these)
+function parseInterests(raw: string | undefined): string[] {
+  return (raw ?? '')
+    .split(/[,;\n]/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
 // Validation schema
 const studentSchema = z.object({
   student_id: z
@@ -20,6 +29,7 @@ const studentSchema = z.object({
   birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format: YYYY-MM-DD'),
   avatar_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   notes: z.string().optional(),
+  interests: z.string().optional(),
 });
 
 type StudentFormData = z.infer<typeof studentSchema>;
@@ -54,6 +64,7 @@ export default function StudentsPage() {
           setValue('birthday', metadata.birthday);
           setValue('avatar_url', metadata.avatar_url || '');
           setValue('notes', metadata.notes || '');
+          setValue('interests', (metadata.interests ?? []).join(', '));
         }
         setIsModalOpen(true);
       }
@@ -70,6 +81,7 @@ export default function StudentsPage() {
           birthday: data.birthday,
           avatar_url: data.avatar_url || undefined,
           notes: data.notes || undefined,
+          interests: parseInterests(data.interests),
         },
       }),
     onSuccess: () => {
@@ -89,6 +101,7 @@ export default function StudentsPage() {
           birthday: data.birthday,
           avatar_url: data.avatar_url || undefined,
           notes: data.notes || undefined,
+          interests: parseInterests(data.interests),
         },
       }),
     onSuccess: () => {
@@ -269,6 +282,12 @@ export default function StudentsPage() {
               label="Avatar URL (optional)"
               {...register('avatar_url')}
               error={errors.avatar_url?.message}
+            />
+
+            <Input
+              label="Interests (optional)"
+              {...register('interests')}
+              helperText="What they love, separated by commas (e.g., dinosaurs, baking, soccer). We build weekly topics from these."
             />
 
             <div>

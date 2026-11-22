@@ -181,6 +181,7 @@ class StudentMetadata(BaseModel):
     birthday: str
     avatar_url: str | None = None
     notes: str | None = None
+    interests: list[str] | None = None  # what the child likes; themes the week topics
 
 
 class StudentMetadataPatch(BaseModel):
@@ -190,6 +191,7 @@ class StudentMetadataPatch(BaseModel):
     birthday: str | None = None
     avatar_url: str | None = None
     notes: str | None = None
+    interests: list[str] | None = None
 
 
 class CreateStudentRequest(BaseModel):

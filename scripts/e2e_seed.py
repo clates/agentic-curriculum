@@ -16,7 +16,6 @@ The DB path is controlled by CURRICULUM_DB_PATH (same env var the backend uses).
 
 import json
 import os
-import json
 import sqlite3
 import sys
 from pathlib import Path
@@ -191,35 +190,35 @@ def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") ->
     from loop_state import Event, advance  # noqa: E402
     from outline_models import OutlineSet  # noqa: E402
 
+    # Three different topics wrapping the SAME skills (the engine's set), like the real thing.
     seeded = {
         "a": (
-            "Gentle Garden Week",
-            "Plant, count and sketch a tiny garden at a calm pace.",
-            "About 15 minutes a day",
+            "Garden Planner Week",
+            "Plant, count and sketch a tiny garden.",
+            "Gardening",
         ),
         "b": (
             "Kitchen Math Lab",
             "Measure, mix and bake your way through real numbers.",
-            "About 25 minutes a day",
+            "Baking",
         ),
         "c": (
-            "Backyard Detectives",
-            "Follow clues outside to answer bigger science questions.",
-            "About 35 minutes a day",
+            "Mountain Climb Diary",
+            "Plan a trail to the very top and record the climb.",
+            "Mountains",
         ),
     }
 
-    def outline(i, difficulty):
-        title, hook, effort = seeded[i]
+    def outline(i):
+        title, hook, topic = seeded[i]
         return {
             "option_id": i,
             "title": title,
             "hook": hook,
-            "difficulty": difficulty,
+            "topic": topic,
             "standard_ids": ["VA.MATH.2.1"],
             "activities": "Short hands-on tasks each day, with a little reading and writing.",
             "skills": ["Counting and measuring", "Reading short passages"],
-            "effort": effort,
         }
 
     conn = sqlite3.connect(_db_path())
@@ -236,9 +235,9 @@ def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") ->
                     OutlineSet.model_validate(
                         {
                             "options": [
-                                outline("a", "easier"),
-                                outline("b", "on_level"),
-                                outline("c", "stretch"),
+                                outline("a"),
+                                outline("b"),
+                                outline("c"),
                             ]
                         }
                     ),

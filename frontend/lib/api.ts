@@ -24,6 +24,7 @@ export interface StudentMetadata {
   birthday: string;
   avatar_url?: string;
   notes?: string;
+  interests?: string[];
 }
 
 export interface ProgressBlob {

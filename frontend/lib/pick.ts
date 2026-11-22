@@ -5,13 +5,12 @@ import { PARENT_QUERY } from '@/lib/parentQuery';
 import type { ChildCard } from '@/lib/thisWeek';
 
 export type OptionId = 'a' | 'b' | 'c';
-export type Difficulty = 'easier' | 'on_level' | 'stretch';
 
 export interface Idea {
   option_id: OptionId;
   title: string;
   hook: string;
-  difficulty: Difficulty;
+  topic: string | null;
   activities: string | null;
   skills: string[];
   effort: string | null;
