@@ -20,7 +20,10 @@ def test_caddy_service_is_pinned_and_publishes_web_ports():
     image = caddy["image"]
     assert image.startswith("caddy:2.") and not image.endswith(":latest")
     assert caddy["restart"] == "unless-stopped"
-    assert {"80:80", "443:443"} <= set(caddy["ports"])
+    assert {"0.0.0.0:80:80", "0.0.0.0:443:443"} <= set(caddy["ports"])
+    assert not any(str(p).startswith(("80:", "443:")) for p in caddy["ports"])  # no dual-stack
+    assert "no-new-privileges:true" in caddy["security_opt"]
+    assert caddy["cap_drop"] == ["ALL"] and caddy["cap_add"] == ["NET_BIND_SERVICE"]
     assert "app" in caddy["depends_on"]
     # The internet-facing process must never get the app's secrets (.env), only caddy.env.
     env_files = caddy["env_file"]
@@ -41,6 +44,9 @@ def test_caddyfile_is_inline_and_proxies_to_the_app():
     assert "header_up X-Forwarded-Proto {scheme}" in content
     assert "max_size 10MB" in content
     assert "Strict-Transport-Security" in content
+    for header in ("X-Frame-Options DENY", "frame-ancestors", "Permissions-Policy"):
+        assert header in content
+    assert "read_header 10s" in content
 
 
 def test_app_keeps_loopback_binding_for_deploy_probe():

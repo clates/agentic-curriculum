@@ -36,6 +36,18 @@ login. Details and background are in `deploy/README.md`. Needs Docker Compose >=
    Then confirm the real visitor address reaches the lockout (see "Check the real visitor address"
    in `deploy/README.md`).
 
+## One-time SSH hardening
+
+`bootstrap.sh` does not edit `sshd_config`. Set `PasswordAuthentication no` and `PermitRootLogin no`,
+reload sshd, and restrict port 22 in the cloud firewall to your own IPs.
+
+## Do not use `docker compose down -v`
+
+It deletes the `caddy_data` volume (certificates); re-issuing runs into Let's Encrypt rate limits.
+
 Moving an existing install, or the live box that still has host Caddy: see the Migration sections
 of `deploy/README.md`. Stop `caddy` on the host (`systemctl disable --now caddy`) before the first
-deploy of the compose-managed Caddy.
+deploy of the compose-managed Caddy, and check `ss -ltn | grep -E ':(80|443)\b'` prints nothing. If
+port 80/443 is still held, `deploy.sh` aborts (it does not roll back): the app is on the new SHA, no
+caddy container exists and `current_sha` is not updated. `deploy.sh` only probes 127.0.0.1:3000, so
+always run `curl -sI https://<your-domain>/` after the first deploy.

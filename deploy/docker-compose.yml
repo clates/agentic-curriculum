@@ -23,11 +23,21 @@ services:
   caddy:
     image: caddy:2.10
     restart: unless-stopped
+    # Floating minor tag (not a digest) so security patch releases arrive with each pull.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE # bind 80/443 as a non-root-capable process; nothing else
     depends_on:
       - app
     ports:
-      - "80:80"
-      - "443:443"
+      # IPv4 only on purpose. A bare "443:443" also listens on [::], where Docker's userland proxy can
+      # replace the visitor's address with the Docker gateway and collapse every IPv6 visitor into
+      # one login-lockout bucket. To turn IPv6 on deliberately, see deploy/README.md.
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
     env_file:
       - path: caddy.env # only SITE_DOMAIN; written by bootstrap.sh
         required: false
@@ -47,6 +57,14 @@ volumes:
 configs:
   caddyfile:
     content: |
+      {
+        servers {
+          timeouts {
+            read_header 10s
+          }
+        }
+      }
+
       {$$SITE_DOMAIN:localhost} {
         encode zstd gzip
         request_body {
@@ -57,7 +75,13 @@ configs:
           header_up X-Forwarded-Proto {scheme}
         }
         header {
+          # HSTS is short for now: raise it (and consider includeSubDomains) after the certificate
+          # has renewed cleanly at least once.
           Strict-Transport-Security "max-age=86400"
+          X-Frame-Options DENY
+          # frame-ancestors only: there is no script-src/default-src CSP yet.
+          Content-Security-Policy "frame-ancestors 'none'"
+          Permissions-Policy "camera=(), microphone=(), geolocation=()"
           X-Content-Type-Options nosniff
           Referrer-Policy strict-origin-when-cross-origin
           -Server

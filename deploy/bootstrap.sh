@@ -52,7 +52,20 @@ run() {
 # --- CI public key: never invented, must be supplied -------------------------------------
 CI_KEY=""
 if [[ -n "$CI_KEY_ARG" ]]; then
-  if [[ -f "$CI_KEY_ARG" ]]; then CI_KEY="$(head -n 1 "$CI_KEY_ARG")"; else CI_KEY="$CI_KEY_ARG"; fi
+  if [[ -f "$CI_KEY_ARG" ]]; then
+    # A second line would land in authorized_keys without the command=...,restrict prefix.
+    if [[ "$(grep -c '[^[:space:]]' "$CI_KEY_ARG")" -ne 1 ]]; then
+      echo "refusing: $CI_KEY_ARG must contain exactly one non-empty line (one public key)" >&2
+      exit 2
+    fi
+    CI_KEY="$(grep '[^[:space:]]' "$CI_KEY_ARG")"
+  else
+    CI_KEY="$CI_KEY_ARG"
+  fi
+  if [[ "$CI_KEY" == *$'\n'* || "$CI_KEY" == *$'\r'* ]]; then
+    echo "refusing: --ci-public-key must be a single line" >&2
+    exit 2
+  fi
   if [[ ! "$CI_KEY" =~ ^(ssh-ed25519|ssh-rsa|ecdsa-sha2-[a-z0-9]+|sk-ssh-ed25519@openssh.com)\ [A-Za-z0-9+/=]+(\ .*)?$ ]]; then
     echo "refusing: --ci-public-key is not a single-line SSH PUBLIC key (private keys are never accepted)" >&2
     exit 2
@@ -60,6 +73,14 @@ if [[ -n "$CI_KEY_ARG" ]]; then
 fi
 
 [[ -f "$SCRIPT_DIR/deploy.sh" ]] || { echo "deploy.sh not found next to bootstrap.sh" >&2; exit 1; }
+
+# --- 0. warn if something already holds 80/443 (host Caddy on a box being migrated) -------------
+if [[ "$DRY_RUN" -eq 0 ]] && command -v ss >/dev/null 2>&1; then
+  if ss -ltn 2>/dev/null | grep -E ':(80|443)\b' >/dev/null; then
+    echo "WARNING: something is already listening on port 80 or 443 (host Caddy/nginx?)." >&2
+    echo "         The caddy container cannot start until it is stopped (systemctl disable --now caddy)." >&2
+  fi
+fi
 
 # --- 1. Docker Engine + compose plugin ----------------------------------------------------
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
@@ -84,7 +105,11 @@ else
     echo "[dry-run] write /etc/apt/sources.list.d/docker.list for https://download.docker.com/linux/$OS_ID"
   else
     # shellcheck disable=SC1091
-    CODENAME="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")"
+    CODENAME="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}")"
+    if [[ -z "$CODENAME" ]]; then
+      echo "cannot determine the OS codename (no UBUNTU_CODENAME or VERSION_CODENAME in /etc/os-release)" >&2
+      exit 1
+    fi
     printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/%s %s stable\n' \
       "$(dpkg --print-architecture)" "$OS_ID" "$CODENAME" > /etc/apt/sources.list.d/docker.list
   fi
@@ -210,4 +235,8 @@ Bootstrap finished. What remains manual:
      first start; it needs DNS and ports 80/443 working.
   6. Create the first user (prompts for the password, twice):
        cd $APP_DIR && docker compose --env-file .deploy.env exec -u appuser app python -m auth create-user <username>
+  7. Check the public URL yourself: curl -sI https://${DOMAIN:-<your-domain>}/ (deploy.sh only probes
+     127.0.0.1:3000, so a missing caddy.env or failed certificate does not fail the deploy).
+  8. One-time SSH hardening (this script does not touch sshd_config): set PasswordAuthentication no
+     and PermitRootLogin no, reload sshd, and restrict port 22 in the cloud firewall to your own IPs.
 DONE

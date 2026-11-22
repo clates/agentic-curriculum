@@ -113,15 +113,33 @@ record or enable IPv6 in Docker with `ip6tables` (`/etc/docker/daemon.json`:
 `{"ipv6": true, "ip6tables": true, "fixed-cidr-v6": "fd00:d0c::/64"}`) and restart Docker. Skip
 this if you only publish an A record.
 
+## IPv6 (off on purpose)
+
+The compose file publishes `0.0.0.0:80` and `0.0.0.0:443` only, so Caddy is IPv4 only. A plain
+`443:443` would also listen on `[::]`, where Docker's userland proxy can replace the visitor's
+address with the Docker gateway and put every IPv6 visitor in one login-lockout bucket. Publish only
+an A record. To turn IPv6 on deliberately: enable it in Docker (`/etc/docker/daemon.json`:
+`{"ipv6": true, "ip6tables": true, "fixed-cidr-v6": "fd00:d0c::/64"}`, restart Docker), add
+`"[::]:80:80"` and `"[::]:443:443"` to the caddy `ports`, add an AAAA record, then repeat the client
+address check above from an IPv6 client (`curl -6`) and confirm the key ends in your IPv6 address.
+
+## Do not delete the certificates
+
+`docker compose down -v` deletes the `caddy_data` volume (certificates and the ACME account);
+re-issuing hits Let's Encrypt rate limits. Never use `-v` in production.
+
 ## Migration: the live box (Caddy installed on the host)
 
 The existing server runs Caddy as a host service (see the old manual runbook). It holds ports
-80/443, so the new Caddy container could not bind and `deploy.sh` would fail its health check and
-roll back. **Before the first deploy of this change**, on the server as root:
+80/443, so the new Caddy container cannot bind. That is NOT a clean rollback: `deploy.sh` runs
+`docker compose up -d` under `set -e`, so the bind failure aborts the script before its health check
+and rollback code. The CI job fails, the app container is already on the new SHA, `current_sha` is not
+updated and there is no caddy container (the site stays down). **Before the first deploy of this
+change**, on the server as root:
 
 ```bash
 systemctl disable --now caddy        # frees 80/443; the site is down from here until the deploy ends
-ss -ltnp | grep -E ':(80|443)\b'     # must print nothing
+ss -ltn | grep -E ':(80|443)\b'      # preflight: must print nothing before you deploy
 ```
 
 Then merge/deploy. Caddy in the container will obtain a fresh certificate for `SITE_DOMAIN`, so make
@@ -133,6 +151,10 @@ chown deploy:deploy /srv/curriculum/caddy.env && chmod 640 /srv/curriculum/caddy
 ```
 
 If `SITE_DOMAIN` is still set in `.env` from an earlier attempt, remove that line; Caddy no longer reads it.
+
+After the first deploy, check the public URL yourself: `curl -sI https://homeschool.chrislates.com/`.
+`deploy.sh` only probes `127.0.0.1:3000`, so a missing `caddy.env` (a silent localhost site) or a failed
+certificate does not fail the deploy.
 
 Expect a short outage (the pull plus certificate issuance, usually under a minute or two). The host
 package can be removed afterwards (`apt purge caddy`). To roll back to the host Caddy: stop the
