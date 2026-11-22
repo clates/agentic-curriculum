@@ -11,14 +11,19 @@
  */
 import { test, expect } from '../fixtures/test';
 import { createStudent, createPacket, submitFeedback, backdateFeedback } from '../fixtures/api';
+import { newChild, repeatIdentity, storedFeedback } from '../fixtures/e2e-hardening';
 
 test.describe('4.1 Give feedback on a finished week', () => {
   test.describe.configure({ mode: 'serial' });
-  const STUDENT_ID = 'e2e-feedback-submit-k1l2';
-  const PACKET_ID = `${STUDENT_ID}-pkt-001`;
-  const NAME = 'Submit Feedback Student';
+  const STUDENT_ID_0 = 'e2e-feedback-submit-k1l2';
+  let STUDENT_ID = STUDENT_ID_0;
+  let PACKET_ID = `${STUDENT_ID}-pkt-001`;
+  const NAME_0 = 'Submit Feedback Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
+    PACKET_ID = `${STUDENT_ID}-pkt-001`;
     await createStudent(request, STUDENT_ID, { name: NAME, birthday: '2018-06-01' });
     await createPacket(request, STUDENT_ID, PACKET_ID);
   });
@@ -74,16 +79,45 @@ test.describe('4.1 Give feedback on a finished week', () => {
     await expect(page.getByRole('button', { name: 'Edit Feedback', exact: true })).toBeVisible();
   });
 
-  test.fixme('double-clicking submit sends feedback once', async () => {});
+  test('double-clicking submit sends feedback once', async ({ page, request }) => {
+    test.fail(
+      true,
+      'issue #211: the legacy feedback modal has no synchronous in-flight guard, so two back-to-back clicks POST twice'
+    );
+    // Its own child and packet: the serial tests above have already consumed this describe's.
+    const kid = await newChild(request, 'dc', { packet: 'legacy' });
+    const fullName = `${kid.name} ${kid.lastName}`;
+    let posts = 0;
+    await page.route('**/api/students/*/weekly-packets/*/feedback', async (route) => {
+      if (route.request().method() === 'POST') {
+        posts += 1;
+        await new Promise((r) => setTimeout(r, 500)); // keep the first request in flight
+      }
+      await route.continue();
+    });
+    await page.goto('/plans');
+    await page.getByRole('heading', { name: fullName, exact: true }).click();
+    await page.getByRole('button', { name: 'Provide Feedback' }).click();
+    await page.getByRole('button', { name: 'Mastered' }).click();
+    await page.getByRole('button', { name: 'Just Right' }).click();
+    await page.getByRole('button', { name: 'Submit Feedback', exact: true }).dblclick();
+    await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 30_000 });
+    expect(posts, 'feedback POSTs for one double-click').toBe(1);
+    expect((await storedFeedback(request, kid.id, kid.packetId)).quantity_feedback).toBe(0);
+  });
 });
 
 test.describe('4.2 Revise recent feedback', () => {
   test.describe.configure({ mode: 'serial' });
-  const STUDENT_ID = 'e2e-feedback-resubmit-m3n4';
-  const PACKET_ID = `${STUDENT_ID}-pkt-001`;
-  const NAME = 'Resubmit Feedback Student';
+  const STUDENT_ID_0 = 'e2e-feedback-resubmit-m3n4';
+  let STUDENT_ID = STUDENT_ID_0;
+  let PACKET_ID = `${STUDENT_ID}-pkt-001`;
+  const NAME_0 = 'Resubmit Feedback Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
+    PACKET_ID = `${STUDENT_ID}-pkt-001`;
     await createStudent(request, STUDENT_ID, { name: NAME, birthday: '2018-07-01' });
     await createPacket(request, STUDENT_ID, PACKET_ID);
     await submitFeedback(request, STUDENT_ID, PACKET_ID, { mastery: 'DEVELOPING', quantity: 2 });
@@ -113,11 +147,15 @@ test.describe('4.2 Revise recent feedback', () => {
 });
 
 test.describe('4.3 Old feedback is locked', () => {
-  const STUDENT_ID = 'e2e-feedback-locked-i9j0';
-  const PACKET_ID = `${STUDENT_ID}-pkt-001`;
-  const NAME = 'Locked Feedback Student';
+  const STUDENT_ID_0 = 'e2e-feedback-locked-i9j0';
+  let STUDENT_ID = STUDENT_ID_0;
+  let PACKET_ID = `${STUDENT_ID}-pkt-001`;
+  const NAME_0 = 'Locked Feedback Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
+    PACKET_ID = `${STUDENT_ID}-pkt-001`;
     await createStudent(request, STUDENT_ID, { name: NAME, birthday: '2018-05-01' });
     await createPacket(request, STUDENT_ID, PACKET_ID);
     await submitFeedback(request, STUDENT_ID, PACKET_ID, { mastery: 'DEVELOPING', quantity: 1 });
@@ -136,10 +174,13 @@ test.describe('4.3 Old feedback is locked', () => {
 });
 
 test.describe('4.4 See it on the progress map', () => {
-  const STUDENT_ID = 'e2e-progress-map-w1x2';
-  const NAME = 'Progress Map Student';
+  const STUDENT_ID_0 = 'e2e-progress-map-w1x2';
+  let STUDENT_ID = STUDENT_ID_0;
+  const NAME_0 = 'Progress Map Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
     await createStudent(request, STUDENT_ID, { name: NAME, birthday: '2018-11-01' });
   });
 
@@ -154,5 +195,6 @@ test.describe('4.4 See it on the progress map', () => {
 
   // Feedback on a seeded packet only touches the synthetic "overall" standard. Asserting that a
   // real standard turns "Mastered" needs packets seeded with real standard IDs.
+  // Unblocked by: seeding packets with real standard ids (create_packet uses a synthetic one).
   test.fixme('standards rated Mastered in feedback show as Mastered on the map', async () => {});
 });

@@ -8,13 +8,17 @@
  */
 import { test, expect } from '../fixtures/test';
 import { createStudent, createPacket, submitFeedback } from '../fixtures/api';
+import { repeatIdentity } from '../fixtures/e2e-hardening';
 import { stubCalls, waitForNtfy } from '../fixtures/stub';
 
 test.describe('5.1 The dashboard tells the truth', () => {
-  const STUDENT_ID = 'e2e-dashboard-y3z4';
-  const NAME = 'Dashboard Student';
+  const STUDENT_ID_0 = 'e2e-dashboard-y3z4';
+  let STUDENT_ID = STUDENT_ID_0;
+  const NAME_0 = 'Dashboard Student';
+  let NAME = NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: STUDENT_ID, name: NAME } = repeatIdentity(STUDENT_ID_0, NAME_0));
     // No packet: a child with a pending week gets "Submit Feedback" instead of "Generate Plan".
     await createStudent(request, STUDENT_ID, { name: NAME, birthday: '2019-04-01' });
   });
@@ -28,23 +32,36 @@ test.describe('5.1 The dashboard tells the truth', () => {
 
   // Progress currently counts a synthetic "overall" standard (showing "1/1, 100%") and rounds
   // 1015/1016 up to "100% Complete".
+  // Unblocked by: real standard ids in feedback (mastery_feedback.overall is synthetic); not built, no card.
   test.fixme('progress counts real standards and never rounds up to 100%', async () => {});
   // "Worksheets Ready" counts every worksheet ever generated, not the ones still waiting to be used.
+  // Unblocked by: a per-family stats endpoint. The stat is computed over every child in the shared test
+  // database, so a real-API assertion would not be deterministic; the product behavior also does not exist yet.
   test.fixme('"Worksheets Ready" counts only weeks that are still pending', async () => {});
+  // Unblocked by: a design for past weeks (no card, no UI today).
   test.fixme('past weeks look different from the current week', async () => {});
 });
 
 test.describe('5.2 The next week adapts', () => {
   // One worker runs beforeAll once: feedback must be submitted (and generation triggered) once.
   test.describe.configure({ mode: 'serial' });
-  const FED_ID = 'e2e-next-week-fed-a5b6';
-  const FED_NAME = 'Next Week Student';
-  const BASE_ID = 'e2e-next-week-base-c7d8';
-  const BASE_NAME = 'Steady Workload Student';
-  const HEAVY_ID = 'e2e-next-week-heavy-e9f0';
-  const HEAVY_NAME = 'Heavy Workload Student';
+  const FED_ID_0 = 'e2e-next-week-fed-a5b6';
+  let FED_ID = FED_ID_0;
+  const FED_NAME_0 = 'Next Week Student';
+  let FED_NAME = FED_NAME_0;
+  const BASE_ID_0 = 'e2e-next-week-base-c7d8';
+  let BASE_ID = BASE_ID_0;
+  const BASE_NAME_0 = 'Steady Workload Student';
+  let BASE_NAME = BASE_NAME_0;
+  const HEAVY_ID_0 = 'e2e-next-week-heavy-e9f0';
+  let HEAVY_ID = HEAVY_ID_0;
+  const HEAVY_NAME_0 = 'Heavy Workload Student';
+  let HEAVY_NAME = HEAVY_NAME_0;
 
   test.beforeAll(async ({ request }) => {
+    ({ id: FED_ID, name: FED_NAME } = repeatIdentity(FED_ID_0, FED_NAME_0));
+    ({ id: BASE_ID, name: BASE_NAME } = repeatIdentity(BASE_ID_0, BASE_NAME_0));
+    ({ id: HEAVY_ID, name: HEAVY_NAME } = repeatIdentity(HEAVY_ID_0, HEAVY_NAME_0));
     for (const [id, name, birthday] of [
       [FED_ID, FED_NAME, '2017-05-01'],
       [BASE_ID, BASE_NAME, '2017-06-01'],
@@ -104,5 +121,6 @@ test.describe('5.2 The next week adapts', () => {
 
   // Mastery feedback currently lands on a synthetic "overall" standard, and the stub's replies do
   // not depend on which standards were already taught, so there is nothing to observe yet.
+  // Unblocked by: real standard ids in feedback plus a stub that varies its reply by taught standards.
   test.fixme('standards rated Mastered are not re-taught next week', async () => {});
 });

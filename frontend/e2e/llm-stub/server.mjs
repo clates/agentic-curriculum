@@ -217,5 +217,10 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// Node closes idle keep-alive sockets after 5 s by default. A client (Playwright's request
+// context, the backend's HTTP client) that reuses a socket at that instant gets ECONNRESET, which
+// failed an unrelated test at teardown. Keep idle sockets open far longer than any test pause.
+server.keepAliveTimeout = 120_000;
+server.headersTimeout = 125_000;
 server.listen(PORT, HOST, () => console.log(`e2e llm stub listening on http://${HOST}:${PORT}`));
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => server.close(() => process.exit(0)));

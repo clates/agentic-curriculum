@@ -43,7 +43,10 @@ export function ParentShell({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </header>
-      <main id="main" className="mx-auto max-w-3xl px-4 py-6 pb-28 md:pb-10">
+      <main
+        id="main"
+        className="mx-auto max-w-3xl px-4 py-6 pb-28 [overflow-wrap:anywhere] md:pb-10"
+      >
         {children}
       </main>
       <nav
@@ -53,11 +56,11 @@ export function ParentShell({ children }: { children: ReactNode }) {
       >
         <ul className="mx-auto flex max-w-3xl">
           {TABS.map((tab) => (
-            <li key={tab.href} className="flex-1">
+            <li key={tab.href} className="min-w-0 flex-1">
               <Link
                 href={tab.href}
                 aria-current={isActive(tab.href) ? 'page' : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-1 px-2 py-2 text-xs ${
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 px-1 py-2 text-center text-xs ${
                   isActive(tab.href) ? 'text-primary-700 font-semibold' : 'text-neutral-700'
                 }`}
               >

@@ -4,9 +4,9 @@ import { openSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { STUB_BASE_URL, STUB_LOG_FILE, STUB_PID_FILE, STUB_PORT } from './e2e/llm-stub/config';
 
-const PID_FILE = '/tmp/playwright-backend.pid';
+const BACKEND_PORT = Number(process.env.E2E_BACKEND_PORT ?? 8182);
+const PID_FILE = `/tmp/playwright-backend-${BACKEND_PORT}.pid`;
 const DB_FILE = process.env.PLAYWRIGHT_DB_FILE ?? '/tmp/playwright-test.db';
-const BACKEND_PORT = 8182;
 const POLL_INTERVAL_MS = 500;
 const MAX_WAIT_MS = 30_000;
 
@@ -90,10 +90,12 @@ export default async function globalSetup(): Promise<void> {
     { stdio: 'pipe', env: { ...process.env, CURRICULUM_DB_PATH: DB_FILE } }
   );
 
-  const backendLog = openSync('/tmp/playwright-backend.log', 'w');
+  const backendLog = openSync(`/tmp/playwright-backend-${BACKEND_PORT}.log`, 'w');
   const uvicorn = spawn(
     `${projectRoot}/venv/bin/uvicorn`,
-    ['main:app', '--port', String(BACKEND_PORT)],
+    // uvicorn closes idle keep-alive sockets after 5 s; the Next proxy and the test request
+    // context reuse them, and a reuse that races the close surfaces as ECONNRESET / "fetch failed".
+    ['main:app', '--port', String(BACKEND_PORT), '--timeout-keep-alive', '120'],
     {
       cwd: `${projectRoot}/src`,
       env: {
