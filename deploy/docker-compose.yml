@@ -4,14 +4,59 @@ services:
   app:
     image: ${IMAGE:?IMAGE is set by deploy.sh}
     restart: unless-stopped
-    # Bound to localhost only. Nothing is exposed to the internet until accounts exist;
-    # reach it over Tailscale (tailscale serve) or an SSH tunnel.
+    # Bound to localhost only: the public entrance is the caddy service below, which reaches the
+    # app as app:3000 over the compose network. This binding stays because deploy.sh's health
+    # probe and SSH-tunnel access (ssh -L 3000:127.0.0.1:3000) use it.
     ports:
       - "127.0.0.1:3000:3000"
-    env_file: .env # secrets (OPENAI_API_KEY); never committed
+    env_file: .env # secrets (OPENROUTER_API_KEY); never committed
     environment:
       CURRICULUM_DB_PATH: /data/curriculum.db
     volumes:
       - /srv/curriculum/data:/data # SQLite database
       - /srv/curriculum/artifacts:/app/artifacts # generated worksheets and packets
       - /srv/curriculum/logs:/app/logs
+
+  # HTTPS entrance. Needs Docker Compose >= 2.23.1 (inline `configs: content:`).
+  # SITE_DOMAIN comes from .env; unset, it serves a harmless localhost site so the stack still starts.
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: .env # SITE_DOMAIN (also carries the app's secrets into this container's env)
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    volumes:
+      - caddy_data:/data # certificates and ACME account: must survive redeploys
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+# Inline so deploy.sh, which downloads only this file, is enough. `$$` is a literal `$` after
+# compose interpolation, so Caddy sees {$SITE_DOMAIN:localhost}.
+configs:
+  caddyfile:
+    content: |
+      {$$SITE_DOMAIN:localhost} {
+        encode zstd gzip
+        request_body {
+          max_size 10MB
+        }
+        reverse_proxy app:3000 {
+          header_up X-Forwarded-For {remote_host}
+          header_up X-Forwarded-Proto {scheme}
+        }
+        header {
+          Strict-Transport-Security "max-age=86400"
+          X-Content-Type-Options nosniff
+          Referrer-Policy strict-origin-when-cross-origin
+          -Server
+        }
+      }
