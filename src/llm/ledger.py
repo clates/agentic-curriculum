@@ -13,7 +13,7 @@ import logging
 import sqlite3
 import threading
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Callable, Protocol
 
@@ -23,12 +23,48 @@ from .types import Usage
 logger = logging.getLogger(__name__)
 
 
+class RunBudget:
+    """A per-run spend cap and meter. Checked before every call (a call can overshoot it by its
+    own cost); every completed call is added, so the run record has exact totals."""
+
+    def __init__(self, limit_usd: float | None = None) -> None:
+        self.limit_usd = limit_usd
+        self.spent_usd = 0.0
+        self.calls: list[dict] = []
+        self._lock = threading.Lock()
+
+    def check(self, model: str | None = None) -> None:
+        if self.limit_usd is not None and self.spent_usd >= self.limit_usd:
+            raise CostCapExceeded(
+                f"run budget reached (${self.spent_usd:.4f} of ${self.limit_usd:.2f})",
+                family_id=None,
+                spent=self.spent_usd,
+                cap=self.limit_usd,
+                model=model,
+                attempts=0,
+            )
+
+    def add(self, task: str, model: str, usage: Usage) -> None:
+        with self._lock:
+            self.spent_usd += usage.cost_usd or 0.0
+            self.calls.append(
+                {
+                    "task": task,
+                    "model": model,
+                    "prompt_tokens": usage.prompt_tokens,
+                    "completion_tokens": usage.completion_tokens,
+                    "cost_usd": usage.cost_usd,
+                }
+            )
+
+
 @dataclass(frozen=True)
 class UsageContext:
     """Who a call is billed to. Opaque ids only (fam_..., stu_...)."""
 
     family_id: str | None = None
     student_id: str | None = None
+    budget: RunBudget | None = field(default=None, compare=False, repr=False)
 
 
 @dataclass(frozen=True)

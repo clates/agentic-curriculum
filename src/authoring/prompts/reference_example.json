@@ -1,0 +1,194 @@
+{
+ "days": [
+  {
+   "day": "Monday",
+   "title": "The Sun Heats Our World",
+   "kinds": [
+    [
+     "mon-1",
+     "readingWorksheet"
+    ],
+    [
+     "mon-2",
+     "wordSortWorksheet"
+    ]
+   ],
+   "standards": [
+    "VA.SCIENCE.K.k.8.a",
+    "VA.SCIENCE.1.1.6.a"
+   ]
+  },
+  {
+   "day": "Tuesday",
+   "title": "Clouds and Precipitation",
+   "kinds": [
+    [
+     "tue-1",
+     "readingWorksheet"
+    ],
+    [
+     "tue-2",
+     "featureMatrixWorksheet"
+    ]
+   ],
+   "standards": [
+    "VA.SCIENCE.K.k.9.a"
+   ]
+  },
+  {
+   "day": "Wednesday",
+   "title": "The Water Cycle",
+   "kinds": [
+    [
+     "wed-1",
+     "readingWorksheet"
+    ],
+    [
+     "wed-2",
+     "causeEffectWorksheet"
+    ]
+   ],
+   "standards": [
+    "VA.SCIENCE.K.k.9.a",
+    "VA.SCIENCE.1.1.7.a"
+   ]
+  },
+  {
+   "day": "Thursday",
+   "title": "Wind and Air Pressure",
+   "kinds": [
+    [
+     "thu-1",
+     "readingWorksheet"
+    ],
+    [
+     "thu-2",
+     "matchingWorksheet"
+    ]
+   ],
+   "standards": [
+    "VA.SCIENCE.1.1.7.a"
+   ]
+  },
+  {
+   "day": "Friday",
+   "title": "Weather Patterns and Forecasting (Capstone)",
+   "kinds": [
+    [
+     "fri-1",
+     "readingWorksheet"
+    ],
+    [
+     "fri-2",
+     "treeMapWorksheet"
+    ],
+    [
+     "fri-3",
+     "readingWorksheet"
+    ]
+   ],
+   "standards": [
+    "VA.SCIENCE.K.k.9.a",
+    "VA.SCIENCE.1.1.7.a"
+   ]
+  }
+ ],
+ "reading_worksheet": {
+  "id": "mon-1",
+  "kind": "readingWorksheet",
+  "data": {
+   "title": "Monday: The Sun Heats Our World",
+   "passage_title": "Meet Zara — and Why the Sun Matters!",
+   "instructions": "Before reading: Go outside for two minutes. Stand in the sun, then in the shade. Feel the difference! Come back inside and share what you noticed.",
+   "passage": "Meet Zara the Zebra Finch! Zara is a small speckled bird with an orange beak and a striped tail. Every morning, Zara wakes up on her branch and checks the sky before she flies out to find seeds. 'What will the weather be like today?' she chirps.\n\nZara knows that everything about weather starts with the Sun. The Sun is a giant ball of burning gas far away in space, and it sends energy all the way to Earth as light and heat. When sunlight reaches Earth, it warms the ground, the water, and the air above it. The more directly the Sun shines on a spot, the warmer it gets.\n\nOn a sunny day, Zara feels warm and cozy in the sunlight. The air around her is warmer too, which means the air temperature is high. Temperature tells us how warm or cold the air feels. We measure temperature with a thermometer. When there are no clouds and the Sun shines all day, we call that a clear or sunny day.\n\nBut the Sun's energy does more than just warm us up — it also drives everything else about weather. Without the Sun, there would be no wind, no rain, and no clouds. Every storm, every rainbow, and every gentle breeze on Earth starts with the energy our Sun provides. 'It all begins with the Sun,' Zara tweets to herself as she spreads her wings and soars into the bright blue sky.",
+   "vocabulary": [
+    {
+     "term": "weather",
+     "definition": "What the air outside is like right now — sunny, cloudy, rainy, windy, or snowy."
+    },
+    {
+     "term": "temperature",
+     "definition": "How warm or cold the air is. We measure temperature with a thermometer."
+    },
+    {
+     "term": "thermometer",
+     "definition": "A tool that shows how warm or cold the air is."
+    },
+    {
+     "term": "energy",
+     "definition": "The power the Sun sends to Earth as light and heat."
+    },
+    {
+     "term": "sunny",
+     "definition": "A day with no clouds blocking the Sun, so the sky looks bright blue and clear."
+    }
+   ],
+   "questions": [
+    {
+     "prompt": "Where does all of Earth's weather energy come from?",
+     "response_lines": 2
+    },
+    {
+     "prompt": "What is temperature, and what tool do we use to measure it?",
+     "response_lines": 2
+    },
+    {
+     "prompt": "What did you notice when you stood in the sun vs. the shade before the lesson?",
+     "response_lines": 2
+    },
+    {
+     "prompt": "LET'S DISCUSS: If the Sun suddenly turned off, what do you think would happen to the weather on Earth? Explain your thinking!",
+     "response_lines": 0
+    }
+   ]
+  }
+ },
+ "prep_check": {
+  "id": "chk-1",
+  "day": "Monday",
+  "standard_id": "VA.SCIENCE.K.k.8.a",
+  "kind": "oral",
+  "prompt": "Ask: where does the energy for weather come from?",
+  "pass_criteria": "Says the Sun, and that it warms the ground, water and air."
+ },
+ "teacher_guide_day": {
+  "day": "Monday",
+  "title": "The Sun Heats Our World",
+  "page_break_before": false,
+  "blocks": [
+   {
+    "heading": "Answer Key — Reading Questions"
+   },
+   {
+    "style": "answer",
+    "paragraphs": [
+     "**Q1 (Energy source):** All of Earth's weather energy comes from the Sun. It sends light and heat energy to Earth.",
+     "**Q2 (Temperature):** Temperature is how warm or cold the air is. We measure it with a thermometer.",
+     "**Q3 (Outdoor observation):** Personal response — student should note feeling warmer in sunlight and cooler in shade. Guide them to connect this to the passage's explanation of direct sunlight warming surfaces."
+    ]
+   },
+   {
+    "heading": "LET'S DISCUSS Guidance"
+   },
+   {
+    "style": "discuss",
+    "paragraphs": [
+     "*\"If the Sun turned off, what would happen to the weather?\"*",
+     "Expected reasoning: No energy = no evaporation, no wind, no rain. Earth would get very cold very quickly. All weather would stop. There is no single right answer here — encourage logical chaining of causes."
+    ]
+   }
+  ]
+ },
+ "teacher_guide_summary": {
+  "heading": "Week Summary — Causal Chain",
+  "intro": "The week followed this chain of causes:",
+  "items": [
+   "**Monday:** The Sun provides all weather energy; heats the ground, air, and water.",
+   "**Tuesday:** Heat causes evaporation; rising moist air cools and condenses into clouds; clouds produce precipitation.",
+   "**Wednesday:** The full water cycle — evaporation → condensation → precipitation → repeat.",
+   "**Thursday:** Uneven heating creates pressure differences; air moves from high to low pressure = wind.",
+   "**Friday:** All these forces together create weather patterns; meteorologists measure and predict them."
+  ],
+  "closing": "By Friday, {{student_name}} should be able to trace the path from sunlight on the ground to a rainstorm without prompting — and name at least four weather tools."
+ }
+}

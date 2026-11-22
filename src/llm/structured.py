@@ -28,6 +28,7 @@ T = TypeVar("T", bound=BaseModel)
 class StructuredResult(Generic[T]):
     parsed: T
     completions: list[Completion] = field(default_factory=list)  # first call, then repairs
+    errors: list[str] = field(default_factory=list)  # what each rejected attempt was told
 
     @property
     def repairs(self) -> int:
@@ -165,11 +166,11 @@ def generate_structured(
             client.complete(
                 "repair",
                 repair_messages,
+                config_task=task,  # same model and sampling as the author call it repairs
                 response_format=_response_format(model_cls, mode),
                 usage=usage,
-                max_tokens=max(cfg.max_tokens or 0, client.config("repair").max_tokens or 0)
-                or None,
+                max_tokens=cfg.max_tokens,
             )
         )
         parsed, error = _try_parse(completions[-1].text, model_cls, check)
-    return StructuredResult(parsed=parsed, completions=completions)
+    return StructuredResult(parsed=parsed, completions=completions, errors=errors)

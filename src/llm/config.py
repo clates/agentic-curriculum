@@ -23,9 +23,11 @@ class TaskConfig:
     task: str
     model: str
     fallback_model: str | None = None
-    temperature: float | None = 0.7
+    temperature: float | None = 0.7  # None = send no temperature (provider default)
     max_tokens: int | None = None
     timeout_s: float | None = None
+    top_p: float | None = None
+    top_k: int | None = None
 
 
 def _load(path: Path) -> dict:
@@ -42,8 +44,22 @@ def _num(value: str, cast, name: str):
         raise LLMConfigError(f"{name} must be a number, got {value!r}") from exc
 
 
-def task_config(task: str, env=None, path: Path | None = None) -> TaskConfig:
-    """Resolve one task's settings. Unknown task names are an error, never a silent default."""
+def model_profile(model: str, data: dict) -> dict | None:
+    """The per-model sampling/limits entry (``model_profiles`` in models.json), or None."""
+    return (data.get("model_profiles") or {}).get(model)
+
+
+def task_config(
+    task: str, env=None, path: Path | None = None, model: str | None = None
+) -> TaskConfig:
+    """Resolve one task's settings. Unknown task names are an error, never a silent default.
+
+    Sampling (temperature, top_p, top_k) and the output-token limit belong to the MODEL: when the
+    resolved model has an entry in ``model_profiles`` it wins over the task's values, including an
+    explicit ``null`` temperature (send none). ``max_tokens: "model_max"`` on a task means the
+    profile's ``max_output_tokens`` capped by the task's ``max_tokens_ceiling``. Env fields
+    (LLM_<FIELD>_<TASK>) still override everything. ``model`` forces a model (no fallback).
+    """
     env = os.environ if env is None else env
     path = path or Path(env.get("LLM_MODELS_FILE") or DEFAULT_FILE)
     data = _load(path)
@@ -53,7 +69,8 @@ def task_config(task: str, env=None, path: Path | None = None) -> TaskConfig:
     merged = {**data.get("defaults", {}), **tasks[task]}
 
     key = task.upper()
-    model = (
+    forced_model = model is not None
+    model = model or (
         env.get(f"LLM_MODEL_{key}")
         or env.get("LLM_MODEL")
         or env.get("OPENAI_MODEL")
@@ -62,21 +79,38 @@ def task_config(task: str, env=None, path: Path | None = None) -> TaskConfig:
     if not model:
         raise LLMConfigError(f"no model configured for task {task!r}")
 
+    profile = model_profile(model, data) or {}
+
     def field(name: str, cast):
         raw = env.get(f"LLM_{name.upper()}_{key}")
-        return _num(raw, cast, f"LLM_{name.upper()}_{key}") if raw else merged.get(name)
+        if raw:
+            return _num(raw, cast, f"LLM_{name.upper()}_{key}")
+        if name in profile:  # explicit null in a profile = send nothing
+            return profile[name]
+        return merged.get(name)
+
+    max_tokens = field("max_tokens", int)
+    if max_tokens == "model_max":
+        limit = profile.get("max_output_tokens") or merged.get("max_tokens_fallback") or 32000
+        ceiling = env.get(f"LLM_MAX_TOKENS_CEILING_{key}")
+        ceiling = int(ceiling) if ceiling else merged.get("max_tokens_ceiling")
+        max_tokens = min(limit, ceiling) if ceiling else limit
 
     # An explicitly empty LLM_FALLBACK_MODEL_<TASK> disables the fallback.
     fallback = env.get(f"LLM_FALLBACK_MODEL_{key}")
     if fallback is None:
         fallback = merged.get("fallback_model")
+    if forced_model:
+        fallback = None
     return TaskConfig(
         task=task,
         model=model,
         fallback_model=fallback if fallback and fallback != model else None,
         temperature=field("temperature", float),
-        max_tokens=field("max_tokens", int),
+        max_tokens=max_tokens,
         timeout_s=field("timeout_s", float),
+        top_p=field("top_p", float),
+        top_k=field("top_k", int),
     )
 
 
