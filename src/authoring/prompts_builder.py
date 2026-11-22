@@ -103,9 +103,7 @@ class Prompts:
         return [{"role": "system", "content": self.system}, {"role": "user", "content": user}]
 
 
-def build_prompts(
-    student: ModelStudentContext, topic: str, standards: list[Standard]
-) -> Prompts:
+def build_prompts(student: ModelStudentContext, topic: str, standards: list[Standard]) -> Prompts:
     common = "\n\n".join(
         [student_block(student, topic, standards), reference_block(), _read("rules.md")]
     )

@@ -9,17 +9,13 @@ from weekdoc import WeekDoc
 ALLOWED = set(STANDARDS)
 
 
-def problems(week: dict, name="Ada"):
-    return completeness_problems(
-        WeekDoc.model_validate(week), student_first_name=name, allowed_standards=ALLOWED
-    )
+def problems(week: dict):
+    return completeness_problems(WeekDoc.model_validate(week), allowed_standards=ALLOWED)
 
 
 def test_a_complete_week_passes():
     assert problems(good_week()) == []
-    assert make_week_check(student_first_name="Ada", allowed_standards=ALLOWED)(
-        WeekDoc.model_validate(good_week())
-    ) is None
+    assert make_week_check(allowed_standards=ALLOWED)(WeekDoc.model_validate(good_week())) is None
 
 
 def _drop_day(w):
@@ -44,10 +40,6 @@ def _no_extension(w):
     w["teacher_guide"]["days"][0]["blocks"] = [
         b for b in w["teacher_guide"]["days"][0]["blocks"] if b.get("style") != "extension"
     ]
-
-
-def _name(w):
-    w["days"][0]["worksheets"][0]["data"]["passage"] = "Ada looks at the sky."
 
 
 def _missing_answer(w):
@@ -95,7 +87,6 @@ CASES = [
     (_few_checks, "prep checks"),
     (_guide_day, "teacher_guide must have exactly one entry"),
     (_no_extension, "lacks a 'extension' callout"),
-    (_name, "name appears literally"),
     (_missing_answer, "answers missing for item_refs questions.1"),
     (_wrong_math, "is wrong; the correct answer is 7"),
     (_match_unknown, "not one of right_items"),
@@ -128,5 +119,8 @@ def test_speed_math_and_ten_frame_are_recomputed():
     from authoring.gate import _expected_arithmetic
 
     assert _expected_arithmetic("speedMath", {"problems": [{"a": 9, "op": "-", "b": 4}]}, 0) == 5
-    assert _expected_arithmetic("tenFrameWorksheet", {"problems": [{"addend_a": 3, "addend_b": 4}]}, 0) == 7
+    assert (
+        _expected_arithmetic("tenFrameWorksheet", {"problems": [{"addend_a": 3, "addend_b": 4}]}, 0)
+        == 7
+    )
     assert _expected_arithmetic("readingWorksheet", {}, 0) is None

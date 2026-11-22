@@ -34,7 +34,7 @@ from .prompts_builder import build_prompts
 from .standards import Standard, UnknownStandardsError, load_standards
 
 MAX_REPAIRS = 4  # per step
-DEFAULT_MAX_RUN_USD = 10.0  # generous on purpose; tune later (AUTHOR_MAX_RUN_USD)
+DEFAULT_MAX_RUN_USD = 1.5  # a week costs about $0.10-0.30; override with AUTHOR_MAX_RUN_USD
 
 SUCCESS = "success"
 INVALID_INPUT = "invalid_input"
@@ -95,7 +95,9 @@ class RunRecord:
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         d.update(
-            repairs=self.repairs, cost_usd=self.cost_usd, prompt_tokens=self.prompt_tokens,
+            repairs=self.repairs,
+            cost_usd=self.cost_usd,
+            prompt_tokens=self.prompt_tokens,
             completion_tokens=self.completion_tokens,
         )
         return d
@@ -210,8 +212,13 @@ def author_week(
         start, t0 = len(budget.calls), time.monotonic()
         try:
             res = generate_structured(
-                "author", messages, model_cls, client=client, max_repairs=max_repairs,
-                usage=usage, check=check,
+                "author",
+                messages,
+                model_cls,
+                client=client,
+                max_repairs=max_repairs,
+                usage=usage,
+                check=check,
             )
         except StructuredOutputError as exc:
             step = _step_from_budget(name, budget, start, time.monotonic() - t0)
@@ -249,7 +256,7 @@ def author_week(
         "week",
         week_msgs,
         WeekDoc,
-        make_week_check(student_first_name=student.first_name, allowed_standards=allowed),
+        make_week_check(allowed_standards=allowed),
     )
     if week is None:
         return finish({"validation": WEEK_FAILED}.get(fail, fail), plan=plan)
@@ -265,8 +272,12 @@ def author_week(
         run.packet_id = packet_id or "pk_" + uuid.uuid4().hex[:12]
         try:
             week_store.save_week(
-                student_id, run.packet_id, week, grade_level=student.grade,
-                week_of=week_of or date.today().isoformat(), family_id=tenant.family_id,
+                student_id,
+                run.packet_id,
+                week,
+                grade_level=student.grade,
+                week_of=week_of or date.today().isoformat(),
+                family_id=tenant.family_id,
             )
             saved = True
         except Exception as exc:  # reported, not swallowed: the week is still in the result

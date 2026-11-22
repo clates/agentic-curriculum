@@ -37,7 +37,9 @@ class WeekPlan(BaseModel):
     @model_validator(mode="after")
     def _shape(self) -> "WeekPlan":
         if [d.day for d in self.days] != DAYS:
-            raise ValueError("plan must cover Monday, Tuesday, Wednesday, Thursday, Friday in order")
+            raise ValueError(
+                "plan must cover Monday, Tuesday, Wednesday, Thursday, Friday in order"
+            )
         if any(len(d.worksheets) < MIN_WORKSHEETS_PER_DAY for d in self.days):
             raise ValueError("each day needs at least 2 worksheets")
         ids = [w.id for d in self.days for w in d.worksheets]

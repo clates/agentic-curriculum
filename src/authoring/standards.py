@@ -55,11 +55,17 @@ def load_standards(ids: list[str], db_path: str | None = None) -> list[Standard]
 
 
 def search_standards(
-    *, grade: int, subject: str | None = None, keyword: str | None = None,
-    db_path: str | None = None, limit: int = 40,
+    *,
+    grade: int,
+    subject: str | None = None,
+    keyword: str | None = None,
+    db_path: str | None = None,
+    limit: int = 40,
 ) -> list[Standard]:
     """Browse the DB for a grade (and optional subject / description keyword)."""
-    sql = "SELECT standard_id, description, subject, grade_level FROM standards WHERE grade_level = ?"
+    sql = (
+        "SELECT standard_id, description, subject, grade_level FROM standards WHERE grade_level = ?"
+    )
     args: list[object] = [grade]
     if subject:
         sql += " AND lower(subject) = lower(?)"

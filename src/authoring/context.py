@@ -28,7 +28,9 @@ class Tenant:
 class ModelStudentContext(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    first_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+    first_name: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)
+    ]
     grade: int = Field(ge=0, le=12, description="0 = kindergarten")
     reading_level: Short
     interests: list[Short] = Field(default_factory=list, max_length=12)
