@@ -25,6 +25,10 @@ class Outline(BaseModel):
     difficulty: Difficulty
     standard_ids: list[str] = Field(min_length=1)
     event_note: str | None = Field(default=None, max_length=200)
+    # What the parent reads (M6.3). Optional so outlines stored before they existed still load.
+    activities: str | None = Field(default=None, max_length=300)  # what the child will do
+    skills: list[str] = Field(default_factory=list, max_length=6)  # plain-language skills covered
+    effort: str | None = Field(default=None, max_length=60)  # time/effort hint
 
     @field_validator("standard_ids")
     @classmethod

@@ -83,6 +83,51 @@ export const copy = {
     nothingBody: 'Once a week has been printed, you can tell us how it went.',
     unknownChild: 'We couldn\u2019t find that child',
   },
+  pick: {
+    title: (name: string) => `Pick ${name}\u2019s next week`,
+    back: 'Back to this week',
+    question: (name: string) => `Which idea fits ${name}\u2019s next week?`,
+    ourPick: 'Our pick',
+    difficulty: { easier: 'A gentler week', on_level: 'Right on level', stretch: 'A step up' },
+    willDo: 'What they\u2019ll do',
+    covers: 'What it covers',
+    useThis: 'Use this one',
+    confirmTitle: (idea: string) => `Use \u201c${idea}\u201d?`,
+    confirmBody: (name: string) =>
+      `We\u2019ll start writing ${name}\u2019s week right away. Once we start, it can\u2019t be changed.`,
+    confirmYes: 'Yes, use this one',
+    confirmBack: 'Back to the ideas',
+    choosing: 'Choosing\u2026',
+    chooseErrorTitle: 'We couldn\u2019t save your choice',
+    chooseErrorBody: 'Nothing was lost. Please try again.',
+    fresh: 'Show me different ideas',
+    freshLeft: (n: number) =>
+      n === 1
+        ? 'One more set available'
+        : n === 2
+          ? 'Two more sets available'
+          : `${n} more sets available`,
+    freshUsedUp: 'You\u2019ve used this week\u2019s fresh ideas.',
+    expiredBody: 'Those ideas ran out of time. We can write fresh ones.',
+    getFresh: 'Get fresh ideas',
+    writingFresh: 'Writing fresh ideas\u2026',
+    writingFreshBody: 'This takes a few seconds.',
+    freshErrorTitle: 'We couldn\u2019t write new ideas',
+    freshErrorBody: 'Nothing was lost. Please try again.',
+    limitTitle: 'That\u2019s all the fresh ideas for this week',
+    limitBody: 'We\u2019ll have new ones after your next check-in.',
+    alreadyTitle: (name: string) => `${name}\u2019s next week is on its way`,
+    alreadyBody: (idea: string | null) =>
+      idea
+        ? `You chose \u201c${idea}\u201d. We\u2019re writing it now.`
+        : 'You already chose. We\u2019re writing it now.',
+    writingTitle: 'We\u2019re writing the ideas',
+    writingBody: 'This takes a few minutes. We\u2019ll let you know when they\u2019re ready.',
+    notYetTitle: 'Not ready to pick yet',
+    notYetBody: 'Check in on last week first. The ideas come right after.',
+    checkIn: 'Check in',
+    unknownChild: 'We couldn\u2019t find that child',
+  },
   byCheck: {
     useQuick: 'Use the quick rating instead',
     useChecks: 'Check each skill instead',
