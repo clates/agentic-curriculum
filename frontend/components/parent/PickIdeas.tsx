@@ -35,7 +35,7 @@ function Working({ title, body }: { title: string; body: string }) {
   );
 }
 
-/** One idea as a big radio card: title, how hard it is, the hook and the effort. */
+/** One idea as a big radio card: topic, title, hook and the effort. */
 function IdeaCard({
   idea,
   checked,
@@ -61,14 +61,9 @@ function IdeaCard({
         onChange={onChange}
         className="sr-only"
       />
-      <span className="flex flex-wrap items-center gap-2 text-sm text-neutral-700">
-        <span>{c.difficulty[idea.difficulty]}</span>
-        {idea.difficulty === 'on_level' ? (
-          <span className="bg-primary-100 text-primary-700 rounded px-2 py-0.5 font-medium">
-            {c.ourPick}
-          </span>
-        ) : null}
-      </span>
+      {idea.topic ? (
+        <span className="block text-sm font-medium text-neutral-700">{idea.topic}</span>
+      ) : null}
       <span className="text-foreground mt-1 block text-xl font-semibold [overflow-wrap:anywhere]">
         {idea.title}
       </span>
@@ -127,9 +122,7 @@ function Choose({ plan, ideas }: { plan: WeekPlan; ideas: Idea[] }) {
   const router = useRouter();
   const pick = usePickIdea(plan.student_id);
   const lock = useRef(false);
-  const [selected, setSelected] = useState<OptionId>(
-    (ideas.find((i) => i.difficulty === 'on_level') ?? ideas[0]).option_id
-  );
+  const [selected, setSelected] = useState<OptionId>(ideas[0].option_id);
   const [confirming, setConfirming] = useState(false);
   const confirmHeading = useRef<HTMLHeadingElement>(null);
   const idea = ideas.find((i) => i.option_id === selected) ?? ideas[0];
@@ -212,6 +205,7 @@ function Choose({ plan, ideas }: { plan: WeekPlan; ideas: Idea[] }) {
         <legend className="text-foreground mb-2 text-lg font-semibold">
           {c.question(plan.first_name)}
         </legend>
+        <p className="text-neutral-700">{c.sameSkills}</p>
         {ideas.map((i) => (
           <IdeaCard
             key={i.option_id}

@@ -158,6 +158,19 @@ def latest_plan_for_student(
     return row_to_plan(row) if row else None
 
 
+def recent_plans_for_student(
+    conn: sqlite3.Connection, family_id: str, student_id: str, *, before_week: str, limit: int = 4
+) -> list[WeekPlan]:
+    """The child's last few plans before ``before_week``, newest first."""
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT * FROM week_plan WHERE family_id=? AND student_id=? AND week_start<? "
+        "ORDER BY week_start DESC LIMIT ?",
+        (family_id, student_id, before_week, limit),
+    ).fetchall()
+    return [row_to_plan(r) for r in rows]
+
+
 def store_outlines(
     conn: sqlite3.Connection, family_id: str, plan_id: str, outlines: OutlineSet
 ) -> None:

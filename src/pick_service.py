@@ -24,7 +24,7 @@ from typing import Any, Protocol
 try:  # Prefer package-relative import when available
     from . import week_plan as wp  # type: ignore
     from .authoring_kickoff import request_authoring  # type: ignore
-    from .candidate_selector import NoCandidates, load_candidate_inputs, select_candidates  # type: ignore
+    from .candidate_selector import NoCandidates, load_candidate_inputs, select_week_standards  # type: ignore
     from .loop_state import Event, IllegalTransition, advance  # type: ignore
     from .model_context import ModelStudentContext, build_model_context  # type: ignore
     from .outline_generator import generate_outlines  # type: ignore
@@ -32,7 +32,7 @@ try:  # Prefer package-relative import when available
 except ImportError:  # Fallback for direct script execution / top-level import
     import week_plan as wp  # type: ignore
     from authoring_kickoff import request_authoring  # type: ignore
-    from candidate_selector import NoCandidates, load_candidate_inputs, select_candidates  # type: ignore
+    from candidate_selector import NoCandidates, load_candidate_inputs, select_week_standards  # type: ignore
     from loop_state import Event, IllegalTransition, advance  # type: ignore
     from model_context import ModelStudentContext, build_model_context  # type: ignore
     from outline_generator import generate_outlines  # type: ignore
@@ -99,7 +99,7 @@ def _public_outline(o) -> dict[str, Any]:
         "option_id": o.option_id,
         "title": o.title,
         "hook": o.hook,
-        "difficulty": o.difficulty,
+        "topic": o.topic,
         "activities": o.activities,
         "skills": list(o.skills),
         "effort": o.effort,
@@ -215,6 +215,26 @@ def _latest_packet_grade(conn: sqlite3.Connection, family_id: str, student_id: s
     return row[0] if row else None
 
 
+def _topic_text(o) -> str:
+    return o.topic or o.title
+
+
+def recent_topics(
+    conn: sqlite3.Connection, family_id: str, student: StudentRow, plan: wp.WeekPlan
+) -> list[str]:
+    """Topics to steer away from: what this child chose in recent weeks, and every topic already
+    shown for this week (so fresh ideas are fresh)."""
+    out: list[str] = []
+    for past in wp.recent_plans_for_student(
+        conn, family_id, student.student_id, before_week=plan.week_start
+    ):
+        if past.outlines and past.picked_option:
+            out.append(_topic_text(past.outlines.get(past.picked_option)))
+    if plan.outlines:
+        out.extend(_topic_text(o) for o in plan.outlines.options)
+    return out
+
+
 def make_outlines(
     conn: sqlite3.Connection,
     family_id: str,
@@ -225,7 +245,7 @@ def make_outlines(
     client=None,
     today: date | None = None,
 ) -> OutlineSet:
-    """Selector + one framing call. Nothing is stored. ``variant`` changes the picks (fresh ideas)."""
+    """Selector + one framing call. Nothing is stored. ``variant`` changes the topics (fresh ideas)."""
     from llm import UsageContext
 
     context: ModelStudentContext = build_model_context(
@@ -235,17 +255,16 @@ def make_outlines(
         fallback_grade=_latest_packet_grade(conn, family_id, student.student_id),
     )
     standards, prereqs = load_candidate_inputs(_db_path(conn), context.grade)
-    avoid = (
-        {sid for o in plan.outlines.options for sid in o.standard_ids} if plan.outlines else set()
-    )
+    # The engine alone picks the skills (mastery, review dates, grade). ``variant`` is not in the
+    # seed: fresh ideas are new topics around the same skills.
+    seed = f"{student.student_id}:{plan.week_start}"
     try:
-        candidates = select_candidates(
+        week_standards = select_week_standards(
             progress=student.progress_blob,
             standards=standards,
             prereqs=prereqs,
             grade=context.grade,
-            seed=f"{student.student_id}:{plan.week_start}:{variant}",
-            avoid=avoid,
+            seed=seed,
         )
     except NoCandidates as exc:
         raise PickError(
@@ -253,7 +272,9 @@ def make_outlines(
         ) from exc
     generated = generate_outlines(
         context,
-        candidates,
+        week_standards,
+        recent_topics=recent_topics(conn, family_id, student, plan),
+        seed=f"{seed}:{variant}",
         client=client,
         usage=UsageContext(family_id=family_id, student_id=student.student_id),
     )

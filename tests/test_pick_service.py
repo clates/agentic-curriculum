@@ -1,6 +1,7 @@
 """M6.4 / M6.6: pick one of three, the authoring hook, fresh ideas and their cap."""
 
 import json
+import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -82,12 +83,12 @@ def to_state(conn, status, student="kid", family=FAM):
 
 
 def old_outlines():
-    def o(i, d, sid):
+    def o(i, topic, sid):
         return {
             "option_id": i,
             "title": f"Old {i}",
             "hook": "An old idea",
-            "difficulty": d,
+            "topic": topic,
             "standard_ids": [sid],
             "activities": "Do things",
             "skills": ["A plain skill"],
@@ -97,39 +98,51 @@ def old_outlines():
     return OutlineSet.model_validate(
         {
             "options": [
-                o("a", "easier", "VA.MATH.2.1"),
-                o("b", "on_level", "VA.MATH.3.1"),
-                o("c", "stretch", "VA.MATH.4.1"),
+                o("a", "Pirates", "VA.MATH.3.1"),
+                o("b", "Music", "VA.MATH.3.1"),
+                o("c", "Robots", "VA.MATH.3.1"),
             ]
         }
     )
 
 
-def reply_for(prompt_json):
-    """A passing model answer for whatever ids the prompt offers."""
-    options = []
-    names = [
-        ("Dino Dig", "Dig up dinosaur facts."),
-        ("Bake Lab", "Bake and measure a snack."),
-        ("Fossil Case", "Crack a fossil mystery."),
-    ]
-    for (letter, spec), (title, hook) in zip(sorted(prompt_json.items()), names, strict=True):
-        options.append(
-            {
-                "option_id": letter,
-                "title": f"{title} {letter}",
-                "hook": hook.replace(".", f" {letter}."),
-                "activities": f"Hands-on work for {title}.",
-                "skills": ["A plain skill"],
-                "effort": "About 25 minutes a day",
-                "standard_ids": [s["id"] for s in spec["standards"]],
-            }
-        )
-    return json.dumps({"options": options})
+SETS = [
+    [
+        ("Weather", "Weather Watchers", "tracks the sky and predicts tomorrow."),
+        ("Baking", "Bakery Boss", "runs a bakery and tests recipes."),
+        ("Space", "Mission to Mars", "plans a trip to another planet."),
+    ],
+    [
+        ("Ocean animals", "Deep Sea Files", "dives down to meet sea creatures."),
+        ("Castles", "Castle Under Siege", "defends a castle and its kingdom."),
+        ("Music", "Band Practice Week", "puts a band together for a show."),
+    ],
+]
+
+
+def reply_for(prompt):
+    """A passing model answer; picks a set whose topics are not in the recent-topics line."""
+    recent = json.loads(re.search(r"recent topics: (\[.*\])\.", prompt).group(1))
+    text = " ".join(recent).lower()
+    chosen = next(s for s in SETS if not any(t.lower() in text for t, _, _ in s))
+    return json.dumps(
+        {
+            "options": [
+                {
+                    "option_id": letter,
+                    "topic": topic,
+                    "title": title,
+                    "hook": f"Mira {hook}",
+                    "activities": f"Hands-on work for {title}.",
+                }
+                for letter, (topic, title, hook) in zip("abc", chosen, strict=True)
+            ]
+        }
+    )
 
 
 class SmartProvider(ScriptedProvider):
-    """Answers every outline call from the OPTIONS_JSON block in the prompt."""
+    """Answers every outline call, avoiding the recent topics the prompt lists."""
 
     def __init__(self, fail=False):
         super().__init__()
@@ -142,8 +155,7 @@ class SmartProvider(ScriptedProvider):
 
             raise LLMBadRequest("boom")
         text = "\n".join(m["content"] for m in request.messages)
-        spec = json.loads(text.split("OPTIONS_JSON: ", 1)[1].splitlines()[0])
-        self.script = [reply_for(spec)]
+        self.script = [reply_for(text)]
         return super().complete(request)
 
 
@@ -273,10 +285,45 @@ def test_expired_ideas_can_be_replaced_with_new_ones(db):
     assert not any(o["title"].startswith("Old") for o in view["outlines"])
     assert len(provider.requests) == 1
     new = wp.get_plan(db, FAM, plan.plan_id).outlines
-    assert not (
-        {s for o in new.options for s in o.standard_ids}
-        & {"VA.MATH.2.1", "VA.MATH.3.1", "VA.MATH.4.1"}
-    )  # fresh, not the same skills
+    # all three topics wrap the engine's one set; no parent input changed it
+    assert len({tuple(o.standard_ids) for o in new.options}) == 1
+    assert len({o.topic for o in new.options}) == 3
+
+
+def test_fresh_ideas_keep_the_skills_and_change_the_topics(db):
+    plan = to_state(db, "awaiting_pick")
+    provider = SmartProvider()
+    ps.regenerate(db, FAM, "kid", plan.plan_id, client=client(provider))
+    first = wp.get_plan(db, FAM, plan.plan_id).outlines
+    advance(db, FAM, plan.plan_id, Event("pick_expired"))
+    ps.regenerate(db, FAM, "kid", plan.plan_id, client=client(provider))
+    second = wp.get_plan(db, FAM, plan.plan_id).outlines
+    assert first.options[0].standard_ids == second.options[0].standard_ids
+    assert not ({o.topic for o in first.options} & {o.topic for o in second.options})
+
+
+def test_last_weeks_chosen_topics_are_told_to_the_model(db):
+    old = wp.create_plan(db, FAM, "kid", "2026-01-05")
+    for kind in ("feedback_submitted", "outlines_ready", "pick_made"):
+        if kind == "outlines_ready":
+            wp.store_outlines(db, FAM, old.plan_id, old_outlines())
+        advance(
+            db,
+            FAM,
+            old.plan_id,
+            Event(kind, payload={"option_id": "b"} if kind == "pick_made" else {}),
+        )
+    now = wp.create_plan(db, FAM, "kid", "2026-01-12")
+    for kind in ("feedback_submitted", "outlines_ready"):
+        if kind == "outlines_ready":
+            wp.store_outlines(db, FAM, now.plan_id, old_outlines())
+        advance(db, FAM, now.plan_id, Event(kind))
+    provider = SmartProvider()
+    ps.regenerate(db, FAM, "kid", now.plan_id, client=client(provider))
+    prompt = "\n".join(m["content"] for m in provider.requests[0].messages)
+    recent = re.search(r"recent topics: (\[.*\])\.", prompt).group(1)
+    assert "Music" in recent  # the topic of the option picked last week
+    assert "Pirates" in recent  # and what this week already showed
 
 
 def test_the_third_regeneration_stops_with_a_plain_message(db):

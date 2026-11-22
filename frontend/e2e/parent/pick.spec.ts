@@ -58,7 +58,7 @@ test.describe('Pick one of three: the happy path', () => {
     await card.getByRole('link', { name: 'See the ideas' }).click();
     await expect(page).toHaveURL(new RegExp(`/week/pick/${kid.id}$`), { timeout: 30_000 });
 
-    // 2. Three ideas, each with its hook and effort; first name only; nothing technical.
+    // 2. Three ideas, each with its topic and hook; first name only; nothing technical.
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       `Pick ${kid.name}’s next week`
     );
@@ -66,7 +66,7 @@ test.describe('Pick one of three: the happy path', () => {
     for (const idea of Object.values(SEEDED)) {
       const c = ideaCards(page).filter({ hasText: idea.title });
       await expect(c).toHaveCount(1);
-      await expect(c).toContainText(idea.effort);
+      await expect(c).toContainText(idea.topic);
     }
     await expect(ideaCards(page).filter({ hasText: 'Plant, count and sketch' })).toBeVisible();
     await expect(page.locator('body')).not.toContainText(kid.lastName);
@@ -75,11 +75,14 @@ test.describe('Pick one of three: the happy path', () => {
     await expectNoViolations(page);
     await shot(page, 'm10-6-ideas');
 
-    // 3. One clear default (our pick, on level); choose a different one instead.
-    await expect(page.getByRole('radio', { name: /Kitchen Math Lab/ })).toBeChecked();
-    await expect(ideaCards(page).filter({ hasText: 'Our pick' })).toHaveCount(1);
+    // 3. The ideas differ by topic, not rigor: no difficulty wording, one shared-skills line.
+    await expect(page.getByText('Every idea covers the same skills.')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(
+      /easier|on level|stretch|a step up|gentler|harder/i
+    );
+    await expect(page.getByRole('radio', { name: /Garden Planner Week/ })).toBeChecked();
     await ideaCards(page).filter({ hasText: SEEDED.c.title }).click();
-    await expect(page.getByRole('radio', { name: /Backyard Detectives/ })).toBeChecked();
+    await expect(page.getByRole('radio', { name: /Mountain Climb Diary/ })).toBeChecked();
 
     // 4. Confirm step names the choice and what it covers; nothing is sent yet.
     let posts = 0;
@@ -88,7 +91,7 @@ test.describe('Pick one of three: the happy path', () => {
       return route.continue();
     });
     await openConfirm(page);
-    await expect(page.getByRole('heading', { name: 'Use “Backyard Detectives”?' })).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'Use “Mountain Climb Diary”?' })).toBeFocused();
     await expect(page.getByText('Counting and measuring')).toBeVisible();
     await expect(page.getByText('Once we start, it can’t be changed.')).toBeVisible();
     expect(posts).toBe(0);
@@ -163,7 +166,7 @@ test.describe('Pick one of three: a double tap and a repeat do not double-submit
     await expect(page).toHaveURL(/\/week$/, { timeout: 30_000 });
     expect(posts).toBe(1);
     const plan = await planOf(request, kid.id);
-    expect(plan.picked_option).toBe('b');
+    expect(plan.picked_option).toBe('a');
     expect(loopEvents(kid.id).filter((e) => e.type === 'pick_made')).toHaveLength(1);
   });
 
@@ -423,7 +426,7 @@ test.describe('Pick one of three: loading, errors and other states', () => {
     page,
     request,
   }) => {
-    const kid = await pickChild(request, 'ef', { status: 'expired', scenario: 'fail-once' });
+    const kid = await pickChild(request, 'ef', { status: 'expired', scenario: 'provider-error' });
     await openPick(page, kid.id, kid.name);
     await page.getByRole('button', { name: 'Get fresh ideas' }).click();
     await expect(errorBox(page)).toBeVisible({ timeout: 60_000 });
@@ -434,20 +437,34 @@ test.describe('Pick one of three: loading, errors and other states', () => {
     await expectNoViolations(page);
     await shot(page, 'm10-6-fresh-error');
 
-    // One try plus four repairs were made, the week is untouched, no allowance was spent.
-    expect((await outlineCalls(request, kid.id)).map((c) => c.kind)).toEqual([
-      'outline',
-      'outline-repair',
-      'outline-repair',
-      'outline-repair',
-      'outline-repair',
-    ]);
+    // The model refused once; the week is untouched and no allowance was spent.
+    expect((await outlineCalls(request, kid.id)).map((c) => c.kind)).toEqual(['outline']);
     const plan = await planOf(request, kid.id);
     expect(plan).toMatchObject({ status: 'expired', regenerations_used: 0, regenerations_left: 2 });
 
     await page.getByRole('button', { name: 'Try again' }).click();
     await expect(ideaCards(page)).toHaveCount(3, { timeout: 30_000 });
     expect((await planOf(request, kid.id)).status).toBe('awaiting_pick');
+  });
+
+  test('when the model cannot pass the topic gate, curated topics fill in (still three, all different)', async ({
+    page,
+    request,
+  }) => {
+    const kid = await pickChild(request, 'tf', { status: 'expired', scenario: 'fail-once' });
+    await openPick(page, kid.id, kid.name);
+    await page.getByRole('button', { name: 'Get fresh ideas' }).click();
+    await expect(ideaCards(page)).toHaveCount(3, { timeout: 90_000 });
+    const plan = await planOf(request, kid.id);
+    const topics = (plan.outlines ?? []).map((o) => o.topic);
+    expect(new Set(topics).size).toBe(3);
+    // the topics already shown for this week (the seeded ones) are not offered again
+    for (const old of Object.values(SEEDED)) expect(topics).not.toContain(old.topic);
+    expect((await outlineCalls(request, kid.id)).length).toBe(5); // one try plus four repairs
+    expect(plan).toMatchObject({ status: 'awaiting_pick', regenerations_used: 1 });
+    await expectNoBannedWords(page);
+    await expectNoViolations(page);
+    await shot(page, 'topics-template-fallback');
   });
 
   test('empty states: unknown child, still writing, check in first, already chosen', async ({
@@ -502,17 +519,19 @@ test.describe('Pick one of three: keyboard, accessibility, small screens', () =>
     await expect(ideaCards(page)).toHaveCount(3);
 
     await tabTo(page, 'input[type=radio][name=idea]');
-    await expect(page.getByRole('radio', { name: /Kitchen Math Lab/ })).toBeFocused();
+    await expect(page.getByRole('radio', { name: /Garden Planner Week/ })).toBeFocused();
     await page.keyboard.press('ArrowDown'); // next idea
-    await expect(page.getByRole('radio', { name: /Backyard Detectives/ })).toBeChecked();
+    await expect(page.getByRole('radio', { name: /Kitchen Math Lab/ })).toBeChecked();
+    await page.keyboard.press('ArrowDown');
+    await expect(page.getByRole('radio', { name: /Mountain Climb Diary/ })).toBeChecked();
     await page.keyboard.press('ArrowUp');
     await page.keyboard.press('ArrowUp');
-    await expect(page.getByRole('radio', { name: /Gentle Garden Week/ })).toBeChecked();
+    await expect(page.getByRole('radio', { name: /Garden Planner Week/ })).toBeChecked();
 
     await tabTo(page, 'button');
     await expect(page.getByRole('button', { name: 'Use this one' })).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('heading', { name: 'Use “Gentle Garden Week”?' })).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'Use “Garden Planner Week”?' })).toBeFocused();
 
     await tabTo(page, 'button');
     await expect(page.getByRole('button', { name: 'Yes, use this one' })).toBeFocused();

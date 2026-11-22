@@ -1,28 +1,23 @@
-"""Deterministic candidate selector (M6.1): which standards next week could be about.
+"""Deterministic standards selector (M6.1): WHICH skills next week must carry.
 
-``select_candidates`` is a pure function of its arguments (no clock, no randomness, no I/O). The
-same child, week and seed always give the same answer; a different ``seed`` (for example one
-that includes the regeneration count) gives a different but equally valid answer, and ids passed
-in ``avoid`` (what the parent has already seen) sort last so fresh ideas are actually fresh.
+The curriculum engine, not the parent, decides the week's skills. ``select_week_standards`` is a
+pure function of the child's progress (mastery, review due dates), the grade-level standards and
+a tie-break seed: no clock, no randomness, no I/O, and no parent input. The same inputs always
+give the same set; the three week topics the parent chooses between all wrap this one set.
 
-It returns three pools, one per outline option, and every id in them exists in ``standards``:
+What goes in, in this order, up to ``PER_SET`` skills:
 
-* ``easier``    review that is due, then skills one grade below, then the child's own grade
-* ``on_level``  skills the child is working on, then new skills at their grade
-* ``stretch``   new skills one grade up whose prerequisites are not known weak
+* due review: mastered or benched skills that have fallen due (``review_policy``), at most two
+* the gap: skills the child is working on or last marked shaky, up to two more
+* the new core: new skills at the child's own grade, then one grade below, taken round-robin
+  across subjects so a week is not one subject
+* a measured step up: ``step_up_slots`` (0 or 1) skills one grade above, only when the child's
+  mastery says they are ready (several mastered, at most one shaky skill)
 
-Rules, in plain terms:
-
-* Mastered skills are never new work. A mastered or benched skill inside its cooldown is left
-  alone; once it falls due (``review_policy``) it comes back as review.
-* Dependencies: a skill is blocked while one of its prerequisites is known weak (being worked on
-  or last marked needs-work and not yet mastered). The weak prerequisite is offered first. A
-  prerequisite the child has no record for is assumed known: placement by grade is the evidence,
-  and a new child with no history must still get ideas.
-* Within a pool, skills the child is already working on come first, then new ones, then a stable
-  hash of ``seed|id`` decides the order. Each option takes skills round-robin across subjects,
-  so a week is not three versions of one subject, and no skill appears in two options unless
-  the pools are too small to avoid it.
+Mastered skills are never new work. A skill is blocked while one of its prerequisites is known
+weak; the weak prerequisite is offered first. A prerequisite the child has no record for is
+assumed known: placement by grade is the evidence, and a new child with no history must still
+get a week.
 """
 
 from __future__ import annotations
@@ -38,13 +33,17 @@ try:  # Prefer package-relative import when available
 except ImportError:  # Fallback for direct script execution / top-level import
     from review_policy import review_due, review_schedule  # type: ignore
 
-DIFFICULTIES = ("easier", "on_level", "stretch")
-PER_OPTION = 3
+PER_SET = 4
+MAX_REVIEWS = 2
+MAX_GAP = 2
+STEP_UP_MIN_MASTERED = 3
+STEP_UP_MAX_WEAK = 1
 WEAK_RATINGS = ("STRUGGLING", "NOT_STARTED", "DEVELOPING")
 
 REASON_REVIEW = "review"
 REASON_WORKING_ON = "working_on"
 REASON_NEW = "new"
+REASON_NEXT_STEP = "next_step"  # a measured step above the child's grade
 
 
 class NoCandidates(ValueError):
@@ -65,23 +64,22 @@ class Candidate:
     subject: str
     grade: int
     description: str
-    reason: str  # review | working_on | new
+    reason: str  # review | working_on | new | next_step
 
 
 @dataclass(frozen=True)
-class CandidateSet:
-    easier: tuple[Candidate, ...]
-    on_level: tuple[Candidate, ...]
-    stretch: tuple[Candidate, ...]
+class StandardsSet:
+    """The one set of skills the week carries. Every topic option offers exactly this."""
 
-    def for_difficulty(self, difficulty: str) -> tuple[Candidate, ...]:
-        return getattr(self, difficulty)
+    items: tuple[Candidate, ...]
 
-    def ids_for(self, difficulty: str) -> list[str]:
-        return [c.standard_id for c in self.for_difficulty(difficulty)]
+    def ids(self) -> list[str]:
+        return [c.standard_id for c in self.items]
 
-    def all_ids(self) -> set[str]:
-        return {c.standard_id for d in DIFFICULTIES for c in self.for_difficulty(d)}
+
+def step_up_slots(mastered_count: int, weak_count: int) -> int:
+    """How many skills above the child's grade this week may hold, from mastery alone."""
+    return 1 if mastered_count >= STEP_UP_MIN_MASTERED and weak_count <= STEP_UP_MAX_WEAK else 0
 
 
 def _digest(seed: str, standard_id: str) -> str:
@@ -103,7 +101,7 @@ def _round_robin(ordered: Sequence[StandardInfo], limit: int) -> list[StandardIn
     return out
 
 
-def select_candidates(
+def select_week_standards(
     *,
     progress: Mapping[str, Any] | str | None,
     standards: Iterable[StandardInfo],
@@ -111,10 +109,9 @@ def select_candidates(
     grade: int,
     seed: str,
     now: str | None = None,
-    per_option: int = PER_OPTION,
-    avoid: Collection[str] = frozenset(),
-) -> CandidateSet:
-    """Pick the standards pools for the three outline options. See the module docstring."""
+    per_set: int = PER_SET,
+) -> StandardsSet:
+    """Pick the week's standards from mastery, review dates and grade. See the module docstring."""
     if isinstance(progress, str):
         progress = json.loads(progress or "{}")
     progress = progress or {}
@@ -134,19 +131,13 @@ def select_candidates(
     cooling = {r["standard_id"] for r in review_schedule(progress)} - {
         r["standard_id"] for r in due_rows
     }
-    reviews = [by_id[sid] for sid in due_ids]
     review_set = set(due_ids)
 
     def blocked(sid: str) -> bool:
         return any(p != sid and p in weak for p in prereqs.get(sid, ()))
 
     def order_key(s: StandardInfo):
-        working = s.standard_id in weak
-        return (
-            0 if working else 1,
-            1 if s.standard_id in avoid else 0,
-            _digest(seed, s.standard_id),
-        )
+        return (0 if s.standard_id in weak else 1, _digest(seed, s.standard_id))
 
     eligible: dict[int, list[StandardInfo]] = {}
     for s in by_id.values():
@@ -157,55 +148,50 @@ def select_candidates(
         eligible.setdefault(s.grade, []).append(s)
     for pool in eligible.values():
         pool.sort(key=order_key)
-    reviews.sort(key=lambda s: (1 if s.standard_id in avoid else 0,))  # stable: policy order
 
     def pool(g: int) -> list[StandardInfo]:
         return eligible.get(g, [])
 
-    def build(head: list[StandardInfo], sources: list[list[StandardInfo]], used: set[str]):
-        chosen = [s for s in head if s.standard_id not in used][: max(0, per_option - 1)]
-        taken = used | {s.standard_id for s in chosen}
-        for source in sources:
-            if len(chosen) >= per_option:
-                break
-            picked = _round_robin(
-                [s for s in source if s.standard_id not in taken], per_option - len(chosen)
-            )
-            chosen.extend(picked)
-            taken |= {s.standard_id for s in picked}
-        return chosen
+    step_up = min(step_up_slots(len(mastered), len(weak)), max(0, per_set - 1))
+    chosen: list[StandardInfo] = [by_id[sid] for sid in due_ids][: min(MAX_REVIEWS, per_set)]
+    taken = {s.standard_id for s in chosen}
 
-    used: set[str] = set()
-    easier = build(reviews[:2], [pool(grade - 1), pool(grade)], used)
-    used |= {s.standard_id for s in easier}
-    on_level = build(reviews[2:3], [pool(grade), pool(grade - 1), pool(grade + 1)], used)
-    used |= {s.standard_id for s in on_level}
-    stretch = build([], [pool(grade + 1), pool(grade), pool(grade + 2)], used)
+    def add(items: list[StandardInfo], limit: int) -> None:
+        for s in _round_robin([s for s in items if s.standard_id not in taken], limit):
+            chosen.append(s)
+            taken.add(s.standard_id)
 
-    everything = [s for g in sorted(eligible) for s in eligible[g]] + reviews
+    room = per_set - step_up
+    gap = sorted(
+        [s for g in sorted(eligible) for s in eligible[g] if s.standard_id in weak],
+        key=lambda s: (abs(s.grade - grade), order_key(s)),
+    )
+    add(gap, min(MAX_GAP, room - len(chosen)))
+    add(pool(grade) + pool(grade - 1) + pool(grade + 1), room - len(chosen))
+    before = len(chosen)
+    add(pool(grade + 1), step_up)
+    step_up_ids = {s.standard_id for s in chosen[before:]}
+
+    everything = [s for g in sorted(eligible) for s in eligible[g]] + [
+        by_id[sid] for sid in due_ids
+    ]
     everything.sort(key=lambda s: (abs(s.grade - grade), order_key(s)))
     if not everything:
         raise NoCandidates(f"no standards available near grade {grade}")
+    if not chosen:  # a week must never be empty: borrow from anywhere
+        chosen = _round_robin(everything, per_set)
 
-    def fill(chosen: list[StandardInfo]) -> list[StandardInfo]:
-        """An option must never be empty: borrow from anywhere (overlap beats nothing)."""
-        if chosen:
-            return chosen
-        return _round_robin(everything, per_option)
+    def reason(s: StandardInfo) -> str:
+        if s.standard_id in review_set:
+            return REASON_REVIEW
+        if s.standard_id in weak:
+            return REASON_WORKING_ON
+        return REASON_NEXT_STEP if s.standard_id in step_up_ids else REASON_NEW
 
-    def convert(items: list[StandardInfo]) -> tuple[Candidate, ...]:
-        out = []
-        for s in fill(items):
-            reason = (
-                REASON_REVIEW
-                if s.standard_id in review_set
-                else REASON_WORKING_ON if s.standard_id in weak else REASON_NEW
-            )
-            out.append(Candidate(s.standard_id, s.subject, s.grade, s.description, reason))
-        return tuple(out)
-
-    return CandidateSet(
-        easier=convert(easier), on_level=convert(on_level), stretch=convert(stretch)
+    return StandardsSet(
+        items=tuple(
+            Candidate(s.standard_id, s.subject, s.grade, s.description, reason(s)) for s in chosen
+        )
     )
 
 

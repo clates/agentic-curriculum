@@ -14,7 +14,7 @@
  * Classification is by prompt content (see src/agent.py for the prompts):
  *   scaffold  "weekly lesson plan scaffold"                  -> fixtures/scaffold.json
  *   day       "Create a lesson plan for the following ..."   -> fixtures/day.json
- *   outline   "OPTIONS_JSON: ..." (and repairs of its bad replies) -> outline.mjs
+ *   outline   "SKILLS_JSON: ..." (and repairs of its bad replies) -> outline.mjs
  * Anything else -> HTTP 500 plus a logged error, never a guess. Specs fail on any such record.
  *
  * Attribution and scenarios ride in the student's `parent_notes` (they appear in every prompt):
@@ -173,6 +173,8 @@ async function handleChat(req, res) {
       const out = outlineResponse(prompt, meta.student, scenario);
       record(out.record);
       if (out.delayMs) await new Promise((r) => setTimeout(r, out.delayMs));
+      if (out.httpStatus)
+        return sendJson(res, out.httpStatus, { error: { message: 'e2e stub: refused' } });
       return sendJson(res, 200, completion(body.model, out.raw));
     }
     throw new Error('prompt matched no known request type');

@@ -1,15 +1,17 @@
-"""M6.1: the deterministic candidate selector."""
+"""M6.1: the deterministic standards selector (the engine decides; no parent input)."""
 
+import inspect
 import json
 
 import pytest
 
 from candidate_selector import (
-    DIFFICULTIES,
+    PER_SET,
     NoCandidates,
     StandardInfo,
     load_candidate_inputs,
-    select_candidates,
+    step_up_slots,
+    select_week_standards,
 )
 
 NOW = "2026-03-01T00:00:00Z"
@@ -28,69 +30,51 @@ def world():
     return out
 
 
-def ids(cs):
-    return {d: cs.ids_for(d) for d in DIFFICULTIES}
+def sel(progress=None, **kw):
+    kw.setdefault("standards", world())
+    return select_week_standards(progress=progress or {}, grade=3, seed="x", now=NOW, **kw)
 
 
-def test_same_inputs_same_answer_and_different_seed_differs():
-    a = select_candidates(progress={}, standards=world(), grade=3, seed="s1", now=NOW)
-    b = select_candidates(progress={}, standards=world(), grade=3, seed="s1", now=NOW)
-    c = select_candidates(progress={}, standards=world(), grade=3, seed="s2", now=NOW)
+def test_same_inputs_same_answer_and_the_seed_only_breaks_ties():
+    a, b = sel(), sel()
     assert a == b
-    assert ids(a) != ids(c)
+    assert len(a.ids()) == len(set(a.ids())) <= PER_SET
 
 
-def test_every_id_exists_and_pools_sit_at_their_grade():
-    standards = world()
-    known = {s.standard_id: s for s in standards}
-    cs = select_candidates(progress={}, standards=standards, grade=3, seed="x", now=NOW)
-    for d in DIFFICULTIES:
-        pool = cs.for_difficulty(d)
-        assert 1 <= len(pool) <= 3
-        assert all(c.standard_id in known for c in pool)
-    assert {c.grade for c in cs.easier} == {2}
-    assert {c.grade for c in cs.on_level} == {3}
-    assert {c.grade for c in cs.stretch} == {4}
+def test_the_selector_takes_no_parent_input_and_no_difficulty():
+    params = set(inspect.signature(select_week_standards).parameters)
+    assert params == {"progress", "standards", "prereqs", "grade", "seed", "now", "per_set"}
 
 
-def test_no_skill_appears_in_two_options_when_there_is_room():
-    cs = select_candidates(progress={}, standards=world(), grade=3, seed="x", now=NOW)
-    flat = [i for d in DIFFICULTIES for i in cs.ids_for(d)]
-    assert len(flat) == len(set(flat))
+def test_a_new_child_gets_grade_level_skills_across_subjects_and_no_step_up():
+    cs = sel()
+    assert {c.grade for c in cs.items} == {3}
+    assert len({c.subject for c in cs.items}) >= 3
+    assert {c.reason for c in cs.items} == {"new"}
 
 
-def test_options_rotate_through_subjects():
-    cs = select_candidates(progress={}, standards=world(), grade=3, seed="x", now=NOW)
-    for d in DIFFICULTIES:
-        assert len({c.subject for c in cs.for_difficulty(d)}) == 3
+def test_every_id_exists():
+    known = {s.standard_id for s in world()}
+    assert set(sel().ids()) <= known
 
 
 def test_mastered_skills_are_never_new_work():
-    standards = world()
-    mastered = [s.standard_id for s in standards if s.grade == 3]
-    progress = {"mastered_standards": mastered, "developing_standards": []}
-    cs = select_candidates(progress=progress, standards=standards, grade=3, seed="x", now=NOW)
-    assert not (set(mastered) & cs.all_ids())
+    mastered = [s.standard_id for s in world() if s.grade == 3]
+    cs = sel({"mastered_standards": mastered, "developing_standards": []})
+    assert not (set(mastered) & set(cs.ids()))
 
 
-def test_working_on_skills_come_first_in_the_on_level_option():
-    standards = world()
-    target = "SC.3.2"
-    progress = {"mastered_standards": [], "developing_standards": [target]}
-    cs = select_candidates(progress=progress, standards=standards, grade=3, seed="x", now=NOW)
-    assert cs.on_level[0].standard_id == target
-    assert cs.on_level[0].reason == "working_on"
+def test_the_gap_comes_first_after_review():
+    cs = sel({"mastered_standards": [], "developing_standards": ["SC.3.2"]})
+    assert cs.items[0].standard_id == "SC.3.2" and cs.items[0].reason == "working_on"
 
 
-def test_due_review_leads_the_easier_option_and_cooldown_is_respected():
-    standards = world()
+def test_due_review_comes_first_and_cooldown_is_respected():
     progress = {
         "mastered_standards": ["MA.3.1", "MA.3.2"],
         "developing_standards": [],
         "standard_metadata": {
-            # missed last week: due now
             "MA.3.1": {"last_seen": "2026-02-20T00:00:00Z", "last_feedback": "STRUGGLING"},
-            # mastered yesterday with a 4 week cooldown: left alone
             "MA.3.2": {
                 "last_seen": "2026-02-28T00:00:00Z",
                 "last_feedback": "MASTERED",
@@ -98,45 +82,53 @@ def test_due_review_leads_the_easier_option_and_cooldown_is_respected():
             },
         },
     }
-    cs = select_candidates(progress=progress, standards=standards, grade=3, seed="x", now=NOW)
-    assert cs.easier[0].standard_id == "MA.3.1"
-    assert cs.easier[0].reason == "review"
-    assert "MA.3.2" not in cs.all_ids()
+    cs = sel(progress)
+    assert cs.items[0].standard_id == "MA.3.1" and cs.items[0].reason == "review"
+    assert "MA.3.2" not in cs.ids()
+
+
+def test_the_step_up_share_comes_from_mastery_not_from_anyone_asking():
+    assert step_up_slots(0, 0) == 0
+    assert step_up_slots(2, 0) == 0
+    assert step_up_slots(3, 0) == 1
+    assert step_up_slots(10, 2) == 0  # shaky: consolidate first
+    strong = {"mastered_standards": ["MA.3.1", "MA.3.2", "MA.3.3", "SC.3.1"]}
+    cs = sel(strong)
+    up = [c for c in cs.items if c.reason == "next_step"]
+    assert len(up) == 1 and up[0].grade == 4
+    shaky = {
+        "mastered_standards": ["MA.3.1", "MA.3.2", "MA.3.3", "SC.3.1"],
+        "developing_standards": ["SC.3.2", "EN.3.1"],
+    }
+    assert not [c for c in sel(shaky).items if c.reason == "next_step"]
+
+
+def test_the_set_follows_mastery_so_different_children_get_different_weeks():
+    fresh = sel()
+    strong = sel({"mastered_standards": ["MA.3.1", "MA.3.2", "MA.3.3", "SC.3.1"]})
+    assert fresh.ids() != strong.ids()
 
 
 def test_a_skill_is_blocked_while_its_prerequisite_is_known_weak():
     standards = [std("A.3.1"), std("A.3.2"), std("A.3.3", "Science"), std("A.4.1", grade=4)]
     prereqs = {"A.3.2": {"A.3.1"}, "A.4.1": {"A.3.2"}}
-    progress = {"mastered_standards": [], "developing_standards": ["A.3.1"]}
-    cs = select_candidates(
-        progress=progress, standards=standards, prereqs=prereqs, grade=3, seed="x", now=NOW
+    cs = sel(
+        {"mastered_standards": [], "developing_standards": ["A.3.1"]},
+        standards=standards,
+        prereqs=prereqs,
     )
-    assert "A.3.2" not in cs.all_ids()  # its prerequisite is shaky: offer that first
-    assert "A.3.1" in cs.all_ids()
-    # once the prerequisite is mastered the next skill opens up
-    progress = {"mastered_standards": ["A.3.1"], "developing_standards": []}
-    cs = select_candidates(
-        progress=progress, standards=standards, prereqs=prereqs, grade=3, seed="x", now=NOW
+    assert "A.3.2" not in cs.ids() and "A.3.1" in cs.ids()
+    cs = sel(
+        {"mastered_standards": ["A.3.1"], "developing_standards": []},
+        standards=standards,
+        prereqs=prereqs,
     )
-    assert "A.3.2" in cs.all_ids()
+    assert "A.3.2" in cs.ids()
 
 
 def test_a_prerequisite_with_no_record_is_assumed_known():
-    standards = [std("A.3.2"), std("A.3.1")]
-    cs = select_candidates(
-        progress={}, standards=standards, prereqs={"A.3.2": {"A.3.1"}}, grade=3, seed="x", now=NOW
-    )
-    assert "A.3.2" in cs.all_ids()
-
-
-def test_avoid_pushes_already_seen_skills_to_the_back():
-    standards = world()
-    first = select_candidates(progress={}, standards=standards, grade=3, seed="x", now=NOW)
-    seen = first.all_ids()
-    fresh = select_candidates(
-        progress={}, standards=standards, grade=3, seed="x2", now=NOW, avoid=seen
-    )
-    assert not (seen & fresh.all_ids())
+    cs = sel(standards=[std("A.3.2"), std("A.3.1")], prereqs={"A.3.2": {"A.3.1"}})
+    assert "A.3.2" in cs.ids()
 
 
 def test_progress_can_be_a_json_string_and_unknown_ids_are_ignored():
@@ -148,20 +140,20 @@ def test_progress_can_be_a_json_string_and_unknown_ids_are_ignored():
             },
         }
     )
-    cs = select_candidates(progress=progress, standards=world(), grade=3, seed="x", now=NOW)
-    assert "GONE.2" not in cs.all_ids()
+    cs = select_week_standards(progress=progress, standards=world(), grade=3, seed="x", now=NOW)
+    assert "GONE.2" not in set(cs.ids())
 
 
-def test_tiny_pools_still_give_every_option_something():
-    cs = select_candidates(progress={}, standards=[std("ONLY.3.1")], grade=3, seed="x", now=NOW)
-    assert all(cs.for_difficulty(d) for d in DIFFICULTIES)
+def test_tiny_pools_still_give_a_week():
+    cs = select_week_standards(progress={}, standards=[std("ONLY.3.1")], grade=3, seed="x", now=NOW)
+    assert cs.ids() == ["ONLY.3.1"]
 
 
 def test_nothing_to_plan_from_is_a_clear_error():
     with pytest.raises(NoCandidates):
-        select_candidates(progress={}, standards=[], grade=3, seed="x", now=NOW)
+        select_week_standards(progress={}, standards=[], grade=3, seed="x", now=NOW)
     with pytest.raises(NoCandidates):
-        select_candidates(
+        select_week_standards(
             progress={"mastered_standards": ["ONLY.3.1"]},
             standards=[std("ONLY.3.1")],
             grade=3,

@@ -24,17 +24,17 @@ STATES = (
 
 
 def _outlines():
-    def o(i, d):
+    def o(i, d):  # d is the topic
         return {
             "option_id": i,
             "title": i,
             "hook": "h",
-            "difficulty": d,
+            "topic": d,
             "standard_ids": ["VA.MATH.2.1"],
         }
 
     return OutlineSet.model_validate(
-        {"options": [o("a", "easier"), o("b", "on_level"), o("c", "stretch")]}
+        {"options": [o("a", "Weather"), o("b", "Baking"), o("c", "Space")]}
     )
 
 

@@ -23,13 +23,13 @@ function seed(cmd: string, ...args: string[]): string {
 
 /** The three ideas scripts/e2e_seed.py create_plan writes, by option. */
 export const SEEDED = {
-  a: { title: 'Gentle Garden Week', effort: 'About 15 minutes a day' },
-  b: { title: 'Kitchen Math Lab', effort: 'About 25 minutes a day' },
-  c: { title: 'Backyard Detectives', effort: 'About 35 minutes a day' },
+  a: { title: 'Garden Planner Week', topic: 'Gardening' },
+  b: { title: 'Kitchen Math Lab', topic: 'Baking' },
+  c: { title: 'Mountain Climb Diary', topic: 'Mountains' },
 } as const;
 
-/** The ideas the stub writes for a child's first generation (src outline.mjs, TITLES[0]). */
-export const STUB_FIRST_TITLES = ['Number Detectives', 'Garden Scientists', 'Story Builders'];
+/** The ideas the stub writes for a child's first generation (src outline.mjs, SETS[0]). */
+export const STUB_FIRST_TITLES = ['Weather Watchers', 'Game Day Reporter', 'Deep Sea Animal Files'];
 
 export interface PickChild {
   id: string;
@@ -38,7 +38,7 @@ export interface PickChild {
   lastName: string;
 }
 
-export type OutlineScenario = 'repair' | 'fail-once' | 'slow';
+export type OutlineScenario = 'repair' | 'fail-once' | 'slow' | 'provider-error';
 
 /** A child (born 2018, so about third grade) whose week plan is already in `status`. */
 export async function pickChild(
@@ -64,7 +64,9 @@ export interface PlanApi {
   first_name: string;
   status: string;
   picked_option: string | null;
-  outlines: { option_id: string; title: string; hook: string; skills: string[] }[] | null;
+  outlines:
+    | { option_id: string; topic: string | null; title: string; hook: string; skills: string[] }[]
+    | null;
   regenerations_used: number;
   regenerations_left: number;
 }

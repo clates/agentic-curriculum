@@ -1,40 +1,63 @@
-"""Outline generator (M6.3): ONE framing call that turns candidate standards into 3 options.
+"""Outline generator (M6.3): ONE framing call that turns the week's skills into 3 TOPIC options.
 
-The selector (candidate_selector.py) decides WHAT each option covers; the model only FRAMES it:
-a title, a one-sentence hook, what the child will do, the skills in plain words and a time hint.
-It sees the child's first name, grade, reading level, interests and the parent's notes through
-``ModelStudentContext`` and nothing else (D9).
+The curriculum engine (candidate_selector.py) decides WHAT the week covers: one set of skills
+from the child's mastery, review dates and grade. The three options differ only by TOPIC (what the
+week is about); every option carries exactly that same set. The model frames each: a topic, a
+short title (at most 6 words), a one-sentence hook and what the child will do. It sees the child's
+first name, grade, reading level, interests and the parent's notes through ``ModelStudentContext``
+and nothing else (D9).
 
-The call goes through ``llm.generate_structured`` (task ``outline``). The schema the model must
-satisfy is built per call and carries the gate, so a bad answer is sent back through the repair
-loop with a message that says exactly what to fix (up to ``MAX_REPAIRS`` repairs):
+The call goes through ``llm.generate_structured`` (task ``outline``). The schema carries the gate,
+so a bad answer is sent back through the repair loop with a message that says what to fix:
 
-  * exactly three options, a/b/c, in the order easier / on level / stretch
-  * titles, hooks and activities are all different from each other
-  * each option's standard ids are exactly the ids the selector gave it (none added or dropped)
-  * no placeholder text, no standard codes, none of the banned technical words
+  * exactly three options, a/b/c
+  * title at most 6 words / 40 characters, hook ONE sentence, no placeholders, codes or jargon
+  * topics clearly different from each other and from the child's recent topics (topic_gate)
+
+If the model still cannot pass after the repairs, three options are built from the curated topic
+list instead (``source == "template"``), so the parent always gets a usable screen. A provider
+failure (timeout, outage) is not hidden: it raises, and the parent sees a retry.
+
+This function is the boundary the job queue (M8.2) will call: it takes plain values, stores
+nothing and returns a validated ``OutlineSet``.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
 try:  # Prefer package-relative import when available
-    from .candidate_selector import DIFFICULTIES, CandidateSet  # type: ignore
+    from .candidate_selector import StandardsSet  # type: ignore
     from .model_context import ModelStudentContext  # type: ignore
     from .outline_models import OPTION_IDS, Outline, OutlineSet  # type: ignore
     from .progress_summary import skill_label  # type: ignore
+    from .topic_gate import (  # type: ignore
+        OptionText,
+        distinctness_problems,
+        template_options,
+        title_problems,
+        vetted_menu,
+    )
 except ImportError:  # Fallback for direct script execution / top-level import
-    from candidate_selector import DIFFICULTIES, CandidateSet  # type: ignore
+    from candidate_selector import StandardsSet  # type: ignore
     from model_context import ModelStudentContext  # type: ignore
     from outline_models import OPTION_IDS, Outline, OutlineSet  # type: ignore
     from progress_summary import skill_label  # type: ignore
+    from topic_gate import (  # type: ignore
+        OptionText,
+        distinctness_problems,
+        template_options,
+        title_problems,
+        vetted_menu,
+    )
 
+MAX_TOPIC_WORDS = 3
 TASK = "outline"
 MAX_REPAIRS = 4
 
@@ -72,12 +95,6 @@ _PLACEHOLDER = re.compile(
 )
 _SENTENCE_BREAK = re.compile(r"[.!?]['\")\]]*\s+\S")
 
-DIFFICULTY_WORDS = {
-    "easier": "easier: a gentler week; revisit what was tricky and build confidence",
-    "on_level": "on level: right where the child is now",
-    "stretch": "stretch: a step up that moves them forward",
-}
-
 
 def _words(text: str) -> set[str]:
     return set(re.findall(r"[a-z0-9]+", text.lower()))
@@ -102,36 +119,39 @@ def _clean_text(label: str, text: str) -> str:
     return text
 
 
-def make_draft_model(candidates: CandidateSet) -> type[BaseModel]:
-    """The model's answer shape, with the gate built in (closed over this call's candidates)."""
-    allowed = {OPTION_IDS[i]: candidates.ids_for(d) for i, d in enumerate(DIFFICULTIES)}
+def make_draft_model(recent_topics: Sequence[str] = ()) -> type[BaseModel]:
+    """The model's answer shape, with the gate built in (closed over this child's recent topics)."""
+    recent = tuple(recent_topics)
 
     class DraftOption(BaseModel):
         model_config = ConfigDict(extra="forbid")
 
         option_id: str = Field(description="a, b or c")
-        title: str = Field(max_length=60, description="A short, inviting week title")
+        topic: str = Field(max_length=40, description="What the week is about, 1-3 words")
+        title: str = Field(max_length=60, description="At most 6 words, inviting")
         hook: str = Field(max_length=160, description="ONE sentence that makes the child want it")
         activities: str = Field(
             max_length=300, description="What the child will do this week, in plain words"
         )
-        skills: list[str] = Field(
-            min_length=1, max_length=6, description="Skills covered, one plain phrase each"
-        )
-        effort: str = Field(max_length=50, description="Time hint, e.g. About 25 minutes a day")
-        standard_ids: list[str] = Field(description="Copy this option's ids exactly")
 
         @field_validator("option_id")
         @classmethod
         def _option(cls, v: str) -> str:
-            if v not in allowed:
+            if v not in OPTION_IDS:
                 raise ValueError(f"option_id must be one of a, b, c (got {v!r})")
             return v
 
-        @field_validator("title", "activities", "effort")
+        @field_validator("topic", "title", "activities")
         @classmethod
         def _plain(cls, v: str, info: ValidationInfo) -> str:
-            return _clean_text(info.field_name or "text", v)
+            v = _clean_text(info.field_name or "text", v)
+            if info.field_name == "topic" and len(v.split()) > MAX_TOPIC_WORDS:
+                raise ValueError(f"topic must be 1-{MAX_TOPIC_WORDS} words: {v!r}")
+            if info.field_name == "title":
+                problem = title_problems(v)
+                if problem:
+                    raise ValueError(problem)
+            return v
 
         @field_validator("hook")
         @classmethod
@@ -140,21 +160,6 @@ def make_draft_model(candidates: CandidateSet) -> type[BaseModel]:
             if _SENTENCE_BREAK.search(v):
                 raise ValueError(f"hook must be ONE sentence: {v!r}")
             return v
-
-        @field_validator("skills")
-        @classmethod
-        def _skills(cls, v: list[str]) -> list[str]:
-            return [_clean_text("a skill", s) for s in v]
-
-        @model_validator(mode="after")
-        def _ids(self) -> "DraftOption":
-            want = allowed[self.option_id]
-            if sorted(self.standard_ids) != sorted(want):
-                raise ValueError(
-                    f"option {self.option_id}: standard_ids must be exactly {want} "
-                    f"(none added, none dropped); got {self.standard_ids}"
-                )
-            return self
 
     class Draft(BaseModel):
         model_config = ConfigDict(extra="forbid")
@@ -166,15 +171,20 @@ def make_draft_model(candidates: CandidateSet) -> type[BaseModel]:
             ids = [o.option_id for o in self.options]
             if sorted(ids) != list(OPTION_IDS):
                 raise ValueError("there must be exactly one option each for a, b and c")
-            for field_name in ("title", "hook", "activities"):
-                values = [getattr(o, field_name) for o in self.options]
+            ordered = sorted(self.options, key=lambda o: o.option_id)
+            problems = distinctness_problems(
+                [OptionText(o.topic, o.title, o.hook) for o in ordered], recent
+            )
+            if problems:
+                raise ValueError("; ".join(problems))
+            for field_name in ("hook", "activities"):
+                values = [getattr(o, field_name) for o in ordered]
                 for i in range(3):
                     for j in range(i + 1, 3):
                         if _similar(values[i], values[j]):
                             raise ValueError(
-                                f"options {self.options[i].option_id} and "
-                                f"{self.options[j].option_id} have the same {field_name}; "
-                                "the three options must be clearly different"
+                                f"options {ordered[i].option_id} and {ordered[j].option_id} "
+                                f"have the same {field_name}; the topics must be different"
                             )
             return self
 
@@ -188,38 +198,58 @@ SYSTEM = (
 )
 
 
-def build_messages(context: ModelStudentContext, candidates: CandidateSet) -> list[dict[str, str]]:
-    options: dict[str, Any] = {}
-    for i, difficulty in enumerate(DIFFICULTIES):
-        options[OPTION_IDS[i]] = {
-            "kind": DIFFICULTY_WORDS[difficulty],
-            "standards": [
-                {
-                    "id": c.standard_id,
-                    "subject": c.subject,
-                    "plain_skill": skill_label(c.description),
-                }
-                for c in candidates.for_difficulty(difficulty)
-            ],
-        }
+def plain_skills(standards: StandardsSet) -> list[str]:
+    seen: list[str] = []
+    for c in standards.items:
+        label = skill_label(c.description)
+        if label not in seen:
+            seen.append(label)
+    return seen[:6]
+
+
+def build_messages(
+    context: ModelStudentContext,
+    standards: StandardsSet,
+    *,
+    recent_topics: Sequence[str] = (),
+    seed: str = "",
+) -> list[dict[str, str]]:
+    skills = [
+        {"subject": c.subject, "plain_skill": skill_label(c.description)} for c in standards.items
+    ]
+    menu = [t.label for t in vetted_menu(seed, context.interests, recent_topics)]
+    avoid = list(recent_topics)
     user = (
         "ABOUT THE CHILD\n"
         f"{context.prompt_lines()}\n\n"
         "TASK\n"
-        f"Write exactly three options for {context.first_name}'s next week: a, b and c. The "
-        "skills each option covers are already chosen; you only frame them. Make the three "
-        "clearly different in feel, not just in difficulty. Tie each to what "
-        f"{context.first_name} enjoys where it fits, and respect the parent's notes.\n\n"
+        f"Write exactly three week options for {context.first_name}: a, b and c. The skills for "
+        "the week are already chosen and are the SAME under all three options; you choose only "
+        "the TOPIC (what the week is about) that wraps them. The parent is choosing what "
+        f"{context.first_name} will enjoy, not how hard it is.\n\n"
+        "Topic rules:\n"
+        "- Each option is ONE coherent theme a child would care about, like a real subject or "
+        "a role they could play for a week.\n"
+        + (
+            "- Use the child's interests and the parent's notes, a different interest for each "
+            "option. If they give fewer than three themes, choose the rest from this vetted "
+            f"list (it already leaves out recent topics): {json.dumps(menu)}.\n"
+            if context.interests
+            else "- The child has no interests on file: choose all three topics from this vetted "
+            f"list (it already leaves out recent topics): {json.dumps(menu)}.\n"
+        )
+        + "- The three topics must be completely different from each other: no shared main noun "
+        "and no shared theme in topic, title or hook.\n"
+        f"- Do not reuse these recent topics: {json.dumps(avoid)}.\n"
+        "- Every skill below must be practised inside the topic; say how in activities.\n\n"
         "For each option give:\n"
-        "- title: short and inviting (no more than 60 characters)\n"
+        "- topic: the theme in 1-3 words\n"
+        "- title: at most 6 words, inviting\n"
         "- hook: ONE sentence that makes the child want to do it\n"
-        "- activities: what the child will actually do this week, in plain words\n"
-        "- skills: the skills covered, one plain phrase each (never standard codes)\n"
-        "- effort: a time or effort hint, like 'About 25 minutes a day'\n"
-        "- standard_ids: copy the ids for that option exactly; do not add or drop any\n\n"
-        'Reply with one JSON object: {"options": [ {option_id, title, hook, activities, '
-        "skills, effort, standard_ids}, ... ]} and nothing else.\n\n"
-        f"OPTIONS_JSON: {json.dumps(options, sort_keys=True)}"
+        "- activities: what the child will actually do this week, in plain words\n\n"
+        'Reply with one JSON object: {"options": [ {option_id, topic, title, hook, '
+        "activities}, ... ]} and nothing else.\n\n"
+        f"SKILLS_JSON: {json.dumps(skills, sort_keys=True)}"
     )
     return [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}]
 
@@ -232,50 +262,87 @@ class OutlineGeneration:
     cost_usd: float | None
 
 
+def _outline_set(items: Sequence[dict[str, Any]], ids: list[str], skills: list[str], source: str):
+    return OutlineSet(
+        source=source,
+        options=[
+            Outline(
+                option_id=OPTION_IDS[i],
+                topic=d["topic"],
+                title=d["title"],
+                hook=d["hook"],
+                standard_ids=list(ids),
+                activities=d["activities"],
+                skills=skills,
+                effort=None,
+            )
+            for i, d in enumerate(items)
+        ],
+    )
+
+
+def template_outlines(
+    context: ModelStudentContext,
+    standards: StandardsSet,
+    *,
+    recent_topics: Sequence[str] = (),
+    seed: str = "",
+) -> OutlineSet:
+    """Three options from the curated topic list. No model call; deterministic for ``seed``."""
+    topics = template_options(seed, context.first_name, context.interests, recent_topics)
+    items = []
+    for t in topics:
+        items.append(
+            {
+                "topic": t.label,
+                "title": t.titles[
+                    int(hashlib.sha256(f"{seed}{t.key}".encode()).hexdigest(), 16) % len(t.titles)
+                ],
+                "hook": t.hook.format(name=context.first_name),
+                "activities": t.activities.format(name=context.first_name),
+            }
+        )
+    return _outline_set(items, standards.ids(), plain_skills(standards), "template")
+
+
 def generate_outlines(
     context: ModelStudentContext,
-    candidates: CandidateSet,
+    standards: StandardsSet,
     *,
+    recent_topics: Sequence[str] = (),
+    seed: str = "",
     client=None,
     usage=None,
     max_repairs: int = MAX_REPAIRS,
 ) -> OutlineGeneration:
     """One structured call (plus bounded repairs) -> a validated OutlineSet.
 
-    Raises ``llm.StructuredOutputError`` when the model cannot produce a passing answer, or any
-    other ``llm.LLMError`` the provider raised. Nothing is stored here.
+    When the model cannot pass the gate, falls back to the curated topic list. Any other
+    ``llm.LLMError`` the provider raised propagates. Nothing is stored here.
     """
-    from llm import generate_structured
+    from llm import StructuredOutputError, generate_structured
 
-    draft_cls = make_draft_model(candidates)
-    result = generate_structured(
-        TASK,
-        build_messages(context, candidates),
-        draft_cls,
-        client=client,
-        max_repairs=max_repairs,
-        usage=usage,
-    )
-    by_id = {o.option_id: o for o in result.parsed.options}
-    options = []
-    for i, difficulty in enumerate(DIFFICULTIES):
-        letter = OPTION_IDS[i]
-        d = by_id[letter]
-        options.append(
-            Outline(
-                option_id=letter,
-                title=d.title,
-                hook=d.hook,
-                difficulty=difficulty,
-                standard_ids=candidates.ids_for(difficulty),
-                activities=d.activities,
-                skills=d.skills,
-                effort=d.effort,
-            )
+    try:
+        result = generate_structured(
+            TASK,
+            build_messages(context, standards, recent_topics=recent_topics, seed=seed),
+            make_draft_model(recent_topics),
+            client=client,
+            max_repairs=max_repairs,
+            usage=usage,
         )
+    except StructuredOutputError:
+        return OutlineGeneration(
+            outlines=template_outlines(context, standards, recent_topics=recent_topics, seed=seed),
+            repairs=max_repairs,
+            model=None,
+            cost_usd=None,
+        )
+    by_id = {o.option_id: o for o in result.parsed.options}
+    items = [by_id[letter].model_dump() for letter in OPTION_IDS]
     last = result.completions[-1]
     return OutlineGeneration(
-        outlines=OutlineSet(options=options),
+        outlines=_outline_set(items, standards.ids(), plain_skills(standards), "model"),
         repairs=result.repairs,
         model=last.model,
         cost_usd=result.cost_usd,

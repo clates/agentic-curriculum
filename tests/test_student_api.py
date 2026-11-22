@@ -146,6 +146,7 @@ class TestCreateStudentEndpoint:
                 "birthday": "2020-03-15",
                 "avatar_url": "https://example.com/avatar.png",
                 "notes": "Some notes about the student",
+                "interests": ["dinosaurs", "baking"],
             },
             "plan_rules": {},
         }
@@ -156,6 +157,21 @@ class TestCreateStudentEndpoint:
         assert metadata["name"] == "Bob"
         assert metadata["avatar_url"] == "https://example.com/avatar.png"
         assert metadata["notes"] == "Some notes about the student"
+        assert metadata["interests"] == ["dinosaurs", "baking"]
+        # and they reach the model context (the only way the topics can personalise)
+        from model_context import build_model_context
+
+        assert build_model_context(data["metadata_blob"]).interests == ("dinosaurs", "baking")
+
+    def test_update_student_interests(self, test_client):
+        test_client.post(
+            "/students",
+            json={"student_id": "likes", "metadata": {"name": "Cy", "birthday": "2019-01-01"}},
+        )
+        res = test_client.put("/student/likes", json={"metadata": {"interests": ["soccer"]}})
+        assert res.status_code == 200
+        assert json.loads(res.json()["metadata_blob"])["interests"] == ["soccer"]
+        assert json.loads(res.json()["metadata_blob"])["name"] == "Cy"
 
     def test_create_student_duplicate_fails(self, test_client):
         """POST /students returns 400 for duplicate student_id."""

@@ -73,7 +73,7 @@ def test_card_follows_the_loop_state(conn):
                 "option_id": i,
                 "title": i,
                 "hook": "h",
-                "difficulty": d,
+                "topic": d,
                 "standard_ids": ["VA.MATH.2.1"],
             }
             wp.store_outlines(
@@ -81,7 +81,7 @@ def test_card_follows_the_loop_state(conn):
                 "fam_local",
                 plan.plan_id,
                 OutlineSet.model_validate(
-                    {"options": [o("a", "easier"), o("b", "on_level"), o("c", "stretch")]}
+                    {"options": [o("a", "Weather"), o("b", "Baking"), o("c", "Space")]}
                 ),
             )
         advance(conn, "fam_local", plan.plan_id, Event(kind, payload=payload))
