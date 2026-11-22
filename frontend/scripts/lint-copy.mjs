@@ -57,6 +57,7 @@ const TARGETS = [
   'app/week',
   'app/this-week',
   'app/how-its-going',
+  'app/login',
 ];
 
 export function targetFiles() {

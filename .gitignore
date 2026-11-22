@@ -66,3 +66,4 @@ test-results/
 # E2E production builds
 /frontend/.next-e2e-*/
 /frontend/tsconfig.e2e.json
+/frontend/tsconfig.e2e-auth.json

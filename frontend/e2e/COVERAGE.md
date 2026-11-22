@@ -40,6 +40,20 @@ Journeys, `app-shell` and `print/` run on desktop (`app-shell` on both).
 | 320px-wide phone, no sideways scroll                  | `parent-screens-hardening.spec.ts`: "A 320px-wide phone" x5: This week with every loop state, the quick check-in (before, chosen, done), the by-check card/review/done, How it's going with the picker, the empty and error states                                                                                                                              | covered                    | The legacy desktop pages are not checked at 320px.                                                                                                                                  |
 | Accessibility (axe, WCAG A/AA)                        | `expectNoViolations` in every parent spec, in each state it visits                                                                                                                                                                                                                                                                                              | covered                    | Axe finds only machine-checkable issues.                                                                                                                                            |
 
+## Login (`auth` project, phone, AUTH_REQUIRED=1)
+
+Own backend (8184, fresh database) and own frontend build (3003); the other projects run with login
+off. Each test makes its own account (real `python -m auth create-user`) and its own client
+address (X-Forwarded-For), so lockout state never leaks between parallel tests. `auth/login.spec.ts`:
+the login form is the first page (axe, banned words, autocomplete, focus); sign in lands on This
+week; wrong password and unknown name give one message; show/hide; keyboard only; loading (button
+disabled); error with Try again; deep link returns to the page; off-site `next` ignored; 401 JSON
+without a cookie and `/api/health` open; stale cookie and a session ended on the server go back to
+the login; Sign out; lockout after 4 wrong tries shows the calm wait and the right password works
+after it (`AUTH_BACKOFF_SCALE=0.2`); 429 with Retry-After; an owner is not locked from another
+address; a foreign Origin is refused. Backend rules (hashing, expiry, lockout math, route inventory,
+CLI) are in `tests/test_auth.py`. Open-redirect variants (`%09`, `%0a`, `%0d`, `%5c`, `//`, full URL), the rightmost forwarded address, the busy message, 413 and no-echo 422 are covered too. `E2E_SKIP_AUTH=1` leaves this project and its servers out (CI runs them). Gap: the Secure cookie flag is only asserted in pytest.
+
 ## Hosted-week printing (backend serves, the app proxies)
 
 | Route / flow                                                                      | Spec: tests                                                                                                                                                                                                | Status  | Missing                                                                                 |

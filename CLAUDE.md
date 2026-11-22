@@ -37,6 +37,16 @@ touches `curriculum.db` or the dev servers. Override ports/DB with `E2E_BACKEND_
 `E2E_FRONTEND_PORT`, `E2E_LLM_STUB_PORT`, `PLAYWRIGHT_DB_FILE` to run several worktrees at once.
 Coverage and stability notes: `frontend/e2e/COVERAGE.md`.
 
+## Login (off by default)
+
+`AUTH_REQUIRED=1` turns on username/password login: `src/auth/` (scrypt, sessions, progressive
+lockout; accounts are made with `python -m auth create-user`, no signup), a global gate in
+`src/main.py` with a small public allowlist (`auth.web.PUBLIC_PATHS`; a route-inventory test fails
+if a new route is left open), `frontend/proxy.ts` (page redirect) and `/login`. Runbook:
+`docs/runbook-auth.md`. E2E: the `auth` Playwright project has its own backend and frontend
+(ports 8184/3003, `AUTH_BACKOFF_SCALE` shortens lockouts); the main suite keeps login off. `E2E_SKIP_AUTH=1` leaves the auth project and its two servers out
+(CI always runs them).
+
 ## Architecture map
 
 - `src/main.py` — FastAPI app; students, weekly packets, feedback, artifacts endpoints

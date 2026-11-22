@@ -39,6 +39,13 @@ from feedback_models import FeedbackResponse, SubmitFeedbackRequest
 from feedback_service import FeedbackError, apply_feedback
 from curriculum_graph import load_from_db
 from migrations import apply_migrations
+from auth.web import (
+    AuthBodyLimit,
+    auth_gate,
+    auth_required,
+    invalid_request_handler,
+    router as auth_router,
+)
 from this_week import this_week_cards, first_name_of
 import pick_service
 from prep_check_cards import check_cards
@@ -55,13 +62,15 @@ import os
 import sys
 from collections import OrderedDict
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from datetime import UTC, datetime
 from email.utils import formatdate
 from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Response
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -80,7 +89,14 @@ async def _lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=_lifespan)
+# Login (see docs/runbook-auth.md). The gate protects every route except auth.web.PUBLIC_PATHS and
+# does nothing unless AUTH_REQUIRED is on. The interactive docs are not routes the gate can see,
+# so they are simply not served when login is required.
+_docs_off = {"docs_url": None, "redoc_url": None, "openapi_url": None} if auth_required() else {}
+app = FastAPI(lifespan=_lifespan, dependencies=[Depends(auth_gate)], **_docs_off)
+app.include_router(auth_router)
+app.add_middleware(AuthBodyLimit)
+app.add_exception_handler(RequestValidationError, invalid_request_handler)
 
 
 def _project_root_path() -> Path:
@@ -254,6 +270,12 @@ def _resolve_git_sha() -> str:
     sha = os.environ.get("GIT_SHA", "").strip()
     if sha and sha != "unknown":
         return sha
+    return _git_head_sha()
+
+
+@lru_cache(maxsize=1)
+def _git_head_sha() -> str:
+    """The `git rev-parse` fallback, run once (the public /version route must stay cheap)."""
     try:
         out = subprocess.run(
             ["git", "rev-parse", "HEAD"],
