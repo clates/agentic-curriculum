@@ -2,9 +2,7 @@
  * Every This week card either offers a button that leads somewhere real, or no button at all.
  * The button's href is /week/<next_action with '_' -> '-'>/<student id>.
  *
- * The check-in and pick screens exist. The print screen is not built, so its button lands on the
- * app's 404. That test is marked test.fail with the card that unblocks it: the stream that builds
- * the screen deletes the test.fail line.
+ * The check-in, pick and print screens all exist, so every card button lands on a real screen.
  */
 import { test, expect } from '../fixtures/test';
 import { newChild } from '../fixtures/e2e-hardening';
@@ -49,7 +47,7 @@ const STATES: State[] = [
     action: 'print',
     button: 'Print it',
     segment: 'print',
-    unbuilt: 'M10.7 print screen not built: /week/print/<id> is a 404 today',
+    arrives: /^Print .+’s week$/,
   },
   { status: 'printed', action: 'done', button: null, segment: null },
 ];
