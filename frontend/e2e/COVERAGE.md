@@ -52,7 +52,7 @@ without a cookie and `/api/health` open; stale cookie and a session ended on the
 the login; Sign out; lockout after 4 wrong tries shows the calm wait and the right password works
 after it (`AUTH_BACKOFF_SCALE=0.2`); 429 with Retry-After; an owner is not locked from another
 address; a foreign Origin is refused. Backend rules (hashing, expiry, lockout math, route inventory,
-CLI) are in `tests/test_auth.py`. Gap: the Secure cookie flag is only asserted in pytest.
+CLI) are in `tests/test_auth.py`. Open-redirect variants (`%09`, `%0a`, `%0d`, `%5c`, `//`, full URL), the rightmost forwarded address, the busy message, 413 and no-echo 422 are covered too. `E2E_SKIP_AUTH=1` leaves this project and its servers out (CI runs them). Gap: the Secure cookie flag is only asserted in pytest.
 
 ## Hosted-week printing (backend serves, the app proxies)
 

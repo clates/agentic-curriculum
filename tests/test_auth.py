@@ -46,6 +46,10 @@ def auth_env(tmp_path, monkeypatch):
     monkeypatch.delenv("COOKIE_SECURE", raising=False)
     monkeypatch.setattr(passwords, "CURRENT", FAST)
     passwords._dummy.clear()
+    monkeypatch.delenv("AUTH_ALLOWED_HOSTS", raising=False)
+    monkeypatch.delenv("AUTH_MAX_CONCURRENT_HASHES", raising=False)
+    monkeypatch.setattr(lockout, "_last_prune", float("-inf"))
+    monkeypatch.setattr(service, "_slots", None)
     fake = Clock()
     clock.set_source(fake)
     apply_migrations(db)
@@ -590,3 +594,185 @@ def test_migration_runner_tolerates_the_gap_before_0011(tmp_path):
     for f in [*MIGRATIONS_DIR.glob("000[1-8]_*.sql"), *MIGRATIONS_DIR.glob("0011_*.sql")]:
         shutil.copy(f, d / f.name)
     assert apply_migrations(tmp_path / "gap.db", d) == [1, 2, 3, 4, 5, 6, 7, 8, 11]
+
+
+# --- security review follow-up ---------------------------------------------------------------
+
+
+def test_busy_hashing_turns_attempts_away_before_the_lockout_gate(user, monkeypatch, client):
+    import threading
+
+    monkeypatch.setenv("AUTH_MAX_CONCURRENT_HASHES", "1")
+    monkeypatch.setattr(service, "BUSY_WAIT_S", 0.2)
+    inside, release = threading.Event(), threading.Event()
+
+    def slow_verify(*args):
+        inside.set()
+        release.wait(5)
+        return False
+
+    monkeypatch.setattr(passwords, "verify_password", slow_verify)
+    first = threading.Thread(target=lambda: service.attempt_login("parent", "x", "1.1.1.1"))
+    first.start()
+    assert inside.wait(5)
+    r = login(client, password="another wrong one")
+    assert r.status_code == 503 and r.headers["retry-after"] == "3"
+    assert r.json() == {"detail": "busy", "retry_after": 3}
+    release.set()
+    first.join()
+    # only the attempt that ran was recorded; the turned-away one counted against nobody
+    assert db_rows("SELECT failures FROM login_attempt WHERE scope='user_ip'") == [(1,)]
+    monkeypatch.undo()
+
+
+def test_the_slot_is_released_after_every_attempt(user, monkeypatch):
+    monkeypatch.setenv("AUTH_MAX_CONCURRENT_HASHES", "1")
+    for _ in range(3):
+        assert service.attempt_login("parent", "x" * 12, "1.1.1.1").kind in {"bad", "locked"}
+
+
+@pytest.mark.parametrize(
+    "origin,status",
+    [("https://home.example", 200), ("https://evil.example", 403), ("https://other.example", 403)],
+)
+def test_allowed_hosts_list_overrides_proxy_headers(user, monkeypatch, origin, status):
+    monkeypatch.setenv("AUTH_ALLOWED_HOSTS", "Home.example, second.example")
+    local = TestClient(app, client=("127.0.0.1", 1))
+    # the Host / X-Forwarded-Host the proxy sends is ignored once the list is set
+    headers = {"origin": origin, "x-forwarded-host": "evil.example"}
+    if origin == "https://other.example":
+        headers["x-forwarded-host"] = "other.example"
+    assert login(local, headers=headers).status_code == status
+
+
+def test_set_password_and_enable_clear_lockouts(user, now):
+    for _ in range(5):
+        wrong()
+    wrong(ip="2.2.2.2", name="ghost")
+    assert wrong().kind == "locked"
+    conn = store.connect()
+    store.set_password(conn, "parent", "a brand new password")
+    conn.close()
+    assert service.attempt_login("parent", "a brand new password", "1.1.1.1").kind == "ok"
+    # the unrelated name's rows are untouched (substr match, not LIKE)
+    assert db_rows("SELECT COUNT(*) FROM login_attempt WHERE key LIKE 'ghost|%'") == [(1,)]
+    for _ in range(5):
+        wrong()
+    conn = store.connect()
+    store.set_disabled(conn, "parent", True)
+    store.set_disabled(conn, "parent", False)
+    conn.close()
+    assert wrong().kind == "bad"
+
+
+def test_clear_attempts_matches_the_exact_username_prefix(user):
+    conn = store.connect()
+    for name in ("al", "al_b", "alb", "a%"):
+        lockout.reserve(conn, name, "1.1.1.1", clock.now())
+    store.clear_attempts(conn, "al")
+    left = {r[0] for r in conn.execute("SELECT key FROM login_attempt WHERE scope='user_ip'")}
+    assert left == {"al_b|1.1.1.1", "alb|1.1.1.1", "a%|1.1.1.1"}
+    assert store.clear_attempts(conn) > 0
+    assert conn.execute("SELECT COUNT(*) FROM login_attempt").fetchone() == (0,)
+    conn.close()
+
+
+def test_cli_unlock_one_user_or_everything(tmp_path):
+    run_cli(tmp_path, "create-user", "mama", password=PASSWORD)
+    for _ in range(5):
+        wrong(name="mama")
+    for i in range(lockout.IP_CEILING):
+        wrong(ip="7.7.7.7", name=f"u{i}")
+    assert service.attempt_login("mama", PASSWORD, "1.1.1.1").kind == "locked"
+    assert run_cli(tmp_path, "unlock", "mama").returncode == 0
+    assert service.attempt_login("mama", PASSWORD, "1.1.1.1").kind == "ok"
+    assert service.attempt_login("mama", PASSWORD, "7.7.7.7").kind == "locked"  # the address lock
+    out = run_cli(tmp_path, "unlock")
+    assert out.returncode == 0 and "Cleared" in out.stdout
+    assert service.attempt_login("mama", PASSWORD, "7.7.7.7").kind == "ok"
+
+
+def test_the_owners_known_address_is_not_held_by_the_address_ceiling(user, now):
+    assert service.attempt_login("parent", PASSWORD, "5.5.5.5").kind == "ok"  # now a known pair
+    for i in range(lockout.IP_CEILING):
+        wrong(ip="5.5.5.5", name=f"stranger{i}")  # someone behind the same address
+    assert service.attempt_login("parent", PASSWORD, "5.5.5.5").kind == "ok"
+    # a name that was never used from there is held
+    assert service.attempt_login("newcomer", PASSWORD, "5.5.5.5").kind == "locked"
+    # the pair layer still applies to the known pair
+    for _ in range(5):
+        wrong(ip="5.5.5.5")
+    assert wrong(ip="5.5.5.5").kind == "locked"
+
+
+def test_prune_runs_at_most_once_a_minute_and_survives_a_clock_that_goes_back(user, now):
+    wrong(ip="9.9.9.1", name="old")
+    now.advance(lockout.QUIET_RESET_S * 2)
+    wrong(ip="9.9.9.2", name="a")  # prunes: the old rows go
+    assert not db_rows("SELECT 1 FROM login_attempt WHERE key LIKE 'old|%'")
+    conn = store.connect()
+    conn.execute(
+        "INSERT INTO login_attempt (scope,key,failures,window_start,last_failure_at,locked_until)"
+        " VALUES ('user_ip','stale|1.1.1.1',1,0,0,0)"
+    )
+    conn.close()
+    now.advance(30)
+    wrong(ip="9.9.9.3", name="b")  # inside the minute: no prune
+    assert db_rows("SELECT 1 FROM login_attempt WHERE key='stale|1.1.1.1'")
+    now.advance(31)
+    wrong(ip="9.9.9.4", name="c")
+    assert not db_rows("SELECT 1 FROM login_attempt WHERE key='stale|1.1.1.1'")
+    now.advance(-10_000)  # the clock steps back: the next attempt prunes rather than stalling
+    assert lockout._last_prune > now.t
+
+
+def test_the_attempt_table_is_capped(user, now, monkeypatch):
+    monkeypatch.setattr(lockout, "MAX_ROWS", 50)
+    conn = store.connect()
+    conn.executemany(
+        "INSERT INTO login_attempt (scope,key,failures,window_start,last_failure_at,locked_until)"
+        " VALUES ('user_ip',?,1,?,?,?)",
+        [(f"n{i}|1.1.1.1", now.t, now.t + i, now.t + 1e6) for i in range(200)],
+    )
+    conn.execute(
+        "INSERT INTO login_attempt (scope,key,failures,window_start,last_failure_at,locked_until,"
+        "last_success_at) VALUES ('user_ip','keep|1.1.1.1',0,0,1,0,?)",
+        (now.t,),
+    )
+    conn.close()
+    wrong(ip="9.9.9.9", name="trigger")
+    (count,) = db_rows("SELECT COUNT(*) FROM login_attempt")[0]
+    assert count <= 50 + 4  # the cap, plus this attempt's own rows written after the prune
+    assert db_rows("SELECT 1 FROM login_attempt WHERE key='keep|1.1.1.1'")
+    assert not db_rows("SELECT 1 FROM login_attempt WHERE key='n0|1.1.1.1'")  # oldest went first
+
+
+def test_create_user_refuses_any_other_family(tmp_path):
+    r = run_cli(tmp_path, "create-user", "mama", "--family", "fam_other", password=PASSWORD)
+    assert r.returncode == 1 and "per-family separation is not built" in r.stderr
+    assert db_rows("SELECT COUNT(*) FROM app_user") == [(0,)]
+    assert "every account sees all data" in run_cli(tmp_path, "create-user", "--help").stdout
+
+
+def test_validation_errors_on_auth_do_not_echo_the_input(client):
+    r = client.post("/auth/login", json={"username": "u", "password": "p" * 2000})
+    assert r.status_code == 422 and r.json() == {"detail": "invalid_request"}
+    r = client.post("/auth/login", json={"username": "secret-name-here"})
+    assert r.status_code == 422 and "secret-name-here" not in r.text
+    other = client.post("/students", json={"nope": "echoed-value"})
+    assert other.status_code == 422 and "detail" in other.json()  # other paths keep the default
+
+
+def test_auth_bodies_over_16_kib_are_refused(client):
+    big = "x" * (17 * 1024)
+    r = client.post("/auth/login", content=big, headers={"content-type": "application/json"})
+    assert r.status_code == 413 and r.json() == {"detail": "request_too_large"}
+
+    def chunks():  # streamed: no Content-Length to check
+        for _ in range(20):
+            yield b"x" * 1024
+
+    r = client.post("/auth/login", content=chunks(), headers={"content-type": "application/json"})
+    assert r.status_code == 413
+    ok = client.post("/auth/login", json={"username": "a", "password": "b"})
+    assert ok.status_code == 401

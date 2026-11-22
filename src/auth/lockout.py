@@ -6,7 +6,12 @@ Three layers, so nobody can lock the real owner out from somewhere else:
   that pair for 15 s, 30 s, 60 s ... doubling up to 1 hour. Reset by a correct password, or after
   a quiet period with no failures.
 * ``ip``       one address across all usernames. 20 wrong tries inside 10 minutes lock that address
-  for 10 minutes. Stops one address from walking through many usernames.
+  for 10 minutes. Stops one address from walking through many usernames. A (username, address)
+  pair the owner has signed in from in the last 30 days is exempt from this lock, so a stranger
+  behind the same public address cannot stop the owner's own phone at home; the pair layer's own
+  backoff still applies, so someone who shares that address can still trigger the pair lock
+  (`python -m auth unlock` clears it, and the 30-day session cookie means the owner rarely needs
+  to type the password).
 * ``user``     one username across all addresses (a spread-out attack). 30 wrong tries inside an hour
   make addresses this user has never signed in from wait 30 s, doubling up to 5 minutes. An
   address the owner has signed in from in the last 30 days is never held by this layer, so the
@@ -41,6 +46,10 @@ USER_BASE_LOCK_S = 30
 USER_MAX_LOCK_S = 300
 
 KNOWN_ADDRESS_S = 30 * 86400
+
+PRUNE_EVERY_S = 60
+MAX_ROWS = 20000
+_last_prune = float("-inf")
 
 
 def scale() -> float:
@@ -85,11 +94,23 @@ def _save(conn, scope, key, **fields) -> None:
 
 
 def _prune(conn: sqlite3.Connection, now: float) -> None:
+    """Forget old rows, at most once a minute, and keep the table under MAX_ROWS."""
+    global _last_prune
+    if 0 <= now - _last_prune < PRUNE_EVERY_S * scale():
+        return
+    _last_prune = now  # also when the clock went backwards: the next call re-prunes
     conn.execute(
         "DELETE FROM login_attempt WHERE locked_until < ? AND COALESCE(last_failure_at, 0) < ? "
         "AND (last_success_at IS NULL OR last_success_at < ?)",
         (now, now - QUIET_RESET_S * scale(), now - KNOWN_ADDRESS_S),
     )
+    (count,) = conn.execute("SELECT COUNT(*) FROM login_attempt").fetchone()
+    if count > MAX_ROWS:  # a flood of made-up names: drop the oldest strangers first
+        conn.execute(
+            "DELETE FROM login_attempt WHERE rowid IN (SELECT rowid FROM login_attempt "
+            "WHERE last_success_at IS NULL ORDER BY COALESCE(last_failure_at, 0) LIMIT ?)",
+            (count - MAX_ROWS,),
+        )
 
 
 def _is_known_address(row, now: float) -> bool:
@@ -113,7 +134,7 @@ def reserve(conn: sqlite3.Connection, username: str, ip: str, now: float) -> flo
             _row(conn, "user", user_key),
         )
         locked_until = 0.0
-        if ip_row:
+        if ip_row and not _is_known_address(pair, now):
             locked_until = max(locked_until, ip_row[3])
         if pair:
             locked_until = max(locked_until, pair[3])
@@ -146,7 +167,7 @@ def reserve(conn: sqlite3.Connection, username: str, ip: str, now: float) -> flo
         if now - window > IP_WINDOW_S * s:
             failures, window = 0, now
         failures += 1
-        lock_until = 0.0
+        lock_until = ip_row[3] if ip_row else 0.0  # a known pair passing through keeps the lock
         if failures >= IP_CEILING:
             lock_until, failures, window = now + IP_LOCK_S * s, 0, now
         _save(

@@ -8,7 +8,12 @@ import { safeNext } from '@/lib/auth';
 import { copy } from '@/lib/copy';
 import { primaryButton } from '@/components/parent/states';
 
-type Problem = { kind: 'wrong' } | { kind: 'wait'; seconds: number } | { kind: 'failed' } | null;
+type Problem =
+  | { kind: 'wrong' }
+  | { kind: 'wait'; seconds: number }
+  | { kind: 'failed' }
+  | { kind: 'busy' }
+  | null;
 
 const field =
   'mt-1 block min-h-11 w-full rounded-md border border-neutral-400 bg-white px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
@@ -60,6 +65,8 @@ export function LoginForm() {
           setWaiting(false);
           passwordRef.current?.focus();
         }, seconds * 1000);
+      } else if (status === 503) {
+        setProblem({ kind: 'busy' });
       } else {
         setProblem({ kind: 'failed' });
       }
@@ -72,9 +79,11 @@ export function LoginForm() {
       ? copy.login.wrong
       : problem?.kind === 'wait'
         ? copy.login.wait(problem.seconds)
-        : problem?.kind === 'failed'
-          ? copy.login.couldNotReach
-          : null;
+        : problem?.kind === 'busy'
+          ? copy.login.busy
+          : problem?.kind === 'failed'
+            ? copy.login.couldNotReach
+            : null;
 
   return (
     <div className="bg-background min-h-screen">
@@ -144,7 +153,7 @@ export function LoginForm() {
             >
               {sending ? copy.login.submitting : copy.login.submit}
             </button>
-            {problem?.kind === 'failed' ? (
+            {problem?.kind === 'failed' || problem?.kind === 'busy' ? (
               <button
                 type="button"
                 onClick={() => submit()}

@@ -29,6 +29,7 @@ export const copy = {
       `Too many tries. Please wait ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`,
     couldNotReach:
       'We couldn\u2019t sign you in just now. Your information is safe. Please try again.',
+    busy: 'Busy right now. Please try again in a moment.',
     retry: 'Try again',
     signOut: 'Sign out',
     signingOut: 'Signing out\u2026',

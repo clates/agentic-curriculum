@@ -43,3 +43,4 @@ CREATE TABLE login_attempt (
     last_success_at REAL,
     PRIMARY KEY (scope, key)
 );
+CREATE INDEX idx_login_attempt_recent ON login_attempt(last_failure_at, locked_until);

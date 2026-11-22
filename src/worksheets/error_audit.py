@@ -84,8 +84,7 @@ def _validate_clock_art(art: dict) -> None:
         raise ValueError(f"clock art minute must be int 0-59, got {minute!r}")
     if art.get("missing") not in (None, "hour", "minute", "both"):
         raise ValueError(
-            "clock art missing must be hour/minute/both/None, "
-            f"got {art.get('missing')!r}"
+            "clock art missing must be hour/minute/both/None, " f"got {art.get('missing')!r}"
         )
 
 
@@ -110,8 +109,7 @@ def _validate_partitions_art(art: dict) -> None:
         for idx in idxs:
             if not isinstance(idx, int) or isinstance(idx, bool) or not 0 <= idx < parts:
                 raise ValueError(
-                    f"partitions {field!r} must be an integer index 0-{parts - 1}, "
-                    f"got {idx!r}"
+                    f"partitions {field!r} must be an integer index 0-{parts - 1}, " f"got {idx!r}"
                 )
 
 
@@ -154,15 +152,12 @@ class ErrorAuditWorksheet(BaseWorksheet):
                 block.append("    ( ) Bug circled")
                 if self.legend:
                     block.append(
-                        "    Diagnosis: "
-                        + " / ".join(f"( ) {entry}" for entry in self.legend)
+                        "    Diagnosis: " + " / ".join(f"( ) {entry}" for entry in self.legend)
                     )
                 if self.fix_mode == "rewrite":
                     if spec.fix_scaffold:
                         block.append("    Fix (line up the decimals):")
-                        grid = decimal_stack_rows(
-                            spec.fix_scaffold, filled=self.show_answers
-                        )
+                        grid = decimal_stack_rows(spec.fix_scaffold, filled=self.show_answers)
                         for row in grid["terms"]:
                             block.append("    " + _scaffold_row_text(row))
                         block.append("    " + "-" * (len(grid["terms"][0]) * 2 + 1))
@@ -203,9 +198,7 @@ def _validate_fix_scaffold(scaffold: dict | None) -> None:
         raise ValueError(f"fix_scaffold must be a dict, got {scaffold!r}")
     kind = scaffold.get("kind")
     if kind != "decimal_stack":
-        raise ValueError(
-            f"fix_scaffold kind must be 'decimal_stack', got {kind!r}"
-        )
+        raise ValueError(f"fix_scaffold kind must be 'decimal_stack', got {kind!r}")
     addends = scaffold.get("addends")
     answer = scaffold.get("answer")
     if not isinstance(addends, list) or not addends:
@@ -213,20 +206,16 @@ def _validate_fix_scaffold(scaffold: dict | None) -> None:
     for label, value in [("answer", answer), *[(f"addend[{i}]", a) for i, a in enumerate(addends)]]:
         if not isinstance(value, str) or "." not in value:
             raise ValueError(
-                f"decimal_stack {label} must be a decimal string like "
-                f"'0.50', got {value!r}"
+                f"decimal_stack {label} must be a decimal string like " f"'0.50', got {value!r}"
             )
         whole, _, frac = value.partition(".")
         if not whole.isdigit() or not frac.isdigit():
             raise ValueError(
-                f"decimal_stack {label} must be digits around one '.', "
-                f"got {value!r}"
+                f"decimal_stack {label} must be digits around one '.', " f"got {value!r}"
             )
 
 
-def decimal_stack_rows(
-    scaffold: dict, *, filled: bool = False
-) -> dict:
+def decimal_stack_rows(scaffold: dict, *, filled: bool = False) -> dict:
     """Build decimal-aligned grid rows for a decimal_stack scaffold.
 
     Every row has the same columns: integer digits right-aligned, one

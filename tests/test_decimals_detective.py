@@ -1,4 +1,5 @@
 """Tests for the Decimals Detective error_audit theme (Priya, grade 5)."""
+
 import pytest
 
 from src.worksheets.base import BaseWorksheet
@@ -82,22 +83,20 @@ def test_legend_names_suspects():
 def test_rewrite_mode_stages_in_markdown():
     ws = WorksheetFactory.create("error_audit", _decimals_payload())
     md = ws.to_markdown()
-    assert "Bug circled" in md          # mark stage
-    assert "Diagnosis:" in md           # diagnose stage
-    assert "Fix:" in md                 # rewrite stage
-    assert "Re-checked my fix" in md    # verify stage
-    assert "redraw box" not in md       # not redraw mode
+    assert "Bug circled" in md  # mark stage
+    assert "Diagnosis:" in md  # diagnose stage
+    assert "Fix:" in md  # rewrite stage
+    assert "Re-checked my fix" in md  # verify stage
+    assert "redraw box" not in md  # not redraw mode
 
 
 def test_show_answers_key_fills_fix_text():
-    ws = WorksheetFactory.create(
-        "error_audit", _decimals_payload(show_answers=True)
-    )
+    ws = WorksheetFactory.create("error_audit", _decimals_payload(show_answers=True))
     md = ws.to_markdown()
-    assert "0.50 + 0.25 = 0.75" in md       # fix_text filled
-    assert "Line-Up Slip" in md            # diagnosis filled
-    assert "hundredths column" in md       # bug_location filled
-    assert "Bug circled" not in md         # student scaffolding hidden
+    assert "0.50 + 0.25 = 0.75" in md  # fix_text filled
+    assert "Line-Up Slip" in md  # diagnosis filled
+    assert "hundredths column" in md  # bug_location filled
+    assert "Bug circled" not in md  # student scaffolding hidden
     assert "Re-checked" not in md
 
 
@@ -143,11 +142,9 @@ def test_html_fragment_contains_stages():
     assert frag
     assert "Decimals Detective" in frag
     for name in ["Line-Up Slip", "Trailing-Zero Myth", "Place Swap"]:
-        assert name in frag          # diagnose stage checkboxes
-    assert "Bug circled" in frag     # mark stage
-    assert "Fix:" in frag            # rewrite stage
-    assert "Re-check" in frag        # verify stage
-    assert "0.5 + 0.25" in frag      # specimen text present
+        assert name in frag  # diagnose stage checkboxes
+    assert "Bug circled" in frag  # mark stage
+    assert "Fix:" in frag  # rewrite stage
+    assert "Re-check" in frag  # verify stage
+    assert "0.5 + 0.25" in frag  # specimen text present
     assert "0.50 + 0.25 = 0.75" not in frag  # no answers on student sheet
-
-

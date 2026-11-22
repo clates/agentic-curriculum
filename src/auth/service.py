@@ -2,14 +2,41 @@
 
 from __future__ import annotations
 
+import os
+import threading
 from dataclasses import dataclass
 
 from . import clock, lockout, passwords, store
 
+# Each password check is a 32 MiB scrypt run, and anyone can ask for one without signing in. Only
+# a few may run at once; the rest wait briefly and then get a calm "busy" answer. A refused attempt
+# is turned away BEFORE the lockout gate, so it records nothing against anyone.
+BUSY_WAIT_S = 3.0
+BUSY_RETRY_AFTER_S = 3
+_slots: threading.BoundedSemaphore | None = None
+_slots_size = 0
+_slots_lock = threading.Lock()
+
+
+def _max_concurrent() -> int:
+    try:
+        return max(1, int(os.environ.get("AUTH_MAX_CONCURRENT_HASHES", "2")))
+    except ValueError:
+        return 2
+
+
+def _slot_pool() -> threading.BoundedSemaphore:
+    global _slots, _slots_size
+    size = _max_concurrent()
+    with _slots_lock:
+        if _slots is None or _slots_size != size:
+            _slots, _slots_size = threading.BoundedSemaphore(size), size
+        return _slots
+
 
 @dataclass(frozen=True)
 class LoginResult:
-    kind: str  # "ok" | "bad" | "locked"
+    kind: str  # "ok" | "bad" | "locked" | "busy"
     token: str | None = None
     retry_after: int = 0
     user: store.User | None = None
@@ -18,6 +45,16 @@ class LoginResult:
 def attempt_login(
     username: str, password: str, ip: str, user_agent: str | None = None
 ) -> LoginResult:
+    pool = _slot_pool()
+    if not pool.acquire(timeout=BUSY_WAIT_S):
+        return LoginResult("busy", retry_after=BUSY_RETRY_AFTER_S)
+    try:
+        return _attempt(username, password, ip, user_agent)
+    finally:
+        pool.release()
+
+
+def _attempt(username: str, password: str, ip: str, user_agent: str | None) -> LoginResult:
     name = store.normalize_username(username)
     conn = store.connect()
     try:

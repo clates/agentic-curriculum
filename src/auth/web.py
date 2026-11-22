@@ -60,6 +60,11 @@ def _is_https(request: Request) -> bool:
     return request.url.scheme == "https"
 
 
+def _allowed_hosts() -> set[str]:
+    raw = os.environ.get("AUTH_ALLOWED_HOSTS", "")
+    return {h.strip().lower() for h in raw.split(",") if h.strip()}
+
+
 def _own_host(request: Request) -> str:
     if _trusted_proxy(request) and request.headers.get("x-forwarded-host"):
         return request.headers["x-forwarded-host"].split(",")[0].strip().lower()
@@ -79,7 +84,9 @@ def check_origin(request: Request) -> None:
     if not source:
         return
     host = (urlsplit(source).netloc or "").lower() if source != "null" else ""
-    if host != _own_host(request):
+    allowed = _allowed_hosts()
+    # With AUTH_ALLOWED_HOSTS set, only those hosts count and proxy headers are not consulted.
+    if host not in allowed if allowed else host != _own_host(request):
         raise HTTPException(403, "bad_origin")
 
 
@@ -150,6 +157,12 @@ def login(body: LoginBody, request: Request, response: Response):
             status_code=429,
             headers={"Retry-After": str(result.retry_after)},
         )
+    if result.kind == "busy":
+        return JSONResponse(
+            {"detail": "busy", "retry_after": result.retry_after},
+            status_code=503,
+            headers={"Retry-After": str(result.retry_after)},
+        )
     if result.kind != "ok" or not result.token or not result.user:
         raise HTTPException(401, "invalid_credentials")
     set_session_cookie(response, request, result.token)
@@ -174,3 +187,58 @@ def me(request: Request):
         return {"auth_required": False, "user": None}
     user = request.state.user
     return {"auth_required": True, "user": {"username": user.username}}
+
+
+# --- request size and validation errors on /auth/* -------------------------------------------
+
+AUTH_BODY_MAX = 16 * 1024
+
+
+class AuthBodyLimit:
+    """Pure ASGI: /auth/* bodies over 16 KiB get 413 (Content-Length first, then streamed bytes)."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or not scope["path"].startswith("/auth/"):
+            return await self.app(scope, receive, send)
+        declared = dict(scope["headers"]).get(b"content-length")
+        too_big = JSONResponse({"detail": "request_too_large"}, status_code=413)
+        if declared is not None and declared.isdigit() and int(declared) > AUTH_BODY_MAX:
+            return await too_big(scope, receive, send)
+        seen = 0
+        refused = False
+
+        async def counting_receive():
+            nonlocal seen, refused
+            if refused:
+                return {"type": "http.disconnect"}
+            message = await receive()
+            if message["type"] == "http.request":
+                seen += len(message.get("body", b""))
+                if seen > AUTH_BODY_MAX:
+                    refused = True  # stop feeding the app; whatever it answers is replaced
+                    return {"type": "http.disconnect"}
+            return message
+
+        async def guarded_send(message):
+            if not refused:
+                await send(message)
+
+        try:
+            await self.app(scope, counting_receive, guarded_send)
+        except Exception:
+            if not refused:
+                raise
+        if refused:
+            await too_big(scope, receive, send)
+
+
+async def invalid_request_handler(request: Request, exc):
+    """422 without echoing what was submitted (a mistyped password must not come back)."""
+    from fastapi.exception_handlers import request_validation_exception_handler
+
+    if request.url.path.startswith("/auth/"):
+        return JSONResponse({"detail": "invalid_request"}, status_code=422)
+    return await request_validation_exception_handler(request, exc)

@@ -70,6 +70,11 @@ def create_user(
     conn: sqlite3.Connection, username: str, password: str, family_id: str = DEFAULT_FAMILY
 ) -> User | None:
     """Create a user. Returns None (and changes nothing) when the username already exists."""
+    if family_id != DEFAULT_FAMILY:
+        raise UserError(
+            "Only the default family (fam_local) is allowed: per-family separation is not built "
+            "yet, so every account sees all data."
+        )
     name = normalize_username(username)
     if not name or any(ch.isspace() for ch in name):
         raise UserError("Username must be a single word with no spaces.")
@@ -97,6 +102,7 @@ def set_password(conn: sqlite3.Connection, username: str, password: str) -> bool
         "UPDATE app_user SET password_hash=? WHERE id=?", (hash_password(password), user.id)
     )
     conn.execute("DELETE FROM auth_session WHERE user_id=?", (user.id,))  # sign out everywhere
+    clear_attempts(conn, user.username)  # a new password starts with a clean slate
     return True
 
 
@@ -107,6 +113,8 @@ def set_disabled(conn: sqlite3.Connection, username: str, disabled: bool) -> boo
     conn.execute("UPDATE app_user SET disabled=? WHERE id=?", (int(disabled), user.id))
     if disabled:
         conn.execute("DELETE FROM auth_session WHERE user_id=?", (user.id,))
+    else:
+        clear_attempts(conn, user.username)
     return True
 
 
@@ -153,3 +161,17 @@ def resolve_session(conn: sqlite3.Connection, token: str | None) -> tuple[User, 
 def delete_session(conn: sqlite3.Connection, token: str | None) -> None:
     if token:
         conn.execute("DELETE FROM auth_session WHERE token_hash=?", (token_hash(token),))
+
+
+def clear_attempts(conn: sqlite3.Connection, username: str | None = None) -> int:
+    """Forget lockout state: one user's rows (their 'user' row and every 'user_ip' row), or all
+    rows, address locks included, when no username is given. Returns the rows removed."""
+    if username is None:
+        return conn.execute("DELETE FROM login_attempt").rowcount
+    name = normalize_username(username)
+    prefix = name + "|"
+    return conn.execute(
+        "DELETE FROM login_attempt WHERE (scope='user' AND key=?) "
+        "OR (scope='user_ip' AND substr(key, 1, ?) = ?)",
+        (name, len(prefix), prefix),
+    ).rowcount

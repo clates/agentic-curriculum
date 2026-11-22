@@ -17,6 +17,11 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
     return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
   }
 
+  // Sign-in bodies are tiny; refuse a big one before reading it.
+  if (pathname.startsWith('auth/') && Number(request.headers.get('Content-Length') ?? 0) > 16384) {
+    return NextResponse.json({ detail: 'request_too_large' }, { status: 413 });
+  }
+
   // Construct the backend URL
   const url = new URL(`${BACKEND_URL}/${pathname}`);
 
@@ -48,9 +53,13 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
     if (fetchSite) headers['Sec-Fetch-Site'] = fetchSite;
     const userAgent = request.headers.get('User-Agent');
     if (userAgent) headers['User-Agent'] = userAgent;
-    const clientIp =
-      request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ||
-      request.headers.get('X-Real-IP')?.trim();
+    // The RIGHTMOST entry is the hop our own front proxy appended; the ones to its left were
+    // supplied by the client and can say anything.
+    const forwarded = (request.headers.get('X-Forwarded-For') ?? '')
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const clientIp = forwarded[forwarded.length - 1] || request.headers.get('X-Real-IP')?.trim();
     if (clientIp) headers['X-Curriculum-Client-IP'] = clientIp;
     headers['X-Forwarded-Proto'] =
       request.headers.get('X-Forwarded-Proto')?.split(',')[0]?.trim() ||

@@ -19,6 +19,33 @@ Tailscale do. The login uses the first address in `X-Forwarded-For` to rate-limi
 visitor, so do not point the app at the internet directly with no proxy in front: anyone could
 make up that header.
 
+## Behind Caddy
+
+Host must reach the app unchanged (Caddy keeps it by default; nginx's default rewrites it, so add
+`proxy_set_header Host $host;`). The login's cross-site check compares the browser's Origin with
+that host. Example:
+
+```
+homeschool.chrislates.com {
+    request_body {
+        max_size 10MB
+    }
+    reverse_proxy 127.0.0.1:3000 {
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+```
+
+`header_up X-Forwarded-For {remote_host}` replaces whatever the visitor sent, so the address used
+for the lockout is the real one (the app reads the rightmost entry, the one your proxy wrote).
+
+Also set `AUTH_ALLOWED_HOSTS=homeschool.chrislates.com` in `.env` (comma-separated for several).
+When set, a sign-in or any change request must come from one of those hosts and the proxy's
+`X-Forwarded-Host` is ignored, so the check no longer depends on how the proxy treats Host. (A
+cross-site page cannot set a custom header such as `X-Forwarded-Host` without a preflight the
+server refuses, so this is defence in depth, not a known hole.)
+
 ## Turn it on (on the server)
 
 ```bash
@@ -40,6 +67,10 @@ docker compose --env-file .deploy.env exec -u appuser app python -m auth create-
 `create-user` does nothing if the name already exists, so it is safe to run again. The first
 account joins the existing family (`fam_local`), so everything already in the app stays visible.
 
+**There is no per-family separation yet.** Every account sees ALL data, and `--family` refuses
+anything but `fam_local`. Only make accounts for people you would show every child. Being signed in
+is the only check.
+
 Open the site over HTTPS. You land on the login form; after signing in you land on This week.
 
 For a script, set the password in the environment instead of the prompt:
@@ -52,7 +83,9 @@ For a script, set the password in the environment instead of the prompt:
 |---|---|
 | Change a password (signs that user out everywhere) | `python -m auth set-password <username>` |
 | Lock an account (also signs it out) | `python -m auth disable <username>` |
-| Unlock it | `python -m auth enable <username>` |
+| Re-enable it (also clears its lockouts) | `python -m auth enable <username>` |
+| Clear one user's lockouts | `python -m auth unlock <username>` |
+| Clear every lockout, address locks too | `python -m auth unlock` |
 
 ## What it does
 
@@ -61,7 +94,13 @@ For a script, set the password in the environment instead of the prompt:
 - After 3 wrong tries from one address for one username, each further wrong try locks that pair for
   15 s, 30 s, 60 s and so on, doubling up to an hour. A different address is never held back by
   someone else's wrong tries, and a stranger guessing from many addresses can only make strangers
-  wait a few minutes; an address you have signed in from before is not held at all.
+  wait a few minutes. An address you signed in from in the last 30 days is not held by the
+  many-names-from-one-address limit or the many-addresses limit. Be aware: someone who shares your
+  public address (the same home or office connection) can still trigger the lock on that one
+  username-and-address pair by guessing. `python -m auth unlock` clears it, and the 30-day session
+  cookie means you rarely need to type the password at all.
+- Only 2 password checks run at once (`AUTH_MAX_CONCURRENT_HASHES`); an extra sign-in waits up to
+  3 seconds, then is told "Busy right now" and nothing is counted against anyone.
 - Everything except `/health`, `/version` and the sign-in and sign-out calls needs a session.
 
 ## Turn it off
@@ -71,6 +110,15 @@ sessions stay in the database and work again when it is turned back on.
 
 ## If you are locked out
 
-You cannot be locked out by someone else's guesses, but you can lock your own address by mistyping.
-Wait a few minutes, or reset from the server: `python -m auth set-password <username>` still works
-because the command line does not go through the login.
+Someone else's guesses cannot lock you out from another address, but you can lock your own by
+mistyping, and a stranger behind your own public address can lock that pair. From the server (the
+command line does not go through the login):
+
+```bash
+cd /srv/curriculum
+docker compose --env-file .deploy.env exec -u appuser app python -m auth unlock <username>
+# or forget every lockout, address locks included:
+docker compose --env-file .deploy.env exec -u appuser app python -m auth unlock
+```
+
+`python -m auth set-password <username>` and `enable <username>` also clear that user's lockouts.

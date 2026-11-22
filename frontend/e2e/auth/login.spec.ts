@@ -138,13 +138,33 @@ test.describe('Going to a page you were not signed in for', () => {
   test('a link that would leave the site is ignored after signing in', async ({
     page,
     account,
+    baseURL,
   }) => {
-    for (const bad of ['//evil.example', 'https://evil.example', '/\\evil.example']) {
+    // Raw query strings, exactly as an attacker would write them: browsers drop tabs and
+    // newlines inside a URL and read a backslash as a slash, so these all mean "//evil.example".
+    const raw = [
+      '/%09/evil.example',
+      '/%0a/evil.example',
+      '/%0d/evil.example',
+      '/%5cevil.example',
+      '/%09%5cevil.example',
+      '//evil.example',
+      'https://evil.example',
+      '/%00/evil.example',
+    ];
+    for (const bad of raw) {
       await page.context().clearCookies();
-      await page.goto(`/login?next=${encodeURIComponent(bad)}`);
+      await page.goto(`/login?next=${bad}`);
       await signIn(page, account);
-      await expect(page).toHaveURL(/\/week$/);
+      await expect(page).toHaveURL(`${baseURL}/week`);
+      expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
     }
+  });
+
+  test('a link to a page on this site keeps its query and anchor', async ({ page, account }) => {
+    await page.goto('/login?next=%2Fhow-its-going%3Fchild%3Dabc%23top');
+    await signIn(page, account);
+    await expect(page).toHaveURL(/\/how-its-going\?child=abc#top$/);
   });
 
   test('without a session the API says 401 in JSON, and the health check stays open', async ({
@@ -279,5 +299,62 @@ test.describe('Too many wrong tries', () => {
       headers: { origin: 'https://evil.example' },
     });
     expect(r.status()).toBe(403);
+  });
+
+  test('the address used for the lock is the one our own proxy added, not one the visitor wrote', async ({
+    request,
+    account,
+  }) => {
+    const ours = '10.88.0.1';
+    const post = (invented: string, password: string) =>
+      request.post('/api/auth/login', {
+        data: { username: account.username, password },
+        // what a front proxy produces when a visitor sends their own X-Forwarded-For
+        headers: { 'x-forwarded-for': `${invented}, ${ours}` },
+      });
+    for (let i = 0; i < 4; i++) {
+      expect((await post(`198.51.100.${i + 1}`, 'wrong password!!')).status()).toBe(401);
+    }
+    // a fifth made-up leftmost address does not escape the lock on the real one
+    expect((await post('198.51.100.200', account.password)).status()).toBe(429);
+  });
+});
+
+test.describe('Busy and oversized requests', () => {
+  test('a busy answer is calm and has a Try again that works', async ({ page, account }) => {
+    let busy = true;
+    await page.route('**/api/auth/login', async (route) => {
+      if (busy)
+        await route.fulfill({
+          status: 503,
+          headers: { 'retry-after': '3' },
+          json: { detail: 'busy', retry_after: 3 },
+        });
+      else await route.continue();
+    });
+    await page.goto('/login');
+    await signIn(page, account);
+    await expect(page.locator('#login-message')).toHaveText(
+      'Busy right now. Please try again in a moment.'
+    );
+    await expectNoViolations(page);
+    await expectNoBannedWords(page);
+    await shot(page, 'm7-login-busy');
+    busy = false;
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page).toHaveURL(/\/week$/);
+  });
+
+  test('a sign-in body over 16 KiB is refused with 413 before it is read', async ({ request }) => {
+    const r = await request.post('/api/auth/login', {
+      data: { username: 'a', password: 'x'.repeat(20_000) },
+    });
+    expect(r.status()).toBe(413);
+  });
+
+  test('a mistyped value is never echoed back in an error', async ({ request }) => {
+    const r = await request.post('/api/auth/login', { data: { username: 'only-a-name-here' } });
+    expect(r.status()).toBe(422);
+    expect(await r.text()).not.toContain('only-a-name-here');
   });
 });

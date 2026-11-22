@@ -108,13 +108,9 @@ class TenFrameWorksheet(BaseWorksheet):
                 frame_a += f" ({prob.fill_a})"
             if prob.fill_b != "black":
                 frame_b += f" ({prob.fill_b})"
-            block.append(
-                f"    [ten-frame: {frame_a}] [ten-frame: {frame_b}]"
-            )
+            block.append(f"    [ten-frame: {frame_a}] [ten-frame: {frame_b}]")
             if self.show_answers:
-                block.append(
-                    f"    **Proof:** {' , '.join(prob.proof_equations())}"
-                )
+                block.append(f"    **Proof:** {' , '.join(prob.proof_equations())}")
             else:
                 block.append("    Proof:" + " _" * 20 * self.equation_lines)
             body.append("\n".join(block))
@@ -138,14 +134,11 @@ def _normalize_problems(
 def _validate_problem(problem: TenFrameProblem) -> None:
     for name, value in (("addend_a", problem.addend_a), ("addend_b", problem.addend_b)):
         if not MIN_ADDEND <= value <= MAX_ADDEND:
-            raise ValueError(
-                f"{name} must be between {MIN_ADDEND} and {MAX_ADDEND}, got {value}"
-            )
+            raise ValueError(f"{name} must be between {MIN_ADDEND} and {MAX_ADDEND}, got {value}")
     for name, fill in (("fill_a", problem.fill_a), ("fill_b", problem.fill_b)):
         if not isinstance(fill, str) or not 1 <= len(fill) <= 24:
             raise ValueError(
-                f"{name} must be a CSS color or emoji string "
-                f"(1-24 chars), got {fill!r}"
+                f"{name} must be a CSS color or emoji string " f"(1-24 chars), got {fill!r}"
             )
     if problem.total > MAX_SUM:
         raise ValueError(
