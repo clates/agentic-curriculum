@@ -1,5 +1,4 @@
 """Tests for the Fraction Repair Shop (error_audit partitions art)."""
-
 import pytest
 
 from src.worksheets.error_audit import (
@@ -58,9 +57,9 @@ def _payload(**over):
 
 def test_partitions_art_passthrough():
     art = {"kind": "partitions", "parts": 3, "broken": 1}
-    ws = WorksheetFactory.create(
-        "error_audit", {"specimens": [{"prompt": "p", "lines": ["l"], "art": art}]}
-    )
+    ws = WorksheetFactory.create("error_audit", {"specimens": [
+        {"prompt": "p", "lines": ["l"], "art": art}
+    ]})
     assert isinstance(ws.specimens[0], ErrorAuditSpecimen)
     assert ws.specimens[0].art == art
 
@@ -81,24 +80,21 @@ def test_partitions_validation_accepts_valid_specs():
 def test_partitions_validation_rejects_bad_parts():
     with pytest.raises(ValueError):
         generate_error_audit_worksheet(
-            [{"prompt": "p", "lines": [], "art": {"kind": "partitions", "parts": 1, "broken": 0}}]
+            [{"prompt": "p", "lines": [],
+              "art": {"kind": "partitions", "parts": 1, "broken": 0}}]
         )
 
 
 def test_partitions_validation_rejects_bad_indices():
     with pytest.raises(ValueError):
         generate_error_audit_worksheet(
-            [{"prompt": "p", "lines": [], "art": {"kind": "partitions", "parts": 3, "broken": 3}}]
+            [{"prompt": "p", "lines": [],
+              "art": {"kind": "partitions", "parts": 3, "broken": 3}}]
         )
     with pytest.raises(ValueError):
         generate_error_audit_worksheet(
-            [
-                {
-                    "prompt": "p",
-                    "lines": [],
-                    "art": {"kind": "partitions", "parts": 3, "shaded": [0, 5]},
-                }
-            ]
+            [{"prompt": "p", "lines": [],
+              "art": {"kind": "partitions", "parts": 3, "shaded": [0, 5]}}]
         )
 
 
@@ -113,6 +109,9 @@ def test_fraction_repair_worksheet_fields():
 
 
 # ── PIL renderer ───────────────────────────────────────────────────────────
+
+
+
 
 
 def _html_frag(**data_over):
@@ -212,14 +211,21 @@ def _blank_payload(**over):
 
 def test_columns_validation():
     with pytest.raises(ValueError):
-        generate_error_audit_worksheet(_blank_payload()["specimens"], columns=3)
-    ws = generate_error_audit_worksheet(_blank_payload()["specimens"], columns=2, fix_mode="redraw")
+        generate_error_audit_worksheet(
+            _blank_payload()["specimens"], columns=3
+        )
+    ws = generate_error_audit_worksheet(
+        _blank_payload()["specimens"], columns=2, fix_mode="redraw"
+    )
     assert ws.columns == 2
-    assert generate_error_audit_worksheet(_blank_payload()["specimens"]).columns == 1
+    assert generate_error_audit_worksheet(
+        _blank_payload()["specimens"]).columns == 1
 
 
 def test_blank_fix_circle_markdown():
-    ws = generate_error_audit_worksheet(_blank_payload()["specimens"], fix_mode="redraw")
+    ws = generate_error_audit_worksheet(
+        _blank_payload()["specimens"], fix_mode="redraw"
+    )
     md = ws.to_markdown()
     assert md.count("blank circle") == 3
     assert "[redraw box]" not in md
@@ -238,12 +244,19 @@ def test_html_blank_circle_no_starter():
 
 
 def test_html_key_shows_fixed_shape():
-    frag = _html_frag(specimens=_blank_payload()["specimens"], show_answers=True)
+    frag = _html_frag(
+        specimens=_blank_payload()["specimens"], show_answers=True
+    )
     assert "Fixed shape:" in frag
 
 
 def test_html_two_up_wraps_cards():
-    frag = _html_frag(specimens=_blank_payload()["specimens"], columns=2)
+    frag = _html_frag(
+        specimens=_blank_payload()["specimens"], columns=2
+    )
     assert 'class="ea-cards-2"' in frag
     single = _html_frag(specimens=_blank_payload()["specimens"])
     assert 'class="ea-cards-2"' not in single
+
+
+

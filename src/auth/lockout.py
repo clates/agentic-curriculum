@@ -106,10 +106,12 @@ def _prune(conn: sqlite3.Connection, now: float) -> None:
     )
     (count,) = conn.execute("SELECT COUNT(*) FROM login_attempt").fetchone()
     if count > MAX_ROWS:  # a flood of made-up names: drop the oldest strangers first
+        # Never a row that is holding an active lock: evicting it would let the attacker reset it.
         conn.execute(
             "DELETE FROM login_attempt WHERE rowid IN (SELECT rowid FROM login_attempt "
-            "WHERE last_success_at IS NULL ORDER BY COALESCE(last_failure_at, 0) LIMIT ?)",
-            (count - MAX_ROWS,),
+            "WHERE last_success_at IS NULL AND locked_until <= ? "
+            "ORDER BY COALESCE(last_failure_at, 0) LIMIT ?)",
+            (now, count - MAX_ROWS),
         )
 
 

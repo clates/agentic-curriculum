@@ -99,7 +99,9 @@ def _reload_logic(db_path: Path):
 
 
 def _grade3_english_doc() -> dict:
-    data = json.loads((PROJECT_ROOT / "standards_data" / "english_writing.json").read_text())
+    data = json.loads(
+        (PROJECT_ROOT / "standards_data" / "english_writing.json").read_text()
+    )
     for doc in data:
         if str(doc.get("grade")) == "3":
             return doc
@@ -117,12 +119,16 @@ def test_grade3_english_standards_span_multiple_categories(tmp_path):
 
     assert len(standards) == 5, "Expected exactly 5 standards"
     assert all(s.get("standard_id") for s in standards), "Expanded standards need ids"
-    assert all(s.get("description") for s in standards), "Expanded standards need descriptions"
+    assert all(s.get("description") for s in standards), (
+        "Expanded standards need descriptions"
+    )
 
-    categories = {json.loads(s["json_blob"]).get("category", "") for s in standards}
-    assert (
-        len(categories) >= 4
-    ), f"Expected standards from multiple categories, got: {sorted(categories)}"
+    categories = {
+        json.loads(s["json_blob"]).get("category", "") for s in standards
+    }
+    assert len(categories) >= 4, (
+        f"Expected standards from multiple categories, got: {sorted(categories)}"
+    )
     assert len(categories) > 1
     # The historical failure mode: every pick from 'Foundations for Reading'.
     assert categories != {"Foundations for Reading"}
@@ -139,7 +145,6 @@ def test_diversity_round_robins_flat_rows(tmp_path):
 
     assert len(standards) == 4
     categories = {json.loads(s["json_blob"]).get("category", "") for s in standards}
-    assert categories == {
-        "Cat 0",
-        "Cat 1",
-    }, f"Expected picks from both categories, got: {sorted(categories)}"
+    assert categories == {"Cat 0", "Cat 1"}, (
+        f"Expected picks from both categories, got: {sorted(categories)}"
+    )

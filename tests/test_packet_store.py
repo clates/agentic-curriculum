@@ -192,7 +192,9 @@ def test_resave_does_not_overwrite_created_at(tmp_path):
     ).fetchone()
     conn.close()
 
-    assert row_after["created_at"] == original_created_at, "created_at was overwritten on re-save"
+    assert row_after["created_at"] == original_created_at, (
+        "created_at was overwritten on re-save"
+    )
     # updated_at may be the same if re-save is fast, but created_at must not change
     assert row_after["updated_at"] is not None
 

@@ -151,6 +151,14 @@ test.describe('Going to a page you were not signed in for', () => {
       '//evil.example',
       'https://evil.example',
       '/%00/evil.example',
+      '/..//evil.example',
+      '/.//evil.example',
+      '/a/..//evil.example',
+      '/%2e%2e//evil.example',
+      '/%2E%2E//evil.example',
+      '/a/%2e%2e//evil.example',
+      '/.%2e//evil.example',
+      '/%2f/evil.example',
     ];
     for (const bad of raw) {
       await page.context().clearCookies();

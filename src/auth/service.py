@@ -13,6 +13,11 @@ from . import clock, lockout, passwords, store
 # is turned away BEFORE the lockout gate, so it records nothing against anyone.
 BUSY_WAIT_S = 3.0
 BUSY_RETRY_AFTER_S = 3
+# Waiting costs a worker thread, so only a few requests may wait for a slot; the rest are turned
+# away at once instead of parking threads (a flood of sign-ins must not starve the whole app).
+MAX_WAITERS = 4
+_waiting = 0
+_waiting_lock = threading.Lock()
 _slots: threading.BoundedSemaphore | None = None
 _slots_size = 0
 _slots_lock = threading.Lock()
@@ -46,8 +51,19 @@ def attempt_login(
     username: str, password: str, ip: str, user_agent: str | None = None
 ) -> LoginResult:
     pool = _slot_pool()
-    if not pool.acquire(timeout=BUSY_WAIT_S):
-        return LoginResult("busy", retry_after=BUSY_RETRY_AFTER_S)
+    if not pool.acquire(blocking=False):
+        global _waiting
+        with _waiting_lock:
+            if _waiting >= MAX_WAITERS:
+                return LoginResult("busy", retry_after=BUSY_RETRY_AFTER_S)
+            _waiting += 1
+        try:
+            got = pool.acquire(timeout=BUSY_WAIT_S)
+        finally:
+            with _waiting_lock:
+                _waiting -= 1
+        if not got:
+            return LoginResult("busy", retry_after=BUSY_RETRY_AFTER_S)
     try:
         return _attempt(username, password, ip, user_agent)
     finally:

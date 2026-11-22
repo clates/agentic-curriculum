@@ -1,5 +1,4 @@
 """Tests for the ten_frame ("Make Ten") worksheet type."""
-
 import pytest
 
 from src.worksheets.base import BaseWorksheet
@@ -66,7 +65,9 @@ def test_problem_derived_values():
 
 
 def test_show_answers_renders_key():
-    ws = WorksheetFactory.create("ten_frame", {"problems": [_prob()], "show_answers": True})
+    ws = WorksheetFactory.create(
+        "ten_frame", {"problems": [_prob()], "show_answers": True}
+    )
     md = ws.to_markdown()
     assert "8 + 2 = 10" in md
     assert "10 + 3 = 13" in md
@@ -100,6 +101,7 @@ def test_metadata_round_trips_through_factory():
     assert ws.metadata["subject"] == "addition_make_ten"
     assert ws.metadata["strategy"] == "make-ten-bridge"
     assert ws.metadata["source"].startswith("bank:")
+
 
 
 def test_html_render_smoke():
@@ -177,3 +179,5 @@ def test_html_renders_color_and_emoji_fills():
     assert 'fill="blue"' in frag
     assert 'fill="red"' in frag
     assert "🦆" in frag
+
+

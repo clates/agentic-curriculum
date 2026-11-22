@@ -100,7 +100,7 @@ For a script, set the password in the environment instead of the prompt:
   username-and-address pair by guessing. `python -m auth unlock` clears it, and the 30-day session
   cookie means you rarely need to type the password at all.
 - Only 2 password checks run at once (`AUTH_MAX_CONCURRENT_HASHES`); an extra sign-in waits up to
-  3 seconds, then is told "Busy right now" and nothing is counted against anyone.
+  3 seconds (at most 4 may wait; any more are told at once), then is told "Busy right now" and nothing is counted against anyone. A limit at the proxy (for example fail2ban reading the Caddy access log; stock Caddy has no rate_limit module) is an optional extra, not required.
 - Everything except `/health`, `/version` and the sign-in and sign-out calls needs a session.
 
 ## Turn it off

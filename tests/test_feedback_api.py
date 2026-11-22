@@ -95,7 +95,6 @@ def feedback_client(tmp_path: Path, monkeypatch):
     # For the packet-existence check, return a stub payload for any packet_id
     def fake_get_weekly_packet(student_id: str, packet_id: str):
         return {"payload": {"plan_id": packet_id, "student_id": student_id}}
-
     monkeypatch.setattr(main_module, "get_weekly_packet", fake_get_weekly_packet)
 
     client = TestClient(main_module.app)

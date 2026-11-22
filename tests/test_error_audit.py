@@ -1,5 +1,4 @@
 """Tests for the error_audit ("Bug Hunt") worksheet type."""
-
 import pytest
 
 from src.worksheets.base import BaseWorksheet
@@ -43,7 +42,9 @@ def test_empty_specimens_rejected():
 
 def test_bad_fix_mode_rejected():
     with pytest.raises(ValueError):
-        WorksheetFactory.create("error_audit", {"specimens": [_spec()], "fix_mode": "teleport"})
+        WorksheetFactory.create(
+            "error_audit", {"specimens": [_spec()], "fix_mode": "teleport"}
+        )
 
 
 def test_bad_fix_lines_rejected():
@@ -84,7 +85,9 @@ def test_adversarial_and_redraw_modes():
 
 
 def test_show_answers_renders_key():
-    ws = WorksheetFactory.create("error_audit", {"specimens": [_spec()], "show_answers": True})
+    ws = WorksheetFactory.create(
+        "error_audit", {"specimens": [_spec()], "show_answers": True}
+    )
     md = ws.to_markdown()
     assert "Hour-hand trap" in md
     assert "Bug circled" not in md
@@ -92,7 +95,9 @@ def test_show_answers_renders_key():
 
 def test_specimen_art_passthrough():
     art = {"kind": "clock", "hour": 3.0, "minute": 30}
-    ws = WorksheetFactory.create("error_audit", {"specimens": [_spec(art=art)]})
+    ws = WorksheetFactory.create(
+        "error_audit", {"specimens": [_spec(art=art)]}
+    )
     assert ws.specimens[0].art == art
 
 
@@ -106,6 +111,7 @@ def test_metadata_round_trips_through_factory():
     )
     assert ws.metadata["learner"] == "Maya"
     assert ws.metadata["strategy"] == "misconception-hunter"
+
 
 
 def test_html_render_smoke():
@@ -169,20 +175,14 @@ def test_fix_scaffold_decimal_stack_rows():
 
 def test_fix_scaffold_validation():
     with pytest.raises(ValueError):
-        generate_error_audit_worksheet([_scaffold_spec(fix_scaffold={"kind": "mystery_grid"})])
+        generate_error_audit_worksheet([_scaffold_spec(
+            fix_scaffold={"kind": "mystery_grid"})])
     with pytest.raises(ValueError):
-        generate_error_audit_worksheet(
-            [
-                _scaffold_spec(
-                    fix_scaffold={"kind": "decimal_stack", "addends": [], "answer": "0.75"}
-                )
-            ]
-        )
+        generate_error_audit_worksheet([_scaffold_spec(
+            fix_scaffold={"kind": "decimal_stack", "addends": [], "answer": "0.75"})])
     with pytest.raises(ValueError):
-        generate_error_audit_worksheet(
-            [
-                _scaffold_spec(
-                    fix_scaffold={"kind": "decimal_stack", "addends": ["0.5"], "answer": "3/4"}
-                )
-            ]
-        )
+        generate_error_audit_worksheet([_scaffold_spec(
+            fix_scaffold={"kind": "decimal_stack",
+                          "addends": ["0.5"], "answer": "3/4"})])
+
+

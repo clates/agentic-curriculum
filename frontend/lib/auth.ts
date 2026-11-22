@@ -21,10 +21,14 @@ export function safeNext(raw: string | null | undefined): string {
   }
   if (url.origin !== 'http://x.invalid') return DEFAULT_LANDING;
   const path = url.pathname;
+  // Dot segments are resolved above, so `/..//evil.com` has become the path `//evil.com`, which a
+  // browser reads as another site. Check the RESULT, not just the input.
+  if (path.startsWith('//')) return DEFAULT_LANDING;
   if (path === '/' || path === '/login' || path.startsWith('/login/') || path.startsWith('/api/')) {
     return DEFAULT_LANDING;
   }
-  return path + url.search + url.hash;
+  const result = path + url.search + url.hash;
+  return /^\/(?![/\\])/.test(result) ? result : DEFAULT_LANDING;
 }
 
 /** Is the login screen required? A server-side read (never NEXT_PUBLIC), so it can change per run. */

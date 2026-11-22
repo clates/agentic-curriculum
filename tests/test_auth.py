@@ -732,7 +732,7 @@ def test_the_attempt_table_is_capped(user, now, monkeypatch):
     conn.executemany(
         "INSERT INTO login_attempt (scope,key,failures,window_start,last_failure_at,locked_until)"
         " VALUES ('user_ip',?,1,?,?,?)",
-        [(f"n{i}|1.1.1.1", now.t, now.t + i, now.t + 1e6) for i in range(200)],
+        [(f"n{i}|1.1.1.1", now.t, now.t + i, 0) for i in range(200)],
     )
     conn.execute(
         "INSERT INTO login_attempt (scope,key,failures,window_start,last_failure_at,locked_until,"
@@ -776,3 +776,82 @@ def test_auth_bodies_over_16_kib_are_refused(client):
     assert r.status_code == 413
     ok = client.post("/auth/login", json={"username": "a", "password": "b"})
     assert ok.status_code == 401
+
+
+def test_an_active_lock_survives_a_flood_past_the_row_cap(user, now, monkeypatch):
+    monkeypatch.setattr(lockout, "MAX_ROWS", 30)
+    for _ in range(5):
+        wrong(ip="1.1.1.1")  # a real lock on parent|1.1.1.1
+    assert wrong(ip="1.1.1.1").kind == "locked"
+    conn = store.connect()
+    conn.executemany(
+        "INSERT INTO login_attempt (scope,key,failures,window_start,last_failure_at,locked_until)"
+        " VALUES ('user_ip',?,1,?,?,0)",
+        [(f"flood{i}|9.9.9.9", now.t, now.t + i + 1) for i in range(200)],
+    )
+    conn.close()
+    monkeypatch.setattr(lockout, "_last_prune", float("-inf"))  # let the prune run now
+    wrong(ip="2.2.2.2", name="other")
+    assert db_rows("SELECT COUNT(*) FROM login_attempt WHERE key LIKE 'flood%'")[0][0] < 200
+    assert db_rows(
+        "SELECT 1 FROM login_attempt WHERE key='parent|1.1.1.1' AND locked_until>?", now.t
+    )
+    assert wrong(ip="1.1.1.1").kind == "locked"
+
+
+def test_the_prune_delete_uses_the_locked_until_index():
+    plan = " ".join(
+        str(r)
+        for r in db_rows(
+            "EXPLAIN QUERY PLAN DELETE FROM login_attempt WHERE locked_until < ? "
+            "AND COALESCE(last_failure_at, 0) < ? AND (last_success_at IS NULL OR last_success_at < ?)",
+            1,
+            1,
+            1,
+        )
+    )
+    assert "idx_login_attempt_locked" in plan
+
+
+def test_only_a_few_sign_ins_wait_and_the_rest_are_turned_away_at_once(user, monkeypatch):
+    import threading
+
+    monkeypatch.setenv("AUTH_MAX_CONCURRENT_HASHES", "2")
+    monkeypatch.setattr(service, "BUSY_WAIT_S", 5.0)
+    release = threading.Event()
+    inside = 0
+    peak = 0
+    guard = threading.Lock()
+
+    def slow_verify(*args):
+        nonlocal inside, peak
+        with guard:
+            inside += 1
+            peak = max(peak, inside)
+        release.wait(10)
+        with guard:
+            inside -= 1
+        return False
+
+    monkeypatch.setattr(passwords, "verify_password", slow_verify)
+    results = []
+
+    def attempt(i):
+        results.append(service.attempt_login("parent", "x", f"3.3.3.{i}").kind)
+
+    threads = [threading.Thread(target=attempt, args=(i,)) for i in range(30)]
+    for t in threads:
+        t.start()
+    # 2 running + 4 waiting = 6 are inside; the other 24 answer "busy" immediately
+    deadline = time.time() + 5
+    while results.count("busy") < 24 and time.time() < deadline:
+        time.sleep(0.01)
+    assert results.count("busy") == 24
+    assert service._waiting == service.MAX_WAITERS
+    release.set()
+    for t in threads:
+        t.join(10)
+    assert peak <= 2 and sorted(set(results)) == ["bad", "busy"] and results.count("bad") == 6
+    # nothing was recorded for the 24 turned away
+    assert db_rows("SELECT COUNT(*) FROM login_attempt WHERE scope='user_ip'") == [(6,)]
+    assert service._waiting == 0
