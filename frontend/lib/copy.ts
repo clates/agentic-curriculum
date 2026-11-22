@@ -13,6 +13,26 @@ export const copy = {
     progress: 'How it’s going',
     children: 'Children',
   },
+  login: {
+    title: 'Welcome back',
+    intro: 'Sign in to see your week.',
+    username: 'Username',
+    password: 'Password',
+    show: 'Show',
+    hide: 'Hide',
+    showLabel: 'Show password',
+    hideLabel: 'Hide password',
+    submit: 'Sign in',
+    submitting: 'Signing in\u2026',
+    wrong: 'That didn\u2019t match. Try again.',
+    wait: (seconds: number) =>
+      `Too many tries. Please wait ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`,
+    couldNotReach:
+      'We couldn\u2019t sign you in just now. Your information is safe. Please try again.',
+    retry: 'Try again',
+    signOut: 'Sign out',
+    signingOut: 'Signing out\u2026',
+  },
   states: {
     loadingLabel: 'Loading',
     loadingMessage: 'Just a moment…',

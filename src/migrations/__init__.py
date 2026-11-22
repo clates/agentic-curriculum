@@ -11,7 +11,8 @@ standard SQLite 12-step recipe), and ``PRAGMA foreign_key_check`` must come back
 migration commits.
 
 Number ownership (see the build plan): 0001 baseline, 0002 tenancy, 0003 llm_usage,
-0004 week_documents, 0005 feedback, 0006 week_plan, 0007 loop state, 0008 student FK.
+0004 week_documents, 0005 feedback, 0006 week_plan, 0007 loop state, 0008 student FK,
+0011 auth (0009 and 0010 are reserved; the runner applies by version, so gaps are fine).
 """
 
 from __future__ import annotations

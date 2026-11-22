@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { apiClient } from '@/lib/api';
 import { copy } from '@/lib/copy';
 
 const TABS = [
@@ -22,6 +23,25 @@ const TABS = [
 /** Phone-first shell: a title bar, the page, and a thumb-reachable tab bar (top links on desktop). */
 export function ParentShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [signedIn, setSignedIn] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  // Is a login in use? When it is off (self-hosting, dev) nothing is shown and nothing changes.
+  useEffect(() => {
+    apiClient
+      .get('/auth/me')
+      .then(({ data }) => setSignedIn(Boolean(data?.auth_required && data?.user)))
+      .catch(() => setSignedIn(false));
+  }, []);
+
+  async function signOut() {
+    setLeaving(true);
+    try {
+      await apiClient.post('/auth/logout');
+    } finally {
+      window.location.assign('/login');
+    }
+  }
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
@@ -41,6 +61,16 @@ export function ParentShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
+          {signedIn ? (
+            <button
+              type="button"
+              onClick={signOut}
+              disabled={leaving}
+              className="min-h-11 px-2 text-sm text-neutral-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+            >
+              {leaving ? copy.login.signingOut : copy.login.signOut}
+            </button>
+          ) : null}
         </div>
       </header>
       <main

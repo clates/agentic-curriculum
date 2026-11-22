@@ -134,7 +134,7 @@ def test_0008_drops_orphan_packets_and_children_and_keeps_valid_ones(tmp_path):
     c.commit()
     c.close()
 
-    assert apply_migrations(db) == [8]
+    assert apply_migrations(db)[0] == 8  # later migrations apply after it
     c = _conn(db)
     assert [r[0] for r in c.execute("SELECT packet_id FROM weekly_packets")] == ["p_good"]
     assert c.execute("SELECT COUNT(*) FROM packet_feedback").fetchone()[0] == 0

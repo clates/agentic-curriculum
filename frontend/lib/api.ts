@@ -11,6 +11,22 @@ export const apiClient = axios.create({
   },
 });
 
+// An expired or missing session (401 from anywhere except the sign-in call itself) sends the
+// person back to the login screen, then on to the page they were on.
+apiClient.interceptors.response.use(undefined, (error) => {
+  const url: string = error?.config?.url ?? '';
+  if (
+    error?.response?.status === 401 &&
+    typeof window !== 'undefined' &&
+    !url.startsWith('/auth/login') &&
+    window.location.pathname !== '/login'
+  ) {
+    const here = window.location.pathname + window.location.search;
+    window.location.assign(`/login?next=${encodeURIComponent(here)}`);
+  }
+  return Promise.reject(error);
+});
+
 // Student types
 export interface StudentProfile {
   student_id: string;
