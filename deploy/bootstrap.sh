@@ -5,8 +5,8 @@
 #   sudo deploy/bootstrap.sh --domain homeschool.example.com --ci-public-key ./ci_deploy.pub
 #
 # Flags:
-#   --domain NAME            site name; written into /srv/curriculum/.env (SITE_DOMAIN and
-#                            AUTH_ALLOWED_HOSTS) when that file is created
+#   --domain NAME            site name; written into /srv/curriculum/caddy.env (SITE_DOMAIN) and
+#                            .env (AUTH_ALLOWED_HOSTS) when those files are created
 #   --ci-public-key FILE|KEY the CI deploy PUBLIC key (a file path or the key text itself)
 #   --dry-run                print what would be done, change nothing (works without root)
 #   -h, --help
@@ -15,6 +15,7 @@ set -euo pipefail
 APP_DIR=/srv/curriculum
 DEPLOY_USER=deploy
 DEPLOY_SCRIPT_DEST=/usr/local/sbin/curriculum-deploy.sh
+CADDY_ENV="$APP_DIR/caddy.env"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 DOMAIN=""
@@ -144,15 +145,13 @@ ENV_FILE="$APP_DIR/.env"
 if [[ -e "$ENV_FILE" ]]; then
   say "$ENV_FILE exists; not touching it"
 elif [[ "$DRY_RUN" -eq 1 ]]; then
-  say "would write $ENV_FILE skeleton (mode 600, owner $DEPLOY_USER), SITE_DOMAIN=${DOMAIN:-<placeholder>}"
+  say "would write $ENV_FILE skeleton (mode 600, owner $DEPLOY_USER)"
 else
   say "writing $ENV_FILE skeleton (mode 600)"
   if [[ -n "$DOMAIN" ]]; then
-    DOMAIN_LINES="SITE_DOMAIN=$DOMAIN
-AUTH_ALLOWED_HOSTS=$DOMAIN"
+    DOMAIN_LINES="AUTH_ALLOWED_HOSTS=$DOMAIN"
   else
-    DOMAIN_LINES="#SITE_DOMAIN=homeschool.example.com
-#AUTH_ALLOWED_HOSTS=homeschool.example.com"
+    DOMAIN_LINES="#AUTH_ALLOWED_HOSTS=homeschool.example.com"
   fi
   umask 077
   cat > "$ENV_FILE" <<ENVEOF
@@ -163,8 +162,8 @@ AUTH_ALLOWED_HOSTS=$DOMAIN"
 # Model access (required for plan generation)
 #OPENROUTER_API_KEY=sk-or-...
 
-# The public host name (DNS A record must point here). Caddy gets its certificate for this name.
-# AUTH_ALLOWED_HOSTS is the same name: login/change requests must come from it.
+# The public host name: login/change requests must come from it. Same name as SITE_DOMAIN in
+# caddy.env (Caddy's own env file; kept separate so the web-facing process never sees this file).
 $DOMAIN_LINES
 
 # Login on, cookies HTTPS-only. Make the first account after the first deploy (see docs/runbook-https.md).
@@ -176,9 +175,23 @@ ENVEOF
 fi
 
 if [[ -n "$DOMAIN" ]]; then
-  ENV_TODO="set OPENROUTER_API_KEY (SITE_DOMAIN is already $DOMAIN)."
+  ENV_TODO="set OPENROUTER_API_KEY (AUTH_ALLOWED_HOSTS is already $DOMAIN; $CADDY_ENV holds SITE_DOMAIN)."
 else
-  ENV_TODO="set OPENROUTER_API_KEY, SITE_DOMAIN and AUTH_ALLOWED_HOSTS."
+  ENV_TODO="set OPENROUTER_API_KEY and AUTH_ALLOWED_HOSTS, and create $CADDY_ENV with: printf 'SITE_DOMAIN=<your-domain>\\n' > $CADDY_ENV"
+fi
+
+# --- 7. caddy.env: the only thing the internet-facing container may read ---------------------
+if [[ -e "$CADDY_ENV" ]]; then
+  say "$CADDY_ENV exists; not touching it"
+elif [[ -z "$DOMAIN" ]]; then
+  say "no --domain given: not writing $CADDY_ENV (Caddy serves a localhost site until you create it)"
+elif [[ "$DRY_RUN" -eq 1 ]]; then
+  say "would write $CADDY_ENV (mode 640, owner $DEPLOY_USER) with SITE_DOMAIN=$DOMAIN"
+else
+  say "writing $CADDY_ENV (mode 640)"
+  printf 'SITE_DOMAIN=%s\n' "$DOMAIN" > "$CADDY_ENV"
+  chown "$DEPLOY_USER:$DEPLOY_USER" "$CADDY_ENV"
+  chmod 640 "$CADDY_ENV"
 fi
 
 # --- done ---------------------------------------------------------------------------------------

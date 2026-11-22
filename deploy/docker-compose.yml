@@ -17,8 +17,9 @@ services:
       - /srv/curriculum/artifacts:/app/artifacts # generated worksheets and packets
       - /srv/curriculum/logs:/app/logs
 
-  # HTTPS entrance. Needs Docker Compose >= 2.23.1 (inline `configs: content:`).
-  # SITE_DOMAIN comes from .env; unset, it serves a harmless localhost site so the stack still starts.
+  # HTTPS entrance. Needs Docker Compose >= 2.24.0 (inline `configs: content:` and `required: false`).
+  # SITE_DOMAIN comes from caddy.env, NOT .env: this is the internet-facing process and must not see
+  # the app's secrets. If caddy.env is missing it serves a harmless localhost site so the stack starts.
   caddy:
     image: caddy:2.10
     restart: unless-stopped
@@ -27,7 +28,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    env_file: .env # SITE_DOMAIN (also carries the app's secrets into this container's env)
+    env_file:
+      - path: caddy.env # only SITE_DOMAIN; written by bootstrap.sh
+        required: false
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile

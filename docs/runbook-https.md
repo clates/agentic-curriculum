@@ -1,7 +1,7 @@
 # Runbook: a new server with HTTPS and login
 
 Goal: a fresh Debian/Ubuntu host, one DNS record and one `.env` give a working HTTPS site with
-login. Details and background are in `deploy/README.md`. Needs Docker Compose >= 2.23.1
+login. Details and background are in `deploy/README.md`. Needs Docker Compose >= 2.24.0
 (bootstrap installs a current one).
 
 1. **Create the host** (any provider). Note its public IPv4.
@@ -14,8 +14,9 @@ login. Details and background are in `deploy/README.md`. Needs Docker Compose >=
    deploy/bootstrap.sh --dry-run --domain <your-domain> --ci-public-key ./ci_deploy.pub   # preview
    deploy/bootstrap.sh           --domain <your-domain> --ci-public-key ./ci_deploy.pub
    ```
-5. **`.env`**: edit `/srv/curriculum/.env`, set `OPENROUTER_API_KEY` (and confirm `SITE_DOMAIN` /
-   `AUTH_ALLOWED_HOSTS` are your domain, `AUTH_REQUIRED=1`, `COOKIE_SECURE=1`).
+5. **`.env`**: edit `/srv/curriculum/.env`, set `OPENROUTER_API_KEY` (and confirm `AUTH_ALLOWED_HOSTS` is your
+   domain, `AUTH_REQUIRED=1`, `COOKIE_SECURE=1`). `/srv/curriculum/caddy.env` (only `SITE_DOMAIN=<your-domain>`)
+   is written by bootstrap when you pass `--domain`.
 6. **GitHub secrets**: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`
    (`ssh-keyscan -t ed25519 <host>`), `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`.
 7. **Deploy**: push to main, or re-run the deploy workflow. Caddy gets the certificate on first

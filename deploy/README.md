@@ -23,7 +23,8 @@ push to main -> CI (tests) -> build + push image -> ssh deploy@server <sha> -> d
 |---|---|
 | `data/curriculum.db` | SQLite database (bind mount, survives redeploys) |
 | `artifacts/`, `logs/` | Generated worksheets and logs (bind mounts) |
-| `.env` | Secrets and site settings (`OPENROUTER_API_KEY`, `SITE_DOMAIN`, ...). Never committed. |
+| `.env` | The app's secrets and settings (`OPENROUTER_API_KEY`, `AUTH_*`, ...). Never committed. |
+| `caddy.env` | Only `SITE_DOMAIN`, read by the Caddy container (mode 640). Missing means a localhost site. |
 | `current_sha` | Last successfully deployed commit |
 
 The app listens on `127.0.0.1:3000` only (deploy.sh's health probe and SSH tunnels use it:
@@ -32,10 +33,10 @@ same compose file: it terminates HTTPS on ports 80/443 and forwards to `app:3000
 network. Its Caddyfile is inline in `docker-compose.yml` (deploy.sh downloads only that file), and
 certificates live in the `caddy_data` named volume so they survive redeploys.
 
-Requires Docker Compose >= 2.23.1 (inline `configs: content:`). Preflight:
+Requires Docker Compose >= 2.24.0 (inline `configs: content:`, `env_file` with `required: false`). Preflight:
 
 ```bash
-docker compose version --short   # must print 2.23.1 or newer
+docker compose version --short   # must print 2.24.0 or newer
 ```
 
 ## GitHub secrets
@@ -74,11 +75,11 @@ stays manual: fill in `.env`, DNS A record, cloud firewall, GitHub secrets, firs
 Changes to `deploy.sh` are reinstalled by hand (re-run `bootstrap.sh`, or the `install` line). CI
 deliberately cannot update it, since it is the security boundary for the CI key.
 
-`.env` settings used by the stack: `SITE_DOMAIN` (Caddy's site address and certificate name; unset
-means a harmless `localhost` site), `AUTH_ALLOWED_HOSTS` (same value), `AUTH_REQUIRED=1`,
-`COOKIE_SECURE=1`, `OPENROUTER_API_KEY`. `.env` is also loaded into the Caddy container's
-environment (that is how it sees `SITE_DOMAIN`), so it receives the app's secrets too; Caddy does
-not read or log them. An ACME contact email is not wired in: Let's Encrypt issues without one.
+Two env files, on purpose. `.env` is the app's (`OPENROUTER_API_KEY`, `AUTH_REQUIRED=1`,
+`COOKIE_SECURE=1`, `AUTH_ALLOWED_HOSTS`). `caddy.env` holds only `SITE_DOMAIN` (Caddy's site address
+and certificate name; missing means a harmless `localhost` site) and is the only file the
+internet-facing Caddy container reads, so it never sees the app's secrets. An ACME contact email is
+not wired in: Let's Encrypt issues without one.
 
 ## Firewall
 
@@ -124,7 +125,15 @@ ss -ltnp | grep -E ':(80|443)\b'     # must print nothing
 ```
 
 Then merge/deploy. Caddy in the container will obtain a fresh certificate for `SITE_DOMAIN`, so make
-sure `SITE_DOMAIN` is set in `/srv/curriculum/.env` first (`AUTH_ALLOWED_HOSTS` is already there).
+sure `caddy.env` exists first (`AUTH_ALLOWED_HOSTS` is already in `.env`):
+
+```bash
+printf 'SITE_DOMAIN=homeschool.chrislates.com\n' > /srv/curriculum/caddy.env
+chown deploy:deploy /srv/curriculum/caddy.env && chmod 640 /srv/curriculum/caddy.env
+```
+
+If `SITE_DOMAIN` is still set in `.env` from an earlier attempt, remove that line; Caddy no longer reads it.
+
 Expect a short outage (the pull plus certificate issuance, usually under a minute or two). The host
 package can be removed afterwards (`apt purge caddy`). To roll back to the host Caddy: stop the
 container (`docker compose --env-file .deploy.env stop caddy`), then `systemctl enable --now caddy`.
