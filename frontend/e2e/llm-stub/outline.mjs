@@ -65,8 +65,24 @@ const LETTERS = ['a', 'b', 'c'];
 const callsPerStudent = new Map();
 
 export const isOutlinePrompt = (prompt) => prompt.includes('SKILLS_JSON: ');
+// A repair of one of the stub's own bad replies. The backend's repair keeps the original brief,
+// then sends the rejected reply back as the assistant's turn, then "That output was rejected."
+// (src/llm/structured.py). The first form ("You repair invalid JSON ... Invalid output:") is what
+// the repair looked like before that change; both are accepted.
+const REJECTED = 'That output was rejected';
 export const isStubRepair = (prompt) =>
-  prompt.includes('You repair invalid JSON') && prompt.includes('e2e_stub');
+  prompt.includes('e2e_stub') &&
+  (prompt.includes(REJECTED) || prompt.includes('You repair invalid JSON'));
+
+/** The bad reply (JSON text) that a repair call is being asked to fix. */
+function rejectedReply(prompt) {
+  const at = prompt.lastIndexOf(REJECTED);
+  if (at >= 0) {
+    const before = prompt.slice(0, at).trimEnd();
+    return before.slice(before.lastIndexOf('{"options":[]'));
+  }
+  return /Invalid output:\n([\s\S]*)$/.exec(prompt)?.[1] ?? '';
+}
 
 function recentTopics(prompt) {
   const line = /Do not reuse these recent topics: (\[.*\])\./.exec(prompt)?.[1];
@@ -111,8 +127,7 @@ function badReply(promptForRepair, garbageLeft) {
 /** -> { record, raw, delayMs } for an outline prompt or a repair of one of our bad replies. */
 export function outlineResponse(prompt, student, scenario) {
   if (isStubRepair(prompt)) {
-    const shown = /Invalid output:\n([\s\S]*)$/.exec(prompt)?.[1] ?? '';
-    const stub = JSON.parse(shown).e2e_stub;
+    const stub = JSON.parse(rejectedReply(prompt)).e2e_stub;
     if (stub.garbage_left > 0) {
       return {
         record: { kind: 'outline-repair', student, scenario: 'still-bad' },
