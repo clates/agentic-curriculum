@@ -1,0 +1,118 @@
+{
+ "storyPanel": [],
+ "readingWorksheet": [
+  "questions.N"
+ ],
+ "causeEffectWorksheet": [
+  "pairs.N.effect"
+ ],
+ "oddOneOutWorksheet": [
+  "rows.N"
+ ],
+ "frayerModelWorksheet": [
+  "entries.N.quadrants.Characteristics",
+  "entries.N.quadrants.Non-Examples"
+ ],
+ "doingCard": [],
+ "noteBox": [],
+ "heartBar": [],
+ "colorKey": [],
+ "logoBadge": [],
+ "calibrationRuler": [],
+ "richText": [],
+ "taskList": [
+  "tasks.N"
+ ],
+ "wordSortWorksheet": [
+  "tiles.N"
+ ],
+ "treeMapWorksheet": [
+  "branches.N"
+ ],
+ "tChartWorksheet": [
+  "columns.N"
+ ],
+ "featureMatrixWorksheet": [
+  "items.N"
+ ],
+ "matchingWorksheet": [
+  "left_items.N"
+ ],
+ "cutCards": [],
+ "colorTask": [
+  "entries.N"
+ ],
+ "pixelCopyWorksheet": [
+  "colors.N"
+ ],
+ "fractionStrips": [
+  "strips.N"
+ ],
+ "fractionCircles": [
+  "circles.N"
+ ],
+ "fractionArea": [
+  "grids.N"
+ ],
+ "fractionNumberLine": [
+  "lines.N"
+ ],
+ "twoOperandWorksheet": [
+  "problems.N"
+ ],
+ "tenFrameWorksheet": [
+  "problems.N"
+ ],
+ "numberLineWorksheet": [
+  "tasks.N"
+ ],
+ "speedMath": [
+  "problems.N"
+ ],
+ "barGraphWorksheet": [
+  "questions.N"
+ ],
+ "pictographWorksheet": [
+  "questions.N"
+ ],
+ "comparePairs": [
+  "pairs.N"
+ ],
+ "mathWorksheet": [
+  "problems.N"
+ ],
+ "writingScaffoldWorksheet": [
+  "sections.N"
+ ],
+ "handwritingWorksheet": [],
+ "alphabetWorksheet": [],
+ "mirrorMessageWorksheet": [],
+ "letterWorksheet": [
+  "checklist.N",
+  "reply.paragraphs.N"
+ ],
+ "sequencingWorksheet": [
+  "steps.N"
+ ],
+ "fillInBlankWorksheet": [
+  "segments.N"
+ ],
+ "labeledDiagramWorksheet": [
+  "labels.N"
+ ],
+ "vennDiagramWorksheet": [
+  "word_bank.N"
+ ],
+ "storyMapWorksheet": [
+  "fields.N"
+ ],
+ "shapeIdWorksheet": [
+  "shapes.N"
+ ],
+ "pictureSequenceWorksheet": [
+  "steps.N"
+ ],
+ "errorAuditWorksheet": [
+  "specimens.N"
+ ]
+}

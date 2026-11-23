@@ -29,10 +29,11 @@
       "max_tokens": 3000
     },
     "author": {
-      "model": "google/gemini-3.5-flash",
-      "temperature": 0.5,
-      "max_tokens": 8000,
-      "timeout_s": 180
+      "model": "z-ai/glm-5.3",
+      "fallback_model": "z-ai/glm-5.3-flash",
+      "max_tokens": "model_max",
+      "max_tokens_ceiling": 131072,
+      "timeout_s": 1500
     },
     "judge": {
       "model": "anthropic/claude-haiku-4.5",
@@ -49,5 +50,47 @@
     "google/gemini-3.1-flash-lite",
     "anthropic/claude-haiku-4.5",
     "openai/gpt-5-nano"
-  ]
+  ],
+  "model_profiles": {
+    "_comment": "Per-model sampling (vendor-published, looked up 2026-11-21) and max output tokens (OpenRouter top_provider.max_completion_tokens; refresh with scripts/refresh_model_limits.py). A temperature of null means send none. top_p/top_k go in the request body.",
+    "tencent/hy4": {
+      "temperature": 0.9,
+      "top_p": 1.0,
+      "max_output_tokens": 65536
+    },
+    "deepseek/deepseek-v4-flash": {
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "max_output_tokens": 393216
+    },
+    "~deepseek/deepseek-v4-flash-latest": {
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "max_output_tokens": 131072
+    },
+    "z-ai/glm-5.3": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "max_output_tokens": 943718
+    },
+    "z-ai/glm-5.3-flash": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "max_output_tokens": 131072
+    },
+    "qwen/qwen3.8-flash": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "max_output_tokens": 131072
+    },
+    "openai/gpt-6-luna": {
+      "temperature": null,
+      "max_output_tokens": 128000
+    },
+    "meta/muse-ember": {
+      "temperature": null,
+      "max_output_tokens": 943718
+    }
+  }
 }

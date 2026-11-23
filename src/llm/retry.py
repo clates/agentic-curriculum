@@ -42,6 +42,7 @@ def complete_with_retry(
     *,
     fallback_model: str | None = None,
     sleep: Callable[[float], None] = time.sleep,
+    request_for: Callable[[str], CompletionRequest] | None = None,
 ) -> Completion:
     """Call the provider; retry retryable failures; then try ``fallback_model`` the same way.
 
@@ -51,7 +52,10 @@ def complete_with_retry(
     total = 0
     last: LLMError | None = None
     for model in models:
-        req = request if model == request.model else replace(request, model=model)
+        if model == request.model:
+            req = request
+        else:  # the fallback gets ITS OWN sampling and limits, not the primary's
+            req = request_for(model) if request_for else replace(request, model=model)
         for attempt in range(1, policy.max_attempts + 1):
             total += 1
             try:

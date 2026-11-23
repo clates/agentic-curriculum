@@ -6,6 +6,7 @@ stub redirect it. Retries are disabled in the SDK on purpose: the retry layer ow
 
 from __future__ import annotations
 
+import threading
 import time
 from typing import Any
 
@@ -49,6 +50,10 @@ def _retry_after(exc: openai.APIStatusError) -> float | None:
         return None
 
 
+class _DeadlineExceeded(Exception):
+    """The hard wall-clock deadline passed while the SDK call was still running."""
+
+
 class OpenRouterProvider:
     def __init__(self, settings: ProviderSettings, client: OpenAI | None = None) -> None:
         self.settings = settings
@@ -68,8 +73,12 @@ class OpenRouterProvider:
         if request.response_format is not None:
             payload["response_format"] = request.response_format
         # Ask OpenRouter to report cost in the usage block; other endpoints ignore it.
+        sampling = {
+            k: v for k, v in (("top_p", request.top_p), ("top_k", request.top_k)) if v is not None
+        }
         payload["extra_body"] = {
             "usage": {"include": True},
+            **sampling,
             **self.settings.routing,
             **request.extra_body,
         }
@@ -77,7 +86,11 @@ class OpenRouterProvider:
 
         started = time.monotonic()
         try:
-            response = self._client.chat.completions.create(**payload)
+            response = self._create_with_deadline(payload, payload["timeout"])
+        except _DeadlineExceeded as exc:
+            raise LLMTimeout(
+                f"no response within the {payload['timeout']:.0f}s deadline", model=request.model
+            ) from exc
         except openai.APITimeoutError as exc:
             raise LLMTimeout(self._scrub(exc), model=request.model) from exc
         except openai.APIConnectionError as exc:
@@ -100,6 +113,31 @@ class OpenRouterProvider:
             finish_reason=choice.get("finish_reason"),
             raw=raw,
         )
+
+    def _create_with_deadline(self, payload: dict[str, Any], deadline_s: float) -> Any:
+        """Run the SDK call with a hard wall-clock deadline.
+
+        httpx read timeouts reset on every byte, so a non-streaming request whose upstream
+        stalls while the gateway keeps the connection alive never times out. The call runs in a
+        daemon thread and the caller gives up at ``deadline_s`` (the abandoned thread ends when
+        the socket does).
+        """
+        box: dict[str, Any] = {}
+
+        def work() -> None:
+            try:
+                box["response"] = self._client.chat.completions.create(**payload)
+            except BaseException as exc:  # re-raised in the caller's thread
+                box["error"] = exc
+
+        thread = threading.Thread(target=work, daemon=True, name="llm-call")
+        thread.start()
+        thread.join(deadline_s)
+        if thread.is_alive():
+            raise _DeadlineExceeded()
+        if "error" in box:
+            raise box["error"]
+        return box["response"]
 
     def _scrub(self, exc: BaseException) -> str:
         return str(exc).replace(self.settings.api_key, "[redacted]")

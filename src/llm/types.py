@@ -21,6 +21,8 @@ class CompletionRequest:
     temperature: float | None = None
     max_tokens: int | None = None
     response_format: dict[str, Any] | None = None
+    top_p: float | None = None  # sent in the request body (extra_body), not as an SDK kwarg
+    top_k: int | None = None
     timeout_s: float | None = None
     # Provider routing options, e.g. {"provider": {"data_collection": "deny"}} for OpenRouter.
     extra_body: dict[str, Any] = field(default_factory=dict)
