@@ -61,7 +61,12 @@ def test_malformed_json_is_repaired_by_a_repair_call():
     assert result.parsed.title == "Week" and result.repairs == 1
     repair = provider.requests[1]
     assert "invalid JSON" in repair.messages[-1]["content"]
-    assert repair.messages[-1]["content"].count('{"title": "Week", "days": ') >= 1
+    # the repair call keeps the original brief and shows the model its own bad output
+    assert repair.messages[0] == MSGS[0]
+    assert any(
+        m["role"] == "assistant" and m["content"].startswith('{"title": "Week"')
+        for m in repair.messages
+    )
 
 
 def test_schema_violation_is_repaired():
@@ -102,3 +107,32 @@ def test_truncated_output_is_flagged():
 def test_extract_json_raises_on_garbage():
     with pytest.raises(ValueError):
         extract_json("no json here")
+
+
+def test_repair_uses_author_token_budget_and_usage_context():
+    from llm.ledger import UsageContext
+
+    provider, go = run("not json", GOOD)
+    ctx = UsageContext(family_id="f1")
+    result = generate_structured(
+        "author",
+        MSGS,
+        Plan,
+        client=LLMClient(provider, env={"LLM_MAX_TOKENS_AUTHOR": "20000"}),
+        usage=ctx,
+    )
+    assert result.repairs == 1
+    assert provider.requests[1].max_tokens == 20000  # not the 4096 repair default
+
+
+def test_completeness_check_triggers_a_repair():
+    provider, go = run('{"title": "Week", "days": 2}', GOOD)
+    result = generate_structured(
+        "author",
+        MSGS,
+        Plan,
+        client=LLMClient(provider, env={}),
+        check=lambda p: None if p.days >= 5 else "only 2 days",
+    )
+    assert result.repairs == 1
+    assert "incomplete: only 2 days" in provider.requests[1].messages[-1]["content"]

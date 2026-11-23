@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -63,9 +63,16 @@ def extract_json(text: str) -> Any:
     raise error
 
 
-def _try_parse(text: str, model_cls: type[T]) -> tuple[T | None, str | None]:
+def _try_parse(
+    text: str, model_cls: type[T], check: Callable[[T], str | None] | None = None
+) -> tuple[T | None, str | None]:
+    """Parse + validate; ``check`` is an optional completeness gate returning an error string."""
     try:
-        return model_cls.model_validate(extract_json(text)), None
+        parsed = model_cls.model_validate(extract_json(text))
+        problem = check(parsed) if check else None
+        if problem:
+            return None, f"incomplete: {problem}"
+        return parsed, None
     except json.JSONDecodeError as exc:
         return None, f"invalid JSON: {exc}"
     except ValidationError as exc:
@@ -96,6 +103,7 @@ def generate_structured(
     client: LLMClient | None = None,
     max_repairs: int | None = None,
     usage: UsageContext | None = None,
+    check: Callable[[T], str | None] | None = None,
 ) -> StructuredResult[T]:
     client = client or default_client()
     budget = configured_max_repairs(client._env) if max_repairs is None else max_repairs
@@ -115,7 +123,7 @@ def generate_structured(
     completions = [
         client.complete(task, msgs, response_format=_response_format(model_cls, mode), usage=usage)
     ]
-    parsed, error = _try_parse(completions[0].text, model_cls)
+    parsed, error = _try_parse(completions[0].text, model_cls, check)
     errors: list[str] = []
     while parsed is None:
         errors.append(error or "unknown")
@@ -130,21 +138,38 @@ def generate_structured(
                 model=completions[-1].model,
                 attempts=len(completions),
             )
+        # The repair call keeps the ORIGINAL brief (so the model knows what it was asked for),
+        # shows its own previous output, and says what is wrong. It gets the author's token
+        # budget (a full week does not fit the small repair default), the author's output mode,
+        # and is billed to the same usage context as the first call.
+        cut_off = completions[-1].finish_reason == "length"
+        note = (
+            " Your previous output was cut off by the length limit: write the complete object "
+            "again, more compactly if you must, and make sure it closes."
+            if cut_off
+            else ""
+        )
         repair_messages = [
-            {
-                "role": "system",
-                "content": "You repair invalid JSON. Reply with only the corrected JSON object.",
-            },
+            *msgs,
+            {"role": "assistant", "content": completions[-1].text},
             {
                 "role": "user",
                 "content": (
-                    f"JSON Schema:\n{schema_hint}\n\nProblem: {error}\n\n"
-                    f"Invalid output:\n{completions[-1].text}"
+                    f"That output was rejected. Problem: {error}.{note}\n"
+                    "Reply with the complete corrected JSON object only, keeping everything "
+                    "that was already correct."
                 ),
             },
         ]
         completions.append(
-            client.complete("repair", repair_messages, response_format={"type": "json_object"})
+            client.complete(
+                "repair",
+                repair_messages,
+                response_format=_response_format(model_cls, mode),
+                usage=usage,
+                max_tokens=max(cfg.max_tokens or 0, client.config("repair").max_tokens or 0)
+                or None,
+            )
         )
-        parsed, error = _try_parse(completions[-1].text, model_cls)
+        parsed, error = _try_parse(completions[-1].text, model_cls, check)
     return StructuredResult(parsed=parsed, completions=completions)

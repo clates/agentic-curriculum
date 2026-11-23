@@ -51,6 +51,7 @@ class LLMClient:
         response_format: dict[str, Any] | None = None,
         usage: UsageContext | None = None,
         model: str | None = None,
+        max_tokens: int | None = None,
     ) -> Completion:
         """Run one task. ``usage`` names who is billed; with a ledger it is checked against the
         family cap before any request is made, and the call is recorded afterwards.
@@ -61,6 +62,8 @@ class LLMClient:
         cfg = self.config(task)
         if model:
             cfg = replace(cfg, model=model, fallback_model=None)
+        if max_tokens:
+            cfg = replace(cfg, max_tokens=max_tokens)
         ctx = usage or UsageContext()
         env = self._env if self._env is not None else os.environ
         if self.ledger is not None:
