@@ -17,6 +17,27 @@ services:
       - /srv/curriculum/artifacts:/app/artifacts # generated worksheets and packets
       - /srv/curriculum/logs:/app/logs
 
+  # The weekly loop's background process: the job queue worker plus the scheduler. Same image, same
+  # data volume, no ports. It idles until LOOP_JOBS_ENABLED=1 is in /srv/curriculum/.env (the app
+  # reads the same switch): off, nothing is planned or queued and no model call is made.
+  # See docs/runbook-worker.md.
+  worker:
+    image: ${IMAGE:?IMAGE is set by deploy.sh}
+    restart: unless-stopped
+    command: ["python", "-m", "worker", "--scheduler"]
+    # appuser (see Dockerfile). The image's start.sh starts as root and drops to appuser, but this
+    # command bypasses it. Running as root would leave root-owned SQLite WAL files the app cannot write.
+    user: "1000:1000"
+    env_file: .env
+    environment:
+      CURRICULUM_DB_PATH: /data/curriculum.db
+      WORKER_HANDLER_MODULES: job_handlers_real
+    stop_grace_period: 45s # above WORKER_SHUTDOWN_GRACE_SECONDS (30): a running job finishes or is released
+    volumes:
+      - /srv/curriculum/data:/data
+      - /srv/curriculum/artifacts:/app/artifacts
+      - /srv/curriculum/logs:/app/logs
+
   # HTTPS entrance. Needs Docker Compose >= 2.24.0 (inline `configs: content:` and `required: false`).
   # SITE_DOMAIN comes from caddy.env, NOT .env: this is the internet-facing process and must not see
   # the app's secrets. If caddy.env is missing it serves a harmless localhost site so the stack starts.

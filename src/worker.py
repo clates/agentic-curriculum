@@ -8,7 +8,8 @@
 
 Env: CURRICULUM_DB_PATH, WORKER_LEASE_SECONDS (300), WORKER_POLL_SECONDS (2),
 WORKER_SHUTDOWN_GRACE_SECONDS (30), WORKER_HANDLER_MODULES (comma-separated modules that register
-real handlers), ALERT_EMAIL_TO / SMTP_* (see job_alerts), SCHEDULER_* (see scheduler).
+real handlers), LOOP_JOBS_ENABLED (the switch for the weekly loop: scheduler and web hooks),
+ALERT_EMAIL_TO / SMTP_* (see job_alerts), SCHEDULER_* (see scheduler).
 
 Safe to run several at once against one SQLite file. SIGTERM/SIGINT: stop claiming, give the
 running job up to the grace period to finish, then release it back to the queue (a hard kill is
@@ -281,9 +282,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.scheduler:
         try:
-            from . import scheduler  # type: ignore
+            from . import loop_integration, scheduler  # type: ignore
         except ImportError:
+            import loop_integration  # type: ignore
             import scheduler  # type: ignore
+        if not loop_integration.enabled():
+            # The one switch for the weekly loop (also read by the web app). Off, the worker idles
+            # and nothing is planned, queued or paid for.
+            logger.warning("LOOP_JOBS_ENABLED is not set: the scheduler is OFF, the loop is idle")
+            args.scheduler = False
+    if args.scheduler:
         threading.Thread(
             target=scheduler.run_forever, args=(db_path, stop), name="scheduler", daemon=True
         ).start()

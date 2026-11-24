@@ -103,11 +103,34 @@ def auto_pick_option(plan) -> str:
 
 
 def _enqueue(
-    conn, report: TickReport, family_id: str, kind: str, key: str, payload: dict, now: datetime
+    conn,
+    report: TickReport,
+    family_id: str,
+    kind: str,
+    key: str,
+    payload: dict,
+    now: datetime,
+    max_attempts: int = jobs.DEFAULT_MAX_ATTEMPTS,
 ) -> None:
-    job, created = jobs.enqueue(conn, family_id, kind, key, payload, now=now)
+    job, created = jobs.enqueue(
+        conn, family_id, kind, key, payload, now=now, max_attempts=max_attempts
+    )
     if created:
         report.jobs_enqueued.append((kind, key))
+
+
+AUTHOR_MAX_ATTEMPTS = 3  # each author attempt can cost real money; outlines are cheap (default 5)
+
+
+def outline_key(conn: sqlite3.Connection, plan_id: str) -> str:
+    """The idempotency key of a plan's outline job (the scheduler and the web app share it)."""
+    return f"outlines:{plan_id}{_regen_suffix(conn, plan_id)}"
+
+
+def author_key(conn: sqlite3.Connection, plan_id: str, option: str) -> str:
+    """The idempotency key of a plan's author job. One key for the parent's pick, the scheduler's
+    auto-pick and its repair pass, so a week is never authored twice."""
+    return f"author:{plan_id}:{option}{_regen_suffix(conn, plan_id)}"
 
 
 def _regen_suffix(conn: sqlite3.Connection, plan_id: str) -> str:
@@ -230,7 +253,7 @@ def _family_tick(
                 report,
                 family_id,
                 "outline",
-                f"outlines:{plan.plan_id}{_regen_suffix(conn, plan.plan_id)}",
+                outline_key(conn, plan.plan_id),
                 {"plan_id": plan.plan_id},
                 now,
             )
@@ -241,10 +264,10 @@ def _family_tick(
                 report,
                 family_id,
                 "author",
-                f"author:{plan.plan_id}:{fresh.picked_option}"
-                f"{_regen_suffix(conn, plan.plan_id)}",
+                author_key(conn, plan.plan_id, fresh.picked_option),
                 {"plan_id": plan.plan_id, "option_id": fresh.picked_option},
                 now,
+                max_attempts=AUTHOR_MAX_ATTEMPTS,
             )
 
     # 4. notices: only the latest window, once per family per week

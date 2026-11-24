@@ -53,6 +53,7 @@ from progress_summary import build_progress_summary
 from week_store import get_week
 from print_week import PlanNotReady, mark_printed, print_info
 from week_plan import PlanNotFound
+import loop_integration
 from weekdoc.render import render_packet, render_prep_sheet, render_teacher_guide
 from worksheet_html_renderer import build_print_packet_html
 
@@ -832,6 +833,7 @@ def _submit_feedback_v2(
         raise HTTPException(status_code=404, detail=str(e)) from e
     if outcome.changed:  # an exact repeat must not re-trigger plan generation
         background_tasks.add_task(generate_trio_for_student, student_id)
+        background_tasks.add_task(loop_integration.on_feedback, LOCAL_FAMILY_ID, student_id)
 
 
 @app.post("/students/{student_id}/weekly-packets/{packet_id}/feedback", status_code=204)
@@ -917,6 +919,7 @@ def submit_packet_feedback(
         )
         save_packet_feedback(student_id, packet_id, mastery_feedback, quantity_feedback)
         background_tasks.add_task(generate_trio_for_student, student_id)
+        background_tasks.add_task(loop_integration.on_feedback, LOCAL_FAMILY_ID, student_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -1014,6 +1017,7 @@ def get_student_progress_summary(student_id: str):
 # --- Pick one of three (M6.4) and fresh ideas (M6.6) -------------------------------------------
 # AUTH_MODE=none: the one local family until login exists, like /this-week.
 LOCAL_FAMILY_ID = "fam_local"
+loop_integration.install()  # LOOP_JOBS_ENABLED=1: a pick queues the author job
 
 
 class PickRequest(BaseModel):
