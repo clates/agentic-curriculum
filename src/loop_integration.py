@@ -36,21 +36,21 @@ def enabled() -> bool:
     return os.environ.get("LOOP_JOBS_ENABLED", "").strip().lower() in ("1", "true", "yes", "on")
 
 
-def enqueue_outline(conn: sqlite3.Connection, family_id: str, plan_id: str) -> None:
-    jobs.enqueue(
+def enqueue_outline(conn: sqlite3.Connection, family_id: str, plan_id: str) -> jobs.Job:
+    return jobs.enqueue(
         conn, family_id, "outline", scheduler.outline_key(conn, plan_id), {"plan_id": plan_id}
-    )
+    )[0]
 
 
-def enqueue_author(conn: sqlite3.Connection, family_id: str, plan_id: str, option: str) -> None:
-    jobs.enqueue(
+def enqueue_author(conn: sqlite3.Connection, family_id: str, plan_id: str, option: str) -> jobs.Job:
+    return jobs.enqueue(
         conn,
         family_id,
         "author",
         scheduler.author_key(conn, plan_id, option),
         {"plan_id": plan_id, "option_id": option},
         max_attempts=scheduler.AUTHOR_MAX_ATTEMPTS,
-    )
+    )[0]
 
 
 def _open() -> sqlite3.Connection:

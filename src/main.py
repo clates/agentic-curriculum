@@ -54,6 +54,7 @@ from week_store import get_week
 from print_week import PlanNotReady, mark_printed, print_info
 from week_plan import PlanNotFound
 import loop_integration
+from loop_admin import router as loop_admin_router
 from weekdoc.render import render_packet, render_prep_sheet, render_teacher_guide
 from worksheet_html_renderer import build_print_packet_html
 
@@ -96,6 +97,7 @@ async def _lifespan(_app: FastAPI):
 _docs_off = {"docs_url": None, "redoc_url": None, "openapi_url": None} if auth_required() else {}
 app = FastAPI(lifespan=_lifespan, dependencies=[Depends(auth_gate)], **_docs_off)
 app.include_router(auth_router)
+app.include_router(loop_admin_router)
 app.add_middleware(AuthBodyLimit)
 app.add_exception_handler(RequestValidationError, invalid_request_handler)
 
