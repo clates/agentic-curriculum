@@ -10,7 +10,7 @@ import { test, expect } from '../fixtures/test';
 import { expectNoViolations } from '../fixtures/parent';
 import { expectNoHorizontalScroll } from '../fixtures/e2e-hardening';
 import { shot } from '../fixtures/shots';
-import { STUB_FIRST_TITLES, loopEvents, pickChild, planOf } from '../fixtures/pick';
+import { STUB_FIRST_TITLES, failJob, loopEvents, pickChild, planOf } from '../fixtures/pick';
 
 const card = (page: Page, id: string) =>
   page.locator(`[data-testid="loop-child"][data-student="${id}"]`);
@@ -116,6 +116,64 @@ test.describe('Loop console', () => {
     await expect(pick).toBeDisabled();
     await expect(pick).toHaveAttribute('title', /check-in/);
     await expect(card(page, kid.id).getByRole('button', { name: 'Mark printed' })).toBeEnabled();
+  });
+
+  test('a job that dies on a rejected key flags the week, says what to do, and Retry clears it', async ({
+    page,
+    request,
+  }) => {
+    const kid = await pickChild(request, 'loopdead', { status: 'outlining' });
+    failJob(kid.id, 'outline');
+    await open(page, kid.id);
+
+    await expect(card(page, kid.id).getByTestId('loop-attention')).toHaveText(
+      'Needs attention: outline_failed'
+    );
+    const job = card(page, kid.id).locator('[data-testid="loop-job"]');
+    await expect(job).toHaveAttribute('data-state', 'dead');
+    await expect(job).toContainText('attempt 1/5'); // no second try
+    await expect(job).toContainText('LLMAuthError');
+    await expect(job.getByTestId('loop-hint')).toHaveText(
+      'The model key was rejected. Replace OPENROUTER_API_KEY in /srv/curriculum/.env and recreate the app and worker containers.'
+    );
+    await expectNoViolations(page);
+    await page.setViewportSize({ width: 360, height: 800 });
+    await expectNoHorizontalScroll(page);
+    await shot(page, 'loop-console-needs-attention');
+
+    await job.getByRole('button', { name: 'Retry' }).click();
+    await expect(card(page, kid.id).getByTestId('loop-attention')).toHaveCount(0);
+    await expect(job).toHaveAttribute('data-state', 'queued');
+    expect((await planOf(request, kid.id)).status).toBe('outlining');
+  });
+
+  test('Author now on a week whose author job died clears the flag and requeues the job', async ({
+    page,
+    request,
+  }) => {
+    const kid = await pickChild(request, 'loopdead2', { status: 'authoring' });
+    failJob(kid.id, 'author');
+    await open(page, kid.id);
+    await expect(card(page, kid.id).getByTestId('loop-attention')).toHaveText(
+      'Needs attention: author_failed'
+    );
+    await card(page, kid.id).getByRole('button', { name: 'Author now' }).click();
+    await expect(card(page, kid.id).getByTestId('loop-attention')).toHaveCount(0);
+    await expect(card(page, kid.id).locator('[data-testid="loop-job"]')).toHaveAttribute(
+      'data-state',
+      'queued'
+    );
+  });
+
+  test('a rate limit is retried later and does not flag the week', async ({ page, request }) => {
+    const kid = await pickChild(request, 'loopslow', { status: 'outlining' });
+    failJob(kid.id, 'outline', 'rate_limit');
+    await open(page, kid.id);
+    const job = card(page, kid.id).locator('[data-testid="loop-job"]');
+    await expect(job).toHaveAttribute('data-state', 'queued');
+    await expect(job).toContainText('attempt 1/5');
+    await expect(job.getByTestId('loop-hint')).toHaveCount(0);
+    await expect(card(page, kid.id).getByTestId('loop-attention')).toHaveCount(0);
   });
 
   test('the console is accessible and does not scroll sideways, even on a phone', async ({

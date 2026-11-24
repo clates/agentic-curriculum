@@ -49,6 +49,11 @@ export const copy = {
     emptyBody: 'Add your first child and we will help you plan their week.',
     emptyAction: 'Add a child',
     attention: 'We\u2019re taking a closer look at this one. You don\u2019t need to do anything.',
+    // A week we could not write: shown instead of the "writing" step while we fix it.
+    problem: {
+      title: (name: string) => `We hit a problem writing ${name}\u2019s week`,
+      body: 'We\u2019re on it. You don\u2019t need to do anything. Please check back a little later.',
+    },
     weekOf: 'Week of',
     actions: {
       check_in: {

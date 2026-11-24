@@ -22,7 +22,7 @@ from typing import Any
 
 from db_utils import get_db_path
 from llm import LLMClient, default_client
-from llm.errors import CostCapExceeded, LLMError, StructuredOutputError
+from llm.errors import CostCapExceeded, LLMError, StructuredOutputError, is_permanent
 from llm.ledger import RunBudget, UsageContext
 from llm.structured import generate_structured
 from weekdoc import WeekDoc
@@ -75,6 +75,10 @@ class RunRecord:
     packet_id: str | None = None
     uncovered_standards: list[str] = field(default_factory=list)
     final_errors: list[str] = field(default_factory=list)
+    # Set when a model/provider error ended the run: the exception class name only, and whether
+    # retrying can help. The job queue reads these (never the error text, which can quote lessons).
+    error_class: str | None = None
+    error_permanent: bool = False
 
     @property
     def repairs(self) -> int:
@@ -118,6 +122,16 @@ class AuthorResult:
     @property
     def ok(self) -> bool:
         return self.status == SUCCESS and self.week is not None
+
+    @property
+    def error_class(self) -> str | None:
+        """Class name of the provider error that ended the run (e.g. LLMAuthError), else None."""
+        return self.run.error_class
+
+    @property
+    def permanent(self) -> bool:
+        """True when the failure cannot be fixed by running the same week again."""
+        return self.run.error_permanent
 
 
 def _runs_dir() -> Path:
@@ -230,11 +244,13 @@ def author_week(
             step = _step_from_budget(name, budget, start, time.monotonic() - t0)
             run.steps.append(step)
             run.final_errors = [str(exc)]
+            run.error_class, run.error_permanent = type(exc).__name__, is_permanent(exc)
             return None, BUDGET_EXCEEDED
         except LLMError as exc:
             step = _step_from_budget(name, budget, start, time.monotonic() - t0)
             run.steps.append(step)
             run.final_errors = [f"{type(exc).__name__}: {exc}"]
+            run.error_class, run.error_permanent = type(exc).__name__, is_permanent(exc)
             return None, PROVIDER_ERROR
         step = _step_from_budget(name, budget, start, time.monotonic() - t0)
         step.ok = True

@@ -10,6 +10,7 @@ Usage:
   python scripts/e2e_seed.py create_plan <student_id> <loop_status> [week_start]
   python scripts/e2e_seed.py expire_plan <student_id>
   python scripts/e2e_seed.py loop_events <student_id>
+  python scripts/e2e_seed.py fail_job <student_id> <outline|author> [auth|rate_limit]
 
 The DB path is controlled by CURRICULUM_DB_PATH (same env var the backend uses).
 """
@@ -18,6 +19,7 @@ import json
 import os
 import sqlite3
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 # Allow importing from src/
@@ -267,6 +269,53 @@ def expire_plan(student_id: str) -> None:
     print(f"plan for {student_id} expired")
 
 
+def fail_job(student_id: str, kind: str, error: str = "auth") -> None:
+    """Queue the plan's ``kind`` job and run it once through the REAL worker with a handler that
+    raises a model error. ``auth`` (a rejected key) goes dead on the first attempt and flags the
+    week; ``rate_limit`` is retried later (queued, not flagged). No model, no network."""
+    import job_registry  # noqa: E402
+    import jobs  # noqa: E402
+    import loop_integration  # noqa: E402
+    import week_plan as wp  # noqa: E402
+    from llm.errors import LLMAuthError, LLMRateLimit  # noqa: E402
+    from worker import Worker  # noqa: E402
+
+    exc = {
+        "auth": LLMAuthError("HTTP 401: User not found"),
+        "rate_limit": LLMRateLimit("HTTP 429: slow down"),
+    }[error]
+    conn = jobs.connect(_db_path())
+    try:
+        plan = wp.latest_plan_for_student(conn, "fam_local", student_id)
+        if kind == "outline":
+            job = loop_integration.enqueue_outline(conn, "fam_local", plan.plan_id)
+        else:
+            job = loop_integration.enqueue_author(
+                conn, "fam_local", plan.plan_id, plan.picked_option
+            )
+    finally:
+        conn.close()
+
+    def boom(ctx):
+        raise exc
+
+    job_registry._HANDLERS[kind] = (boom, False)
+    worker = Worker(_db_path(), poll_seconds=0.01, backoff_base=3600)
+    # The E2E database is shared by many children, so claim exactly THIS job (a worker's own claim
+    # takes the oldest runnable one, which may belong to another test), then run it the way the
+    # worker does: handler, fail (permanent or backoff), dead hook.
+    now = jobs.utcnow()
+    worker.conn.execute(
+        "UPDATE jobs SET state='running', attempts=attempts+1, lease_owner=?, lease_expires_at=? "
+        "WHERE id=? AND state='queued'",
+        (worker.worker_id, jobs.iso(now + timedelta(seconds=300)), job.id),
+    )
+    worker.conn.commit()
+    worker._process(jobs.get_job(worker.conn, job.id))
+    worker.conn.close()
+    print(f"{kind} job for {student_id} failed with {type(exc).__name__}")
+
+
 def loop_events(student_id: str) -> None:
     """Print the loop events recorded for the child's latest plan as JSON."""
     import week_plan as wp  # noqa: E402
@@ -357,6 +406,12 @@ if __name__ == "__main__":
 
     elif cmd == "expire_plan":
         expire_plan(sys.argv[2])
+
+    elif cmd == "fail_job":
+        if len(sys.argv) not in (4, 5):
+            print("Usage: e2e_seed.py fail_job <student_id> <outline|author> [auth|rate_limit]")
+            sys.exit(1)
+        fail_job(*sys.argv[2:])
 
     elif cmd == "loop_events":
         loop_events(sys.argv[2])

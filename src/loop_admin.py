@@ -25,11 +25,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 try:
-    from . import jobs, loop_integration, loop_state, pick_service, print_week, week_plan as wp  # type: ignore
+    from . import job_alerts, jobs, loop_integration, loop_state, pick_service, print_week, week_plan as wp  # type: ignore
     from .candidate_selector import NoCandidates, load_candidate_inputs, select_week_standards  # type: ignore
     from .db_utils import get_db_path  # type: ignore
     from .model_context import build_model_context  # type: ignore
 except ImportError:
+    import job_alerts  # type: ignore
     import jobs  # type: ignore
     import loop_integration  # type: ignore
     import loop_state  # type: ignore
@@ -136,6 +137,19 @@ def _actions(plan: wp.WeekPlan | None) -> list[dict[str, Any]]:
     ]
 
 
+# What the operator should do about a failure, by the exception class in ``last_error``.
+AUTH_HINT = (
+    "The model key was rejected. Replace OPENROUTER_API_KEY in /srv/curriculum/.env "
+    "and recreate the app and worker containers."
+)
+_HINTS = {"LLMAuthError": AUTH_HINT}
+
+
+def _hint(last_error: str | None) -> str | None:
+    """A plain next step for a known error class, or None."""
+    return _HINTS.get(job_alerts.error_class(last_error))
+
+
 def _plan_jobs(conn: sqlite3.Connection, plan_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         "SELECT id, kind, state, attempts, max_attempts, last_error, run_after FROM jobs "
@@ -147,6 +161,7 @@ def _plan_jobs(conn: sqlite3.Connection, plan_id: str) -> list[dict[str, Any]]:
         {
             "id": r[0], "kind": r[1], "state": r[2], "attempts": r[3], "max_attempts": r[4],
             "last_error": (r[5] or "")[:300] or None, "run_after": r[6],
+            "hint": _hint(r[5]),
         }
         for r in rows
     ]  # fmt: skip
@@ -160,6 +175,7 @@ def _plan_view(conn: sqlite3.Connection, plan: wp.WeekPlan) -> dict[str, Any]:
         "picked_option": plan.picked_option,
         "packet_id": plan.packet_id,
         "needs_attention": plan.needs_attention,
+        "attention_reason": plan.attention_reason,
         "pick_deadline": plan.pick_deadline,
         "outlines": [
             {
@@ -212,7 +228,10 @@ def _queue(conn: sqlite3.Connection) -> dict[str, Any]:
         "oldest_ready_wait_s": waited,
         # work is waiting, nothing is running and it has waited a while: the worker may be down
         "worker_may_be_down": bool(st["ready_now"] and not st["running"] and (waited or 0) > 90),
-        "dead": [{**d, "last_error": (d["last_error"] or "")[:300]} for d in st["dead"]],
+        "dead": [
+            {**d, "last_error": (d["last_error"] or "")[:300], "hint": _hint(d["last_error"])}
+            for d in st["dead"]
+        ],
     }
 
 
@@ -295,9 +314,12 @@ def _next_monday(latest_week: str | None) -> str:
 
 
 def _ensure_job_runs(conn: sqlite3.Connection, job: jobs.Job) -> None:
-    """A job that gave up is put back in the queue; one already waiting or running is left alone."""
+    """A job that gave up is put back in the queue; one already waiting or running is left alone.
+    Either way the operator is working on the week, so its "needs attention" flag comes off."""
     if job.state == "dead":
-        jobs.retry_dead(conn, job.id)
+        loop_integration.retry_dead_job(conn, job.id)
+    elif job.payload.get("plan_id"):
+        loop_integration.clear_attention(conn, job.family_id, job.payload["plan_id"])
 
 
 def _require(plan: wp.WeekPlan | None, *statuses: str) -> wp.WeekPlan:
@@ -413,7 +435,7 @@ def retry_job(job_id: int):
         job = jobs.get_job(conn, job_id)
         if job is None or job.family_id != FAMILY:
             raise _refuse(404, "No such job.")
-        if not jobs.retry_dead(conn, job_id):
+        if not loop_integration.retry_dead_job(conn, job_id):
             raise _refuse(409, "Only a job that gave up can be retried.")
         return {"queue": _queue(conn)}
     finally:

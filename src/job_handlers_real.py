@@ -28,7 +28,16 @@ logger = logging.getLogger(__name__)
 
 class AuthoringFailed(RuntimeError):
     """The week did not come out valid or did not save. The text is the status code only: the
-    validation errors can quote the child's lesson content, so they stay in the run record."""
+    validation errors can quote the child's lesson content, so they stay in the run record.
+
+    When a model error ended the run, ``error_class`` is that error's class name (it becomes the
+    job's ``last_error`` class, e.g. ``LLMAuthError: provider_error``) and ``permanent`` says
+    whether retrying can help (a rejected key cannot be fixed by waiting)."""
+
+    def __init__(self, status: str, *, error_class: str | None = None, permanent: bool = False):
+        super().__init__(status)
+        self.error_class = error_class
+        self.permanent = permanent
 
 
 def _llm_client():
@@ -97,7 +106,9 @@ def author(ctx: JobContext) -> None:
                 db_path=ctx.db_path,
             )
             if not (result.ok and result.saved):
-                raise AuthoringFailed(result.status)
+                raise AuthoringFailed(
+                    result.status, error_class=result.error_class, permanent=result.permanent
+                )
         res = loop_state.advance(
             conn,
             family_id,

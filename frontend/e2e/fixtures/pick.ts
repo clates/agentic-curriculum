@@ -78,6 +78,19 @@ export async function planOf(request: APIRequestContext, id: string): Promise<Pl
   return res.json();
 }
 
+/**
+ * Run the child's outline or author job once through the REAL worker with a model error: `auth`
+ * (a rejected key) goes dead on the first attempt and flags the week; `rate_limit` is retried
+ * later (queued, nothing flagged).
+ */
+export function failJob(
+  id: string,
+  kind: 'outline' | 'author',
+  error: 'auth' | 'rate_limit' = 'auth'
+): void {
+  seed('fail_job', id, kind, error);
+}
+
 export function expirePlan(id: string): void {
   seed('expire_plan', id);
 }

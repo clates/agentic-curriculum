@@ -8,6 +8,7 @@ Lifecycle::
     queued --claim--> running --complete--> succeeded
                          |--fail (attempts left)--> queued   (run_after = backoff + jitter)
                          |--fail (out of attempts)--> dead   (quarantined; one alert)
+                         |--fail (permanent: retrying cannot help)--> dead on the first attempt
                          |--lease expired (worker died)--> queued, or dead if out of attempts
     dead --retry_dead--> queued (attempts reset)             (the operator's decision)
 
@@ -41,6 +42,26 @@ LAST_ERROR_MAX = 2000
 
 # Called (job) after a job turns dead (the worker logs it; the email digest is job_alerts.send_digest).
 DeadHook = Callable[["Job"], None]
+
+
+class PermanentJobError(Exception):
+    """Raise from a handler when running the job again cannot succeed until a person changes
+    something (a rejected key, a request the provider refuses). The job goes straight to dead."""
+
+    permanent = True
+
+
+def is_permanent(exc: BaseException) -> bool:
+    """True when ``exc`` says retrying is pointless: a truthy ``permanent`` attribute. The model
+    layer's LLMAuthError and LLMBadRequest carry it. Messages are never inspected."""
+    return bool(getattr(exc, "permanent", False))
+
+
+def describe_error(exc: BaseException) -> str:
+    """The text stored as ``last_error``: ``Class: message``. A handler that only has a status code
+    (the author handler, whose messages could quote lesson content) can set ``error_class`` so the
+    class that matters is the one recorded."""
+    return f"{getattr(exc, 'error_class', None) or type(exc).__name__}: {exc}"
 
 
 def family_hash(family_id: str) -> str:
@@ -293,8 +314,10 @@ def fail(
     backoff_base: float = BACKOFF_BASE_SECONDS,
     backoff_cap: float = BACKOFF_CAP_SECONDS,
     on_dead: DeadHook | None = None,
+    permanent: bool = False,
 ) -> str | None:
-    """Record a failed attempt. Returns the new state ('queued' or 'dead'), None if lease lost."""
+    """Record a failed attempt. Returns the new state ('queued' or 'dead'), None if lease lost.
+    ``permanent=True`` skips the remaining attempts: the job is dead now."""
     now = now or utcnow()
     _begin(conn)
     try:
@@ -306,7 +329,7 @@ def fail(
         if row is None:
             conn.rollback()
             return None
-        if row["attempts"] >= row["max_attempts"]:
+        if permanent or row["attempts"] >= row["max_attempts"]:
             _mark_dead(conn, job_id, error, now)
             new_state = "dead"
         else:

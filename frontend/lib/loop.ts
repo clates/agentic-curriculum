@@ -24,6 +24,8 @@ export interface LoopJob {
   attempts: number;
   max_attempts: number;
   last_error: string | null;
+  /** A plain next step for the operator, for error classes we know (a rejected model key). */
+  hint: string | null;
 }
 
 export interface LoopIdea {
@@ -40,6 +42,8 @@ export interface LoopPlan {
   status: string;
   picked_option: string | null;
   packet_id: string | null;
+  needs_attention: boolean;
+  attention_reason: string | null;
   outlines: LoopIdea[];
   jobs: LoopJob[];
 }
@@ -58,7 +62,13 @@ export interface LoopQueue {
   ready_now: number;
   running: number;
   worker_may_be_down: boolean;
-  dead: { id: number; kind: string; attempts: number; last_error: string }[];
+  dead: {
+    id: number;
+    kind: string;
+    attempts: number;
+    last_error: string;
+    hint: string | null;
+  }[];
 }
 
 export interface LoopOverview {

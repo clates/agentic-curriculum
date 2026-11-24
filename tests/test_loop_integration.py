@@ -277,3 +277,160 @@ def test_seed_demo_and_start_week_are_safe_to_repeat_and_carry_no_real_data(conn
     assert loop_integration.next_monday(date(2026, 1, 12)) == "2026-01-19"  # Monday
     with pytest.raises(SystemExit):
         loop_integration.start_week(conn, "nobody", "2026-01-12")
+
+
+# --- a job that dies flags the week; a retry or a success clears it ----------------------------
+
+
+def _jobs(conn, kind):
+    return conn.execute(
+        "SELECT id, state, attempts, last_error FROM jobs WHERE kind=?", (kind,)
+    ).fetchall()
+
+
+def _card(conn):
+    from datetime import date
+
+    import this_week
+
+    return this_week.this_week_cards(conn, FAM, date(2026, 1, 14))["children"][0]
+
+
+def _picked_plan(conn):
+    plan = plan_at(conn, "awaiting_pick")
+    ls.advance(conn, FAM, plan.plan_id, ls.Event("pick_made", payload={"option_id": "a"}))
+    loop_integration.enqueue_author(conn, FAM, plan.plan_id, "a")
+    return plan
+
+
+def test_a_rejected_key_kills_the_outline_job_at_once_and_flags_the_week(
+    db_path, conn, real_handlers, monkeypatch
+):
+    from llm.errors import LLMAuthError
+
+    plan = plan_at(conn, "outlining")
+    loop_integration.enqueue_outline(conn, FAM, plan.plan_id)
+    provider = ScriptedProvider(LLMAuthError("HTTP 401: User not found"))
+    use_model(real_handlers, monkeypatch, provider)
+    run_worker(db_path, times=4)
+
+    (job,) = _jobs(conn, "outline")
+    assert (job["state"], job["attempts"]) == ("dead", 1)
+    assert job["last_error"].startswith("LLMAuthError")
+    assert len(provider.requests) == 1  # no second try
+    flagged = wp.get_plan(conn, FAM, plan.plan_id)
+    assert flagged.status == "outlining"
+    assert (flagged.needs_attention, flagged.attention_reason) == (True, "outline_failed")
+    card = _card(conn)
+    assert card["next_action"] == "writing" and card["needs_attention"] is True
+
+
+def test_a_rate_limit_retries_and_does_not_flag_the_week(db_path, conn, real_handlers, monkeypatch):
+    from llm.errors import LLMRateLimit
+
+    plan = plan_at(conn, "outlining")
+    loop_integration.enqueue_outline(conn, FAM, plan.plan_id)
+    use_model(real_handlers, monkeypatch, ScriptedProvider(*[LLMRateLimit("429")] * 40))
+    run_worker(db_path, times=1)
+    (job,) = _jobs(conn, "outline")
+    assert (job["state"], job["attempts"]) == ("queued", 1)
+    assert job["last_error"].startswith("LLMRateLimit")
+    assert wp.get_plan(conn, FAM, plan.plan_id).needs_attention is False
+
+
+def test_retrying_the_dead_outline_job_unflags_the_week_and_success_leaves_it_clear(
+    db_path, conn, real_handlers, monkeypatch
+):
+    from llm.errors import LLMAuthError
+
+    plan = plan_at(conn, "outlining")
+    loop_integration.enqueue_outline(conn, FAM, plan.plan_id)
+    use_model(real_handlers, monkeypatch, ScriptedProvider(LLMAuthError("HTTP 401")))
+    run_worker(db_path, times=1)
+    job_id = _jobs(conn, "outline")[0]["id"]
+    assert wp.get_plan(conn, FAM, plan.plan_id).needs_attention
+
+    assert loop_integration.retry_dead_job(conn, job_id)
+    assert not wp.get_plan(conn, FAM, plan.plan_id).needs_attention
+    assert not loop_integration.retry_dead_job(conn, job_id)  # no longer dead
+
+    use_model(real_handlers, monkeypatch, SmartProvider())  # the key was replaced
+    run_worker(db_path, times=1)
+    done = wp.get_plan(conn, FAM, plan.plan_id)
+    assert done.status == "awaiting_pick" and not done.needs_attention
+
+
+def test_the_worker_retry_command_unflags_the_week(db_path, conn, real_handlers, monkeypatch):
+    from llm.errors import LLMAuthError
+
+    plan = plan_at(conn, "outlining")
+    loop_integration.enqueue_outline(conn, FAM, plan.plan_id)
+    use_model(real_handlers, monkeypatch, ScriptedProvider(LLMAuthError("HTTP 401")))
+    run_worker(db_path, times=1)
+    job_id = _jobs(conn, "outline")[0]["id"]
+    assert wp.get_plan(conn, FAM, plan.plan_id).needs_attention
+    assert worker_mod.main(["--db", db_path, "--retry", str(job_id)]) == 0
+    assert not wp.get_plan(conn, FAM, plan.plan_id).needs_attention
+    assert _jobs(conn, "outline")[0]["state"] == "queued"
+
+
+def test_a_rejected_key_in_the_author_step_is_dead_at_once_and_leaks_no_lesson_text(
+    db_path, conn, real_handlers, monkeypatch
+):
+    from llm.errors import LLMAuthError
+
+    plan = _picked_plan(conn)
+    use_model(
+        real_handlers, monkeypatch, ScriptedProvider(LLMAuthError("HTTP 401: Weather Watchers"))
+    )
+    run_worker(db_path, times=3)
+    (job,) = _jobs(conn, "author")
+    assert (job["state"], job["attempts"]) == ("dead", 1)
+    assert job["last_error"] == "LLMAuthError: provider_error"  # class and status only
+    flagged = wp.get_plan(conn, FAM, plan.plan_id)
+    assert flagged.status == "authoring" and flagged.attention_reason == "author_failed"
+    assert _card(conn)["needs_attention"] is True
+
+    # fixed key + retry: the flag comes off, and the finished week leaves it off
+    assert loop_integration.retry_dead_job(conn, job["id"])
+    assert not wp.get_plan(conn, FAM, plan.plan_id).needs_attention
+    use_model(real_handlers, monkeypatch, ScriptedProvider(text(good_plan()), text(good_week())))
+    run_worker(db_path, times=1)
+    done = wp.get_plan(conn, FAM, plan.plan_id)
+    assert done.status == "ready" and not done.needs_attention
+
+
+def test_a_transient_provider_error_in_the_author_step_still_retries(
+    db_path, conn, real_handlers, monkeypatch
+):
+    from llm.errors import LLMTimeout
+
+    plan = _picked_plan(conn)
+    use_model(real_handlers, monkeypatch, ScriptedProvider(*[LLMTimeout("slow")] * 40))
+    run_worker(db_path, times=1)
+    (job,) = _jobs(conn, "author")
+    assert (job["state"], job["attempts"]) == ("queued", 1)
+    assert job["last_error"] == "LLMTimeout: provider_error"
+    assert not wp.get_plan(conn, FAM, plan.plan_id).needs_attention
+
+
+def test_a_dead_job_that_is_not_the_plans_current_one_flags_nothing(conn):
+    plan = plan_at(conn, "awaiting_pick")  # the outline step is long done
+    job, _ = jobs.enqueue(conn, FAM, "outline", "stale", {"plan_id": plan.plan_id}, max_attempts=1)
+    assert not loop_integration.flag_dead_job(conn, job)
+    ls.advance(conn, FAM, plan.plan_id, ls.Event("pick_made", payload={"option_id": "b"}))
+    other, _ = jobs.enqueue(
+        conn, FAM, "author", "other", {"plan_id": plan.plan_id, "option_id": "a"}
+    )
+    assert not loop_integration.flag_dead_job(conn, other)  # an idea that was not the pick
+    assert not wp.get_plan(conn, FAM, plan.plan_id).needs_attention
+
+
+def test_the_plan_moving_on_clears_a_leftover_flag(conn):
+    plan = plan_at(conn, "outlining")
+    ls.advance(
+        conn, FAM, plan.plan_id, ls.Event("flag_attention", payload={"reason": "outline_failed"})
+    )
+    wp.store_outlines(conn, FAM, plan.plan_id, ideas())
+    ls.advance(conn, FAM, plan.plan_id, ls.Event("outlines_ready"))
+    assert not wp.get_plan(conn, FAM, plan.plan_id).needs_attention

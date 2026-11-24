@@ -328,3 +328,100 @@ def test_status_cli(db, conn):
         timeout=60,
     )
     assert out.returncode == 0 and "queue depth: 1" in out.stdout and "dead:" in out.stdout
+
+
+# --- permanent failures go dead at once; transient ones keep retrying -------------------------
+
+
+def _llm_errors():
+    import llm.errors as e
+
+    return e
+
+
+@pytest.mark.parametrize(
+    "name,permanent",
+    [
+        ("LLMAuthError", True),
+        ("LLMBadRequest", True),
+        ("LLMConfigError", True),
+        ("CostCapExceeded", True),
+        ("LLMRateLimit", False),
+        ("LLMTimeout", False),
+        ("LLMServerError", False),
+        ("LLMConnectionError", False),
+        ("LLMEmptyResponse", False),
+        ("StructuredOutputError", False),
+    ],
+)
+def test_the_model_errors_that_retrying_cannot_fix_are_permanent(name, permanent):
+    e = _llm_errors()
+    cls = getattr(e, name)
+    kw = {"family_id": "f", "spent": 1.0, "cap": 1.0} if name == "CostCapExceeded" else {}
+    assert jobs.is_permanent(cls("boom", **kw)) is permanent
+    assert jobs.is_permanent(RuntimeError("boom")) is False
+    assert jobs.is_permanent(jobs.PermanentJobError("boom")) is True
+
+
+def test_fail_permanent_goes_dead_on_the_first_attempt(conn):
+    jobs.enqueue(conn, FAM, "outline", "k", now=T0)  # 5 attempts allowed
+    j = jobs.claim(conn, "w", lease_seconds=10, now=T0)
+    dead = []
+    state = jobs.fail(
+        conn, j.id, "w", "LLMAuthError: HTTP 401", now=T0, permanent=True, on_dead=dead.append
+    )
+    after = jobs.get_job(conn, j.id)
+    assert state == "dead" and after.state == "dead" and after.attempts == 1
+    assert after.last_error == "LLMAuthError: HTTP 401" and after.finished_at
+    assert [d.id for d in dead] == [j.id]
+
+
+def test_fail_not_permanent_still_backs_off(conn):
+    jobs.enqueue(conn, FAM, "outline", "k", now=T0)
+    j = jobs.claim(conn, "w", lease_seconds=10, now=T0)
+    assert jobs.fail(conn, j.id, "w", "LLMRateLimit: 429", now=T0, rng=random.Random(1)) == "queued"
+    after = jobs.get_job(conn, j.id)
+    assert after.state == "queued" and jobs.parse_iso(after.run_after) > T0
+
+
+def _run_failing_job(db, conn, registry, exc):
+    @job_registry.handler("outline")
+    def boom(ctx):
+        raise exc
+
+    jobs.enqueue(conn, FAM, "outline", "k")
+    w = worker_mod.Worker(db, poll_seconds=0.01, backoff_base=60)
+    w.run_once()
+    row = conn.execute("SELECT state, attempts, last_error, run_after FROM jobs").fetchone()
+    w.conn.close()
+    return row
+
+
+def test_a_rejected_key_is_dead_after_one_attempt_with_the_class_recorded(db, conn, registry):
+    e = _llm_errors()
+    row = _run_failing_job(db, conn, registry, e.LLMAuthError("HTTP 401: User not found"))
+    assert (row["state"], row["attempts"]) == ("dead", 1)
+    assert row["last_error"].startswith("LLMAuthError: ")
+
+
+def test_a_bad_request_is_dead_after_one_attempt(db, conn, registry):
+    row = _run_failing_job(db, conn, registry, _llm_errors().LLMBadRequest("HTTP 400"))
+    assert (row["state"], row["attempts"]) == ("dead", 1)
+
+
+def test_an_explicit_permanent_error_is_dead_after_one_attempt(db, conn, registry):
+    row = _run_failing_job(db, conn, registry, jobs.PermanentJobError("nope"))
+    assert (row["state"], row["attempts"]) == ("dead", 1)
+    assert row["last_error"] == "PermanentJobError: nope"
+
+
+@pytest.mark.parametrize(
+    "name", ["LLMRateLimit", "LLMTimeout", "LLMServerError", "LLMConnectionError"]
+)
+def test_transient_model_errors_still_retry_with_backoff(db, conn, registry, name):
+    e = _llm_errors()
+    before = datetime.now(UTC)
+    row = _run_failing_job(db, conn, registry, getattr(e, name)("HTTP 429 slow down"))
+    assert (row["state"], row["attempts"]) == ("queued", 1)
+    assert row["last_error"].startswith(f"{name}: ")
+    assert jobs.parse_iso(row["run_after"]) > before + timedelta(seconds=25)  # backed off

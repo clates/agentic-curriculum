@@ -176,3 +176,20 @@ def test_digest_is_rate_limited_in_the_worker(db, conn, registry, mail):
     kill(conn, "k2")
     w._digest()  # inside the 15 minute window: held back
     assert len(mail) == 1
+
+
+def test_a_permanent_failure_is_reported_with_its_class_and_one_attempt(conn, mail, registry):
+    from llm.errors import LLMAuthError
+
+    @job_registry.handler("outline")
+    def boom(ctx):
+        raise LLMAuthError("HTTP 401: User not found")
+
+    jobs.enqueue(conn, FAM, "outline", "k", {"plan_id": "p"})
+    w = worker_mod.Worker(conn.execute("PRAGMA database_list").fetchone()[2], poll_seconds=0.01)
+    w.run_once()
+    w.conn.close()
+    assert job_alerts.send_digest(conn) == 1
+    body = mail[0][1]
+    assert "error=LLMAuthError" in body and "attempts=1/5" in body
+    assert "User not found" not in body and "401" not in body

@@ -200,3 +200,60 @@ def test_every_console_route_needs_a_login_when_login_is_on(db_path, monkeypatch
         assert c.post(f"{BASE}/students/kid/actions/new_week", json={}).status_code == 401
         assert c.post(f"{BASE}/seed-demo").status_code == 401
         assert c.post(f"{BASE}/jobs/1/retry").status_code == 401
+
+
+def test_a_flagged_week_and_a_rejected_key_are_explained_in_the_console(
+    api, db_path, conn, real_handlers, monkeypatch
+):
+    from llm.errors import LLMAuthError
+    from tests.llm_provider_fakes import ScriptedProvider
+
+    act(api, "new_week", week="2026-01-12")
+    act(api, "skip_checkin")
+    use_model(
+        real_handlers, monkeypatch, ScriptedProvider(LLMAuthError("HTTP 401: User not found"))
+    )
+    run_worker(db_path, times=1)
+
+    c = child(api)
+    assert c["plan"]["needs_attention"] is True
+    assert c["plan"]["attention_reason"] == "outline_failed"
+    (job,) = c["plan"]["jobs"]
+    assert (job["state"], job["attempts"]) == ("dead", 1)
+    hint = (
+        "The model key was rejected. Replace OPENROUTER_API_KEY in /srv/curriculum/.env "
+        "and recreate the app and worker containers."
+    )
+    assert job["hint"] == hint
+    assert api.get(f"{BASE}/overview").json()["queue"]["dead"][0]["hint"] == hint
+
+    assert api.post(f"{BASE}/jobs/{job['id']}/retry").status_code == 200  # Retry button
+    c = child(api)
+    assert c["plan"]["needs_attention"] is False and c["plan"]["attention_reason"] is None
+    assert c["plan"]["jobs"][0]["state"] == "queued"
+
+
+def test_other_dead_jobs_get_no_key_hint_and_the_console_actions_unflag(api, conn):
+    act(api, "new_week", week="2026-01-12")
+    act(api, "skip_checkin")
+    job_id = conn.execute("SELECT id FROM jobs WHERE kind='outline'").fetchone()[0]
+    conn.execute("UPDATE jobs SET state='dead', last_error='RuntimeError: x' WHERE id=?", (job_id,))
+    conn.commit()
+    plan = wp.latest_plan_for_student(conn, FAM, "kid")
+    import loop_state as ls
+
+    ls.advance(
+        conn, FAM, plan.plan_id, ls.Event("flag_attention", payload={"reason": "outline_failed"})
+    )
+    c = child(api)
+    assert c["plan"]["needs_attention"] and c["plan"]["jobs"][0]["hint"] is None
+    act(api, "generate_ideas")  # "Generate ideas" on the stuck week
+    c = child(api)
+    assert not c["plan"]["needs_attention"] and c["plan"]["jobs"][0]["state"] == "queued"
+
+    # author side: Author now clears too
+    ls.advance(
+        conn, FAM, plan.plan_id, ls.Event("flag_attention", payload={"reason": "author_failed"})
+    )
+    assert child(api)["plan"]["needs_attention"]
+    ls.advance(conn, FAM, plan.plan_id, ls.Event("flag_attention", payload={"reason": "x"}))
