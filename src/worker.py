@@ -96,6 +96,14 @@ class Worker:
     def _on_dead(self, job: jobs.Job) -> None:
         # The log line is the always-on alert. The email (job_alerts.send_digest) is batched.
         logger.error("job %s (%s) is DEAD after %s attempts", job.id, job.kind, job.attempts)
+        try:  # the parent's card must stop saying "writing": flag the week
+            try:
+                from . import loop_integration  # type: ignore
+            except ImportError:
+                import loop_integration  # type: ignore
+            loop_integration.flag_dead_job(self.conn, job)
+        except Exception:  # never let flagging stop the worker
+            logger.exception("could not flag the week for dead job %s", job.id)
 
     def _digest(self) -> None:
         """Email newly dead jobs as one message, at most once per DIGEST_SECONDS."""
@@ -178,13 +186,17 @@ class Worker:
                 logger.warning("job %s finished but its lease was lost", job.id)
         else:
             logger.warning("job %s failed: %s: %s", job.id, type(err).__name__, err)
+            permanent = jobs.is_permanent(err)
+            if permanent:
+                logger.error("job %s failed permanently, not retrying", job.id)
             jobs.fail(
                 self.conn,
                 job.id,
                 self.worker_id,
-                f"{type(err).__name__}: {err}",
+                jobs.describe_error(err),
                 backoff_base=self.backoff_base,
                 on_dead=self._on_dead,
+                permanent=permanent,
             )
 
     def _heartbeat(self, job_id: int, lease_lost: threading.Event) -> bool:
@@ -261,8 +273,12 @@ def main(argv: list[str] | None = None) -> int:
         _print_status(db_path, args.json)
         return 0
     if args.retry is not None:
+        try:
+            from . import loop_integration  # type: ignore
+        except ImportError:
+            import loop_integration  # type: ignore
         conn = jobs.connect(db_path)
-        ok = jobs.retry_dead(conn, args.retry)
+        ok = loop_integration.retry_dead_job(conn, args.retry)
         conn.close()
         print("requeued" if ok else f"job {args.retry} is not dead (nothing changed)")
         return 0 if ok else 1

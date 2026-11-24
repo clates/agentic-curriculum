@@ -53,6 +53,59 @@ def enqueue_author(conn: sqlite3.Connection, family_id: str, plan_id: str, optio
     )[0]
 
 
+# --- a job that died: flag the week so the parent is not left staring at "writing" -------------
+
+DEAD_REASONS = {"outline": "outline_failed", "author": "author_failed"}
+
+
+def flag_dead_job(conn: sqlite3.Connection, job: jobs.Job) -> bool:
+    """A dead outline or author job leaves its week stuck: flag it (``needs_attention``) so the
+    parent's card says we hit a problem. Only the plan's current job counts: a dead job for an
+    idea that was not the pick, or a plan that already moved on, is stale and flags nothing.
+    Returns whether the week was flagged. Never raises for a missing plan."""
+    reason = DEAD_REASONS.get(job.kind)
+    plan_id = job.payload.get("plan_id")
+    if reason is None or not plan_id:
+        return False
+    try:
+        plan = wp.get_plan(conn, job.family_id, plan_id)
+    except wp.PlanNotFound:
+        return False
+    if job.kind == "outline" and plan.status != "outlining":
+        return False
+    if job.kind == "author" and (
+        plan.status != "authoring" or plan.picked_option != job.payload.get("option_id")
+    ):
+        return False
+    res = loop_state.advance(
+        conn, job.family_id, plan_id, loop_state.Event("flag_attention", payload={"reason": reason})
+    )
+    return res.applied
+
+
+def clear_attention(conn: sqlite3.Connection, family_id: str, plan_id: str) -> None:
+    """The problem is being fixed (a retry, an operator action): take the flag off. A no-op when
+    there is none."""
+    try:
+        loop_state.advance(conn, family_id, plan_id, loop_state.Event("clear_attention"))
+    except wp.PlanNotFound:
+        pass
+
+
+def retry_dead_job(conn: sqlite3.Connection, job_id: int) -> bool:
+    """``jobs.retry_dead`` plus un-flagging the week the job belongs to. Use this, not
+    ``jobs.retry_dead``, from the console and the CLI."""
+    job = jobs.get_job(conn, job_id)
+    if job is None or job.state != "dead":
+        return False
+    plan_id = job.payload.get("plan_id")
+    # Clear first: once the job is queued a worker can fail it again at once, and that new
+    # failure must flag the week after this clear, not be wiped by it.
+    if plan_id and job.kind in DEAD_REASONS:
+        clear_attention(conn, job.family_id, plan_id)
+    return jobs.retry_dead(conn, job_id)
+
+
 def _open() -> sqlite3.Connection:
     return jobs.connect(get_db_path())
 

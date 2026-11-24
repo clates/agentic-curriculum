@@ -124,6 +124,15 @@ function ChildCard({ child }: { child: LoopChild }) {
         </p>
       </div>
 
+      {plan?.needs_attention && (
+        <p
+          data-testid="loop-attention"
+          className="rounded-md border border-secondary-500 bg-secondary-100 px-3 py-2 text-sm font-medium text-neutral-900"
+        >
+          Needs attention: {plan.attention_reason ?? 'unspecified'}
+        </p>
+      )}
+
       <Stepper steps={child.steps} />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -191,6 +200,11 @@ function ChildCard({ child }: { child: LoopChild }) {
               <Badge variant={j.state === 'dead' ? 'warning' : 'default'}>{j.state}</Badge> #{j.id}{' '}
               {j.kind} · attempt {j.attempts}/{j.max_attempts}
               {j.last_error ? ` · ${j.last_error}` : ''}
+              {j.hint && (
+                <p data-testid="loop-hint" className="mt-1 font-medium text-neutral-900">
+                  {j.hint}
+                </p>
+              )}
               {j.state === 'dead' && (
                 <Button
                   size="sm"
@@ -300,7 +314,9 @@ export function LoopConsole() {
           <ul className="space-y-1 text-sm text-neutral-800">
             {data.queue.dead.map((d) => (
               <li key={d.id}>
-                #{d.id} {d.kind} · {d.attempts} attempts · {d.last_error}
+                #{d.id} {d.kind} · {d.attempts} {d.attempts === 1 ? 'attempt' : 'attempts'} ·{' '}
+                {d.last_error}
+                {d.hint && <span className="block font-medium text-neutral-900">{d.hint}</span>}
               </li>
             ))}
           </ul>

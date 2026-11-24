@@ -7,7 +7,9 @@ States live on ``week_plan.status``. Each transition is a compare-and-set on
 - A replay is a no-op: the same event key seen before, or a transition event whose target is the
   state the plan is already in (with the same payload). ``AdvanceResult.applied`` says which.
 - ``needs_attention`` is a flag, not a state: ``flag_attention`` / ``clear_attention`` work in
-  every state and never move ``status``.
+  every state and never move ``status``. Any applied transition clears the flag: a plan that
+  moved on is no longer stuck (a week flagged because its job died is not left flagged once the
+  retried job gets it to the next state).
 
     awaiting_feedback --feedback_submitted--> outlining --outlines_ready--> awaiting_pick
     awaiting_pick --pick_made--> authoring --authoring_done--> ready --marked_printed--> printed
@@ -143,6 +145,7 @@ def advance(conn: sqlite3.Connection, family_id: str, plan_id: str, event: Event
                 updates = {"needs_attention": 0, "attention_reason": None}
         else:
             to_status, updates = _validate(plan, event)
+            updates.update(needs_attention=0, attention_reason=None)
 
         sets = {"status": to_status, "updated_at": utc_now(), **updates}
         assignments = ", ".join(f"{col}=?" for col in sets)

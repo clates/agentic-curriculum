@@ -76,6 +76,30 @@ Every dead job is logged at ERROR the moment it dies. The email is one digest, s
 15 minutes, listing each newly dead job once (a failed send is retried next time). A line reads
 `job=12 kind=author family=ab12cd34 attempts=5/5 error=TimeoutError`: no child data, no error text. Map the hash by computing `sha256(JOB_ALERT_SALT + family_id)[:8]`.
 
+## When an outline or author job dies
+
+**Retried or not.** A failure that waiting cannot fix goes `dead` on the first attempt, with the
+error class in `last_error`: a rejected model key (`LLMAuthError`, HTTP 401/403), a request the
+provider refuses (`LLMBadRequest`, other 4xx), missing model configuration (`LLMConfigError`) and
+a reached monthly spend cap (`CostCapExceeded`). Rate limits, timeouts, 5xx, dropped connections,
+empty replies and output that fails validation are transient: they keep the backoff above. For
+the author job `last_error` is `<class>: provider_error` (class and status only, never lesson text).
+
+**What the parent sees.** The week is flagged `needs_attention` (reason `outline_failed` or
+`author_failed`), and the This week card changes from "Writing ...'s next week" to "We hit a
+problem writing ...'s week. We're on it. You don't need to do anything." with no button.
+
+**What the console shows (`/loop`).** A "Needs attention: outline_failed" line on the child, the
+dead job with its attempt count and error class, and, for `LLMAuthError`, the hint "The model key
+was rejected. Replace OPENROUTER_API_KEY in /srv/curriculum/.env and recreate the app and worker
+containers." (The key is read when the containers start, so a recreate is needed.)
+
+**Clearing it.** Fix the cause, then any of: the console Retry button, `python -m worker --retry
+<id>`, or the console's Generate ideas / Author now. Each puts the dead job back with a fresh
+attempt budget and takes the flag off. The flag also comes off by itself when the plan moves on
+(outlines ready, week authored). If the retried job dies again the week is flagged again. A dead
+job for a week that has since moved on (another idea was picked) flags nothing.
+
 ## The weekly loop on the server
 
 The `worker` service in `deploy/docker-compose.yml` runs `python -m worker --scheduler` from the
