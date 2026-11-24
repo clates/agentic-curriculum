@@ -230,8 +230,7 @@ def _env(db, **extra):
         PYTHONPATH=f"{ROOT / 'src'}{os.pathsep}{ROOT / 'tests'}",
         CURRICULUM_DB_PATH=db,
         WORKER_HANDLER_MODULES="_loop_test_handlers",
-        NTFY_URL="",
-        JOB_ALERTS_ENABLED="",
+        ALERT_EMAIL_TO="",
     )
     env.update(extra)
     return env
