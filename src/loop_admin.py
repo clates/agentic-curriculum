@@ -26,6 +26,7 @@ from pydantic import BaseModel
 
 try:
     from . import jobs, loop_integration, loop_state, pick_service, print_week, week_plan as wp  # type: ignore
+    from . import week_review  # type: ignore
     from .candidate_selector import NoCandidates, load_candidate_inputs, select_week_standards  # type: ignore
     from .db_utils import get_db_path  # type: ignore
     from .model_context import build_model_context  # type: ignore
@@ -36,6 +37,7 @@ except ImportError:
     import pick_service  # type: ignore
     import print_week  # type: ignore
     import week_plan as wp  # type: ignore
+    import week_review  # type: ignore
     from candidate_selector import NoCandidates, load_candidate_inputs, select_week_standards  # type: ignore
     from db_utils import get_db_path  # type: ignore
     from model_context import build_model_context  # type: ignore
@@ -117,7 +119,7 @@ def _actions(plan: wp.WeekPlan | None) -> list[dict[str, Any]]:
             "Skip check-in",
             status == "awaiting_feedback",
             "Only while the week waits for a check-in.",
-        ),  # fmt: skip
+        ),
         _action(
             "generate_ideas",
             "Fresh ideas" if status in ("awaiting_pick", "expired") else "Generate ideas",
@@ -130,7 +132,7 @@ def _actions(plan: wp.WeekPlan | None) -> list[dict[str, Any]]:
             "Author now",
             status == "authoring",
             "Only after an idea is picked and before the week is ready.",
-        ),  # fmt: skip
+        ),
         _action("mark_printed", "Mark printed", status == "ready", "Only once the week is ready."),
         _action("reset_weeks", "Reset this child's weeks", plan is not None, "No weeks yet."),
     ]
@@ -145,14 +147,57 @@ def _plan_jobs(conn: sqlite3.Connection, plan_id: str) -> list[dict[str, Any]]:
     ).fetchall()
     return [
         {
-            "id": r[0], "kind": r[1], "state": r[2], "attempts": r[3], "max_attempts": r[4],
-            "last_error": (r[5] or "")[:300] or None, "run_after": r[6],
+            "id": r[0],
+            "kind": r[1],
+            "state": r[2],
+            "attempts": r[3],
+            "max_attempts": r[4],
+            "last_error": (r[5] or "")[:300] or None,
+            "run_after": r[6],
         }
         for r in rows
-    ]  # fmt: skip
+    ]
+
+
+def _skill_info(conn: sqlite3.Connection, ids) -> dict[str, dict[str, str]]:
+    """Standard id -> {subject, description}, for showing which skills an idea or a week carries."""
+    ids = list(dict.fromkeys(ids))
+    if not ids:
+        return {}
+    marks = ",".join("?" * len(ids))
+    try:
+        rows = conn.execute(
+            f"SELECT standard_id, subject, description FROM standards WHERE standard_id IN ({marks})",  # noqa: S608
+            ids,
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r[0]: {"subject": r[1] or "", "description": r[2] or ""} for r in rows}
+
+
+def _idea(o, info: dict[str, dict[str, str]]) -> dict[str, Any]:
+    return {
+        "option_id": o.option_id,
+        "title": o.title,
+        "hook": o.hook,
+        "topic": o.topic,
+        "activities": getattr(o, "activities", None),
+        "effort": getattr(o, "effort", None),
+        "skill_names": list(getattr(o, "skills", None) or []),
+        "skills": [
+            {
+                "id": s,
+                "subject": info.get(s, {}).get("subject", ""),
+                "description": info.get(s, {}).get("description", ""),
+            }
+            for s in o.standard_ids
+        ],
+    }
 
 
 def _plan_view(conn: sqlite3.Connection, plan: wp.WeekPlan) -> dict[str, Any]:
+    options = plan.outlines.options if plan.outlines else []
+    info = _skill_info(conn, [s for o in options for s in o.standard_ids])
     return {
         "plan_id": plan.plan_id,
         "week_start": plan.week_start,
@@ -161,18 +206,55 @@ def _plan_view(conn: sqlite3.Connection, plan: wp.WeekPlan) -> dict[str, Any]:
         "packet_id": plan.packet_id,
         "needs_attention": plan.needs_attention,
         "pick_deadline": plan.pick_deadline,
-        "outlines": [
-            {
-                "option_id": o.option_id,
-                "title": o.title,
-                "hook": o.hook,
-                "topic": o.topic,
-                "skills": len(o.standard_ids),
-            }
-            for o in (plan.outlines.options if plan.outlines else [])
-        ],
+        "outlines": [_idea(o, info) for o in options],
         "jobs": _plan_jobs(conn, plan.plan_id),
     }
+
+
+def _grade(conn: sqlite3.Connection, student_id: str) -> int | None:
+    """The grade the engine and the author use (from the profile, the last week, or the birthday)."""
+    row = conn.execute(
+        "SELECT metadata_blob, plan_rules_blob FROM student_profiles WHERE family_id=? AND student_id=?",
+        (FAMILY, student_id),
+    ).fetchone()
+    if row is None:
+        return None
+    try:
+        return build_model_context(
+            row[0],
+            row[1],
+            fallback_grade=pick_service._latest_packet_grade(conn, FAMILY, student_id),
+        ).grade
+    except Exception:  # an incomplete profile: show no grade rather than fail the page
+        return None
+
+
+def _weeks(conn: sqlite3.Connection, student_id: str, limit: int = 6) -> list[dict[str, Any]]:
+    """The child's recent weeks, newest first, so an earlier week can still be reviewed."""
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT * FROM week_plan WHERE family_id=? AND student_id=? ORDER BY week_start DESC LIMIT ?",
+        (FAMILY, student_id, limit),
+    ).fetchall()
+    out = []
+    for r in rows:
+        p = wp.row_to_plan(r)
+        picked = None
+        if p.outlines and p.picked_option:
+            try:
+                picked = p.outlines.get(p.picked_option).title
+            except KeyError:
+                picked = None
+        out.append(
+            {
+                "plan_id": p.plan_id,
+                "week_start": p.week_start,
+                "status": p.status,
+                "picked_title": picked,
+                "packet_id": p.packet_id,
+            }
+        )
+    return out
 
 
 def _child(conn: sqlite3.Connection, student_id: str, metadata_blob: str | None) -> dict[str, Any]:
@@ -181,8 +263,10 @@ def _child(conn: sqlite3.Connection, student_id: str, metadata_blob: str | None)
     return {
         "student_id": student_id,
         "name": (meta.get("name") or student_id).split()[0],
-        "grade": meta.get("grade_level"),
+        "grade": _grade(conn, student_id),
+        "demo": student_id == loop_integration.DEMO_STUDENT,
         "plan": _plan_view(conn, plan) if plan else None,
+        "weeks": _weeks(conn, student_id),
         "steps": _steps(plan.status if plan else None),
         "actions": _actions(plan),
     }
@@ -286,6 +370,77 @@ def feed_forward(student_id: str, week: str | None = None):
         conn.close()
 
 
+def _run_record(packet_id: str) -> dict[str, Any] | None:
+    """The authoring run record saved next to the week (cost, model, rewrites), if there is one."""
+    import json as _json
+    import os as _os
+
+    try:
+        from authoring.pipeline import _runs_dir  # type: ignore
+    except ImportError:  # pragma: no cover - package-relative import in some contexts
+        from .authoring.pipeline import _runs_dir  # type: ignore
+    name = _os.path.basename(packet_id)  # never a path from the request
+    path = _os.path.join(_runs_dir(), f"{name}.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return _json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+@router.get("/students/{student_id}/weeks/{plan_id}/review")
+def review(student_id: str, plan_id: str):
+    """Is this week well formed and well curated? Facts and flags from the saved week, no model call."""
+    conn = _open()
+    try:
+        _child_row(conn, student_id)
+        try:
+            plan = wp.get_plan(conn, FAMILY, plan_id)
+        except wp.PlanNotFound as exc:
+            raise _refuse(404, "No such week.") from exc
+        if plan.student_id != student_id:
+            raise _refuse(404, "No such week.")
+        if not plan.packet_id:
+            raise _refuse(409, "This week has not been written yet.")
+        import week_store  # at call time: it snapshots the database path when imported
+
+        week = week_store.get_week(student_id, plan.packet_id, family_id=FAMILY)
+        if week is None:
+            raise _refuse(404, "The written week could not be found.")
+        planned = []
+        if plan.outlines and plan.picked_option:
+            try:
+                planned = list(plan.outlines.get(plan.picked_option).standard_ids)
+            except KeyError:
+                planned = []
+        ids = planned + [s for d in week.days for s in d.standards]
+        result = week_review.review_week(
+            week,
+            grade=_grade(conn, student_id) or 0,
+            skills=_skill_info(conn, ids),
+            planned=planned,
+            run=_run_record(plan.packet_id),
+        ).to_dict()
+        base = f"/api/students/{student_id}/weekly-packets/{plan.packet_id}/print?doc="
+        result.update(
+            plan_id=plan.plan_id,
+            week_start=plan.week_start,
+            status=plan.status,
+            packet_id=plan.packet_id,
+            documents=[
+                {"doc": d, "label": label, "url": base + d}
+                for d, label in (
+                    ("packet", "Student packet"),
+                    ("guide", "Teacher guide"),
+                    ("prep", "Prep sheet"),
+                )
+            ],
+        )
+        return result
+    finally:
+        conn.close()
+
+
 def _next_monday(latest_week: str | None) -> str:
     today = date.today()
     nxt = today + timedelta(days=7 - today.weekday())
@@ -343,9 +498,11 @@ def _run(conn, student_id: str, plan: wp.WeekPlan | None, action: str, body: Act
     elif action == "skip_checkin":
         plan = _require(plan, "awaiting_feedback")
         res = loop_state.advance(
-            conn, FAMILY, plan.plan_id,
+            conn,
+            FAMILY,
+            plan.plan_id,
             loop_state.Event("feedback_submitted", key=f"console:{plan.plan_id}"),
-        )  # fmt: skip
+        )
         loop_integration.enqueue_outline(conn, FAMILY, res.plan.plan_id)
     elif action == "generate_ideas":
         plan = _require(plan, "outlining", "awaiting_pick", "expired")

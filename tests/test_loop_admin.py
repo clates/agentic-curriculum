@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 import jobs
 import loop_integration
+import loop_state as ls
 import scheduler
 import week_plan as wp
 from tests.test_loop_integration import (  # noqa: F401  (fixtures and helpers)
@@ -200,3 +201,53 @@ def test_every_console_route_needs_a_login_when_login_is_on(db_path, monkeypatch
         assert c.post(f"{BASE}/students/kid/actions/new_week", json={}).status_code == 401
         assert c.post(f"{BASE}/seed-demo").status_code == 401
         assert c.post(f"{BASE}/jobs/1/retry").status_code == 401
+
+
+def test_a_written_week_can_be_reviewed_with_its_run_record(api, conn, db_path, monkeypatch):
+    import json as _json
+    import os
+
+    from tests.authoring_fixtures import STANDARDS, good_week
+
+    act(api, "new_week", week="2026-01-12")
+    act(api, "skip_checkin")
+    plan = wp.latest_plan_for_student(conn, FAM, "kid")
+    wp.store_outlines(conn, FAM, plan.plan_id, ideas())
+    ls.advance(conn, FAM, plan.plan_id, ls.Event("outlines_ready"))
+    act(api, "pick", option="a")
+    packet = f"pk_{plan.plan_id}"
+    __import__("importlib").import_module("week_store").save_week("kid", packet, good_week(), grade_level=2, week_of="2026-01-12",
+                                   family_id=FAM)  # fmt: skip
+    ls.advance(conn, FAM, plan.plan_id, ls.Event("authoring_done", payload={"packet_id": packet}))
+    runs = os.environ["AUTHORING_RUNS_DIR"]
+    os.makedirs(runs, exist_ok=True)
+    with open(os.path.join(runs, f"{packet}.json"), "w") as f:
+        _json.dump({"status": "success", "model": "z-ai/glm-5.3", "cost_usd": 0.11, "repairs": 1,
+                    "wall_s": 400, "uncovered_standards": []}, f)  # fmt: skip
+
+    c = child(api)
+    assert c["weeks"][0]["packet_id"] == packet and c["weeks"][0]["status"] == "ready"
+    assert [s["id"] for s in c["plan"]["outlines"][0]["skills"]] == STANDARDS
+    assert c["plan"]["outlines"][0]["skills"][0]["subject"] == "Science"
+    assert c["grade"] == 2 and c["demo"] is False
+
+    r = api.get(f"{BASE}/students/kid/weeks/{plan.plan_id}/review")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["title"] == "Weather Week" and len(body["days"]) == 5 and body["grade"] == 2
+    assert body["run"]["model"] == "z-ai/glm-5.3" and body["run"]["repairs"] == 1
+    assert [d["doc"] for d in body["documents"]] == ["packet", "guide", "prep"]
+    assert body["documents"][0]["url"].endswith(f"/weekly-packets/{packet}/print?doc=packet")
+    assert any("1 rewrite" in f["message"] for f in body["flags"])
+    assert {s["id"] for s in body["skills"]} >= set(STANDARDS)
+    # the links point at the print route the parent's print screen already uses
+    assert all(
+        d["url"].startswith(f"/api/students/kid/weekly-packets/{packet}/print?doc=")
+        for d in body["documents"]
+    )
+
+    assert api.get(f"{BASE}/students/kid/weeks/wp_nope/review").status_code == 404
+    assert api.get(f"{BASE}/students/nobody/weeks/{plan.plan_id}/review").status_code == 404
+    act(api, "new_week", week="2026-01-19")
+    newer = wp.latest_plan_for_student(conn, FAM, "kid")
+    assert api.get(f"{BASE}/students/kid/weeks/{newer.plan_id}/review").status_code == 409
