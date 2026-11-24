@@ -9,9 +9,12 @@ import {
   useLoopOverview,
   useRetryJob,
   useSeedDemo,
+  useWeekReview,
   type LoopAction,
   type LoopChild,
+  type LoopIdea,
   type LoopStep,
+  type WeekReview,
 } from '@/lib/loop';
 
 const STEP_STYLE: Record<LoopStep['state'], string> = {
@@ -54,6 +57,7 @@ function ActionButton({
     <Button
       size="sm"
       variant={action.id === 'reset_weeks' ? 'ghost' : 'secondary'}
+      className="disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-600 disabled:opacity-100"
       disabled={!action.enabled || busy}
       title={action.enabled ? undefined : action.why_not}
       onClick={onRun}
@@ -96,6 +100,221 @@ function FeedForward({ studentId }: { studentId: string }) {
   );
 }
 
+function IdeaDetails({ idea }: { idea: LoopIdea }) {
+  const subjects = Array.from(new Set(idea.skills.map((s) => s.subject).filter(Boolean)));
+  return (
+    <div className="space-y-1 text-neutral-700">
+      <p>
+        {idea.topic}
+        {idea.effort ? ` · ${idea.effort}` : ''}
+      </p>
+      {idea.activities && <p className="text-neutral-800">{idea.activities}</p>}
+      <details>
+        <summary className="cursor-pointer text-neutral-800">
+          {idea.skills.length} {idea.skills.length === 1 ? 'skill' : 'skills'}
+          {subjects.length > 0 ? `: ${subjects.join(', ')}` : ''}
+        </summary>
+        <ul className="mt-1 space-y-1" data-testid="idea-skills">
+          {idea.skills.map((s) => (
+            <li key={s.id}>
+              <span className="font-medium text-neutral-900">{s.subject || s.id}</span>
+              {s.description ? ` · ${s.description}` : ''}
+            </li>
+          ))}
+        </ul>
+        {idea.skill_names.length > 0 && (
+          <p className="mt-1">As the parent sees it: {idea.skill_names.join('; ')}</p>
+        )}
+      </details>
+    </div>
+  );
+}
+
+function level(grade: number | null) {
+  if (grade == null) return '—';
+  return grade <= 0 ? 'K' : grade.toFixed(1).replace(/\.0$/, '');
+}
+
+function minutes(seconds: number | null) {
+  if (seconds == null) return '—';
+  const m = Math.floor(seconds / 60);
+  return `${m}m ${Math.round(seconds % 60)}s`;
+}
+
+function ReviewPanel({ review }: { review: WeekReview }) {
+  const warns = review.flags.filter((f) => f.level === 'warn');
+  const gradeLabel = review.grade === 0 ? 'kindergarten' : `grade ${review.grade}`;
+  const tooHard = (g: number | null, slack: number) => g != null && g > review.grade + slack;
+  return (
+    <div className="space-y-4 rounded-md border border-neutral-300 p-3" data-testid="week-review">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h4 className="text-lg font-semibold text-neutral-900">{review.title}</h4>
+        <Badge variant={warns.length ? 'warning' : 'success'} data-testid="review-verdict">
+          {review.verdict}
+        </Badge>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {review.documents.map((d) => (
+          <a
+            key={d.doc}
+            href={d.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-sm border-2 border-primary-500 px-3 py-1 text-sm font-medium text-primary-700 hover:bg-primary-50"
+          >
+            Open {d.label.toLowerCase()}
+          </a>
+        ))}
+      </div>
+
+      {review.flags.length > 0 && (
+        <section aria-label="Things to check">
+          <h5 className="font-semibold text-neutral-900">Things to check</h5>
+          <ul className="mt-1 space-y-1 text-sm" data-testid="review-flags">
+            {review.flags.map((f, i) => (
+              <li key={i} data-level={f.level} className="flex gap-2">
+                <Badge variant={f.level === 'warn' ? 'warning' : 'default'}>
+                  {f.level === 'warn' ? 'fix' : 'look'}
+                </Badge>
+                <span className="text-neutral-800">{f.message}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section aria-label="Day by day">
+        <h5 className="font-semibold text-neutral-900">Day by day</h5>
+        <p className="text-xs text-neutral-700">
+          Reading levels are estimates (Flesch-Kincaid). The child is {gradeLabel}; a day is about{' '}
+          {review.word_budget} words for that grade.
+        </p>
+        <div className="mt-1 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm" data-testid="review-days">
+            <thead className="text-neutral-700">
+              <tr>
+                <th className="py-1 pr-2 font-medium">Day</th>
+                <th className="py-1 pr-2 font-medium">Lesson</th>
+                <th className="py-1 pr-2 font-medium">Skills</th>
+                <th className="py-1 pr-2 font-medium">Worksheets</th>
+                <th className="py-1 pr-2 font-medium">Words</th>
+                <th className="py-1 pr-2 font-medium">Passage level</th>
+                <th className="py-1 font-medium">Question level</th>
+              </tr>
+            </thead>
+            <tbody className="text-neutral-800">
+              {review.days.map((d) => (
+                <tr key={d.day} className="border-t border-neutral-200 align-top">
+                  <td className="py-1 pr-2 whitespace-nowrap">{d.day.slice(0, 3)}</td>
+                  <td className="py-1 pr-2">{d.title}</td>
+                  <td className="py-1 pr-2">
+                    {d.skills.map((s) => s.subject || s.id).join(', ') || '—'}
+                  </td>
+                  <td className="py-1 pr-2">{d.kinds.join(', ')}</td>
+                  <td
+                    className={`py-1 pr-2 ${d.words > review.word_budget * 1.2 ? 'font-semibold text-primary-700' : ''}`}
+                  >
+                    {d.words}
+                  </td>
+                  <td
+                    className={`py-1 pr-2 ${tooHard(d.passage_grade, 1) ? 'font-semibold text-primary-700' : ''}`}
+                  >
+                    {level(d.passage_grade)}
+                  </td>
+                  <td
+                    className={`py-1 ${tooHard(d.prompt_grade, 1.5) ? 'font-semibold text-primary-700' : ''}`}
+                  >
+                    {level(d.prompt_grade)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-label="Skills">
+        <h5 className="font-semibold text-neutral-900">
+          Skills ({review.subjects.join(', ') || 'none'})
+        </h5>
+        <ul className="mt-1 space-y-1 text-sm text-neutral-800" data-testid="review-skills">
+          {review.skills.map((s) => (
+            <li key={s.id}>
+              <span className="font-medium text-neutral-900">{s.subject || s.id}</span> ·{' '}
+              {s.days.length
+                ? `taught ${s.days.map((d) => d.slice(0, 3)).join(', ')}`
+                : 'not taught'}
+              {s.description ? ` · ${s.description}` : ''}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-1 text-sm text-neutral-700">
+          {review.prep_checks} prep checks for the parent.
+        </p>
+      </section>
+
+      {review.run && (
+        <p className="text-sm text-neutral-700" data-testid="review-run">
+          Written by {review.run.model ?? 'unknown model'} in {minutes(review.run.wall_s)} for $
+          {(review.run.cost_usd ?? 0).toFixed(3)}
+          {review.run.repairs ? ` after ${review.run.repairs} rewrite(s)` : ', no rewrites'} ·{' '}
+          {review.run.status ?? 'unknown'}
+          {review.run.prompt_version ? ` · prompt ${review.run.prompt_version}` : ''}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function WeekReviewLoader({ studentId, planId }: { studentId: string; planId: string }) {
+  const q = useWeekReview(studentId, planId);
+  if (q.isLoading) return <p className="text-sm text-neutral-700">Checking the week…</p>;
+  if (q.isError)
+    return (
+      <p role="alert" className="text-sm font-medium text-primary-700">
+        {errorMessage(q.error)}
+      </p>
+    );
+  return q.data ? <ReviewPanel review={q.data} /> : null;
+}
+
+function RecentWeeks({ child }: { child: LoopChild }) {
+  const [open, setOpen] = useState<string | null>(null);
+  if (!child.weeks?.length) return null;
+  return (
+    <section aria-label={`Weeks for ${child.name}`} className="space-y-2">
+      <h3 className="font-semibold text-neutral-900">Weeks</h3>
+      <ul className="space-y-2 text-sm" data-testid="loop-weeks">
+        {child.weeks.map((w) => (
+          <li key={w.plan_id} data-plan={w.plan_id} className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-neutral-800">
+              <span className="font-medium text-neutral-900">Week of {w.week_start}</span>
+              <Badge variant="default">{w.status}</Badge>
+              {w.picked_title && <span>· {w.picked_title}</span>}
+              {w.packet_id ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  aria-expanded={open === w.plan_id}
+                  onClick={() => setOpen(open === w.plan_id ? null : w.plan_id)}
+                >
+                  {open === w.plan_id ? 'Hide review' : 'Review this week'}
+                </Button>
+              ) : (
+                <span className="text-neutral-700">· not written yet</span>
+              )}
+            </div>
+            {open === w.plan_id && (
+              <WeekReviewLoader studentId={child.student_id} planId={w.plan_id} />
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function ChildCard({ child }: { child: LoopChild }) {
   const act = useLoopAction(child.student_id);
   const retry = useRetryJob();
@@ -111,7 +330,17 @@ function ChildCard({ child }: { child: LoopChild }) {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="min-w-0 text-xl font-semibold text-neutral-900">
           {child.name}
-          {child.grade != null && <span className="text-neutral-700"> · grade {child.grade}</span>}
+          {child.grade != null && (
+            <span className="text-neutral-700">
+              {' '}
+              · {child.grade === 0 ? 'kindergarten' : `grade ${child.grade}`}
+            </span>
+          )}
+          {child.demo && (
+            <Badge variant="default" className="ml-2 align-middle">
+              made-up child
+            </Badge>
+          )}
         </h2>
         <p className="text-sm text-neutral-700">
           {plan ? (
@@ -162,9 +391,7 @@ function ChildCard({ child }: { child: LoopChild }) {
                   {o.option_id.toUpperCase()} · {o.title}
                 </p>
                 <p className="text-neutral-800">{o.hook}</p>
-                <p className="text-neutral-700">
-                  {o.topic} · {o.skills} {o.skills === 1 ? 'skill' : 'skills'}
-                </p>
+                <IdeaDetails idea={o} />
                 {picked ? (
                   <Badge variant="success">picked</Badge>
                 ) : (
@@ -207,6 +434,8 @@ function ChildCard({ child }: { child: LoopChild }) {
       )}
 
       <FeedForward studentId={child.student_id} />
+
+      <RecentWeeks child={child} />
 
       {act.isError && (
         <p role="alert" className="text-sm font-medium text-primary-700">

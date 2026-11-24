@@ -11,6 +11,7 @@ import { expectNoViolations } from '../fixtures/parent';
 import { expectNoHorizontalScroll } from '../fixtures/e2e-hardening';
 import { shot } from '../fixtures/shots';
 import { STUB_FIRST_TITLES, loopEvents, pickChild, planOf } from '../fixtures/pick';
+import { seedWeek } from '../fixtures/api';
 
 const card = (page: Page, id: string) =>
   page.locator(`[data-testid="loop-child"][data-student="${id}"]`);
@@ -71,7 +72,9 @@ test.describe('Loop console', () => {
       await card(page, kid.id).getByRole('button', { name: 'Fresh ideas' }).click();
       if (i === 0) {
         for (const title of STUB_FIRST_TITLES)
-          await expect(card(page, kid.id).getByText(title)).toBeVisible({ timeout: 20_000 });
+          await expect(card(page, kid.id).getByText(title).first()).toBeVisible({
+            timeout: 20_000,
+          });
       }
       await expect(card(page, kid.id).getByText('Working…')).toHaveCount(0, { timeout: 20_000 });
     }
@@ -129,5 +132,62 @@ test.describe('Loop console', () => {
     await page.setViewportSize({ width: 360, height: 800 });
     await expectNoHorizontalScroll(page);
     await shot(page, 'loop-console-phone');
+  });
+
+  test('each idea shows which skills it covers before you pick it', async ({ page, request }) => {
+    const kid = await pickChild(request, 'loopskills', { status: 'awaiting_pick' });
+    await open(page, kid.id);
+    const idea = card(page, kid.id).locator('[data-testid="loop-idea"]').first();
+    await expect(idea).toContainText('Short hands-on tasks');
+    await idea.getByText(/1 skill/).click();
+    await expect(idea.locator('[data-testid="idea-skills"] li')).toHaveCount(1);
+    await expect(idea).toContainText('As the parent sees it: Counting and measuring');
+  });
+
+  test('a written week can be reviewed: verdict, documents, day by day, skills', async ({
+    page,
+    request,
+  }) => {
+    const kid = await pickChild(request, 'loopreview', { status: 'ready' });
+    seedWeek(kid.id, `e2e_${kid.id}`);
+    await open(page, kid.id);
+    const weeks = card(page, kid.id).locator('[data-testid="loop-weeks"]');
+    await expect(weeks).toContainText('Week of');
+    await weeks.getByRole('button', { name: 'Review this week' }).click();
+    const review = card(page, kid.id).locator('[data-testid="week-review"]');
+    await expect(review).toContainText('Weather Week', { timeout: 20_000 });
+    await expect(review.locator('[data-testid="review-verdict"]')).toHaveText(
+      /Looks good|thing(s)? to fix/
+    );
+    await expect(review.locator('[data-testid="review-days"] tbody tr')).toHaveCount(5);
+    await expect(review.locator('[data-testid="review-flags"]')).toContainText('No time estimates');
+    const links = review.getByRole('link', { name: /^Open / });
+    await expect(links).toHaveCount(3);
+    for (const href of await links.evaluateAll((as) => as.map((a) => a.getAttribute('href')))) {
+      const res = await page.request.get(href!);
+      expect(res.status(), href!).toBe(200);
+      expect(await res.text()).toContain('<html');
+    }
+    await shot(page, 'loop-console-review');
+    await weeks.getByRole('button', { name: 'Hide review' }).click();
+    await expect(review).toHaveCount(0);
+  });
+
+  test('the review stays accessible and does not scroll the page sideways on a phone', async ({
+    page,
+    request,
+  }) => {
+    const kid = await pickChild(request, 'loopreviewa11y', { status: 'ready' });
+    seedWeek(kid.id, `e2e_${kid.id}`);
+    await open(page, kid.id);
+    await card(page, kid.id).getByRole('button', { name: 'Review this week' }).click();
+    await expect(card(page, kid.id).locator('[data-testid="week-review"]')).toContainText(
+      'Weather Week',
+      { timeout: 20_000 }
+    );
+    await expectNoViolations(page);
+    await page.setViewportSize({ width: 360, height: 800 });
+    await expectNoHorizontalScroll(page);
+    await shot(page, 'loop-console-review-phone');
   });
 });

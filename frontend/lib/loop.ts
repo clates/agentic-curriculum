@@ -26,12 +26,69 @@ export interface LoopJob {
   last_error: string | null;
 }
 
+export interface LoopSkill {
+  id: string;
+  subject: string;
+  description: string;
+}
+
 export interface LoopIdea {
   option_id: string;
   title: string;
   hook: string;
   topic: string | null;
-  skills: number;
+  activities: string | null;
+  effort: string | null;
+  skill_names: string[];
+  skills: LoopSkill[];
+}
+
+export interface LoopWeek {
+  plan_id: string;
+  week_start: string;
+  status: string;
+  picked_title: string | null;
+  packet_id: string | null;
+}
+
+export interface ReviewFlag {
+  level: 'warn' | 'info';
+  message: string;
+}
+
+export interface ReviewDay {
+  day: string;
+  title: string;
+  skills: { id: string; subject: string }[];
+  kinds: string[];
+  words: number;
+  passage_grade: number | null;
+  prompt_grade: number | null;
+}
+
+export interface WeekReview {
+  plan_id: string;
+  week_start: string;
+  status: string;
+  title: string;
+  grade: number;
+  word_budget: number;
+  verdict: string;
+  days: ReviewDay[];
+  skills: (LoopSkill & { days: string[] })[];
+  subjects: string[];
+  prep_checks: number;
+  flags: ReviewFlag[];
+  documents: { doc: string; label: string; url: string }[];
+  run: {
+    status: string | null;
+    model: string | null;
+    cost_usd: number | null;
+    wall_s: number | null;
+    repairs: number | null;
+    prompt_version: string | null;
+    final_errors: string[];
+  } | null;
 }
 
 export interface LoopPlan {
@@ -48,7 +105,9 @@ export interface LoopChild {
   student_id: string;
   name: string;
   grade: number | null;
+  demo: boolean;
   plan: LoopPlan | null;
+  weeks: LoopWeek[];
   steps: LoopStep[];
   actions: LoopAction[];
 }
@@ -134,5 +193,15 @@ export function useFeedForward(studentId: string, enabled: boolean) {
     enabled,
     queryFn: async () =>
       (await apiClient.get<FeedForward>(`/loop-admin/students/${studentId}/feed-forward`)).data,
+  });
+}
+
+export function useWeekReview(studentId: string, planId: string | null) {
+  return useQuery({
+    queryKey: ['loop-week-review', studentId, planId],
+    enabled: !!planId,
+    queryFn: async () =>
+      (await apiClient.get<WeekReview>(`/loop-admin/students/${studentId}/weeks/${planId}/review`))
+        .data,
   });
 }
