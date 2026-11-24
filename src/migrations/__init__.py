@@ -12,7 +12,8 @@ migration commits.
 
 Number ownership (see the build plan): 0001 baseline, 0002 tenancy, 0003 llm_usage,
 0004 week_documents, 0005 feedback, 0006 week_plan, 0007 loop state, 0008 student FK,
-0011 auth (0009 and 0010 are reserved; the runner applies by version, so gaps are fine).
+0010 job queue + family timezone, 0011 auth (0009 is reserved; the runner applies by version, so
+gaps are fine).
 """
 
 from __future__ import annotations
