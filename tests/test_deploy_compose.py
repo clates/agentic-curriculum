@@ -32,6 +32,22 @@ def test_caddy_service_is_pinned_and_publishes_web_ports():
     assert env_files[0].get("required") is False
 
 
+def test_worker_runs_the_loop_as_appuser_on_the_apps_data_and_stays_off_the_internet():
+    doc = _compose()["services"]
+    worker, app = doc["worker"], doc["app"]
+    assert worker["image"] == app["image"]
+    assert worker["command"] == ["python", "-m", "worker", "--scheduler"]
+    # Not root: root-owned SQLite WAL files in /data would lock the app (uid 1000) out of its DB.
+    assert worker["user"] == "1000:1000"
+    assert "ports" not in worker and worker["restart"] == "unless-stopped"
+    assert worker["env_file"] == app["env_file"]  # the one LOOP_JOBS_ENABLED switch is in .env
+    assert worker["environment"]["CURRICULUM_DB_PATH"] == app["environment"]["CURRICULUM_DB_PATH"]
+    assert worker["environment"]["WORKER_HANDLER_MODULES"] == "job_handlers_real"
+    assert "LOOP_JOBS_ENABLED" not in worker["environment"]  # off until the server's .env says so
+    assert set(worker["volumes"]) >= {v for v in app["volumes"] if "/data" in v}
+    assert worker["stop_grace_period"] == "45s"
+
+
 def test_caddyfile_is_inline_and_proxies_to_the_app():
     doc = _compose()
     caddy = doc["services"]["caddy"]
