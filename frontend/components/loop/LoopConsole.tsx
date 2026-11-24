@@ -109,7 +109,7 @@ function ChildCard({ child }: { child: LoopChild }) {
   return (
     <Card data-testid="loop-child" data-student={child.student_id} className="space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xl font-semibold text-neutral-900">
+        <h2 className="min-w-0 text-xl font-semibold text-neutral-900">
           {child.name}
           {child.grade != null && <span className="text-neutral-700"> · grade {child.grade}</span>}
         </h2>
@@ -254,7 +254,7 @@ export function LoopConsole() {
   const hasDemo = data?.children.some((c) => c.student_id === 'demo_child');
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 [overflow-wrap:anywhere]">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold text-neutral-900">Loop console</h1>
         <p className="max-w-prose text-neutral-800">
