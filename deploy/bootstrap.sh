@@ -191,7 +191,7 @@ else
 # caddy.env (Caddy's own env file; kept separate so the web-facing process never sees this file).
 $DOMAIN_LINES
 
-# Login on, cookies HTTPS-only. Make the first account after the first deploy (see docs/runbook-https.md).
+# Login on, cookies HTTPS-only. Make the first account after the first deploy (see docs/how-to/set-up-a-server.md).
 AUTH_REQUIRED=1
 COOKIE_SECURE=1
 ENVEOF

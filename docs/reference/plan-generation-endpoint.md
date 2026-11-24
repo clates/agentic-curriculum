@@ -1,10 +1,16 @@
-# Plan Generation
+# Single-request plan endpoint
 
-A **plan** (also called a **packet**) is a complete weekly lesson plan for one student in one subject. This document covers how plans are generated, stored, and surfaced in the UI.
+`POST /generate_weekly_plan`: the older, synchronous way to make a plan, used by the **Plans** page
+of the self-hosted web app. It makes one plan for one student, subject and week in a single HTTP
+request. The hosted weekly loop doesn't use it; that is described in
+[The weekly loop](../explanation/the-weekly-loop.md) and
+[Worker and scheduler reference](worker-and-scheduler.md).
+
+Line numbers below were correct when this page was written and may have drifted.
 
 ---
 
-## Concepts
+## Terms
 
 ### Packet
 A packet is the atomic unit of a week's work. It contains:

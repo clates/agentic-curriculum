@@ -91,7 +91,7 @@ async def _lifespan(_app: FastAPI):
     yield
 
 
-# Login (see docs/runbook-auth.md). The gate protects every route except auth.web.PUBLIC_PATHS and
+# Login (see docs/how-to/turn-on-login.md). The gate protects every route except auth.web.PUBLIC_PATHS and
 # does nothing unless AUTH_REQUIRED is on. The interactive docs are not routes the gate can see,
 # so they are simply not served when login is required.
 _docs_off = {"docs_url": None, "redoc_url": None, "openapi_url": None} if auth_required() else {}

@@ -7,7 +7,7 @@ Ensure the worksheet feature ships safely with automated coverage, validation ho
 - Expand `tests/validate_chunk4.py` (and other relevant validators) to assert that worksheet resource payloads and artifact metadata meet the schema from Story 01.
 - Add integration tests that mock LLM outputs end-to-end, verifying that artifacts are generated and referenced correctly.
 - Introduce a feature flag or environment variable (e.g., `ENABLE_WORKSHEETS`) so the feature can be toggled during rollout.
-- Document operational guidance (log locations, artifact cleanup strategy, troubleshooting steps) in `docs/WORKSHEET_REQUEST_SCHEMA.md` or a new ops note.
+- Document operational guidance (log locations, artifact cleanup strategy, troubleshooting steps) in `docs/reference/worksheet-request-schema.md` or a new ops note.
 
 ## Acceptance Criteria
 - `pytest` (or the existing test harness) covers the happy path and failure cases for the full worksheet pipeline.

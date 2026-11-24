@@ -35,7 +35,7 @@ venv/bin/python scripts/generate_data_week_series.py      # -> data_week_series/
 ```
 
 The scripts themselves were written by Claude Code via the `/generate-week` skill. See
-[Make your own week](../README.md#make-your-own-week) in the root README.
+[Get a better week from `/generate-week`](../docs/how-to/write-a-better-week.md).
 
 ## Adding an example
 

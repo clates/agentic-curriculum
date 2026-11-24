@@ -52,7 +52,7 @@ docker compose version --short   # must print 2.24.0 or newer
 
 A fresh Debian/Ubuntu host, a DNS A record and one `.env` is all it takes; nothing is installed by
 hand except Docker, and `bootstrap.sh` installs that too. The short walkthrough is
-`docs/runbook-https.md`. In brief, as root on the new host:
+`docs/how-to/set-up-a-server.md`. In brief, as root on the new host:
 
 ```bash
 git clone https://github.com/clates/agentic-curriculum.git && cd agentic-curriculum
