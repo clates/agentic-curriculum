@@ -76,20 +76,42 @@ Every dead job is logged at ERROR the moment it dies. The email is one digest, s
 15 minutes, listing each newly dead job once (a failed send is retried next time). A line reads
 `job=12 kind=author family=ab12cd34 attempts=5/5 error=TimeoutError`: no child data, no error text. Map the hash by computing `sha256(JOB_ALERT_SALT + family_id)[:8]`.
 
-## Deploying as a second process (card M8.7, not part of this change)
+## The weekly loop on the server
 
-Same image, second compose service, same volume and env as the app, no ports:
+The `worker` service in `deploy/docker-compose.yml` runs `python -m worker --scheduler` from the
+same image, as `appuser`, on the same data volume. It is deployed on every release but **idle**:
+the scheduler and the web app's hooks start only when `LOOP_JOBS_ENABLED=1` is in
+`/srv/curriculum/.env`. Off, nothing is planned or queued and no model call is made.
 
-```yaml
-  worker:
-    image: <same image as app>
-    command: ["python", "-m", "worker", "--scheduler"]
-    environment: [PYTHONPATH=/app/src, CURRICULUM_DB_PATH=/data/curriculum.db, ALERT_EMAIL_TO=<you>, SMTP_HOST=<relay>,
-                  WORKER_HANDLER_MODULES=<real handler modules>]
-    volumes: ["<same data volume as app>:/data"]
-    stop_grace_period: 45s        # above WORKER_SHUTDOWN_GRACE_SECONDS
-    restart: unless-stopped
+Turn it on (one switch, both containers read it):
+
+```bash
+ssh curriculum
+cd /srv/curriculum
+echo 'LOOP_JOBS_ENABLED=1' >> .env
+docker compose --env-file .deploy.env up -d --force-recreate app worker   # a restart does not re-read .env
+docker compose --env-file .deploy.env logs --tail 20 worker               # expect: handler outline real, handler author real
 ```
+
+Turn it off by deleting the line and recreating. Jobs already queued stay queued.
+
+What it does once on: Friday 00:00 local it makes next week's plan for each child; a check-in
+queues the outlines at once (Saturday 10:00 does it for a family that skipped); the parent picks
+one of three ideas (or, at Sunday 12:00, one is picked for them); the author writes, validates and
+saves the week; the plan becomes `ready` and the print screen shows it. Notices (`send_notice`) are
+still a stub that logs: no parent is emailed.
+
+Try it without waiting for Friday, with a made-up child (no real data):
+
+```bash
+docker compose --env-file .deploy.env exec -u appuser worker python -m loop_integration seed-demo
+docker compose --env-file .deploy.env exec -u appuser worker python -m loop_integration start-week demo_child
+docker compose --env-file .deploy.env logs -f worker      # outline job, then the three ideas appear in the app
+```
+
+Then pick an idea on the child's page. Authoring takes 6 to 8 minutes and costs roughly $0.09 to
+$0.26 (capped at `AUTHOR_MAX_RUN_USD`, default $1.50, per attempt; an author job gets 3 attempts).
+Use `start-week <student_id>` for a real child the same way.
 
 Cutover also deletes the crontab and the two reminder scripts (M8.7). The worker applies pending
 migrations at start-up, as the app does.
