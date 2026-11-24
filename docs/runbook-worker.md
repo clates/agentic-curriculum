@@ -101,7 +101,13 @@ one of three ideas (or, at Sunday 12:00, one is picked for them); the author wri
 saves the week; the plan becomes `ready` and the print screen shows it. Notices (`send_notice`) are
 still a stub that logs: no parent is emailed.
 
-Try it without waiting for Friday, with a made-up child (no real data):
+The **loop console** at `/loop` (behind login, always available, no switch needed) shows every child's
+week as six steps (Feedback, Feed forward, Outlines, Pick, Author, Print) with a button for each, a
+preview of the skills the engine would pick, and the jobs queued for the week. It is the easiest way
+to try the loop; it also has "Add a demo child" and "Reset this child's weeks". It only does what the
+loop itself could do, so it cannot put a week in a state the loop cannot reach.
+
+The same from the command line, with a made-up child (no real data):
 
 ```bash
 docker compose --env-file .deploy.env exec -u appuser worker python -m loop_integration seed-demo
