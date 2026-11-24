@@ -1,30 +1,24 @@
+# Runtime dependencies only. This is the file the production Docker image installs.
+# Development and test tooling lives in requirements-dev.txt.
+
 # Core web framework
-fastapi>=0.109.1,<1.0.0
-uvicorn[standard]>=0.24.0,<1.0.0
+fastapi>=0.165.0,<1.0.0
+uvicorn[standard]>=0.54.0,<1.0.0
 
 # OpenAI API client
-openai>=1.0.0,<2.0.0
+openai>=3.58.0,<4.0.0
 
-# HTTP requests library (for testing)
-requests>=2.31.0,<3.0.0
+# HTTP client (src/ntfy.py)
+requests>=2.34.2,<3.0.0
 
 # Pydantic is a dependency of FastAPI but explicitly listed for clarity
-pydantic>=2.0.0,<3.0.0
+pydantic>=2.14.4,<3.0.0
 
-# Worksheet rendering helpers
-Pillow>=10.0.0,<11.0.0
+# Worksheet rendering helpers (13.x carries the fixes for the 10.x advisories)
+Pillow>=13.0.0,<14.0.0
 
 # IANA timezone data for the scheduler's family-local windows (zoneinfo)
-tzdata>=2024.1
-
-# Testing
-pytest>=7.4.0,<9.0.0
+tzdata>=2026.6
 
 # Graph analysis
-networkx>=3.0,<4.0
-black>=24.4.0,<25.0.0
-pre-commit>=3.6.0,<4.0.0
-ruff>=0.6.0,<1.0.0
-
-# Validating week.v1.schema.json in tests
-jsonschema>=4.0.0,<5.0.0
+networkx>=3.7,<4.0

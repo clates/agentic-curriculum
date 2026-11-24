@@ -1,7 +1,16 @@
 # syntax=docker/dockerfile:1.6
 
+# Node and Python versions: the newest LTS Node and the newest Python, both inside their security
+# support windows (see "Dependency and runtime policy" in CONTRIBUTING.md). One Node image is used for
+# the build AND copied into the runtime stage, so the frontend is built and run with the same Node and
+# the same C library (glibc); no third-party install script is piped into a shell.
+ARG NODE_IMAGE=node:26-slim
+ARG PYTHON_IMAGE=python:3.15-slim
+
+FROM ${NODE_IMAGE} AS node-runtime
+
 # Stage 1: Build frontend
-FROM node:20-alpine AS frontend-builder
+FROM ${NODE_IMAGE} AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -18,7 +27,7 @@ COPY frontend ./
 RUN npm run build
 
 # Stage 2: Python backend with frontend
-FROM python:3.11-slim AS base
+FROM ${PYTHON_IMAGE} AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -28,14 +37,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install Node.js, cron, and build tools
+# cron and build tools (some Python wheels may need compiling)
 RUN apt-get update \
     && apt-get install --no-install-recommends -y build-essential curl cron \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Node.js from the official image (same version the frontend was built with): node, npm and npx.
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && node --version && npm --version
+
+# Install Python dependencies: runtime only (dev and test tools live in requirements-dev.txt)
 COPY requirements.txt requirements.txt
 RUN pip install --upgrade pip && pip install -r requirements.txt
 

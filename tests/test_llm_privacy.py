@@ -4,7 +4,7 @@ import json
 import logging
 from pathlib import Path
 
-import httpx
+import httpx2
 import openai
 import pytest
 
@@ -30,7 +30,7 @@ def provider(handler, settings=None):
         api_key=KEY,
         base_url=settings.base_url,
         max_retries=0,
-        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        http_client=httpx2.Client(transport=httpx2.MockTransport(handler)),
     )
     return OpenRouterProvider(settings, client=client)
 
@@ -42,7 +42,7 @@ def test_key_never_appears_in_any_log_even_on_errors(monkeypatch, caplog):
     def leaky(request):
         # A hostile/buggy upstream that echoes the Authorization header back in its error.
         body = {"error": {"message": f"bad key {request.headers['authorization']}"}}
-        return httpx.Response(401, json=body)
+        return httpx2.Response(401, json=body)
 
     client = LLMClient(provider(leaky), env={})
     with pytest.raises(Exception) as info:
@@ -57,7 +57,7 @@ def test_key_never_appears_in_any_log_even_on_errors(monkeypatch, caplog):
 
 def test_exception_tracebacks_are_scrubbed(monkeypatch, caplog):
     monkeypatch.setenv("OPENROUTER_API_KEY", KEY)
-    LLMClient(provider(lambda r: httpx.Response(200)), env={})  # installs the redaction
+    LLMClient(provider(lambda r: httpx2.Response(200)), env={})  # installs the redaction
     try:
         raise RuntimeError(f"upstream said {KEY}")
     except RuntimeError:
@@ -76,7 +76,7 @@ def test_redact_handles_configured_and_key_shaped_values(monkeypatch):
 
 def test_provider_error_messages_never_contain_the_key():
     def handler(request):
-        return httpx.Response(500, json={"error": {"message": f"oops {KEY}"}})
+        return httpx2.Response(500, json={"error": {"message": f"oops {KEY}"}})
 
     with pytest.raises(LLMServerError) as info:
         provider(handler).complete(CompletionRequest("m/x", [{"role": "user", "content": "a"}]))
@@ -97,7 +97,7 @@ def test_strict_routing_is_sent_with_every_request():
 
     def handler(request):
         seen.append(json.loads(request.content))
-        return httpx.Response(
+        return httpx2.Response(
             200, json={"choices": [{"message": {"content": "x"}, "finish_reason": "stop"}]}
         )
 

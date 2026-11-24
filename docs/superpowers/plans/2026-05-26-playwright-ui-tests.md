@@ -1189,7 +1189,7 @@ ls -la venv/bin/uvicorn
 
 If it doesn't, recreate the venv:
 ```bash
-python -m venv venv && venv/bin/pip install -r requirements.txt
+python -m venv venv && venv/bin/pip install -r requirements-dev.txt
 ```
 
 - [ ] **Step 3: Fix any failures**

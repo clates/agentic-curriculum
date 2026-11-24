@@ -1,0 +1,66 @@
+name: Dependency audit
+
+# Fails when a dependency has a known vulnerability. Runs on pull requests, every Monday (so an
+# advisory published after a merge still shows up without anyone pushing), and on demand.
+on:
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.15"
+  NODE_VERSION: "26"
+  PIP_AUDIT_VERSION: "2.10.1"
+
+jobs:
+  npm-audit:
+    name: npm audit (frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Production dependencies (fails on high or critical)
+        working-directory: frontend
+        run: npm audit --package-lock-only --omit=dev --audit-level=high
+
+      - name: All dependencies, including build and test tools (fails on high or critical)
+        working-directory: frontend
+        run: npm audit --package-lock-only --audit-level=high
+
+  pip-audit:
+    name: pip-audit (backend)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # requirements*.txt hold version ranges, so audit what they actually resolve to today: install
+      # them into a clean venv, freeze it, and audit the exact versions (runtime and dev tools alike).
+      - name: Resolve the dependencies
+        run: |
+          python -m venv /tmp/resolved
+          /tmp/resolved/bin/pip install --quiet --upgrade pip
+          /tmp/resolved/bin/pip install --quiet -r requirements-dev.txt
+          /tmp/resolved/bin/pip freeze --exclude-editable > /tmp/resolved.txt
+          echo "Resolved $(wc -l < /tmp/resolved.txt) packages"
+
+      - name: Audit them (fails on any known vulnerability)
+        run: |
+          python -m pip install --quiet "pip-audit==${PIP_AUDIT_VERSION}"
+          pip-audit --requirement /tmp/resolved.txt --no-deps --disable-pip --strict --progress-spinner off

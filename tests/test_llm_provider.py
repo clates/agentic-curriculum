@@ -2,7 +2,7 @@
 
 import json
 
-import httpx
+import httpx2
 import openai
 import pytest
 
@@ -28,13 +28,13 @@ def provider(handler) -> OpenRouterProvider:
         api_key=SETTINGS.api_key,
         base_url=SETTINGS.base_url,
         max_retries=0,
-        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        http_client=httpx2.Client(transport=httpx2.MockTransport(handler)),
     )
     return OpenRouterProvider(SETTINGS, client=client)
 
 
-def ok(request: httpx.Request) -> httpx.Response:
-    return httpx.Response(
+def ok(request: httpx2.Request) -> httpx2.Response:
+    return httpx2.Response(
         200,
         json={
             "model": "google/test-001",
@@ -88,7 +88,7 @@ def test_missing_cost_is_none_not_zero():
 )
 def test_http_errors_map_to_typed_errors(status, exc):
     def handler(request):
-        return httpx.Response(
+        return httpx2.Response(
             status, json={"error": {"message": "nope"}}, headers={"retry-after": "7"}
         )
 
@@ -101,7 +101,7 @@ def test_http_errors_map_to_typed_errors(status, exc):
 
 def test_timeout_maps_to_typed_error():
     def handler(request):
-        raise httpx.ReadTimeout("slow", request=request)
+        raise httpx2.ReadTimeout("slow", request=request)
 
     with pytest.raises(LLMTimeout):
         provider(handler).complete(REQ)

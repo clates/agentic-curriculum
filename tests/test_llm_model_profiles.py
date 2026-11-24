@@ -2,7 +2,7 @@
 
 import json
 
-import httpx
+import httpx2
 import openai
 import pytest
 from pydantic import BaseModel
@@ -41,8 +41,9 @@ EXPECTED = {
 def run(model, *script, env=None):
     provider = ScriptedProvider(*script)
     client = LLMClient(provider, env={"LLM_MODEL_AUTHOR": model, **(env or {})})
-    generate_structured("author", [{"role": "user", "content": "x"}], Out, client=client,
-                        max_repairs=2)
+    generate_structured(
+        "author", [{"role": "user", "content": "x"}], Out, client=client, max_repairs=2
+    )
     return provider.requests
 
 
@@ -87,27 +88,43 @@ def test_fallback_model_gets_its_own_sampling():
     assert (fallback.temperature, fallback.top_p) == (1.0, 0.95)
     qwen = LLMClient(
         ScriptedProvider(LLMServerError("x"), GOOD),
-        env={"LLM_MODEL_AUTHOR": "z-ai/glm-5.3", "LLM_FALLBACK_MODEL_AUTHOR": "qwen/qwen3.8-flash",
-             "LLM_MAX_ATTEMPTS": "1"},
+        env={
+            "LLM_MODEL_AUTHOR": "z-ai/glm-5.3",
+            "LLM_FALLBACK_MODEL_AUTHOR": "qwen/qwen3.8-flash",
+            "LLM_MAX_ATTEMPTS": "1",
+        },
         sleep=lambda _s: None,
     )
     qwen.complete("author", [{"role": "user", "content": "x"}])
     assert (qwen.provider.requests[-1].top_k, qwen.provider.requests[-1].model) == (
-        20, "qwen/qwen3.8-flash")
+        20,
+        "qwen/qwen3.8-flash",
+    )
 
 
 def _payload_of(request: CompletionRequest) -> dict:
     seen = {}
 
-    def handler(req: httpx.Request) -> httpx.Response:
+    def handler(req: httpx2.Request) -> httpx2.Response:
         seen.update(json.loads(req.content))
-        return httpx.Response(200, json={"model": "m", "choices": [
-            {"message": {"role": "assistant", "content": "{}"}, "finish_reason": "stop"}],
-            "usage": {}})
+        return httpx2.Response(
+            200,
+            json={
+                "model": "m",
+                "choices": [
+                    {"message": {"role": "assistant", "content": "{}"}, "finish_reason": "stop"}
+                ],
+                "usage": {},
+            },
+        )
 
     settings = ProviderSettings(api_key="k", base_url="http://127.0.0.1:9/v1")
-    client = openai.OpenAI(api_key="k", base_url=settings.base_url, max_retries=0,
-                           http_client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client = openai.OpenAI(
+        api_key="k",
+        base_url=settings.base_url,
+        max_retries=0,
+        http_client=httpx2.Client(transport=httpx2.MockTransport(handler)),
+    )
     OpenRouterProvider(settings, client=client).complete(request)
     return seen
 
@@ -125,8 +142,14 @@ def test_run_budget_halts_before_the_next_call_and_meters_calls():
     provider = ScriptedProvider(BAD, BAD, GOOD, cost=0.001)
     client = LLMClient(provider, env={"LLM_MODEL_AUTHOR": "z-ai/glm-5.3"})
     with pytest.raises(CostCapExceeded):
-        generate_structured("author", [{"role": "user", "content": "x"}], Out, client=client,
-                            max_repairs=4, usage=UsageContext(budget=budget))
+        generate_structured(
+            "author",
+            [{"role": "user", "content": "x"}],
+            Out,
+            client=client,
+            max_repairs=4,
+            usage=UsageContext(budget=budget),
+        )
     assert len(provider.requests) == 2 and budget.spent_usd == pytest.approx(0.002)
     assert [c["task"] for c in budget.calls] == ["author", "repair"]
 
@@ -140,19 +163,25 @@ def test_a_stalled_upstream_hits_a_hard_wall_clock_deadline():
 
     release = threading.Event()
 
-    def handler(req: httpx.Request) -> httpx.Response:
+    def handler(req: httpx2.Request) -> httpx2.Response:
         release.wait(5)  # an upstream that never answers within the deadline
-        return httpx.Response(200, json={})
+        return httpx2.Response(200, json={})
 
     settings = ProviderSettings(api_key="k", base_url="http://127.0.0.1:9/v1")
-    client = openai.OpenAI(api_key="k", base_url=settings.base_url, max_retries=0,
-                           http_client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client = openai.OpenAI(
+        api_key="k",
+        base_url=settings.base_url,
+        max_retries=0,
+        http_client=httpx2.Client(transport=httpx2.MockTransport(handler)),
+    )
     started = time.monotonic()
     try:
         with pytest.raises(LLMTimeout):
             OpenRouterProvider(settings, client=client).complete(
-                CompletionRequest(model="m", messages=[{"role": "user", "content": "x"}],
-                                  timeout_s=0.3))
+                CompletionRequest(
+                    model="m", messages=[{"role": "user", "content": "x"}], timeout_s=0.3
+                )
+            )
         assert time.monotonic() - started < 2
     finally:
         release.set()

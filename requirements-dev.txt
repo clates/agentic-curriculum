@@ -1,0 +1,16 @@
+# Development and test tooling. Never installed in the production image.
+-r requirements.txt
+
+pytest>=9.2.0,<10.0.0
+black>=26.10.1,<27.0.0
+pre-commit>=4.7.0,<5.0.0
+ruff>=0.17.6,<1.0.0
+
+# HTTP client for FastAPI's TestClient and the model-layer tests (successor of httpx; openai 3.x uses it)
+httpx2>=2.16.2,<3.0.0
+
+# Validating week.v1.schema.json in tests
+jsonschema>=4.26.0,<5.0.0
+
+# Dependency vulnerability audit (CI runs it; also handy locally)
+pip-audit>=2.10.1,<3.0.0
