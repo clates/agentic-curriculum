@@ -36,6 +36,28 @@ login. Details and background are in `deploy/README.md`. Needs Docker Compose >=
    Then confirm the real visitor address reaches the lockout (see "Check the real visitor address"
    in `deploy/README.md`).
 
+## Access log: who asked for what
+
+Caddy writes one JSON line per request to `/data/access.log` inside the `caddy` container (the
+`caddy_data` volume, so it survives redeploys). It keeps at most 10 files of 20 MiB and 30 days.
+Cookies and tokens are never written. Container logs for every service are capped at 3 files of
+10 MB, so nothing here can fill the disk.
+
+```bash
+cd /srv/curriculum
+C="docker compose --env-file .deploy.env exec -T caddy"
+$C tail -n 20 /data/access.log                                   # the latest requests
+$C sh -c 'grep -c "" /data/access.log'                           # how many lines
+$C sh -c 'grep -o "\"status\":[0-9]*" /data/access.log | sort | uniq -c | sort -rn'      # status mix
+$C sh -c 'grep -o "\"remote_ip\":\"[^\"]*\"" /data/access.log | sort | uniq -c | sort -rn | head'   # busiest visitors
+$C sh -c 'grep -E "\.env|\.git/|wp-login|phpmyadmin|id_rsa|actuator" /data/access.log | tail'          # scanners
+$C sh -c 'grep "/api/auth/login" /data/access.log | grep -v "\"status\":200" | tail'                  # failed sign-ins
+```
+
+Each line has the time, the visitor's address (`request.remote_ip`), method, path, status, size
+and duration. Pull a copy to read it locally with `docker compose ... cp caddy:/data/access.log .`.
+Only requests that reach Caddy appear here: SSH logins are in the host journal, not this file.
+
 ## One-time SSH hardening
 
 `bootstrap.sh` does not edit `sshd_config`. Set `PasswordAuthentication no` and `PermitRootLogin no`,

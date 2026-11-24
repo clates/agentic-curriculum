@@ -65,6 +65,35 @@ def test_caddyfile_is_inline_and_proxies_to_the_app():
     assert "read_header 10s" in content
 
 
+def test_access_log_is_json_rotated_in_the_persistent_volume_and_never_holds_credentials():
+    doc = _compose()
+    caddy = doc["services"]["caddy"]
+    content = doc["configs"][caddy["configs"][0]["source"]]["content"]
+    assert "output file /data/access.log" in content
+    assert any(v.startswith("caddy_data:/data") for v in caddy["volumes"])  # survives redeploys
+    assert (
+        "roll_size 20MiB" in content
+        and "roll_keep 10" in content
+        and "roll_keep_for 720h" in content
+    )
+    assert "wrap json" in content
+    for field in (
+        "request>headers>Cookie",
+        "request>headers>Authorization",
+        "resp_headers>Set-Cookie",
+    ):
+        assert f"{field} delete" in content
+
+
+def test_every_container_log_is_size_capped():
+    services = _compose()["services"]
+    assert set(services) >= {"app", "worker", "caddy"}
+    for name, svc in services.items():
+        opts = svc["logging"]["options"]
+        assert svc["logging"]["driver"] == "json-file", name
+        assert opts["max-size"] == "10m" and opts["max-file"] == "3", name
+
+
 def test_app_keeps_loopback_binding_for_deploy_probe():
     assert "127.0.0.1:3000:3000" in _compose()["services"]["app"]["ports"]
 

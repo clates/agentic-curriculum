@@ -1,9 +1,18 @@
 # Production compose file. Lives at /srv/curriculum/docker-compose.yml on the server.
 # deploy.sh fetches the copy for the commit being deployed and sets IMAGE.
+# Container logs are kept by Docker's json-file driver, which never rotates by default and would
+# slowly fill the disk. Cap every service at 3 files of 10 MB.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     image: ${IMAGE:?IMAGE is set by deploy.sh}
     restart: unless-stopped
+    logging: *default-logging
     # Bound to localhost only: the public entrance is the caddy service below, which reaches the
     # app as app:3000 over the compose network. This binding stays because deploy.sh's health
     # probe and SSH-tunnel access (ssh -L 3000:127.0.0.1:3000) use it.
@@ -24,6 +33,7 @@ services:
   worker:
     image: ${IMAGE:?IMAGE is set by deploy.sh}
     restart: unless-stopped
+    logging: *default-logging
     command: ["python", "-m", "worker", "--scheduler"]
     # appuser (see Dockerfile). The image's start.sh starts as root and drops to appuser, but this
     # command bypasses it. Running as root would leave root-owned SQLite WAL files the app cannot write.
@@ -44,6 +54,7 @@ services:
   caddy:
     image: caddy:2.10
     restart: unless-stopped
+    logging: *default-logging
     # Floating minor tag (not a digest) so security patch releases arrive with each pull.
     security_opt:
       - no-new-privileges:true
@@ -66,7 +77,7 @@ services:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
     volumes:
-      - caddy_data:/data # certificates and ACME account: must survive redeploys
+      - caddy_data:/data # certificates, ACME account and the access log: must survive redeploys
       - caddy_config:/config
 
 volumes:
@@ -87,6 +98,27 @@ configs:
       }
 
       {$$SITE_DOMAIN:localhost} {
+        # Who asked for what, kept so "was this site probed or abused?" can be answered later.
+        # One JSON line per request in the persistent volume (read it with the commands in
+        # docs/runbook-https.md). At most 10 files of 20 MiB and 30 days, so it cannot fill the disk
+        # or keep visitor addresses indefinitely. Cookies, tokens and Set-Cookie are removed on top of
+        # Caddy's own redaction, and the login body is never logged (Caddy does not log bodies).
+        log {
+          output file /data/access.log {
+            roll_size 20MiB
+            roll_keep 10
+            roll_keep_for 720h
+          }
+          format filter {
+            wrap json
+            fields {
+              request>headers>Cookie delete
+              request>headers>Authorization delete
+              request>headers>Proxy-Authorization delete
+              resp_headers>Set-Cookie delete
+            }
+          }
+        }
         encode zstd gzip
         request_body {
           max_size 10MB
