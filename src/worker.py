@@ -8,7 +8,7 @@
 
 Env: CURRICULUM_DB_PATH, WORKER_LEASE_SECONDS (300), WORKER_POLL_SECONDS (2),
 WORKER_SHUTDOWN_GRACE_SECONDS (30), WORKER_HANDLER_MODULES (comma-separated modules that register
-real handlers), JOB_ALERTS_ENABLED (see job_alerts), SCHEDULER_* (see scheduler).
+real handlers), ALERT_EMAIL_TO / SMTP_* (see job_alerts), SCHEDULER_* (see scheduler).
 
 Safe to run several at once against one SQLite file. SIGTERM/SIGINT: stop claiming, give the
 running job up to the grace period to finish, then release it back to the queue (a hard kill is
@@ -25,6 +25,7 @@ import os
 import signal
 import sys
 import threading
+import time
 import uuid
 
 try:
@@ -36,6 +37,7 @@ except ImportError:
     import jobs  # type: ignore
     import job_handlers_stub  # noqa: F401  # type: ignore
 
+DIGEST_SECONDS = 900  # at most one dead-job email per 15 minutes
 logger = logging.getLogger("worker")
 
 
@@ -88,17 +90,26 @@ class Worker:
         self.stop = stop or threading.Event()
         self.kinds = kinds
         self.conn = jobs.connect(db_path)
+        self._last_digest = float("-inf")
 
     def _on_dead(self, job: jobs.Job) -> None:
+        # The log line is the always-on alert. The email (job_alerts.send_digest) is batched.
         logger.error("job %s (%s) is DEAD after %s attempts", job.id, job.kind, job.attempts)
-        try:  # maintainer alert (M8.6); absent or disabled = log only
+
+    def _digest(self) -> None:
+        """Email newly dead jobs as one message, at most once per DIGEST_SECONDS."""
+        now = time.monotonic()
+        if now - self._last_digest < DIGEST_SECONDS:
+            return
+        self._last_digest = now
+        try:
             try:
                 from . import job_alerts  # type: ignore
             except ImportError:
                 import job_alerts  # type: ignore
-            job_alerts.alert_dead_job(self.conn, job)
-        except ImportError:
-            pass
+            job_alerts.send_digest(self.conn)
+        except Exception:  # never let reporting stop the worker
+            logger.exception("dead-job digest failed")
 
     def run_once(self) -> bool:
         """Claim and process one job. Returns False when nothing was runnable."""
@@ -193,9 +204,12 @@ class Worker:
             if self.run_once():
                 processed += 1
                 continue
+            self._digest()
             if drain:
                 break
             self.stop.wait(self.poll)
+        self._last_digest = float("-inf")
+        self._digest()  # report anything that died on the way out
         self.conn.close()
         return processed
 

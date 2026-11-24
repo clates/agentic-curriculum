@@ -33,11 +33,11 @@ scheduler if you can, but two is harmless: every tick effect is idempotent.
 | `WORKER_POLL_SECONDS` | 2 | idle poll interval |
 | `WORKER_SHUTDOWN_GRACE_SECONDS` | 30 | on SIGTERM, how long the running job may finish before it is released to the queue |
 | `WORKER_HANDLER_MODULES` | empty | comma-separated modules whose `@handler("kind")` calls register real handlers |
-| `JOB_ALERTS_ENABLED` | off | `1` sends a maintainer ntfy alert when a job dies (uses `NTFY_URL`) |
+| `ALERT_EMAIL_TO` | empty | who gets the dead-job email (comma-separated). Email stays off until this and `SMTP_HOST` are set. The log line is always on |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | none, 587 | the mail relay (STARTTLS; port 465 uses implicit TLS). Keep the password in the server's env file, never in the repo |
 | `JOB_ALERT_SALT` | empty | salt for the short family hash in alerts and `--status` |
-| `NTFY_URL` | see `src/ntfy.py` | maintainer channel endpoint; empty disables push |
 | `SCHEDULER_DEFAULT_TZ` | `America/New_York` | timezone for families whose `family_settings.timezone` is NULL |
-| `SCHEDULER_INTERVAL_SECONDS` | 60 | tick interval |
+| `SCHEDULER_INTERVAL_SECONDS` | 300 | tick interval. Every action is idempotent and compares against a window start, so a slower tick only delays a notice by up to one interval |
 
 ## Handlers
 
@@ -51,7 +51,7 @@ to be retried. It must be idempotent: a job can run twice.
 ## Job life and the scheduler's windows
 
 `queued -> running -> succeeded`; failure retries with exponential backoff and jitter (30 s base,
-1 h cap, 5 attempts) and then the job is `dead`: quarantined, kept, alerted once. A crashed worker's
+1 h cap, 5 attempts) and then the job is `dead`: quarantined, kept, logged at once, and included in one email digest. A crashed worker's
 job is reclaimed after lease expiry and costs one attempt.
 
 Idempotency keys (do not change): `outlines:{plan}`, `author:{plan}:{option}`,
@@ -59,7 +59,7 @@ Idempotency keys (do not change): `outlines:{plan}`, `author:{plan}:{option}`,
 
 Per family, local time, for the school week starting Monday M: Friday 15:00 check-in reminder;
 Saturday 10:00 nudge to pick, and the safety net (a child with no check-in is moved on so outlines
-still get made); Sunday 08:00 last call; Sunday 12:00 pick deadline (`awaiting_pick -> expired`);
+still get made); Sunday 08:00 last call; Sunday 12:00 pick deadline (a parent who has not picked gets one of the three outlines chosen at random, fixed per plan, and it is authored so Monday's packet is ready; with no outlines the week expires);
 Sunday 20:00 print deadline. Notices catch up to the latest window only. The tick also creates the
 coming week's plans from Friday, and re-enqueues the outline/author job for any plan sitting in
 `outlining`/`authoring` (a no-op when the endpoint already enqueued it, same key).
@@ -69,11 +69,12 @@ Set a family's zone: `INSERT OR REPLACE INTO family_settings (family_id, timezon
 
 1. `python -m worker --status` lists dead jobs with kind, hashed family, attempts and error class/text.
 2. Read the full error: `sqlite3 $CURRICULUM_DB_PATH "select id,kind,last_error from jobs where state='dead'"`.
-3. Fix the cause (or the data), then `python -m worker --retry <id>`: attempts reset, alert re-armed.
+3. Fix the cause (or the data), then `python -m worker --retry <id>`: attempts reset, reporting re-armed.
 4. A job you decide to abandon stays `dead`; it is never deleted by the system.
 
-The alert reads `job=12 kind=author family=ab12cd34 attempts=5/5 error=TimeoutError`: no child
-data, no error text. Map the hash by computing `sha256(JOB_ALERT_SALT + family_id)[:8]`.
+Every dead job is logged at ERROR the moment it dies. The email is one digest, sent at most every
+15 minutes, listing each newly dead job once (a failed send is retried next time). A line reads
+`job=12 kind=author family=ab12cd34 attempts=5/5 error=TimeoutError`: no child data, no error text. Map the hash by computing `sha256(JOB_ALERT_SALT + family_id)[:8]`.
 
 ## Deploying as a second process (card M8.7, not part of this change)
 
@@ -83,7 +84,7 @@ Same image, second compose service, same volume and env as the app, no ports:
   worker:
     image: <same image as app>
     command: ["python", "-m", "worker", "--scheduler"]
-    environment: [PYTHONPATH=/app/src, CURRICULUM_DB_PATH=/data/curriculum.db, JOB_ALERTS_ENABLED=1,
+    environment: [PYTHONPATH=/app/src, CURRICULUM_DB_PATH=/data/curriculum.db, ALERT_EMAIL_TO=<you>, SMTP_HOST=<relay>,
                   WORKER_HANDLER_MODULES=<real handler modules>]
     volumes: ["<same data volume as app>:/data"]
     stop_grace_period: 45s        # above WORKER_SHUTDOWN_GRACE_SECONDS

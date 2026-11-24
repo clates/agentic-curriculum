@@ -39,7 +39,7 @@ BACKOFF_BASE_SECONDS = 30.0
 BACKOFF_CAP_SECONDS = 3600.0
 LAST_ERROR_MAX = 2000
 
-# Called (job) after a job turns dead and its alert slot was won. Set by ``job_alerts``.
+# Called (job) after a job turns dead (the worker logs it; the email digest is job_alerts.send_digest).
 DeadHook = Callable[["Job"], None]
 
 
