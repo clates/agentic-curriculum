@@ -214,7 +214,7 @@ export default function PlansPage() {
     <div className="bg-background min-h-screen">
       <Navigation />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 [overflow-wrap:anywhere] sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="mb-2 flex items-center justify-between">
@@ -292,8 +292,8 @@ export default function PlansPage() {
                       }}
                     >
                       <div className="space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
                             <h3 className="text-foreground text-xl font-semibold">
                               {packet.studentName}
                             </h3>
