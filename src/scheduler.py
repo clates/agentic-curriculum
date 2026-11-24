@@ -1,4 +1,4 @@
-"""Weekly-loop scheduler (M8.4): ``tick(now, conn)`` every minute, in each family's own timezone.
+"""Weekly-loop scheduler (M8.4): ``tick(now, conn)`` on a timer, in each family's own timezone.
 
 ``python -m scheduler`` runs the tick loop alone; ``python -m worker --scheduler`` runs it beside
 a worker. Every effect is idempotent (job idempotency keys, compare-and-set state moves, plan
@@ -12,7 +12,8 @@ local datetime is built first and only then converted to UTC):
     Sat M-2 10:00  NUDGE     nudge:{family}:{M}      "pick next week" (awaiting_pick), and the safety
                              net: a child still awaiting_feedback is moved on without a check-in
     Sun M-1 08:00  LASTCALL  lastcall:{family}:{M}   "pick today" (awaiting_pick)
-    Sun M-1 12:00  pick deadline: awaiting_pick -> expired (pick_expired)
+    Sun M-1 12:00  pick deadline: awaiting_pick -> one of the three outlines is picked at random
+                             and authored (or expired if there are no outlines)
     Sun M-1 20:00  print deadline (recorded on the plan; the author job must be done by then)
 
 Notices catch up to the LATEST window only: after downtime on Sunday morning, a family gets the
@@ -25,6 +26,7 @@ from __future__ import annotations
 
 import logging
 import os
+import random
 import sqlite3
 import sys
 import threading
@@ -59,6 +61,7 @@ class TickReport:
     plans_created: list[str] = field(default_factory=list)
     safety_net: list[str] = field(default_factory=list)
     expired: list[str] = field(default_factory=list)
+    auto_picked: list[str] = field(default_factory=list)
     jobs_enqueued: list[tuple[str, str]] = field(default_factory=list)  # (kind, key), new only
     errors: list[str] = field(default_factory=list)
 
@@ -91,6 +94,12 @@ def current_window(local_now: datetime, monday: date, tz: ZoneInfo) -> str | Non
         if local_now >= local_at(monday, days, at, tz):
             latest = name
     return latest
+
+
+def auto_pick_option(plan) -> str:
+    """The option chosen for a parent who did not pick. Random, but fixed per plan so a retry or a
+    second scheduler picks the same one."""
+    return random.Random(plan.plan_id).choice([o.option_id for o in plan.outlines.options])
 
 
 def _enqueue(
@@ -167,17 +176,34 @@ def _family_tick(
 
     for plan in plans:
         status = plan.status
-        # 1. expiry of awaiting_pick (any week; the deadline is on the plan)
+        # 1. the pick deadline passed (any week; the deadline is on the plan). A parent who was too
+        #    busy still gets a packet on Monday: one of the three outlines is chosen for them. With
+        #    no outlines there is nothing to choose, so the week expires as before.
         if status == "awaiting_pick" and plan.pick_deadline and plan.pick_deadline <= now_iso:
-            res = loop_state.advance(
-                conn,
-                family_id,
-                plan.plan_id,
-                loop_state.Event("pick_expired", key=f"expire:{plan.plan_id}"),
-            )
-            if res.applied:
-                report.expired.append(plan.plan_id)
-            continue
+            if plan.outlines is not None:
+                res = loop_state.advance(
+                    conn,
+                    family_id,
+                    plan.plan_id,
+                    loop_state.Event(
+                        "pick_made",
+                        key=f"autopick:{plan.plan_id}",
+                        payload={"option_id": auto_pick_option(plan), "source": "auto_pick"},
+                    ),
+                )
+                if res.applied:
+                    report.auto_picked.append(plan.plan_id)
+                status = res.plan.status
+            else:
+                res = loop_state.advance(
+                    conn,
+                    family_id,
+                    plan.plan_id,
+                    loop_state.Event("pick_expired", key=f"expire:{plan.plan_id}"),
+                )
+                if res.applied:
+                    report.expired.append(plan.plan_id)
+                continue
         # 2. safety net: no check-in by Saturday 10:00 -> move on without it
         if (
             status == "awaiting_feedback"
@@ -249,7 +275,7 @@ def _family_tick(
 
 
 def tick(now: datetime, conn: sqlite3.Connection) -> TickReport:
-    """Run one scheduler pass at the instant ``now`` (aware). Safe to call every minute."""
+    """Run one scheduler pass at the instant ``now`` (aware). Safe to call at any cadence."""
     if now.tzinfo is None:
         raise ValueError("tick(now): pass an aware datetime")
     report = TickReport()
@@ -276,13 +302,19 @@ def run_forever(
     db_path: str, stop: threading.Event | None = None, interval: float | None = None
 ) -> None:
     stop = stop or threading.Event()
-    interval = interval or float(os.environ.get("SCHEDULER_INTERVAL_SECONDS", "60"))
+    interval = interval or float(os.environ.get("SCHEDULER_INTERVAL_SECONDS", "300"))
     conn = jobs.connect(db_path)
     logger.info("scheduler up: tick every %ss, default tz %s", interval, default_tz())
     while not stop.is_set():
         try:
             rep = tick(jobs.utcnow(), conn)
-            if rep.jobs_enqueued or rep.plans_created or rep.expired or rep.safety_net:
+            if (
+                rep.jobs_enqueued
+                or rep.plans_created
+                or rep.expired
+                or rep.safety_net
+                or rep.auto_picked
+            ):
                 logger.info("tick: %s", rep)
         except Exception:
             logger.exception("scheduler tick failed")

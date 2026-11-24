@@ -3,6 +3,8 @@
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
+import re
+
 import pytest
 
 import jobs
@@ -167,14 +169,40 @@ def test_catch_up_sends_only_the_latest_window(conn):
     assert keys == ["lastcall:fam_local:2026-01-12"]
 
 
-def test_expiry_of_awaiting_pick_at_deadline_then_no_more_notices(conn):
+def test_pick_deadline_auto_picks_one_outline_and_authors_it(conn):
     scheduler.tick(at(NY, 2026, 1, 9, 16), conn)
     to_pick(conn, plan_of(conn))
     rep = scheduler.tick(utc(2026, 1, 11, 16, 59), conn)  # 11:59 EST Sunday
-    assert not rep.expired and plan_of(conn).status == "awaiting_pick"
+    assert not rep.auto_picked and plan_of(conn).status == "awaiting_pick"
     rep = scheduler.tick(utc(2026, 1, 11, 17, 0), conn)  # 12:00 EST
-    assert len(rep.expired) == 1 and plan_of(conn).status == "expired"
-    assert not scheduler.tick(utc(2026, 1, 11, 17, 1), conn).expired
+    p = plan_of(conn)
+    assert len(rep.auto_picked) == 1 and not rep.expired
+    assert p.status == "authoring" and p.picked_option in ("a", "b", "c")
+    assert ("fam_local", "author", f"author:{p.plan_id}:{p.picked_option}") in all_jobs(conn)
+    # a second tick, or a second scheduler, changes nothing and picks the same option
+    rep = scheduler.tick(utc(2026, 1, 11, 17, 1), conn)
+    assert not rep.auto_picked and not rep.jobs_enqueued
+    assert plan_of(conn).picked_option == p.picked_option
+    assert scheduler.auto_pick_option(p) == p.picked_option
+
+
+def test_a_parents_own_pick_is_never_overridden(conn):
+    scheduler.tick(at(NY, 2026, 1, 9, 16), conn)
+    p = plan_of(conn)
+    to_pick(conn, p)
+    ls.advance(conn, p.family_id, p.plan_id, ls.Event("pick_made", payload={"option_id": "c"}))
+    rep = scheduler.tick(utc(2026, 1, 11, 17, 5), conn)
+    assert not rep.auto_picked and plan_of(conn).picked_option == "c"
+
+
+def test_pick_deadline_without_outlines_expires_instead(conn):
+    scheduler.tick(at(NY, 2026, 1, 9, 16), conn)
+    p = plan_of(conn)
+    to_pick(conn, p)
+    conn.execute("UPDATE week_plan SET outlines_json=NULL WHERE plan_id=?", (p.plan_id,))
+    conn.commit()
+    rep = scheduler.tick(utc(2026, 1, 11, 17, 0), conn)
+    assert len(rep.expired) == 1 and not rep.auto_picked and plan_of(conn).status == "expired"
 
 
 def test_picked_week_gets_one_author_job_and_regeneration_gets_a_new_key(conn):
@@ -197,7 +225,7 @@ def test_picked_week_gets_one_author_job_and_regeneration_gets_a_new_key(conn):
     assert ("fam_local", "outline", f"outlines:{p2.plan_id}:r1") in all_jobs(conn)
 
 
-def test_spring_forward_week_deadlines_and_expiry(conn):
+def test_spring_forward_week_deadlines_and_auto_pick(conn):
     # US DST starts Sun 2026-03-08 at 02:00. Target Monday is 2026-03-09.
     scheduler.tick(at(NY, 2026, 3, 6, 16), conn)
     p = plan_of(conn)
@@ -206,11 +234,11 @@ def test_spring_forward_week_deadlines_and_expiry(conn):
     assert p.pick_deadline == "2026-03-08T16:00:00.000000Z"  # Sun 12:00 EDT (not 17:00Z)
     assert p.print_deadline == "2026-03-09T00:00:00.000000Z"  # Sun 20:00 EDT
     to_pick(conn, p)
-    assert not scheduler.tick(utc(2026, 3, 8, 15, 59), conn).expired
-    assert len(scheduler.tick(utc(2026, 3, 8, 16, 0), conn).expired) == 1
+    assert not scheduler.tick(utc(2026, 3, 8, 15, 59), conn).auto_picked
+    assert len(scheduler.tick(utc(2026, 3, 8, 16, 0), conn).auto_picked) == 1
 
 
-def test_fall_back_week_deadlines_and_expiry(conn):
+def test_fall_back_week_deadlines_and_auto_pick(conn):
     # US DST ends Sun 2026-11-01 at 02:00. Target Monday is 2026-11-02.
     scheduler.tick(at(NY, 2026, 10, 30, 16), conn)
     p = plan_of(conn)
@@ -218,8 +246,8 @@ def test_fall_back_week_deadlines_and_expiry(conn):
     assert p.feedback_due_at == "2026-10-30T19:00:00.000000Z"  # Fri 15:00 EDT
     assert p.pick_deadline == "2026-11-01T17:00:00.000000Z"  # Sun 12:00 EST (not 16:00Z)
     to_pick(conn, p)
-    assert not scheduler.tick(utc(2026, 11, 1, 16, 59), conn).expired
-    assert len(scheduler.tick(utc(2026, 11, 1, 17, 0), conn).expired) == 1
+    assert not scheduler.tick(utc(2026, 11, 1, 16, 59), conn).auto_picked
+    assert len(scheduler.tick(utc(2026, 11, 1, 17, 0), conn).auto_picked) == 1
 
 
 def test_saturday_window_instant_across_dst_change(conn):
@@ -276,3 +304,67 @@ def test_null_timezone_uses_default(conn, monkeypatch):
 def test_naive_now_rejected(conn):
     with pytest.raises(ValueError):
         scheduler.tick(datetime(2026, 1, 9, 15), conn)
+
+
+def _fake_outline_worker(conn):
+    """Stands in for the outline job: any plan still outlining gets its three options."""
+    for fam, pid in conn.execute(
+        "SELECT family_id, plan_id FROM week_plan WHERE status='outlining'"
+    ).fetchall():
+        wp.store_outlines(conn, fam, pid, outlines())
+        ls.advance(conn, fam, pid, ls.Event("outlines_ready"))
+
+
+@pytest.mark.parametrize(
+    "start,end",
+    [
+        ((2026, 3, 5), (2026, 3, 9)),  # US spring-forward weekend
+        ((2026, 10, 29), (2026, 11, 2)),  # US fall-back weekend
+    ],
+)
+def test_tick_cadence_changes_latency_not_outcome(tmp_path, start, end):
+    """Nobody ever acts: check-in skipped, no pick. Ticking every 1, 15 or 60 minutes must end in
+    the same place: the same notices and jobs, the same auto-picked option, per family."""
+    results = []
+    for step in (1, 15, 60):
+        path = str(tmp_path / f"cad{step}.db")
+        apply_migrations(path)
+        c = jobs.connect(path)
+        for fam, tz, stu in (
+            ("fam_ny", "America/New_York", "s1"),
+            ("fam_la", "America/Los_Angeles", "s2"),
+        ):
+            c.execute(
+                "INSERT INTO family (family_id, name, created_at) VALUES (?,?,?)",
+                (fam, fam, "2026-01-01T00:00:00Z"),
+            )
+            set_tz(c, fam, tz)
+            c.execute(
+                "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob, "
+                "metadata_blob, family_id) VALUES (?,'{}','{}','{}',?)",
+                (stu, fam),
+            )
+        c.commit()
+        t = datetime(*start, 12, tzinfo=UTC)
+        stop = datetime(*end, 18, tzinfo=UTC)
+        from datetime import timedelta
+
+        while t < stop:
+            scheduler.tick(t, c)
+            _fake_outline_worker(c)
+            t += timedelta(minutes=step)
+        plans = sorted(
+            (r[0], r[1], r[2], r[3])
+            for r in c.execute("SELECT family_id, status, week_start, picked_option FROM week_plan")
+        )
+        keys = sorted(re.sub(r"(wp_[0-9a-f]+)(:[abc])?$", "<plan>", j[2]) for j in all_jobs(c))
+        results.append((plans, keys))
+        c.close()
+    # the option itself depends on each database's own random plan ids, so only its validity counts
+    same = [([p[:3] for p in plans], keys) for plans, keys in results]
+    assert same[0] == same[1] == same[2]
+    plans, keys = results[0]
+    assert [p[1] for p in plans] == ["authoring", "authoring"]
+    assert all(p[3] in ("a", "b", "c") for p in plans)
+    kinds = sorted(k.split(":")[0] for k in keys)
+    assert kinds == sorted(["reminder", "nudge", "lastcall", "outlines", "author"] * 2)
