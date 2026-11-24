@@ -9,10 +9,10 @@ Always use `venv/bin/python` — never system python. The E2E suite hard-codes `
 (`frontend/global-setup.ts`), so the venv must live at the repo root.
 
 ```bash
-# Python 3.11–3.13 required (CI uses 3.12; Pillow<11 does not build on 3.14+).
-# If system python is too new, use uv:
-uv venv --python 3.12 --seed venv
-venv/bin/pip install -r requirements.txt
+# Python 3.12+ required; CI and production use 3.15 (networkx 3.7 needs >= 3.12).
+# Use uv to get the same version as CI:
+uv venv --python 3.15 --seed venv
+venv/bin/pip install -r requirements-dev.txt
 
 cd frontend && npm install && npx playwright install chromium
 venv/bin/python src/ingest_standards.py   # creates curriculum.db (one-time)

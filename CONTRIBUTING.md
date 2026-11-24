@@ -5,13 +5,12 @@ Developer-facing setup and workflow. If you just want to print or generate lesso
 
 ## Development setup
 
-**Python 3.11–3.13 required.** CI runs 3.12. Pillow does not build on 3.14+, so a newer system
-Python will fail during install. The virtual environment **must live at the repo root** — the E2E
+**Python 3.12 or newer required; CI and production run 3.15.** (networkx 3.7 needs 3.12+.) The virtual environment **must live at the repo root** — the E2E
 suite hard-codes `venv/bin/uvicorn` in `frontend/global-setup.ts`.
 
 ```bash
-uv venv --python 3.12 --seed venv        # or: python3.12 -m venv venv
-venv/bin/pip install -r requirements.txt
+uv venv --python 3.15 --seed venv        # or: python3.15 -m venv venv
+venv/bin/pip install -r requirements-dev.txt
 venv/bin/pre-commit install
 
 cd frontend && npm install && npx playwright install chromium && cd ..
@@ -170,3 +169,38 @@ Two conventions matter when reviewing a week PR:
   are the main failure mode to watch for in review.
 
 Weeks good enough to share get their output copied into [`examples/`](examples/README.md).
+
+## Dependency and runtime policy
+
+- **Runtime vs dev Python packages.** `requirements.txt` holds runtime dependencies only and is the
+  only file the production Docker image installs. Test and lint tooling (pytest, black, ruff,
+  pre-commit, jsonschema, httpx2, pip-audit) lives in `requirements-dev.txt`, which includes
+  `requirements.txt`. If a module under `src/` imports a package, it belongs in `requirements.txt`.
+  CI's image build fails if pytest ends up in the production image.
+- **What is audited.** `.github/workflows/dependency-audit.yml` runs on every pull request, every
+  Monday at 06:17 UTC and on demand, so an advisory published after a merge still surfaces:
+  - `npm audit --package-lock-only --audit-level=high` in `frontend/`, for production dependencies
+    and for everything (build and test tools included);
+  - `pip-audit --strict` on the exact versions `requirements-dev.txt` resolves to today (runtime and
+    dev), installed into a clean venv and frozen first, because the requirements files hold ranges.
+- **Reading a failing audit.** Open the job log: it lists the package, installed version, advisory
+  ID and fixed version. Raise the lower bound in `requirements*.txt` (or `npm install <pkg>@latest`
+  in `frontend/`) and re-run. If an advisory has no fix yet, add `--ignore-vuln <ID>` to the
+  pip-audit line in `dependency-audit.yml` with a comment naming the package and why it is not
+  exploitable here, and a date to revisit. Never ignore a whole package or severity class.
+- **The image build is tested.** CI builds the production Docker image on every pull request
+  (nothing is pushed) and checks it starts, reports its Node and Python versions, and imports the
+  backend. A broken Dockerfile is caught before merge, not after.
+- **Node.** The newest LTS: Node 26 (supported to April 2029). One `NODE_IMAGE` build argument in
+  the Dockerfile feeds both the frontend build and the runtime (copied from the official image, no
+  install script piped into a shell); CI uses the same major. Move to the next LTS well before the
+  current one reaches end of life.
+- **Python.** The newest stable: Python 3.15 (supported to October 2031), set by `PYTHON_IMAGE` in
+  the Dockerfile and `PYTHON_VERSION` in the workflows. Change them together.
+- **Frontend tooling held back on purpose.** ESLint stays on 9.x and TypeScript on 6.0.x: Next.js's
+  lint config (`eslint-config-next`, which bundles typescript-eslint, eslint-plugin-import and
+  jsx-a11y) does not load under ESLint 10, and typescript-eslint supports TypeScript below 6.1
+  only. Move both when those packages add support (Dependabot will propose it).
+- **Updates.** Dependabot (`.github/dependabot.yml`) opens weekly PRs for npm, pip, Docker and
+  GitHub Actions: minor and patch updates grouped, majors one per PR. They are reviewed and merged
+  by hand; auto-merge is not enabled.

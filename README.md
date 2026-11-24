@@ -33,8 +33,7 @@ what you need.
 
 ## Setup
 
-You need **Python 3.11, 3.12, or 3.13**. Newer versions will fail to install (a dependency doesn't
-build on 3.14+). If your system Python is too new, [`uv`](https://docs.astral.sh/uv/) will fetch a
+You need **Python 3.12 or newer** (3.15 is what the app runs on). If your system Python is too new, [`uv`](https://docs.astral.sh/uv/) will fetch a
 correct one for you.
 
 ```bash
@@ -42,7 +41,7 @@ git clone https://github.com/clates/agentic-curriculum.git
 cd agentic-curriculum
 
 # Create the virtual environment (it must live here, at the repo root)
-uv venv --python 3.12 --seed venv        # or: python3.12 -m venv venv
+uv venv --python 3.15 --seed venv        # or: python3.15 -m venv venv
 venv/bin/pip install -r requirements.txt
 
 # Build the standards database — this is what lessons get aligned against
@@ -237,8 +236,8 @@ Full table with technical details: [`AGENTS.md` §3](AGENTS.md#3-supported-works
 
 ## Troubleshooting
 
-**`ModuleNotFoundError` or a Pillow build failure during install** — your Python is too new. Check
-with `python3 --version`; if it's 3.14+, use the `uv venv --python 3.12` line above.
+**`ModuleNotFoundError` or a build failure during install** — your Python may be too old. Check
+with `python3 --version`; if it's older than 3.12, use the `uv venv --python 3.15` line above.
 
 **`/generate-week` can't find standards** — you skipped `venv/bin/python src/ingest_standards.py`.
 Run it; it takes a few seconds and creates `curriculum.db`.
