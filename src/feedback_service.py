@@ -140,15 +140,14 @@ def apply_feedback(
             (packet_id, student_id),
         ).fetchone()
 
-        if old is not None:
-            same = (
-                json.loads(old["check_results_json"] or "null") == raw_results
-                and old["quick_rating"] == quick_rating
-                and old["quantity_feedback"] == workload
-            )
-            if same:
-                conn.execute("ROLLBACK")
-                return FeedbackOutcome(False, old["version"], derived)
+        if (
+            old is not None
+            and json.loads(old["check_results_json"] or "null") == raw_results
+            and old["quick_rating"] == quick_rating
+            and old["quantity_feedback"] == workload
+        ):
+            conn.execute("ROLLBACK")
+            return FeedbackOutcome(False, old["version"], derived)
 
         progress = student["progress_blob"] or json.dumps(
             {"mastered_standards": [], "developing_standards": []}
@@ -169,38 +168,18 @@ def apply_feedback(
             "WHERE student_id = ?",
             (progress, plan_rules, student_id),
         )
-        conn.execute(
-            """
-            INSERT INTO packet_feedback (
-                packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
-                check_results_json, quick_rating, derived_mastery_json, version, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
-            ON CONFLICT(family_id, packet_id) DO UPDATE SET
-                completed_at = excluded.completed_at,
-                mastery_feedback_blob = excluded.mastery_feedback_blob,
-                quantity_feedback = excluded.quantity_feedback,
-                check_results_json = excluded.check_results_json,
-                quick_rating = excluded.quick_rating,
-                derived_mastery_json = excluded.derived_mastery_json,
-                version = packet_feedback.version + 1,
-                updated_at = excluded.updated_at
-            """,
-            (
-                packet_id,
-                student_id,
-                now,
-                json.dumps(derived) if derived else None,
-                workload,
-                json.dumps(raw_results) if raw_results else None,
-                quick_rating,
-                json.dumps(derived) if derived else None,
-                now,
-            ),
+        derived_json = json.dumps(derived) if derived else None
+        version = packet_store._upsert_feedback(
+            conn,
+            student_id,
+            packet_id,
+            now,
+            derived_json,
+            workload,
+            json.dumps(raw_results) if raw_results else None,
+            quick_rating,
+            derived_json,
         )
-        version = conn.execute(
-            "SELECT version FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
-            (packet_id, student_id),
-        ).fetchone()[0]
         conn.execute("COMMIT")
         return FeedbackOutcome(True, version, derived)
     except BaseException:

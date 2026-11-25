@@ -53,9 +53,7 @@ class CASEGraphV2:
                 data.get("fullStatement"),
                 data.get("educationLevel"),
             )
-            if key not in duplicates:
-                duplicates[key] = []
-            duplicates[key].append(node_id)
+            duplicates.setdefault(key, []).append(node_id)
 
         for _key, ids in duplicates.items():
             if len(ids) <= 1:
@@ -186,22 +184,13 @@ class CASEGraphV2:
             if node in mastered_set:
                 states[node] = "mastered"
                 continue
-            deps = [
-                u
-                for u, v, d in self.graph.in_edges(node, data=True)
-                if d.get("type") == "dependency"
-            ]
-            deps_met = all(d in mastered_set for d in deps)
-            parents = [
-                u
-                for u, v, d in self.graph.in_edges(node, data=True)
-                if d.get("type") == "hierarchy"
-            ]
+            in_edges = list(self.graph.in_edges(node, data=True))
+            deps_met = all(
+                u in mastered_set for u, _, d in in_edges if d.get("type") == "dependency"
+            )
+            parents = [u for u, _, d in in_edges if d.get("type") == "hierarchy"]
             parent_met = not parents or any(p in mastered_set for p in parents)
-            if deps_met and parent_met:
-                states[node] = "ready"
-            else:
-                states[node] = "locked"
+            states[node] = "ready" if deps_met and parent_met else "locked"
         return states
 
     def get_pruned_nodes(self, mastered_identifiers: List[str], depth: int = 1) -> List[str]:
@@ -240,10 +229,7 @@ class CASEGraphV2:
     ):
         mastered_list = mastered_identifiers or []
         states = self.get_readiness_states(mastered_list)
-        if prune:
-            keep_ids = set(self.get_pruned_nodes(mastered_list))
-        else:
-            keep_ids = set(self.graph.nodes())
+        keep_ids = set(self.get_pruned_nodes(mastered_list) if prune else self.graph.nodes())
         nodes = []
         for node_id, data in self.graph.nodes(data=True):
             if node_id not in keep_ids:

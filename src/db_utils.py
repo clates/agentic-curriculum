@@ -46,113 +46,45 @@ def _has_metadata_column(db_file: str) -> bool:
         conn.close()
 
 
-def get_student_profile(student_id: str) -> dict | None:
-    """
-    Query the student_profiles table for a given student_id.
-
-    Args:
-        student_id: The unique identifier for the student
-
-    Returns:
-        A dictionary with student data if found, None otherwise
-        Dictionary format: {"student_id": "...", "progress_blob": "...", "plan_rules_blob": "...", "metadata_blob": "..."}
-    """
+def _query_profiles(where: str = "", params: tuple = ()) -> list[dict]:
+    """Profile rows as dicts; ``metadata_blob`` is None on old DBs that lack the column."""
+    has_metadata = _has_metadata_column(DB_FILE)
+    columns = "student_id, progress_blob, plan_rules_blob" + (
+        ", metadata_blob" if has_metadata else ""
+    )
     conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-
     try:
-        has_metadata = _has_metadata_column(DB_FILE)
-
-        if has_metadata:
-            cursor.execute(
-                "SELECT student_id, progress_blob, plan_rules_blob, metadata_blob FROM student_profiles WHERE student_id = ?",
-                (student_id,),
-            )
-        else:
-            cursor.execute(
-                "SELECT student_id, progress_blob, plan_rules_blob FROM student_profiles WHERE student_id = ?",
-                (student_id,),
-            )
-        result = cursor.fetchone()
-
-        if result:
-            profile = {
-                "student_id": result[0],
-                "progress_blob": result[1],
-                "plan_rules_blob": result[2],
-            }
-            if has_metadata:
-                profile["metadata_blob"] = result[3]
-            else:
-                profile["metadata_blob"] = None
-            return profile
-        return None
+        rows = conn.execute(f"SELECT {columns} FROM student_profiles{where}", params).fetchall()
     finally:
         conn.close()
+    return [
+        {
+            "student_id": row[0],
+            "progress_blob": row[1],
+            "plan_rules_blob": row[2],
+            "metadata_blob": row[3] if has_metadata else None,
+        }
+        for row in rows
+    ]
+
+
+def get_student_profile(student_id: str) -> dict | None:
+    """The student's profile row as a dict, or None if there is no such student."""
+    rows = _query_profiles(" WHERE student_id = ?", (student_id,))
+    return rows[0] if rows else None
 
 
 def list_students() -> list[dict]:
-    """
-    Query all student profiles from the database.
-
-    Returns:
-        A list of dictionaries with student data
-        Each dictionary format: {"student_id": "...", "progress_blob": "...", "plan_rules_blob": "...", "metadata_blob": "..."}
-    """
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-
-    try:
-        has_metadata = _has_metadata_column(DB_FILE)
-
-        if has_metadata:
-            cursor.execute(
-                "SELECT student_id, progress_blob, plan_rules_blob, metadata_blob FROM student_profiles"
-            )
-        else:
-            cursor.execute(
-                "SELECT student_id, progress_blob, plan_rules_blob FROM student_profiles"
-            )
-        results = cursor.fetchall()
-
-        students = []
-        for result in results:
-            profile = {
-                "student_id": result[0],
-                "progress_blob": result[1],
-                "plan_rules_blob": result[2],
-            }
-            if has_metadata:
-                profile["metadata_blob"] = result[3]
-            else:
-                profile["metadata_blob"] = None
-            students.append(profile)
-
-        return students
-    finally:
-        conn.close()
+    """Every student profile, as dicts shaped like get_student_profile's."""
+    return _query_profiles()
 
 
 def create_student(student_id: str, metadata: dict, plan_rules: dict) -> dict:
-    """
-    Create a new student profile in the database.
-
-    Args:
-        student_id: The unique identifier for the student
-        metadata: Dictionary containing student metadata (name, birthday, etc.)
-        plan_rules: Dictionary containing plan rules
-
-    Returns:
-        A dictionary with the created student data
-
-    Raises:
-        ValueError: If a student with the given ID already exists
-    """
+    """Create a student profile with empty progress; ValueError if the id is taken."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
     try:
-        # Check if student already exists
         cursor.execute(
             "SELECT student_id FROM student_profiles WHERE student_id = ?",
             (student_id,),
@@ -190,22 +122,12 @@ def update_student(
     plan_rules: dict | None = None,
     progress: dict | None = None,
 ) -> dict | None:
-    """
-    Update an existing student profile in the database.
-
-    Args:
-        student_id: The unique identifier for the student
-        metadata: Optional dictionary containing updated metadata (merged with existing)
-        plan_rules: Optional dictionary containing updated plan rules
-
-    Returns:
-        A dictionary with the updated student data, or None if student not found
-    """
+    """Update a profile (metadata is merged into the existing metadata; progress and plan_rules
+    replace theirs). Returns the updated row, or None if the student does not exist."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
     try:
-        # Get existing student
         cursor.execute(
             "SELECT student_id, progress_blob, plan_rules_blob, metadata_blob FROM student_profiles WHERE student_id = ?",
             (student_id,),
@@ -215,20 +137,16 @@ def update_student(
         if not result:
             return None
 
-        current_progress_blob = result[1]
-        current_plan_rules_blob = result[2]
-        current_metadata_blob = result[3]
+        _, current_progress_blob, current_plan_rules_blob, current_metadata_blob = result
 
         if progress is not None:
             current_progress_blob = json.dumps(progress)
 
-        # Merge metadata if provided
         if metadata is not None:
             existing_metadata = json.loads(current_metadata_blob) if current_metadata_blob else {}
             existing_metadata.update(metadata)
             current_metadata_blob = json.dumps(existing_metadata)
 
-        # Update plan_rules if provided
         if plan_rules is not None:
             current_plan_rules_blob = json.dumps(plan_rules)
 
@@ -294,18 +212,8 @@ def ensure_student(family_id: str, student_id: str, conn: sqlite3.Connection | N
 
 
 def delete_student(student_id: str) -> bool:
-    """
-    Delete a student profile from the database.
-
-    Args:
-        student_id: The unique identifier for the student
-
-    Returns:
-        True if the student was deleted, False if not found
-
-    Raises:
-        sqlite3.OperationalError: if the database is locked after timeout
-    """
+    """Delete a student and their packets; False if not found. A locked DB raises
+    sqlite3.OperationalError after the busy timeout."""
     conn = sqlite3.connect(DB_FILE)
     conn.execute("PRAGMA busy_timeout = 5000")  # 5s timeout instead of hanging forever
     conn.execute("PRAGMA foreign_keys = ON")

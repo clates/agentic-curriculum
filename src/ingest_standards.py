@@ -49,7 +49,6 @@ def ingest_standards_from_json(directory):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-    # Find all JSON files in the directory
     json_files = glob.glob(os.path.join(directory, "*.json"))
 
     if not json_files:
@@ -70,28 +69,25 @@ def ingest_standards_from_json(directory):
             with open(json_file, "r") as f:
                 standards = json.load(f)
 
-            # Ingest each standard from the file
             for standard in standards:
                 if not is_flat_standard(standard):
                     skipped += 1  # nested grade-container or malformed record, not a standard
                     continue
-                standard_id = standard.get("id")
-                source = standard.get("source")
-                subject = standard.get("subject")
-                grade = standard.get("grade")
-                description = standard.get("description")
-                json_blob = json.dumps(standard)
-
-                # Insert into database
                 cursor.execute(
                     """
-                    INSERT OR REPLACE INTO standards 
+                    INSERT OR REPLACE INTO standards
                     (standard_id, source, subject, grade_level, description, json_blob)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                    (standard_id, source, subject, grade, description, json_blob),
+                    (
+                        standard["id"],
+                        standard.get("source"),
+                        standard["subject"],
+                        standard["grade"],
+                        standard["description"],
+                        json.dumps(standard),
+                    ),
                 )
-
                 total_inserted += 1
 
         except Exception as e:

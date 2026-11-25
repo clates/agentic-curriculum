@@ -62,8 +62,7 @@ import json
 import logging
 import os
 import sys
-from collections import OrderedDict
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from functools import lru_cache
 from datetime import UTC, datetime
 from email.utils import formatdate
@@ -82,6 +81,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+# AUTH_MODE=none: the one local family until login exists.
+LOCAL_FAMILY_ID = "fam_local"
 
 
 @asynccontextmanager
@@ -102,12 +103,19 @@ app.add_middleware(AuthBodyLimit)
 app.add_exception_handler(RequestValidationError, invalid_request_handler)
 
 
-def _project_root_path() -> Path:
-    return PROJECT_ROOT if isinstance(PROJECT_ROOT, Path) else Path(PROJECT_ROOT)
+@contextmanager
+def _local_db():
+    """A connection to the app DB with foreign keys on, closed afterwards."""
+    conn = sqlite3.connect(get_db_path())
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        yield conn
+    finally:
+        conn.close()
 
 
 def _log_dir() -> Path:
-    return _project_root_path() / "logs"
+    return PROJECT_ROOT / "logs"
 
 
 def _sanitize_for_filename(value: str) -> str:
@@ -310,19 +318,10 @@ def get_version():
 
 @app.get("/system/options", response_model=SystemOptionsResponse)
 def get_system_options():
-    """
-    Return valid configuration options for the frontend.
-
-    Returns a JSON object containing:
-    - subjects: List of valid subject names
-    - grades: List of grade level options with value and label
-    - worksheet_types: List of supported worksheet type keys
-    - statuses: List of evaluation status values
-    """
-    grades = [GradeLevelOption(value=k, label=v) for k, v in GRADE_LEVELS.items()]
+    """Return valid configuration options (subjects, grades, worksheet types, statuses)."""
     return SystemOptionsResponse(
         subjects=SUBJECTS,
-        grades=grades,
+        grades=[GradeLevelOption(value=k, label=v) for k, v in GRADE_LEVELS.items()],
         worksheet_types=get_worksheet_types(),
         statuses=EVALUATION_STATUSES,
     )
@@ -330,36 +329,18 @@ def get_system_options():
 
 @app.get("/student/{student_id}")
 def read_student(student_id: str):
-    """
-    Get student profile by student_id.
-
-    Args:
-        student_id: The unique identifier for the student
-
-    Returns:
-        Student profile data as JSON including metadata_blob
-
-    Raises:
-        HTTPException: 404 if student not found
-    """
+    """Get student profile by student_id."""
     profile = get_student_profile(student_id)
-
     if profile is None:
         raise HTTPException(status_code=404, detail="Student not found")
-
     return profile
 
 
 @app.get("/this-week")
 def read_this_week():
     """One card per child with the single next step for the week (M10.4)."""
-    conn = sqlite3.connect(get_db_path())
-    try:
-        conn.execute("PRAGMA foreign_keys = ON")
-        # AUTH_MODE=none: the one local family until login exists.
-        return this_week_cards(conn, "fam_local", datetime.now(UTC).date())
-    finally:
-        conn.close()
+    with _local_db() as conn:
+        return this_week_cards(conn, LOCAL_FAMILY_ID, datetime.now(UTC).date())
 
 
 @app.get("/students/{student_id}/weekly-packets/{packet_id}/checks")
@@ -386,11 +367,9 @@ def read_print_info(student_id: str, packet_id: str):
 @app.post("/students/{student_id}/week-plans/{plan_id}/printed")
 def mark_week_printed(student_id: str, plan_id: str):
     """The parent says the week is printed: ready -> printed. Repeating it is harmless (M10.7)."""
-    conn = sqlite3.connect(get_db_path())
     try:
-        conn.execute("PRAGMA foreign_keys = ON")
-        # AUTH_MODE=none: the one local family until login exists.
-        return mark_printed(conn, "fam_local", student_id, plan_id)
+        with _local_db() as conn:
+            return mark_printed(conn, LOCAL_FAMILY_ID, student_id, plan_id)
     except PlanNotFound:
         raise HTTPException(status_code=404, detail="Week not found") from None
     except PlanNotReady as exc:
@@ -398,61 +377,30 @@ def mark_week_printed(student_id: str, plan_id: str):
             status_code=409,
             detail=f"This week is not ready to print yet (it is {exc.status}).",
         ) from None
-    finally:
-        conn.close()
 
 
 @app.get("/students", response_model=list[StudentResponse])
 def get_students():
-    """
-    List all student profiles.
-
-    Returns:
-        A list of student profile data.
-    """
+    """List all student profiles."""
     return list_students()
 
 
 @app.post("/students", response_model=StudentResponse, status_code=201)
 def create_student_endpoint(request: CreateStudentRequest):
-    """
-    Create a new student profile.
-
-    Args:
-        request: CreateStudentRequest containing student_id, metadata, and plan_rules
-
-    Returns:
-        The created student profile data
-
-    Raises:
-        HTTPException: 400 if student already exists
-    """
+    """Create a new student profile."""
     try:
-        student = create_student(
+        return create_student(
             student_id=request.student_id,
             metadata=request.metadata.model_dump(),
             plan_rules=request.plan_rules,
         )
-        return student
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @app.put("/student/{student_id}", response_model=StudentResponse)
 def update_student_endpoint(student_id: str, request: UpdateStudentRequest):
-    """
-    Update an existing student profile.
-
-    Args:
-        student_id: The unique identifier for the student
-        request: UpdateStudentRequest containing optional metadata and plan_rules
-
-    Returns:
-        The updated student profile data
-
-    Raises:
-        HTTPException: 404 if student not found
-    """
+    """Update an existing student profile."""
     metadata_dict = request.metadata.model_dump(exclude_unset=True) if request.metadata else None
     student = update_student(
         student_id=student_id,
@@ -469,16 +417,7 @@ def update_student_endpoint(student_id: str, request: UpdateStudentRequest):
 
 @app.delete("/student/{student_id}", status_code=204)
 def delete_student_endpoint(student_id: str):
-    """
-    Delete a student profile.
-
-    Args:
-        student_id: The unique identifier for the student
-
-    Raises:
-        HTTPException: 404 if student not found
-        HTTPException: 503 if database is locked
-    """
+    """Delete a student profile."""
     try:
         deleted = delete_student(student_id)
     except sqlite3.OperationalError as e:
@@ -493,18 +432,7 @@ def delete_student_endpoint(student_id: str):
 
 @app.post("/generate_weekly_plan")
 def create_weekly_plan(request: PlanRequest):
-    """
-    Generate a weekly lesson plan for a student using LLM.
-
-    Args:
-        request: PlanRequest containing student_id, grade_level, and subject
-
-    Returns:
-        A complete weekly plan JSON with daily lesson plans
-
-    Raises:
-        HTTPException: 400 if there's an error generating the plan
-    """
+    """Generate a weekly lesson plan for a student using LLM."""
     request_payload = request.dict()
     start_time = datetime.now(UTC)
     log_context = {
@@ -575,62 +503,51 @@ def get_student_weekly_packet(
     response: Response,
 ):
     """Return the stored weekly packet payload."""
-
     packet = get_weekly_packet(student_id, packet_id)
     if packet is None:
         raise HTTPException(status_code=404, detail="Weekly packet not found")
-
-    etag = packet["etag"]
-    response.headers["ETag"] = f'"{etag}"'
-
-    updated_at = packet["updated_at"]
-    try:
-        updated_dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
-    except ValueError:
-        updated_dt = datetime.now(UTC)
-    response.headers["Last-Modified"] = formatdate(updated_dt.timestamp(), usegmt=True)
+    response.headers["ETag"] = f'"{packet["etag"]}"'
+    response.headers["Last-Modified"] = _http_date(packet["updated_at"])
     return packet["payload"]
 
 
-def _resolve_artifact_path(file_path: str) -> Path:
-    root = _project_root_path()
-    candidate = Path(file_path)
-    if candidate.is_absolute():
-        candidate = candidate.resolve()
-    else:
-        candidate = (root / candidate).resolve()
+def _http_date(iso_timestamp: str) -> str:
+    """An HTTP date for a stored ISO timestamp (now, if it does not parse)."""
     try:
-        candidate.relative_to(root)
+        dt = datetime.fromisoformat(iso_timestamp.replace("Z", "+00:00"))
+    except ValueError:
+        dt = datetime.now(UTC)
+    return formatdate(dt.timestamp(), usegmt=True)
+
+
+def _resolve_artifact_path(file_path: str) -> Path:
+    # An absolute file_path replaces PROJECT_ROOT in the join; either way it must stay inside.
+    candidate = (PROJECT_ROOT / file_path).resolve()
+    try:
+        candidate.relative_to(PROJECT_ROOT)
     except ValueError as e:
         raise HTTPException(status_code=404, detail="Artifact not found") from e
     return candidate
 
 
+_MEDIA_TYPES = {
+    "pdf": "application/pdf",
+    "png": "image/png",
+    "image/png": "image/png",
+    "html": "text/html",
+    "text/html": "text/html",
+}
+
+
 def _media_type(file_format: str | None) -> str:
-    if not file_format:
-        return "application/octet-stream"
-    normalized = file_format.lower()
-    if normalized == "pdf":
-        return "application/pdf"
-    if normalized in {"png", "image/png"}:
-        return "image/png"
-    if normalized in {"html", "text/html"}:
-        return "text/html"
-    return "application/octet-stream"
+    return _MEDIA_TYPES.get((file_format or "").lower(), "application/octet-stream")
 
 
 def _artifact_headers(artifact: dict[str, Any]) -> dict[str, str]:
-    headers = {"Cache-Control": "private, max-age=86400"}
-    checksum = artifact.get("checksum")
-    etag_value = checksum or f"artifact-{artifact['artifact_id']}"
-    headers["ETag"] = f'"{etag_value}"'
-    created_at = artifact.get("created_at")
-    if created_at:
-        try:
-            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-        except ValueError:
-            created_dt = datetime.now(UTC)
-        headers["Last-Modified"] = formatdate(created_dt.timestamp(), usegmt=True)
+    etag_value = artifact.get("checksum") or f"artifact-{artifact['artifact_id']}"
+    headers = {"Cache-Control": "private, max-age=86400", "ETag": f'"{etag_value}"'}
+    if artifact.get("created_at"):
+        headers["Last-Modified"] = _http_date(artifact["created_at"])
     return headers
 
 
@@ -640,33 +557,29 @@ def _artifact_headers(artifact: dict[str, Any]) -> dict[str, str]:
 )
 def list_packet_worksheet_manifest(student_id: str, packet_id: str):
     """Return grouped worksheet artifact metadata for a packet."""
-
     artifacts = list_packet_artifacts(student_id, packet_id)
     if artifacts is None:
         raise HTTPException(status_code=404, detail="Weekly packet not found")
 
-    grouped: OrderedDict[tuple[str, str], dict[str, Any]] = OrderedDict()
+    grouped: dict[tuple[str, str], dict[str, Any]] = {}
     for artifact in artifacts:
-        key = (artifact["day_label"], artifact["kind"])
-        group = grouped.get(key)
-        if group is None:
-            group = {
+        group = grouped.setdefault(
+            (artifact["day_label"], artifact["kind"]),
+            {
                 "day_label": artifact["day_label"],
                 "resource_kind": artifact["kind"],
                 "artifacts": [],
-            }
-            grouped[key] = group
-
-        download_url = app.url_path_for(
-            "download_worksheet_artifact",
-            student_id=student_id,
-            artifact_id=str(artifact["artifact_id"]),
+            },
         )
         group["artifacts"].append(
             {
                 "artifact_id": artifact["artifact_id"],
                 "format": artifact["file_format"],
-                "download_url": download_url,
+                "download_url": app.url_path_for(
+                    "download_worksheet_artifact",
+                    student_id=student_id,
+                    artifact_id=str(artifact["artifact_id"]),
+                ),
                 "checksum": artifact.get("checksum"),
                 "file_size_bytes": artifact.get("file_size_bytes"),
                 "metadata": artifact.get("metadata"),
@@ -687,7 +600,6 @@ def list_packet_worksheet_manifest(student_id: str, packet_id: str):
 )
 def download_worksheet_artifact(student_id: str, artifact_id: int):
     """Stream a worksheet artifact when the student owns it."""
-
     artifact = get_artifact_for_student(student_id, artifact_id)
     if artifact is None:
         raise HTTPException(status_code=404, detail="Artifact not found")
@@ -701,11 +613,9 @@ def download_worksheet_artifact(student_id: str, artifact_id: int):
         raise HTTPException(status_code=410, detail="Artifact unavailable")
 
     headers = _artifact_headers(artifact)
-    fmt = (artifact.get("file_format") or "").lower()
-    if fmt in {"html", "text/html"}:
-        headers["Content-Disposition"] = f'inline; filename="{file_path.name}"'
-    else:
-        headers["Content-Disposition"] = f'attachment; filename="{file_path.name}"'
+    is_html = (artifact.get("file_format") or "").lower() in {"html", "text/html"}
+    disposition = "inline" if is_html else "attachment"
+    headers["Content-Disposition"] = f'{disposition}; filename="{file_path.name}"'
 
     logger.info(
         "worksheet_artifact_download",
@@ -845,25 +755,13 @@ def submit_packet_feedback(
     request: SubmitFeedbackRequest,
     background_tasks: BackgroundTasks,
 ):
-    """
-    Submit feedback for a completed weekly packet.
-
-    Args:
-        student_id: The student ID
-        packet_id: The packet ID
-        request: Feedback data with mastery_feedback and quantity_feedback
-
-    Raises:
-        HTTPException: 400 for validation errors, 404 if packet not found
-    """
+    """Submit feedback for a completed weekly packet."""
     if request.is_v2:
         _submit_feedback_v2(student_id, packet_id, request, background_tasks)
         return
 
     mastery_feedback = request.mastery_feedback
     quantity_feedback = request.quantity_feedback
-
-    # Validate feedback
     try:
         if mastery_feedback:
             validate_mastery_feedback(mastery_feedback)
@@ -872,19 +770,13 @@ def submit_packet_feedback(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    # Verify packet exists before processing feedback
     if get_weekly_packet(student_id, packet_id) is None:
         raise HTTPException(status_code=404, detail="Packet not found")
-
-    # Get current student profile
     profile = get_student_profile(student_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    # Check for existing feedback to handle update case
     existing_feedback = get_packet_feedback(student_id, packet_id)
-
-    # Process feedback and update blobs
     feedback_date = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
     progress_blob = profile["progress_blob"] or json.dumps(
@@ -910,8 +802,6 @@ def submit_packet_feedback(
 
     plan_rules_payload = json.loads(plan_rules_blob) if quantity_feedback is not None else None
     progress_payload = json.loads(progress_blob) if mastery_feedback else None
-
-    # Update student profile and store raw feedback in packet_feedback
     try:
         update_student(
             student_id=student_id,
@@ -931,50 +821,27 @@ def submit_packet_feedback(
     response_model=FeedbackResponse,
 )
 def get_packet_feedback_endpoint(student_id: str, packet_id: str):
-    """
-    Retrieve feedback for a weekly packet.
-
-    Args:
-        student_id: The student ID
-        packet_id: The packet ID
-
-    Returns:
-        Feedback data if it exists
-
-    Raises:
-        HTTPException: 404 if feedback not found
-    """
+    """Retrieve feedback for a weekly packet."""
     feedback = get_packet_feedback(student_id, packet_id)
-
     if feedback is None:
         raise HTTPException(status_code=404, detail="Feedback not found for this packet")
-
     return FeedbackResponse(**feedback)
 
 
 @app.get("/curriculum/graph/{subject}")
 def get_curriculum_graph(subject: str, prune: bool = False):
-    """
-    Retrieve the full structural dependency graph for a subject.
-    """
-    graph = load_from_db(get_db_path(), subject)
-    return graph.export_for_visualization(prune=prune)
+    """Retrieve the full structural dependency graph for a subject."""
+    return load_from_db(get_db_path(), subject).export_for_visualization(prune=prune)
 
 
 @app.get("/students/{student_id}/progress-map/{subject}")
 def get_student_progress_map(student_id: str, subject: str, prune: bool = True):
-    """
-    Retrieve the curriculum graph with student mastery data overlay.
-    """
+    """Retrieve the curriculum graph with student mastery data overlay."""
     profile = get_student_profile(student_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Student not found")
-
-    progress = json.loads(profile["progress_blob"] or "{}")
-    mastered = progress.get("mastered_standards", [])
-
-    graph = load_from_db(get_db_path(), subject)
-    return graph.export_for_visualization(mastered, prune=prune)
+    mastered = json.loads(profile["progress_blob"] or "{}").get("mastered_standards", [])
+    return load_from_db(get_db_path(), subject).export_for_visualization(mastered, prune=prune)
 
 
 def _standards_lookup(standard_ids: set[str]) -> dict[str, dict[str, Any]]:
@@ -1017,8 +884,6 @@ def get_student_progress_summary(student_id: str):
 
 
 # --- Pick one of three (M6.4) and fresh ideas (M6.6) -------------------------------------------
-# AUTH_MODE=none: the one local family until login exists, like /this-week.
-LOCAL_FAMILY_ID = "fam_local"
 loop_integration.install()  # LOOP_JOBS_ENABLED=1: a pick queues the author job
 
 
@@ -1037,11 +902,10 @@ def _week_plan_call(action):
     """Run ``action(conn)`` for the local family, turning refusals into plain-language errors."""
     from llm import LLMError
 
-    conn = sqlite3.connect(get_db_path())
     try:
-        conn.execute("PRAGMA foreign_keys = ON")
-        conn.execute("PRAGMA busy_timeout = 5000")
-        return action(conn)
+        with _local_db() as conn:
+            conn.execute("PRAGMA busy_timeout = 5000")
+            return action(conn)
     except pick_service.PickError as exc:
         raise HTTPException(
             status_code=exc.status, detail={"code": exc.code, "message": exc.message}
@@ -1056,8 +920,6 @@ def _week_plan_call(action):
                 "Please try again.",
             },
         ) from exc
-    finally:
-        conn.close()
 
 
 @app.get("/students/{student_id}/week-plan")

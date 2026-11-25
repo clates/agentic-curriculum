@@ -12,9 +12,9 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Mapping
 
 try:
-    from .review_policy import REASON_MASTERED, REASON_MISSED, REASON_SHAKY, review_due
+    from .review_policy import REASON_MASTERED, REASON_MISSED, REASON_SHAKY, _parse, review_due
 except ImportError:  # imported as a top-level module (src/ on sys.path)
-    from review_policy import REASON_MASTERED, REASON_MISSED, REASON_SHAKY, review_due
+    from review_policy import REASON_MASTERED, REASON_MISSED, REASON_SHAKY, _parse, review_due
 
 FALLBACK_SKILL = "A skill we have been working on"
 _LEAD_IN = re.compile(r"^(the )?(student|students|learner|child)s? (will|should|can)\s+", re.I)
@@ -35,11 +35,6 @@ def skill_label(description: str | None, max_len: int = 90) -> str:
     if len(text) > max_len:
         text = text[: max_len - 1].rsplit(" ", 1)[0].rstrip(",;: ") + "…"
     return text[:1].upper() + text[1:] if text else FALLBACK_SKILL
-
-
-def _parse(ts: str) -> datetime:
-    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
 def _item(standards: Mapping[str, Mapping[str, Any]], sid: str, **extra: Any) -> dict[str, Any]:
