@@ -177,13 +177,7 @@ def _family_tick(
             "UPDATE week_plan SET feedback_due_at=COALESCE(feedback_due_at,?), "
             "pick_deadline=COALESCE(pick_deadline,?), print_deadline=COALESCE(print_deadline,?) "
             "WHERE family_id=? AND week_start=?",
-            (
-                deadlines["feedback_due_at"],
-                deadlines["pick_deadline"],
-                deadlines["print_deadline"],
-                family_id,
-                week,
-            ),
+            (*deadlines.values(), family_id, week),
         )
         conn.commit()
 

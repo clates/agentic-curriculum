@@ -29,7 +29,7 @@ import json
 import os
 import random
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import UTC, datetime, timedelta
 from typing import Any, Callable
 
@@ -85,24 +85,8 @@ class Job:
 
 
 def _row_to_job(row: sqlite3.Row) -> Job:
-    return Job(
-        id=row["id"],
-        family_id=row["family_id"],
-        kind=row["kind"],
-        payload=json.loads(row["payload_json"] or "{}"),
-        idempotency_key=row["idempotency_key"],
-        state=row["state"],
-        attempts=row["attempts"],
-        max_attempts=row["max_attempts"],
-        run_after=row["run_after"],
-        lease_owner=row["lease_owner"],
-        lease_expires_at=row["lease_expires_at"],
-        last_error=row["last_error"],
-        alerted_at=row["alerted_at"],
-        created_at=row["created_at"],
-        updated_at=row["updated_at"],
-        finished_at=row["finished_at"],
-    )
+    cols = {f.name: row[f.name] for f in fields(Job) if f.name != "payload"}
+    return Job(payload=json.loads(row["payload_json"] or "{}"), **cols)
 
 
 def connect(db_path: str) -> sqlite3.Connection:
@@ -373,14 +357,7 @@ def status(conn: sqlite3.Connection, *, now: datetime | None = None) -> dict[str
         (iso(now),),
     ).fetchone()
     dead = [
-        {
-            "id": r["id"],
-            "kind": r["kind"],
-            "family_id": r["family_id"],
-            "attempts": r["attempts"],
-            "last_error": r["last_error"],
-            "finished_at": r["finished_at"],
-        }
+        dict(r)
         for r in conn.execute(
             "SELECT id, kind, family_id, attempts, last_error, finished_at FROM jobs "
             "WHERE state='dead' ORDER BY id"

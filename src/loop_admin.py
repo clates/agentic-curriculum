@@ -16,6 +16,7 @@ The routes sit behind the global login gate like every other route.
 from __future__ import annotations
 
 import json
+import os
 import re
 import sqlite3
 from datetime import date, timedelta
@@ -78,9 +79,7 @@ class _NoCap:
 
 
 def _open() -> sqlite3.Connection:
-    conn = jobs.connect(get_db_path())
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    return jobs.connect(get_db_path())
 
 
 def _refuse(status: int, message: str) -> HTTPException:
@@ -145,18 +144,7 @@ def _plan_jobs(conn: sqlite3.Connection, plan_id: str) -> list[dict[str, Any]]:
         "ORDER BY id DESC LIMIT 6",
         (FAMILY, f"outlines:{plan_id}%", f"author:{plan_id}:%"),
     ).fetchall()
-    return [
-        {
-            "id": r[0],
-            "kind": r[1],
-            "state": r[2],
-            "attempts": r[3],
-            "max_attempts": r[4],
-            "last_error": (r[5] or "")[:300] or None,
-            "run_after": r[6],
-        }
-        for r in rows
-    ]
+    return [{**dict(r), "last_error": (r["last_error"] or "")[:300] or None} for r in rows]
 
 
 def _skill_info(conn: sqlite3.Connection, ids) -> dict[str, dict[str, str]]:
@@ -211,6 +199,16 @@ def _plan_view(conn: sqlite3.Connection, plan: wp.WeekPlan) -> dict[str, Any]:
     }
 
 
+def _picked_idea(plan: wp.WeekPlan):
+    """The outline the plan picked, or None (no pick yet, or it is not among the outlines)."""
+    if not (plan.outlines and plan.picked_option):
+        return None
+    try:
+        return plan.outlines.get(plan.picked_option)
+    except KeyError:
+        return None
+
+
 def _grade(conn: sqlite3.Connection, student_id: str) -> int | None:
     """The grade the engine and the author use (from the profile, the last week, or the birthday)."""
     row = conn.execute(
@@ -239,18 +237,13 @@ def _weeks(conn: sqlite3.Connection, student_id: str, limit: int = 6) -> list[di
     out = []
     for r in rows:
         p = wp.row_to_plan(r)
-        picked = None
-        if p.outlines and p.picked_option:
-            try:
-                picked = p.outlines.get(p.picked_option).title
-            except KeyError:
-                picked = None
+        picked = _picked_idea(p)
         out.append(
             {
                 "plan_id": p.plan_id,
                 "week_start": p.week_start,
                 "status": p.status,
-                "picked_title": picked,
+                "picked_title": picked.title if picked else None,
                 "packet_id": p.packet_id,
             }
         )
@@ -372,18 +365,15 @@ def feed_forward(student_id: str, week: str | None = None):
 
 def _run_record(packet_id: str) -> dict[str, Any] | None:
     """The authoring run record saved next to the week (cost, model, rewrites), if there is one."""
-    import json as _json
-    import os as _os
-
     try:
         from authoring.pipeline import _runs_dir  # type: ignore
     except ImportError:  # pragma: no cover - package-relative import in some contexts
         from .authoring.pipeline import _runs_dir  # type: ignore
-    name = _os.path.basename(packet_id)  # never a path from the request
-    path = _os.path.join(_runs_dir(), f"{name}.json")
+    name = os.path.basename(packet_id)  # never a path from the request
+    path = os.path.join(_runs_dir(), f"{name}.json")
     try:
         with open(path, encoding="utf-8") as f:
-            return _json.load(f)
+            return json.load(f)
     except (OSError, ValueError):
         return None
 
@@ -407,12 +397,8 @@ def review(student_id: str, plan_id: str):
         week = week_store.get_week(student_id, plan.packet_id, family_id=FAMILY)
         if week is None:
             raise _refuse(404, "The written week could not be found.")
-        planned = []
-        if plan.outlines and plan.picked_option:
-            try:
-                planned = list(plan.outlines.get(plan.picked_option).standard_ids)
-            except KeyError:
-                planned = []
+        idea = _picked_idea(plan)
+        planned = list(idea.standard_ids) if idea else []
         ids = planned + [s for d in week.days for s in d.standards]
         result = week_review.review_week(
             week,

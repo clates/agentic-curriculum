@@ -11,7 +11,7 @@ import os
 import secrets
 import sqlite3
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import UTC, datetime
 
 try:  # Prefer package-relative import when available
@@ -65,28 +65,10 @@ def new_plan_id() -> str:
 
 
 def row_to_plan(row: sqlite3.Row) -> WeekPlan:
-    outlines = (
-        OutlineSet.model_validate_json(row["outlines_json"]) if row["outlines_json"] else None
-    )
-    return WeekPlan(
-        plan_id=row["plan_id"],
-        family_id=row["family_id"],
-        student_id=row["student_id"],
-        week_start=row["week_start"],
-        status=row["status"],
-        state_version=row["state_version"],
-        needs_attention=bool(row["needs_attention"]),
-        attention_reason=row["attention_reason"],
-        outlines=outlines,
-        outlines_ready_at=row["outlines_ready_at"],
-        picked_option=row["picked_option"],
-        packet_id=row["packet_id"],
-        feedback_due_at=row["feedback_due_at"],
-        pick_deadline=row["pick_deadline"],
-        print_deadline=row["print_deadline"],
-        created_at=row["created_at"],
-        updated_at=row["updated_at"],
-    )
+    cols = {f.name: row[f.name] for f in fields(WeekPlan) if f.name != "outlines"}
+    cols["needs_attention"] = bool(cols["needs_attention"])
+    outlines = row["outlines_json"]
+    return WeekPlan(outlines=OutlineSet.model_validate_json(outlines) if outlines else None, **cols)
 
 
 def create_plan(

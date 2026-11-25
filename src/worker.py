@@ -42,7 +42,10 @@ DIGEST_SECONDS = 900  # at most one dead-job email per 15 minutes
 logger = logging.getLogger("worker")
 
 
-def _env_float(name: str, default: float) -> float:
+def _env_float(name: str, default: float, value: float | None = None) -> float:
+    """``value`` when given, else the env var ``name`` (``default`` if unset or not a number)."""
+    if value is not None:
+        return value
     try:
         return float(os.environ.get(name, default))
     except ValueError:
@@ -79,14 +82,8 @@ class Worker:
         self.db_path = db_path
         self.worker_id = worker_id or f"w-{os.getpid()}-{uuid.uuid4().hex[:6]}"
         self.lease = lease_seconds or _env_float("WORKER_LEASE_SECONDS", 300)
-        self.poll = (
-            poll_seconds if poll_seconds is not None else _env_float("WORKER_POLL_SECONDS", 2)
-        )
-        self.grace = (
-            shutdown_grace
-            if shutdown_grace is not None
-            else _env_float("WORKER_SHUTDOWN_GRACE_SECONDS", 30)
-        )
+        self.poll = _env_float("WORKER_POLL_SECONDS", 2, poll_seconds)
+        self.grace = _env_float("WORKER_SHUTDOWN_GRACE_SECONDS", 30, shutdown_grace)
         self.backoff_base = backoff_base
         self.stop = stop or threading.Event()
         self.kinds = kinds
@@ -129,14 +126,7 @@ class Worker:
     def _process(self, job: jobs.Job) -> None:
         fn = job_registry.get_handler(job.kind)
         if fn is None:
-            jobs.fail(
-                self.conn,
-                job.id,
-                self.worker_id,
-                f"NoHandler: no handler for {job.kind!r}",
-                backoff_base=self.backoff_base,
-                on_dead=self._on_dead,
-            )
+            self._fail(job, f"NoHandler: no handler for {job.kind!r}")
             return
         lease_lost = threading.Event()
         ctx = job_registry.JobContext(
@@ -178,14 +168,17 @@ class Worker:
                 logger.warning("job %s finished but its lease was lost", job.id)
         else:
             logger.warning("job %s failed: %s: %s", job.id, type(err).__name__, err)
-            jobs.fail(
-                self.conn,
-                job.id,
-                self.worker_id,
-                f"{type(err).__name__}: {err}",
-                backoff_base=self.backoff_base,
-                on_dead=self._on_dead,
-            )
+            self._fail(job, f"{type(err).__name__}: {err}")
+
+    def _fail(self, job: jobs.Job, error: str) -> None:
+        jobs.fail(
+            self.conn,
+            job.id,
+            self.worker_id,
+            error,
+            backoff_base=self.backoff_base,
+            on_dead=self._on_dead,
+        )
 
     def _heartbeat(self, job_id: int, lease_lost: threading.Event) -> bool:
         # The handler thread and this loop may both call it: use a private connection per call.
