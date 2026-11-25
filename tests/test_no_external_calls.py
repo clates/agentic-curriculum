@@ -17,7 +17,7 @@ from tests.conftest import ExternalNetworkBlocked
 SRC = Path(__file__).resolve().parents[1] / "src"
 
 # Modules allowed to make outbound calls (HTTP or SMTP), and the env var that redirects each one.
-OUTBOUND_HTTP_ALLOWLIST = {"ntfy.py": "NTFY_URL", "job_alerts.py": "SMTP_HOST"}  # unset = off
+OUTBOUND_HTTP_ALLOWLIST = {"ntfy.py": "NTFY_URL", "mailer.py": "SMTP_HOST"}  # unset = off
 
 HTTP_CLIENT_PATTERN = re.compile(
     r"^\s*(?:import|from)\s+(requests|httpx|aiohttp|urllib\.request|http\.client|smtplib)\b",
