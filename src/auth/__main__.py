@@ -7,6 +7,7 @@
     python -m auth grant <username> <permission>     (permission: admin)
     python -m auth revoke <username> <permission>
     python -m auth unlock [<username>]   (no name: forget every lockout, addresses included)
+    python -m auth list-users            (username, family, disabled, permissions; no hashes)
 
 `--family` takes any existing family id.
 
@@ -54,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("unlock", help="forget lockouts: one user's, or all of them").add_argument(
         "username", nargs="?"
     )
+    sub.add_parser("list-users", help="one line per user: family, disabled, permissions")
     for name in ("grant", "revoke"):
         p = sub.add_parser(name, help=f"{name} a permission")
         p.add_argument("username")
@@ -95,6 +97,16 @@ def main(argv: list[str] | None = None) -> int:
                 print("No such user.", file=sys.stderr)
                 return 1
             print(f"{args.cmd.capitalize()}: {args.permission} for {args.username}.")
+        elif args.cmd == "list-users":
+            rows = conn.execute(
+                "SELECT u.username, u.family_id, u.disabled, group_concat(p.permission) "
+                "FROM app_user u LEFT JOIN user_permission p ON p.user_id = u.id "
+                "GROUP BY u.id ORDER BY u.username"
+            ).fetchall()
+            for username, family_id, disabled, perms in rows:
+                flag = "disabled" if disabled else "enabled"
+                perms = ",".join(sorted(perms.split(","))) if perms else "-"
+                print(f"{username}\t{family_id}\t{flag}\t{perms}")
         elif args.cmd == "unlock":
             removed = store.clear_attempts(conn, args.username)
             print(f"Cleared {removed} lockout record(s).")

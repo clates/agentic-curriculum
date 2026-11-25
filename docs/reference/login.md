@@ -29,6 +29,7 @@ Background: [Why the login needs HTTPS and a proxy](../explanation/login-and-htt
 | `unlock` | clears every lockout, address locks included |
 | `grant <username> <permission>` | gives the user a permission. Known permissions: `admin` |
 | `revoke <username> <permission>` | takes it away |
+| `list-users` | one line per user: username, family id, `enabled` or `disabled`, comma-separated permissions (`-` for none). Never prints password hashes |
 
 Passwords: at least 12 characters, never accepted as a command-line argument.
 

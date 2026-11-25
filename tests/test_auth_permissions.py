@@ -90,6 +90,21 @@ def test_cli_grant_and_revoke(env, conn):
     assert _cli(env, "revoke", "ghost", "admin").returncode == 1
 
 
+def test_cli_list_users_shows_family_disabled_and_permissions(env, conn):
+    fid = store.create_family(conn, "Rivera")
+    ana = store.create_user(conn, "ana", PW)
+    store.create_user(conn, "bo", PW, fid)
+    store.grant(conn, "ana", "admin")
+    store.set_disabled(conn, "bo", True)
+    r = _cli(env, "list-users")
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.splitlines() == [
+        "ana\tfam_local\tenabled\tadmin",
+        f"bo\t{fid}\tdisabled\t-",
+    ]
+    assert ana.password_hash not in r.stdout and "scrypt" not in r.stdout
+
+
 # --- request dependencies ------------------------------------------------------------------
 
 
