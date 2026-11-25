@@ -54,10 +54,6 @@ test.describe('Quick check-in: stored values', () => {
   });
 
   test('Send fires one request even when tapped twice quickly', async ({ page, request }) => {
-    test.fail(
-      true,
-      'quick check-in: QuickCheckIn.tsx has no in-flight guard, so a double tap POSTs /feedback twice (the backend ignores the exact repeat); issue #211'
-    );
     const kid = await newChild(request, 'qd', { packet: 'legacy', plan: 'awaiting_feedback' });
     let posts = 0;
     await page.route(FEEDBACK, async (route) => {
