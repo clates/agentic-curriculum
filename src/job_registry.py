@@ -42,13 +42,10 @@ class DuplicateHandler(RuntimeError):
 def handler(kind: str, *, stub: bool = False) -> Callable[[Handler], Handler]:
     def deco(fn: Handler) -> Handler:
         existing = _HANDLERS.get(kind)
-        if existing is not None:
-            _, existing_is_stub = existing
+        if existing is not None and not existing[1]:  # a real handler is already registered
             if stub:
-                if not existing_is_stub:
-                    return fn  # a real handler already won; the stub stays out of the way
-            elif not existing_is_stub:
-                raise DuplicateHandler(f"two real handlers registered for job kind {kind!r}")
+                return fn  # the real handler won; the stub stays out of the way
+            raise DuplicateHandler(f"two real handlers registered for job kind {kind!r}")
         _HANDLERS[kind] = (fn, stub)
         return fn
 

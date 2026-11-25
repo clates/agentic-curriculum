@@ -25,9 +25,9 @@ import ssl
 from email.message import EmailMessage
 
 try:
-    from .jobs import Job, family_hash, iso, utcnow  # type: ignore
+    from .jobs import Job, family_hash, get_job, iso, utcnow  # type: ignore
 except ImportError:
-    from jobs import Job, family_hash, iso, utcnow  # type: ignore
+    from jobs import Job, family_hash, get_job, iso, utcnow  # type: ignore
 
 logger = logging.getLogger(__name__)
 _CLASS_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]{0,80}")
@@ -113,10 +113,6 @@ def send_digest(conn: sqlite3.Connection) -> int:
     conn.commit()
     if not claimed:
         return 0
-    try:
-        from .jobs import get_job  # type: ignore
-    except ImportError:
-        from jobs import get_job  # type: ignore
     dead = [j for j in (get_job(conn, i) for i in claimed) if j is not None]
     try:
         _send_email(*build_message(dead))

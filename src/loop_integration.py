@@ -13,9 +13,11 @@ three things, all behind ``LOOP_JOBS_ENABLED`` so a self-hosted or dev install b
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sqlite3
+from datetime import timedelta
 
 try:
     from . import authoring_kickoff, jobs, loop_state, scheduler, week_plan as wp  # type: ignore
@@ -80,9 +82,9 @@ def on_feedback(family_id: str, student_id: str) -> None:
                 "AND status='awaiting_feedback' ORDER BY week_start DESC LIMIT 1",
                 (family_id, student_id),
             ).fetchone()
-            plan = wp.row_to_plan(row) if row else None
-            if plan is None:
+            if row is None:
                 return
+            plan = wp.row_to_plan(row)
             res = loop_state.advance(
                 conn,
                 family_id,
@@ -114,8 +116,6 @@ DEMO_STUDENT = "demo_child"
 def seed_demo(conn: sqlite3.Connection) -> str:
     """Add a made-up child to the local family, to watch the loop with no real student data.
     Safe to repeat. Returns the student id."""
-    import json
-
     conn.execute(
         "INSERT OR IGNORE INTO student_profiles (student_id, progress_blob, plan_rules_blob, "
         "metadata_blob, family_id) VALUES (?,?,?,?,?)",
@@ -134,8 +134,6 @@ def seed_demo(conn: sqlite3.Connection) -> str:
 
 
 def next_monday(today) -> str:
-    from datetime import timedelta
-
     return (today + timedelta(days=7 - today.weekday())).isoformat()
 
 
@@ -158,17 +156,13 @@ def start_week(
         plan = wp.create_plan(conn, family_id, student_id, week_start)
     else:
         plan = wp.get_plan(conn, family_id, row["plan_id"])
-    res = (
-        loop_state.advance(
+    if plan.status == "awaiting_feedback":
+        plan = loop_state.advance(
             conn,
             family_id,
             plan.plan_id,
             loop_state.Event("feedback_submitted", key=f"cli:{plan.plan_id}"),
-        )
-        if plan.status == "awaiting_feedback"
-        else None
-    )
-    plan = res.plan if res else plan
+        ).plan
     if plan.status == "outlining":
         enqueue_outline(conn, family_id, plan.plan_id)
     return plan

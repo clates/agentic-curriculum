@@ -27,16 +27,5 @@ def _stub(ctx: JobContext) -> None:
     )
 
 
-@handler("outline", stub=True)
-def outline_stub(ctx: JobContext) -> None:  # replaced by stream "pick" (M8.3a)
-    _stub(ctx)
-
-
-@handler("author", stub=True)
-def author_stub(ctx: JobContext) -> None:  # replaced by stream "author" (M8.3b)
-    _stub(ctx)
-
-
-@handler("send_notice", stub=True)
-def send_notice_stub(ctx: JobContext) -> None:  # replaced by M8.5 email/notice sender
-    _stub(ctx)
+for _kind in ("outline", "author", "send_notice"):
+    handler(_kind, stub=True)(_stub)
