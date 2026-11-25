@@ -9,17 +9,12 @@ import {
   type PrepCheck,
   type Workload,
 } from '@/lib/checkIn';
-import { Choice } from './Choice';
-import { ErrorState, primaryButton } from './states';
+import { WorkloadChoice } from './Choice';
+import { DonePanel, ErrorState, primaryButton } from './states';
 
 const t = copy.byCheck;
 const c = copy.checkIn;
 const RESULTS: CheckResult[] = ['got_it', 'shaky', 'missed'];
-const WORKLOADS: { value: Workload; label: string }[] = [
-  { value: 2, label: c.workload.tooLittle },
-  { value: 0, label: c.workload.justRight },
-  { value: -2, label: c.workload.tooMuch },
-];
 const secondary =
   'inline-flex min-h-11 items-center justify-center rounded-md border-2 border-neutral-700 bg-white px-5 py-2 font-medium text-neutral-900';
 
@@ -44,15 +39,7 @@ export function CheckByCheck({
   const reviewing = index >= checks.length;
 
   if (send.isSuccess) {
-    return (
-      <div role="status" className="rounded-md border border-sage-300 bg-white p-6 text-center">
-        <h2 className="text-foreground text-xl font-semibold">{c.doneTitle}</h2>
-        <p className="mt-2 text-neutral-700">{c.doneBody(firstName)}</p>
-        <Link href="/week" className={`${primaryButton} mt-4`}>
-          {c.back}
-        </Link>
-      </div>
-    );
+    return <DonePanel title={c.doneTitle} body={c.doneBody(firstName)} back={c.back} />;
   }
 
   if (reviewing) {
@@ -63,22 +50,7 @@ export function CheckByCheck({
           {answered === 0 ? t.answeredNone : t.answered(answered, checks.length)}
         </p>
         {answered > 0 ? <p className="text-neutral-700">{t.skippedNote}</p> : null}
-        <fieldset>
-          <legend className="text-foreground mb-2 text-lg font-semibold">
-            {c.workloadQuestion}
-          </legend>
-          <div className="grid grid-cols-3 gap-2">
-            {WORKLOADS.map((w) => (
-              <Choice
-                key={w.value}
-                name="workload"
-                checked={workload === w.value}
-                onChange={() => setWorkload(w.value)}
-                label={w.label}
-              />
-            ))}
-          </div>
-        </fieldset>
+        <WorkloadChoice value={workload} onChange={setWorkload} />
         {send.isError ? <ErrorState title={c.sendErrorTitle} body={c.sendErrorBody} /> : null}
         {answered === 0 ? (
           <p className="text-neutral-900">{t.needOne}</p>

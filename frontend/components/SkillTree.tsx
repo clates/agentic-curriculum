@@ -14,28 +14,22 @@ import ReactFlow, {
 import dagre from 'dagre';
 import 'reactflow/dist/style.css';
 
+// [background, text, border]: green for mastered, blue for ready, grey for locked.
+const COLORS: Record<string, [string, string, string]> = {
+  mastered: ['#dcfce7', '#166534', '#86efac'],
+  ready: ['#dbeafe', '#1e40af', '#93c5fd'],
+  locked: ['#f3f4f6', '#6b7280', '#d1d5db'],
+};
+
 const StandardNode = memo(({ data }: any) => {
-  let backgroundColor = '#f3f4f6'; // neutral-100 (locked)
-  let textColor = '#6b7280'; // neutral-500
-  let borderColor = '#d1d5db'; // neutral-300
-
-  if (data.state === 'mastered') {
-    backgroundColor = '#dcfce7'; // green-100
-    textColor = '#166534'; // green-800
-    borderColor = '#86efac'; // green-300
-  } else if (data.state === 'ready') {
-    backgroundColor = '#dbeafe'; // blue-100
-    textColor = '#1e40af'; // blue-800
-    borderColor = '#93c5fd'; // blue-300
-  }
-
+  const [background, color, borderColor] = COLORS[data.state] ?? COLORS.locked;
   return (
     <div
       className="px-4 py-2 shadow-md rounded-xl border-2 transition-all flex flex-col justify-center items-center text-center"
       style={{
-        background: backgroundColor,
-        color: textColor,
-        borderColor: borderColor,
+        background,
+        color,
+        borderColor,
         width: '220px',
         height: '100px',
       }}
@@ -67,32 +61,18 @@ dagreGraph.setDefaultEdgeLabel(() => ({}));
 const nodeWidth = 220;
 const nodeHeight = 100;
 
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
-  const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
+const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
+  dagreGraph.setGraph({ rankdir: 'TB' });
+  nodes.forEach((node) => dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight }));
+  edges.forEach((edge) => dagreGraph.setEdge(edge.source, edge.target));
   dagre.layout(dagreGraph);
 
   nodes.forEach((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    node.targetPosition = isHorizontal ? ('left' as any) : ('top' as any);
-    node.sourcePosition = isHorizontal ? ('right' as any) : ('bottom' as any);
-
-    // We are shifting the dagre node position (center) to the top left, so it matches the React Flow node anchor point (top left).
-    node.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
-    };
-
-    return node;
+    const { x, y } = dagreGraph.node(node.id);
+    node.targetPosition = Position.Top;
+    node.sourcePosition = Position.Bottom;
+    // dagre gives the centre; React Flow anchors nodes at the top left.
+    node.position = { x: x - nodeWidth / 2, y: y - nodeHeight / 2 };
   });
 
   return { nodes, edges };

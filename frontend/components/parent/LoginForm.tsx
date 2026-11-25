@@ -15,6 +15,12 @@ type Problem =
   | { kind: 'busy' }
   | null;
 
+const MESSAGES = {
+  wrong: copy.login.wrong,
+  busy: copy.login.busy,
+  failed: copy.login.couldNotReach,
+};
+
 const field =
   'mt-1 block min-h-11 w-full rounded-md border border-neutral-400 bg-white px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
 
@@ -75,15 +81,11 @@ export function LoginForm() {
   }
 
   const message =
-    problem?.kind === 'wrong'
-      ? copy.login.wrong
-      : problem?.kind === 'wait'
-        ? copy.login.wait(problem.seconds)
-        : problem?.kind === 'busy'
-          ? copy.login.busy
-          : problem?.kind === 'failed'
-            ? copy.login.couldNotReach
-            : null;
+    problem?.kind === 'wait'
+      ? copy.login.wait(problem.seconds)
+      : problem
+        ? MESSAGES[problem.kind]
+        : null;
 
   return (
     <div className="bg-background min-h-screen">

@@ -5,6 +5,10 @@ import { Modal, Button } from '@/components/ui';
 import { useSystemOptions, useGenerateWeeklyPlan } from '@/lib/hooks';
 import type { WeeklyPacketDetail } from '@/lib/api';
 
+const labelClass = 'text-secondary-700 mb-1 block text-sm font-medium';
+const selectClass =
+  'border-secondary-300 focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md shadow-sm sm:text-sm';
+
 export interface GeneratePlanModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,7 +33,6 @@ export function GeneratePlanModal({
   const [subject, setSubject] = useState('');
   const [gradeLevel, setGradeLevel] = useState(preSelectedStudent?.grade || 0);
 
-  // Update selected student when preSelectedStudent changes
   useEffect(() => {
     if (preSelectedStudent) {
       setSelectedStudentId(preSelectedStudent.id);
@@ -51,10 +54,7 @@ export function GeneratePlanModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!selectedStudentId || !subject) {
-      return;
-    }
+    if (!selectedStudentId || !subject) return;
 
     try {
       const plan = await generateMutation.mutateAsync({
@@ -62,11 +62,7 @@ export function GeneratePlanModal({
         grade_level: gradeLevel,
         subject,
       });
-
-      if (onSuccess) {
-        onSuccess(plan);
-      }
-
+      onSuccess?.(plan);
       onClose();
     } catch (error) {
       // Error is handled by the mutation state
@@ -79,10 +75,9 @@ export function GeneratePlanModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Generate Weekly Plan">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Student Selector */}
         {!preSelectedStudent && students.length > 0 && (
           <div>
-            <label htmlFor="student" className="text-secondary-700 mb-1 block text-sm font-medium">
+            <label htmlFor="student" className={labelClass}>
               Student
             </label>
             <select
@@ -95,7 +90,7 @@ export function GeneratePlanModal({
                   setGradeLevel(student.grade);
                 }
               }}
-              className="border-secondary-300 focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md shadow-sm sm:text-sm"
+              className={selectClass}
               required
             >
               <option value="">Select a student</option>
@@ -108,16 +103,15 @@ export function GeneratePlanModal({
           </div>
         )}
 
-        {/* Grade Level Selector */}
         <div>
-          <label htmlFor="grade" className="text-secondary-700 mb-1 block text-sm font-medium">
+          <label htmlFor="grade" className={labelClass}>
             Grade Level
           </label>
           <select
             id="grade"
             value={gradeLevel || ''}
             onChange={(e) => setGradeLevel(e.target.value ? Number(e.target.value) : 0)}
-            className="border-secondary-300 focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md shadow-sm sm:text-sm"
+            className={selectClass}
             disabled={optionsLoading}
             required
           >
@@ -130,16 +124,15 @@ export function GeneratePlanModal({
           </select>
         </div>
 
-        {/* Subject Selector */}
         <div>
-          <label htmlFor="subject" className="text-secondary-700 mb-1 block text-sm font-medium">
+          <label htmlFor="subject" className={labelClass}>
             Subject
           </label>
           <select
             id="subject"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="border-secondary-300 focus:border-primary-500 focus:ring-primary-500 block w-full rounded-md shadow-sm sm:text-sm"
+            className={selectClass}
             disabled={optionsLoading}
             required
           >
@@ -152,7 +145,6 @@ export function GeneratePlanModal({
           </select>
         </div>
 
-        {/* Error Display */}
         {generateMutation.isError && (
           <div className="bg-danger-50 border-danger-200 rounded-lg border p-4">
             <div className="flex items-start space-x-3">
@@ -183,7 +175,6 @@ export function GeneratePlanModal({
           </div>
         )}
 
-        {/* Loading State */}
         {generateMutation.isPending && (
           <div className="bg-primary-50 border-primary-200 rounded-lg border p-4">
             <div className="flex items-center space-x-3">
@@ -196,7 +187,6 @@ export function GeneratePlanModal({
           </div>
         )}
 
-        {/* Form Actions */}
         <div className="flex justify-end space-x-3 pt-4">
           <Button
             type="button"
