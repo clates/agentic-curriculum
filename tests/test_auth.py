@@ -504,6 +504,18 @@ def _reaches(dependant, call) -> bool:
     return any(d.call is call or _reaches(d, call) for d in dependant.dependencies)
 
 
+def _reaches_admin(dependant) -> bool:
+    """require_permission("admin") makes a fresh closure, so match it by name and captured value."""
+    return any(
+        (
+            getattr(d.call, "__qualname__", "") == "require_permission.<locals>.check"
+            and d.call.__closure__[0].cell_contents == "admin"
+        )
+        or _reaches_admin(d)
+        for d in dependant.dependencies
+    )
+
+
 def test_every_route_declares_its_family():
     """Every non-public route acts for one family; every student route checks ownership.
     Unscoped on purpose: public paths, /auth/*, the hello at /, and the shared standards data."""
@@ -514,12 +526,12 @@ def test_every_route_declares_its_family():
             continue
         if path.startswith(("/auth/", "/curriculum/")):
             continue
-        if path.startswith("/loop-admin"):  # Task 5 scopes the loop console and removes this skip
-            continue
         checked.add(path)
         assert _reaches(route.dependant, current_family), f"{path} does not ask for the family"
         if "{student_id}" in path:
             assert _reaches(route.dependant, owned_student_id), f"{path} skips the ownership check"
+        if path.startswith("/loop-admin/"):
+            assert _reaches_admin(route.dependant), f"{path} is not admin-only"
     assert {"/students", "/this-week", "/generate_weekly_plan", "/student/{student_id}"} <= checked
 
 

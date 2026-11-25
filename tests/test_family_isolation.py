@@ -133,7 +133,8 @@ def snapshot(conn: sqlite3.Connection) -> dict:
 
 
 def student_get_paths(ids: dict) -> list[str]:
-    """Every GET route with {student_id}, filled in with A's ids (the loop console is Task 5's)."""
+    """Every GET route with {student_id}, filled in with A's ids (the admin-only loop console is
+    tested in test_loop_admin)."""
     values = {**ids, "subject": "Math"}
     return [
         route.path.format(**values)

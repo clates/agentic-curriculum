@@ -482,7 +482,7 @@ export function LoopConsole() {
   const overview = useLoopOverview();
   const seed = useSeedDemo();
   const data = overview.data;
-  const hasDemo = data?.children.some((c) => c.student_id === 'demo_child');
+  const hasDemo = data?.children.some((c) => c.demo);
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 [overflow-wrap:anywhere]">

@@ -340,27 +340,34 @@ def retry_dead(conn: sqlite3.Connection, job_id: int, *, now: datetime | None = 
     return cur.rowcount == 1
 
 
-def status(conn: sqlite3.Connection, *, now: datetime | None = None) -> dict[str, Any]:
-    """Counts for ``worker --status``: queue depth, running, dead, plus the oldest wait."""
+def status(
+    conn: sqlite3.Connection, *, now: datetime | None = None, family_id: str | None = None
+) -> dict[str, Any]:
+    """Counts for ``worker --status``: queue depth, running, dead, plus the oldest wait. With
+    ``family_id``, only that family's jobs (the loop console shows a family its own queue)."""
     now = now or utcnow()
     conn.row_factory = sqlite3.Row
+    mine, fam = ("AND family_id=?", (family_id,)) if family_id else ("", ())
     counts = {s: 0 for s in STATES}
-    for row in conn.execute("SELECT state, COUNT(*) AS n FROM jobs GROUP BY state"):
+    for row in conn.execute(
+        f"SELECT state, COUNT(*) AS n FROM jobs WHERE 1=1 {mine} GROUP BY state", fam  # noqa: S608
+    ):
         counts[row["state"]] = row["n"]
     ready = conn.execute(
         "SELECT COUNT(*) AS n, MIN(run_after) AS oldest FROM jobs "
-        "WHERE state='queued' AND run_after <= ?",
-        (iso(now),),
+        f"WHERE state='queued' AND run_after <= ? {mine}",  # noqa: S608
+        (iso(now), *fam),
     ).fetchone()
     stale = conn.execute(
-        "SELECT COUNT(*) AS n FROM jobs WHERE state='running' AND lease_expires_at <= ?",
-        (iso(now),),
+        f"SELECT COUNT(*) AS n FROM jobs WHERE state='running' AND lease_expires_at <= ? {mine}",  # noqa: S608
+        (iso(now), *fam),
     ).fetchone()
     dead = [
         dict(r)
         for r in conn.execute(
             "SELECT id, kind, family_id, attempts, last_error, finished_at FROM jobs "
-            "WHERE state='dead' ORDER BY id"
+            f"WHERE state='dead' {mine} ORDER BY id",  # noqa: S608
+            fam,
         )
     ]
     return {
