@@ -1,8 +1,7 @@
 # Why the login needs HTTPS and a proxy
 
-The login is deliberately small: usernames and passwords, accounts made from the command line, no
-signup page. It gives each family its own data and a small set of permissions. These choices hold it
-together.
+The login is deliberately small: email addresses and passwords, and sign-up only with an invite.
+It gives each family its own data and a small set of permissions. These choices hold it together.
 
 ## HTTPS before anything else
 
@@ -64,4 +63,39 @@ existence isn't revealed either, and the console acts only on the admin's own fa
 are read on every request, so taking one away takes effect at once rather than when a session
 ends.
 
-Facts and commands: [Login reference](../reference/login.md#families).
+## Why sign-up needs an invite
+
+The app spends money on every family's behalf, on model calls. Open signup would let anyone run up
+that bill. An invite makes the owner decide who comes in. Each code works once and expires, and
+only a hash is stored, so a leaked database gives nobody a way in. The code uses letters that
+can't be mistaken for each other, because people copy it by eye.
+
+## Why the email is confirmed
+
+Without it, anyone could register with someone else's address, and the app would later write to
+that person. A 6-digit code sent to the address proves the registrant can read it. The code also
+needs the password chosen at sign-up. Otherwise a stranger who registers a pending address again
+could be handed the real owner's confirmation. Codes are short-lived and allow few tries because 6
+digits are easy to guess otherwise.
+
+## Why register never reveals accounts
+
+"That email is already registered" tells a stranger who uses the app. So register and resend
+answer the same either way, and a code goes out only when there is a pending account to send it
+to. Every accepted registration also uses up its invite, so a stranger can't tell a taken address
+from a new one by whether the invite survived. Replies take the same time, and the mail is sent
+after the reply, so timing says nothing either.
+
+The cost is a plain failure when the code never arrives. The sign-up screen offers a new code, and
+the answer to that looks the same.
+
+## Why admins' looks at other families are audited
+
+An admin can open any family's child in the loop console, because someone has to fix stuck jobs.
+That power reaches children's data, so it leaves a trail: each look at another family's child or
+job is recorded by id and action, and never by content. The overview refreshes every few seconds,
+so it is recorded once per admin per 10 minutes, or the log would fill with noise. Another
+family's job errors show only the error type, since a message can quote what a child wrote.
+
+Facts and commands: [Login reference](../reference/login.md#families),
+[registration](../reference/login.md#registration).
