@@ -189,6 +189,39 @@ def test_family_b_cannot_write_family_a(env):
     assert env["fake"].calls == [] and env["trio"] == []  # no model call or trio for B
 
 
+def test_own_child_with_another_familys_ids_is_not_found(env):
+    """B's own child combined with A's packet, artifact and plan ids: each answers exactly as a
+    missing id does, and nothing is written."""
+    b = signed_in("parentb")
+    child = {"name": "Bo", "birthday": "2019-05-06"}
+    base = f"/students/{b.post('/students', json={'metadata': child}).json()['student_id']}"
+    before = snapshot(env["conn"])
+    packet_calls = [
+        ("GET", "", None),
+        ("GET", "/worksheets", None),
+        ("GET", "/print", None),
+        ("GET", "/print-info", None),
+        ("GET", "/checks", None),
+        ("GET", "/feedback", None),
+        ("POST", "/feedback", {"quantity_feedback": 1}),
+    ]
+    calls = [
+        (method, f"{base}/weekly-packets/{{}}{tail}", body, packet)
+        for method, tail, body in packet_calls
+        for packet in (PACKET, WEEK)
+    ] + [
+        ("GET", f"{base}/worksheet-artifacts/{{}}", None, env["ids"]["artifact_id"]),
+        ("POST", f"{base}/week-plans/{{}}/printed", None, env["ids"]["plan_id"]),
+    ]
+    for method, path, body, theirs in calls:
+        r = b.request(method, path.format(theirs), json=body)
+        missing = b.request(method, path.format(987654321), json=body)
+        assert r.status_code == missing.status_code == 404, f"{method} {path}: {r.status_code}"
+        assert r.json() == missing.json(), f"{method} {path}"
+    assert snapshot(env["conn"]) == before
+    assert env["fake"].calls == [] and env["trio"] == []
+
+
 def test_family_a_still_works(env):
     a = signed_in("parenta")
     for path in student_get_paths(env["ids"]):

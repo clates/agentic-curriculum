@@ -39,7 +39,7 @@ export const copy = {
     link: 'Admin',
     title: 'Admin',
     loopTitle: 'Loop console',
-    loopBody: 'Drive any child\u2019s week through each step of the loop.',
+    loopBody: 'Drive your family\u2019s children through each step of the loop.',
   },
   states: {
     loadingLabel: 'Loading',

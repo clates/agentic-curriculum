@@ -347,7 +347,7 @@ def status(
     ``family_id``, only that family's jobs (the loop console shows a family its own queue)."""
     now = now or utcnow()
     conn.row_factory = sqlite3.Row
-    mine, fam = ("AND family_id=?", (family_id,)) if family_id else ("", ())
+    mine, fam = ("AND family_id=?", (family_id,)) if family_id is not None else ("", ())
     counts = {s: 0 for s in STATES}
     for row in conn.execute(
         f"SELECT state, COUNT(*) AS n FROM jobs WHERE 1=1 {mine} GROUP BY state", fam  # noqa: S608

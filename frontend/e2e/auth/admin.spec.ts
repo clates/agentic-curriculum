@@ -36,7 +36,7 @@ test.describe('Admin', () => {
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole('heading', { name: 'Loop console' })).toBeVisible();
     await expect(
-      page.getByText('Drive any child\u2019s week through each step of the loop.')
+      page.getByText('Drive your family\u2019s children through each step of the loop.')
     ).toBeVisible();
     await page.getByRole('link', { name: 'Loop console' }).click();
     await expect(page).toHaveURL(/\/loop$/);

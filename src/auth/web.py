@@ -139,12 +139,9 @@ def auth_gate(request: Request, response: Response) -> None:
         set_session_cookie(response, request, token)
 
 
-LOCAL_FAMILY = "fam_local"
-
-
 def current_family(request: Request) -> str:
     """The caller's family: fam_local with login off, otherwise the session user's."""
-    return request.state.user.family_id if auth_required() else LOCAL_FAMILY
+    return request.state.user.family_id if auth_required() else store.DEFAULT_FAMILY
 
 
 def user_permissions(request: Request) -> frozenset[str]:

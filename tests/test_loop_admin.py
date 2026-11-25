@@ -299,9 +299,8 @@ def signed_in(username):
 
 
 def rows(conn):
-    return {
-        t: conn.execute(f"SELECT * FROM {t} ORDER BY 1").fetchall() for t in ("week_plan", "jobs")
-    }  # noqa: S608
+    tables = ("week_plan", "jobs", "student_profiles")
+    return {t: conn.execute(f"SELECT * FROM {t} ORDER BY 1").fetchall() for t in tables}
 
 
 def console_routes():

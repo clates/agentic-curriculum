@@ -118,6 +118,13 @@ def test_status_counts(conn):
     assert st["queue_depth"] == 2 and st["running"] == 1 and st["dead"] == []
 
 
+def test_status_scoped_to_a_family_even_an_empty_id(conn):
+    jobs.enqueue(conn, FAM, "outline", "k", now=T0)
+    assert jobs.status(conn, now=T0, family_id=FAM)["queue_depth"] == 1
+    assert jobs.status(conn, now=T0, family_id="fam_other")["queue_depth"] == 0
+    assert jobs.status(conn, now=T0, family_id="")["queue_depth"] == 0  # not "every family"
+
+
 def test_stub_handlers_exist_and_real_ones_replace_them(registry):
     for kind in ("outline", "author", "send_notice"):
         assert job_registry.is_stub(kind)
