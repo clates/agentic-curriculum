@@ -1,8 +1,8 @@
 # Why the login needs HTTPS and a proxy
 
 The login is deliberately small: usernames and passwords, accounts made from the command line, no
-signup page. It's a stopgap that will grow into proper accounts and families. Until then, these
-choices hold it together.
+signup page. It gives each family its own data and a small set of permissions. These choices hold it
+together.
 
 ## HTTPS before anything else
 
@@ -46,10 +46,22 @@ scrypt is slow on purpose, so a burst of sign-ins could tie up the machine. Only
 and a few more may queue briefly. A sign-in turned away for being busy counts against nobody, so
 the limit can't be used to lock people out.
 
-## Why every account sees everything
+## How families are kept apart
 
-All data still belongs to one family, `fam_local`. Separating families properly takes per-family
-checks on every route, which comes with real accounts. Until then, being signed in is the only
-check, and the docs say so wherever accounts are made.
+Every request acts for the signed-in user's family, and every route that touches a child, packet,
+week, plan or job checks that the record belongs to that family. The check lives in the route, next to the
+data it guards, rather than in one gate at the door that has to guess which ids belong to whom.
 
-Facts and numbers: [Login reference](../reference/login.md).
+A record in another family answers 404 with the same body as a record that doesn't exist. A 403
+would tell a stranger that the id is real. With 404 they learn nothing, so guessing ids gets them
+nowhere. New child ids are random for the same reason: they can't be counted up from one to the
+next.
+
+With login off there is one family, `fam_local`, and nothing changes for a self-hoster.
+
+Admin powers follow the same rule. A non-admin gets 404 from the admin routes, so the console's
+existence isn't revealed either, and the console acts only on the admin's own family. Permissions
+are read on every request, so taking one away takes effect at once rather than when a session
+ends.
+
+Facts and commands: [Login reference](../reference/login.md#families).

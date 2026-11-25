@@ -50,4 +50,22 @@ If that isn't enough, clear every lockout, including those on addresses:
 <prefix> python -m auth create-user <username>
 ```
 
+## Make someone an admin
+
+```bash
+<prefix> python -m auth grant <username> admin
+```
+
+Admins see an "Admin" link in the header, which opens the admin panel and the loop console. To
+take it away:
+
+```bash
+<prefix> python -m auth revoke <username> admin
+```
+
+A revoke applies on the user's next request. What admin covers:
+[Login reference](../reference/login.md#permissions).
+
+To put a new account in an existing family, add `--family <id>` to `create-user`.
+
 How lockouts are counted: [Login reference](../reference/login.md#lockouts).
