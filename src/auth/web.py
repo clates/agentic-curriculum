@@ -7,7 +7,7 @@ import os
 from collections.abc import Callable
 from urllib.parse import urlsplit
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -189,21 +189,21 @@ def _held_back(result) -> JSONResponse | None:
     )
 
 
-def _mail_later(background: BackgroundTasks, mail: tuple[str, str] | None) -> None:
-    """Mail goes out after the response, so its timing says nothing about the account."""
+def _mail_later(mail: tuple[str, str] | None) -> None:
+    """Mail goes out on its own thread, so its timing says nothing about the account."""
     if mail:
-        background.add_task(registration.send_code, *mail)
+        registration.send_later(*mail)
 
 
 @router.post("/login")
-def login(body: LoginBody, request: Request, response: Response, background: BackgroundTasks):
+def login(body: LoginBody, request: Request, response: Response):
     result = service.attempt_login(
         body.username, body.password, client_ip(request), request.headers.get("user-agent")
     )
     if held := _held_back(result):
         return held
     if result.kind == "unverified" and result.user:
-        _mail_later(background, registration.issue_code(result.user.username))
+        _mail_later(registration.issue_code(result.user.username))
         return JSONResponse({"detail": "email_not_verified"}, status_code=403)
     if result.kind != "ok" or not result.token or not result.user:
         raise HTTPException(401, "invalid_credentials")
@@ -222,7 +222,7 @@ class RegisterBody(BaseModel):
 
 
 @router.post("/register", status_code=202)
-def register(body: RegisterBody, request: Request, background: BackgroundTasks):
+def register(body: RegisterBody, request: Request):
     try:
         result = registration.register(
             body.email, body.password, body.family_name, body.invite_code, client_ip(request)
@@ -233,19 +233,24 @@ def register(body: RegisterBody, request: Request, background: BackgroundTasks):
         return held
     if result.kind != "ok":
         raise HTTPException(400, "invalid_invite")
-    _mail_later(background, result.mail)
+    _mail_later(result.mail)
     return CHECK_EMAIL
 
 
 class VerifyBody(BaseModel):
     email: str = Field(max_length=320)
     code: str = Field(max_length=32)
+    password: str = Field(max_length=1024)
 
 
 @router.post("/verify")
 def verify(body: VerifyBody, request: Request, response: Response):
     result = registration.verify(
-        body.email, body.code, client_ip(request), request.headers.get("user-agent")
+        body.email,
+        body.code,
+        body.password,
+        client_ip(request),
+        request.headers.get("user-agent"),
     )
     if held := _held_back(result):
         return held
@@ -260,8 +265,8 @@ class ResendBody(BaseModel):
 
 
 @router.post("/resend", status_code=202)
-def resend(body: ResendBody, background: BackgroundTasks):
-    _mail_later(background, registration.issue_code(body.email))
+def resend(body: ResendBody):
+    _mail_later(registration.issue_code(body.email))
     return CHECK_EMAIL
 
 

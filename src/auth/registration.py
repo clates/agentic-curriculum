@@ -2,9 +2,12 @@
 
 Codes live in ``auth_challenge`` (purpose 'verify_email', subject the email, only a SHA-256 kept),
 one per email: issuing a new one deletes the old. They last 15 minutes and allow 5 tries.
-Register and resend answer the same whether or not the email has an account; every accepted
-registration spends its invite. Bad invites and wrong codes count against the per-address login
-lockout under the pseudo-usernames below (the space keeps them apart from any real username).
+Verifying needs the code AND the account's password, so re-registering a pending email cannot
+hand the attacker the victim's verification. Register and resend answer the same whether or not
+the email has an account; every accepted registration spends its invite. Failed registers and
+verifies count against the login lockout keyed per email (``register:<email>``,
+``verify:<email>``), so failures pile up on the email across resends and one email's trouble
+never touches another's. Mail goes out on a daemon thread, after the response.
 Times are unix seconds from ``auth.clock``. No code, password or email body is ever logged.
 """
 
@@ -14,6 +17,7 @@ import hmac
 import logging
 import re
 import secrets
+import threading
 import unicodedata
 import uuid
 from dataclasses import dataclass
@@ -28,11 +32,9 @@ logger = logging.getLogger(__name__)
 PURPOSE = "verify_email"
 CODE_TTL_S = 15 * 60
 MAX_ATTEMPTS = 5
-RESEND_S = 60
+RESEND_S = 60  # times AUTH_BACKOFF_SCALE
 FAMILY_NAME_MAX = 80
 EMAIL_RE = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
-REGISTER_KEY = "register invite"
-VERIFY_KEY = "verify code"
 SUBJECT = "Your sign-in code"
 BODY = (
     "Your sign-in code is {code}.\n\n"
@@ -49,7 +51,7 @@ class RegistrationError(ValueError):
 class Result:
     kind: str  # "ok" | "invalid_invite" | "bad" | "locked" | "busy"
     retry_after: int = 0
-    mail: tuple[str, str] | None = None  # (email, code) to send once the response is out
+    mail: tuple[str, str] | None = None  # (email, code) to send after the response
     token: str | None = None
     user: store.User | None = None
 
@@ -102,7 +104,7 @@ def register(email: str, password: str, family_name: str, invite_code: str, ip: 
             return Result("busy", retry_after=service.BUSY_RETRY_AFTER_S)
         conn = store.connect()
         try:
-            wait = lockout.reserve(conn, REGISTER_KEY, ip, clock.now())
+            wait = lockout.reserve(conn, f"register:{address}", ip, clock.now())
             if wait > 0:
                 return Result("locked", retry_after=int(wait))
             # Hashed before the invite is checked, so every outcome costs the same time.
@@ -116,77 +118,96 @@ def register(email: str, password: str, family_name: str, invite_code: str, ip: 
                 raise
             if not spent:
                 return Result("invalid_invite")
-            lockout.record_success(conn, REGISTER_KEY, ip, clock.now())
+            lockout.record_success(conn, f"register:{address}", ip, clock.now())
             return Result("ok", mail=(address, code) if code else None)
         finally:
             conn.close()
 
 
-def verify(email: str, code: str, ip: str, user_agent: str | None) -> Result:
-    address = normalize_email(email) or ""
-    conn = store.connect()
-    try:
-        wait = lockout.reserve(conn, VERIFY_KEY, ip, clock.now())
-        if wait > 0:
-            return Result("locked", retry_after=int(wait))
-        now = clock.now()
-        conn.execute("BEGIN IMMEDIATE")
+def verify(email: str, code: str, password: str, ip: str, user_agent: str | None) -> Result:
+    address = normalize_email(email)
+    if not address:  # can never have an account: nothing to look up or count
+        return Result("bad")
+    key = f"verify:{address}"
+    with service.hash_slot() as got:
+        if not got:
+            return Result("busy", retry_after=service.BUSY_RETRY_AFTER_S)
+        conn = store.connect()
         try:
-            row = conn.execute(
-                "SELECT challenge_id, code_hash, attempts, expires_at FROM auth_challenge "
-                "WHERE purpose=? AND subject=? AND consumed_at IS NULL",
-                (PURPOSE, address),
-            ).fetchone()
-            user = store.get_user(conn, address) if row else None
-            token = None
-            if user and not user.disabled and row[2] < MAX_ATTEMPTS and float(row[3]) > now:
-                if hmac.compare_digest(row[1], store.token_hash(code.strip())):
-                    conn.execute(
-                        "UPDATE auth_challenge SET consumed_at=? WHERE challenge_id=?",
-                        (now, row[0]),
-                    )
-                    conn.execute(
-                        "UPDATE app_user SET email_verified_at=COALESCE(email_verified_at, ?) "
-                        "WHERE id=?",
-                        (datetime.now(UTC).isoformat(timespec="seconds"), user.id),
-                    )
-                    token = store.create_session(conn, user.id, user_agent)
-                else:
-                    conn.execute(
-                        "UPDATE auth_challenge SET attempts=attempts+1 WHERE challenge_id=?",
-                        (row[0],),
-                    )
-            conn.execute("COMMIT")
-        except BaseException:
-            conn.execute("ROLLBACK")
-            raise
-        if token is None:
-            return Result("bad")
-        lockout.record_success(conn, VERIFY_KEY, ip, now)
-        return Result("ok", token=token, user=user)
-    finally:
-        conn.close()
+            wait = lockout.reserve(conn, key, ip, clock.now())
+            if wait > 0:
+                return Result("locked", retry_after=int(wait))
+            user = store.get_user(conn, address)
+            # Checked outside the write lock, at the same cost when there is no account.
+            password_ok = bool(user) and passwords.verify_password(password, user.password_hash)
+            if not user:
+                passwords.verify_dummy(password)
+            now = clock.now()
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                token = _use_code(conn, address, code, password_ok, user, now, user_agent)
+                conn.execute("COMMIT")
+            except BaseException:
+                conn.execute("ROLLBACK")
+                raise
+            if token is None:
+                return Result("bad")
+            lockout.record_success(conn, key, ip, now)
+            return Result("ok", token=token, user=user)
+        finally:
+            conn.close()
+
+
+def _use_code(conn, address, code, password_ok, user, now, user_agent) -> str | None:
+    """Inside the transaction: a session token on a match, else None (a miss counts a try)."""
+    row = conn.execute(
+        "SELECT challenge_id, code_hash, attempts, expires_at FROM auth_challenge "
+        "WHERE purpose=? AND subject=? AND consumed_at IS NULL",
+        (PURPOSE, address),
+    ).fetchone()
+    # The account must be the one whose password was checked (not replaced since).
+    live = user is not None and store.get_user(conn, address) == user and not user.disabled
+    if not (row and live and row[2] < MAX_ATTEMPTS and float(row[3]) > now):
+        return None
+    if not (password_ok and hmac.compare_digest(row[1], store.token_hash(code.strip()))):
+        conn.execute(
+            "UPDATE auth_challenge SET attempts=attempts+1 WHERE challenge_id=?", (row[0],)
+        )
+        return None
+    conn.execute("UPDATE auth_challenge SET consumed_at=? WHERE challenge_id=?", (now, row[0]))
+    conn.execute(
+        "UPDATE app_user SET email_verified_at=COALESCE(email_verified_at, ?) WHERE id=?",
+        (datetime.fromtimestamp(now, UTC).isoformat(timespec="seconds"), user.id),
+    )
+    return store.create_session(conn, user.id, user_agent)
+
+
+def _due(conn, address: str, now: float) -> bool:
+    """A pending, enabled account whose last code is older than the cooldown."""
+    user = store.get_user(conn, address)
+    if not user or user.verified or user.disabled:
+        return False
+    (last,) = conn.execute(
+        "SELECT MAX(created_at) FROM auth_challenge WHERE purpose=? AND subject=?",
+        (PURPOSE, address),
+    ).fetchone()
+    return last is None or now - float(last) >= RESEND_S * lockout.scale()
 
 
 def issue_code(email: str) -> tuple[str, str] | None:
-    """A fresh code for a pending account whose last code is over a minute old, else None."""
+    """A fresh code for a pending account whose last code is past the cooldown, else None."""
     address = normalize_email(email)
     if not address:
         return None
     conn = store.connect()
     try:
         now = clock.now()
+        if not _due(conn, address, now):  # read first: most calls need no write lock
+            return None
         conn.execute("BEGIN IMMEDIATE")
         try:
-            user = store.get_user(conn, address)
-            last = conn.execute(
-                "SELECT MAX(created_at) FROM auth_challenge WHERE purpose=? AND subject=?",
-                (PURPOSE, address),
-            ).fetchone()[0]
-            due = last is None or now - float(last) >= RESEND_S
-            pending = user and not user.verified and not user.disabled
-            code = _new_code(conn, address, now) if pending and due else None
-            conn.execute("COMMIT" if code else "ROLLBACK")
+            code = _new_code(conn, address, now) if _due(conn, address, now) else None
+            conn.execute("COMMIT")
         except BaseException:
             conn.execute("ROLLBACK")
             raise
@@ -196,8 +217,15 @@ def issue_code(email: str) -> tuple[str, str] | None:
 
 
 def send_code(email: str, code: str) -> None:
-    """Runs after the response: any failure is logged by type only and the account stays pending."""
+    """Any failure is logged by type only; the account stays pending."""
     try:
         mailer.send(email, SUBJECT, BODY.format(code=code))
     except Exception as exc:  # noqa: BLE001 - a bad port or an outbox OSError count too
         logger.warning("sign-in code not sent: %s", type(exc).__name__)
+
+
+def send_later(email: str, code: str) -> threading.Thread:
+    """Fire and forget on a daemon thread, so SMTP time never shows on any connection."""
+    thread = threading.Thread(target=send_code, args=(email, code), daemon=True)
+    thread.start()
+    return thread

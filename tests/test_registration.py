@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -16,11 +17,12 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import db_utils  # noqa: E402
 import mailer  # noqa: E402
-from auth import clock, lockout, passwords, service, store  # noqa: E402
+from auth import clock, lockout, passwords, registration, service, store  # noqa: E402
 from main import app  # noqa: E402
 from migrations import apply_migrations  # noqa: E402
 
 PW = "correct horse battery"
+NEW = "a brand new password"
 EMAIL = "ana@example.com"
 CODE_RE = re.compile(r"\b(\d{6})\b")
 
@@ -48,6 +50,8 @@ def now(tmp_path, monkeypatch):
     monkeypatch.setattr(service, "_slots", None)
     fake = Clock()
     clock.set_source(fake)
+    send_later = registration.send_later  # still a real thread; joined so tests can read the mail
+    monkeypatch.setattr(registration, "send_later", lambda *a: send_later(*a).join())
     apply_migrations(db)
     yield fake
     clock.set_source(None)
@@ -96,8 +100,12 @@ def register(c, email=EMAIL, password=PW, family="The Anas", code=None):
     return c.post("/auth/register", json={**body, "invite_code": code or invite()})
 
 
-def verify(c, code, email=EMAIL):
-    return c.post("/auth/verify", json={"email": email, "code": code})
+def verify(c, code, email=EMAIL, password=PW):
+    return c.post("/auth/verify", json={"email": email, "code": code, "password": password})
+
+
+def wrong_for(code):
+    return "000000" if code != "000000" else "111111"
 
 
 def counts():
@@ -184,7 +192,7 @@ def test_an_unverified_email_registering_again_replaces_the_pending_account(clie
     register(client)
     first = last_code()
     code = invite()
-    r = register(client, password="a brand new password", family="Renamed", code=code)
+    r = register(client, password=NEW, family="Renamed", code=code)
     assert r.status_code == 202
     assert counts() == {"family": 2, "user": 1, "challenge": 1}  # fam_local + the pending family
     assert rows("SELECT f.name FROM family f JOIN app_user u USING (family_id)") == [("Renamed",)]
@@ -192,9 +200,9 @@ def test_an_unverified_email_registering_again_replaces_the_pending_account(clie
     second = last_code()
     assert len(outbox()) == 2
     if first != second:
-        assert verify(client, first).status_code == 400  # the old code is gone
-    assert verify(client, second).status_code == 200
-    assert service.attempt_login(EMAIL, "a brand new password", "1.2.3.4").kind == "ok"
+        assert verify(client, first, password=NEW).status_code == 400  # the old code is gone
+    assert verify(client, second, password=NEW).status_code == 200
+    assert service.attempt_login(EMAIL, NEW, "1.2.3.4").kind == "ok"
 
 
 def test_operator_made_users_are_verified():
@@ -341,3 +349,110 @@ def test_logs_hold_no_code_and_no_password(client, monkeypatch, caplog, now):
     )
     for secret in (PW, code, invite_code, last_code()):
         assert secret not in text
+
+
+# --- review fixes: password on verify, per-email lockout, mail thread, resend cooldown ------------
+
+
+def test_re_registering_a_pending_email_cannot_take_it_over(client):
+    register(client)  # the victim
+    register(TestClient(app), password="the attacker's password", family="Mine")
+    code = last_code()  # mailed to the victim
+    assert verify(client, code).status_code == 400  # victim's password no longer matches
+    attacker = verify(TestClient(app), wrong_for(code), password="the attacker's password")
+    assert attacker.status_code == 400  # and the attacker never sees the code
+    assert rows("SELECT email_verified_at FROM app_user") == [(None,)]
+    register(client)  # the victim takes it back
+    assert verify(client, last_code()).status_code == 200
+    login = {"username": EMAIL, "password": "the attacker's password"}
+    assert TestClient(app).post("/auth/login", json=login).status_code == 401
+
+
+def test_the_right_code_with_a_wrong_password_fails_and_counts(client):
+    register(client)
+    assert verify(client, last_code(), password="not the password").status_code == 400
+    assert rows("SELECT attempts FROM auth_challenge") == [(1,)]
+    assert verify(client, last_code()).status_code == 200
+
+
+def test_every_verify_failure_looks_the_same(client, now, monkeypatch):
+    monkeypatch.setenv("AUTH_BACKOFF_SCALE", "0.001")
+    register(client)
+    code = last_code()
+    cases = [
+        dict(code=wrong_for(code)),
+        dict(code=code, password="not the password"),
+        dict(code=code, email="nobody@example.com"),
+        dict(code=code, email="not an email"),
+    ]
+    answers = set()
+    for case in cases:
+        now.t += 1
+        r = verify(client, **case)
+        answers.add((r.status_code, r.content, "set-cookie" in r.headers))
+    now.t += 15 * 60 + 1
+    r = verify(client, code)  # expired
+    answers.add((r.status_code, r.content, "set-cookie" in r.headers))
+    assert answers == {(400, b'{"detail":"invalid_code"}', False)}
+
+
+def test_verify_failures_stay_with_their_email(client, now):
+    register(client)
+    register(client, email="bo@example.com")
+    for _ in range(lockout.FREE_FAILURES + 1):
+        verify(client, wrong_for(last_code()))
+    assert verify(client, last_code()).status_code == 429  # ana is held back from here
+    assert verify(client, last_code("bo@example.com"), email="bo@example.com").status_code == 200
+
+
+def test_many_addresses_cannot_lock_another_email_or_everyone(client, now):
+    register(client)
+    register(client, email="bo@example.com")
+    for i in range(lockout.USER_CEILING + 5):
+        registration.verify(EMAIL, "000000", "wrong guess here", f"10.0.0.{i}", None)
+        registration.register("x@example.com", PW, "X", "ABCDEFGHJK", f"10.0.1.{i}")
+    bo = registration.verify("bo@example.com", last_code("bo@example.com"), PW, "10.9.9.9", None)
+    assert bo.kind == "ok"
+    keys = {k for (k,) in rows("SELECT key FROM login_attempt WHERE scope='user'")}
+    emails = (EMAIL, "bo@example.com", "x@example.com")
+    assert keys <= {f"{kind}:{e}" for kind in ("verify", "register") for e in emails}
+
+
+def test_failures_pile_up_on_the_email_across_resends(client, now, monkeypatch):
+    monkeypatch.setenv("AUTH_BACKOFF_SCALE", "0.001")  # also scales the resend cooldown
+    register(client)
+    for _ in range(5):
+        now.t += 1
+        assert verify(client, wrong_for(last_code())).status_code == 400
+    now.t += 1
+    assert client.post("/auth/resend", json={"email": EMAIL}).status_code == 202
+    assert len(outbox()) == 2  # a new code (and a fresh 5 tries on the challenge)
+    for _ in range(5):
+        now.t += 1
+        assert verify(client, wrong_for(last_code())).status_code == 400
+    [(failures,)] = rows(
+        "SELECT failures FROM login_attempt WHERE scope='user_ip' AND key=?",
+        f"verify:{EMAIL}|testclient",
+    )
+    assert failures == 10  # the resend did not reset the email's lockout
+    assert verify(client, last_code()).status_code == 429  # and it is holding
+
+
+def test_resend_cooldown_scales(client, now, monkeypatch):
+    monkeypatch.setenv("AUTH_BACKOFF_SCALE", "0.1")
+    register(client)
+    now.t += 5
+    assert client.post("/auth/resend", json={"email": EMAIL}).status_code == 202
+    assert len(outbox()) == 1
+    now.t += 2
+    client.post("/auth/resend", json={"email": EMAIL})
+    assert len(outbox()) == 2
+
+
+def test_mail_goes_out_on_a_daemon_thread(monkeypatch):
+    seen, made = [], []
+    monkeypatch.setattr(mailer, "send", lambda *a: seen.append(threading.current_thread()))
+    real = threading.Thread
+    monkeypatch.setattr(registration.threading, "Thread", lambda **k: made.append(k) or real(**k))
+    registration.send_later(EMAIL, "123456")  # the fixture's wrapper joins the thread
+    assert made[0]["daemon"] is True and seen[0] is not threading.main_thread()
