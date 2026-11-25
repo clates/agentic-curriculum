@@ -42,10 +42,11 @@ Coverage and stability notes: `frontend/e2e/COVERAGE.md`.
 `AUTH_REQUIRED=1` turns on username/password login: `src/auth/` (scrypt, sessions, progressive
 lockout; accounts are made with `python -m auth create-user`, no signup), a global gate in
 `src/main.py` with a small public allowlist (`auth.web.PUBLIC_PATHS`; a route-inventory test fails
-if a new route is left open), `frontend/proxy.ts` (page redirect) and `/login`. Runbook:
-`docs/runbook-auth.md`. E2E: the `auth` Playwright project has its own backend and frontend
-(ports 8184/3003, `AUTH_BACKOFF_SCALE` shortens lockouts); the main suite keeps login off. `E2E_SKIP_AUTH=1` leaves the auth project and its two servers out
-(CI always runs them).
+if a new route is left open), `frontend/proxy.ts` (page redirect) and `/login`. Docs:
+`docs/how-to/turn-on-login.md`, `docs/reference/login.md`. E2E: the `auth` Playwright project has
+its own backend and frontend (ports 8184/3003, `AUTH_BACKOFF_SCALE` shortens lockouts); the main
+suite keeps login off. `E2E_SKIP_AUTH=1` leaves the auth project and its two servers out (CI
+always runs them).
 
 ## Architecture map
 
@@ -81,6 +82,9 @@ if a new route is left open), `frontend/proxy.ts` (page redirect) and `/login`. 
 - Audience docs split by reader: `README.md` for non-technical users (printing and authoring weeks),
   `CONTRIBUTING.md` for developers (setup, tests, Docker, PR workflow), `AGENTS.md` for worksheet
   and pedagogy internals. Keep dev detail out of `README.md`.
+- **Docs follow [Diátaxis](https://diataxis.fr/)**: every page under `docs/` is one of tutorial,
+  how-to, reference or explanation, in the matching folder. Read `docs/README.md` before adding or
+  moving a page; don't mix kinds in one page, link between them.
 
 ## Skills
 

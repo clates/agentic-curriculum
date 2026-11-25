@@ -1,4 +1,4 @@
-"""Pydantic models that mirror docs/WORKSHEET_REQUEST_SCHEMA.md."""
+"""Pydantic models that mirror docs/reference/worksheet-request-schema.md."""
 
 from __future__ import annotations
 

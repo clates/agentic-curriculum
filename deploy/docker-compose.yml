@@ -29,7 +29,7 @@ services:
   # The weekly loop's background process: the job queue worker plus the scheduler. Same image, same
   # data volume, no ports. It idles until LOOP_JOBS_ENABLED=1 is in /srv/curriculum/.env (the app
   # reads the same switch): off, nothing is planned or queued and no model call is made.
-  # See docs/runbook-worker.md.
+  # See docs/how-to/run-the-worker.md.
   worker:
     image: ${IMAGE:?IMAGE is set by deploy.sh}
     restart: unless-stopped
@@ -100,7 +100,7 @@ configs:
       {$$SITE_DOMAIN:localhost} {
         # Who asked for what, kept so "was this site probed or abused?" can be answered later.
         # One JSON line per request in the persistent volume (read it with the commands in
-        # docs/runbook-https.md). At most 10 files of 20 MiB and 30 days, so it cannot fill the disk
+        # docs/how-to/set-up-a-server.md). At most 10 files of 20 MiB and 30 days, so it cannot fill the disk
         # or keep visitor addresses indefinitely. Cookies, tokens and Set-Cookie are removed on top of
         # Caddy's own redaction, and the login body is never logged (Caddy does not log bodies).
         log {

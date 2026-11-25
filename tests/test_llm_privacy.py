@@ -128,5 +128,11 @@ def test_docs_and_env_example_document_the_key_and_privacy_routing():
     ):
         assert name in example
     assert "sk-or-" not in example.replace("sk-or-...", "")
-    contributing = (ROOT / "CONTRIBUTING.md").read_text()
-    assert "OPENROUTER_API_KEY" in contributing and "LLM_PRIVACY_ROUTING" in contributing
+    reference = (ROOT / "docs" / "reference" / "development.md").read_text()
+    for name in (
+        "OPENROUTER_API_KEY",
+        "LLM_PRIVACY_ROUTING",
+        "AGENTIC_HOSTED",
+        "LLM_CAP_FAMILY_MONTH_USD",
+    ):
+        assert name in reference

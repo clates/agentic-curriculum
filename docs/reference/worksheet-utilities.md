@@ -2,7 +2,7 @@
 
 This document summarizes the two printable worksheet helpers included in the project. Use it as a quick guide when generating math drill sheets or longer reading comprehension activities.
 
-> **Note:** For comprehensive documentation including detailed parameter descriptions and both typical and exotic usage examples, see [WORKSHEET_TYPES.md](./WORKSHEET_TYPES.md).
+> **Note:** For comprehensive documentation including detailed parameter descriptions and both typical and exotic usage examples, see [Worksheet types](worksheet-types.md).
 
 ---
 
@@ -63,4 +63,4 @@ When generating artifacts, remember to create the `artifacts/` directory or poin
 
 ## Structured LLM Requests
 
-Pair these helpers with the JSON contract in `docs/WORKSHEET_REQUEST_SCHEMA.md` when you want the lesson-planning LLM to ask for printable worksheets. That schema mirrors the signatures of `generate_two_operand_math_worksheet` and `generate_reading_comprehension_worksheet`, so any payload that validates against it can be fed directly into the corresponding generator before rendering.
+Pair these helpers with the JSON contract in `docs/reference/worksheet-request-schema.md` when you want the lesson-planning LLM to ask for printable worksheets. That schema mirrors the signatures of `generate_two_operand_math_worksheet` and `generate_reading_comprehension_worksheet`, so any payload that validates against it can be fed directly into the corresponding generator before rendering.
