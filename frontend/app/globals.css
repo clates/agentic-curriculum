@@ -37,7 +37,8 @@
   --color-secondary-900: #372906;
   --color-secondary-950: #231a04;
 
-  /* Ink: blue-black text and blue-grey rules */
+  /* Ink: blue-black text and blue-grey rules. 500 and 600 are close on purpose: both are muted
+     text, and 500 is the lightest that still reads at 4.5:1 on the lightest fill (100). */
   --color-neutral-50: #f5f8fc;
   --color-neutral-100: #ebf0f7;
   --color-neutral-200: #d6e2f0;
@@ -76,18 +77,18 @@
   --color-danger-900: #4a1511;
   --color-danger-950: #300d0b;
 
-  /* Cool neutrals: same as ink */
-  --color-cool-50: #f5f8fc;
-  --color-cool-100: #ebf0f7;
-  --color-cool-200: #d6e2f0;
-  --color-cool-300: #b9c6d8;
-  --color-cool-400: #8e9bb0;
-  --color-cool-500: #5c687c;
-  --color-cool-600: #556275;
-  --color-cool-700: #3d4859;
-  --color-cool-800: #2a3444;
-  --color-cool-900: #1b2433;
-  --color-cool-950: #0f1520;
+  /* Cool neutrals: the same ink scale */
+  --color-cool-50: var(--color-neutral-50);
+  --color-cool-100: var(--color-neutral-100);
+  --color-cool-200: var(--color-neutral-200);
+  --color-cool-300: var(--color-neutral-300);
+  --color-cool-400: var(--color-neutral-400);
+  --color-cool-500: var(--color-neutral-500);
+  --color-cool-600: var(--color-neutral-600);
+  --color-cool-700: var(--color-neutral-700);
+  --color-cool-800: var(--color-neutral-800);
+  --color-cool-900: var(--color-neutral-900);
+  --color-cool-950: var(--color-neutral-950);
 
   /* Semantic aliases */
   --color-success-500: var(--color-sage-500);

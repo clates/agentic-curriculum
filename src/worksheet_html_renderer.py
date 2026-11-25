@@ -29,6 +29,11 @@ import math
 import os
 from typing import Any
 
+try:  # src/ on sys.path (scripts, the app)
+    from print_fonts import Audience, font_face_css, font_stack
+except ImportError:  # imported as a package module
+    from .print_fonts import Audience, font_face_css, font_stack  # type: ignore
+
 try:  # package context (tests, app): src.worksheet_html_renderer
     from .worksheets.ten_frame import TenFrameProblem
     from .worksheets.error_audit import decimal_stack_rows
@@ -1081,14 +1086,11 @@ _BLOCK_CSS = """\
   }
 </style>"""
 
-def _font_css(audience: str) -> str:
+
+def _font_css(audience: Audience) -> str:
     """Embedded typeface for the page body: Andika for the child, Recursive for the adult."""
-    try:
-        from print_fonts import ADULT_FAMILY, KID_FAMILY, font_face_css
-    except ImportError:  # imported as a package module
-        from .print_fonts import ADULT_FAMILY, KID_FAMILY, font_face_css  # type: ignore
-    family, stack = ("Recursive", ADULT_FAMILY) if audience == "adult" else ("Andika", KID_FAMILY)
-    return f"<style>\n{font_face_css(family)}  body {{ font-family: {stack}; }}\n</style>"
+    face, stack = font_face_css(audience), font_stack(audience)
+    return f"<style>\n{face}  body {{ font-family: {stack}; }}\n</style>"
 
 
 _HTML_WRAPPER = """\
@@ -4309,7 +4311,7 @@ def build_print_packet_html(
     pages: list[tuple[str, str]],
     packet_title: str = "Weekly Worksheets",
     layout: str = "classic",
-    audience: str = "child",
+    audience: Audience = "child",
 ) -> str:
     """
     Assemble a full printable HTML document from a list of (day_label, html_fragment) tuples.

@@ -21,11 +21,11 @@ from typing import Any
 
 try:  # package context
     from .. import worksheet_html_renderer as _r
-    from ..print_fonts import font_face_css
+    from ..print_fonts import font_face_css, font_stack
 except ImportError:  # scripts put src/ on sys.path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     import worksheet_html_renderer as _r  # type: ignore
-    from print_fonts import font_face_css  # type: ignore
+    from print_fonts import font_face_css, font_stack  # type: ignore
 
 from .models import WeekDoc
 
@@ -35,10 +35,14 @@ _MAX_NAME = 40
 
 _DAY_CLASS = {"Tuesday": "tue", "Wednesday": "wed", "Thursday": "thu", "Friday": "fri"}
 
-_GUIDE_CSS = """\
+_GUIDE_CSS = (
+    font_face_css("adult")
+    + """\
     @page { size: letter; margin: 0.5in 0.6in; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Recursive', 'Trebuchet MS', Arial, sans-serif; font-size: 11pt; color: #1B2433; line-height: 1.55; }
+    body { font-family: """
+    + font_stack("adult")
+    + """; font-size: 11pt; color: #1B2433; line-height: 1.55; }
     @media screen { body { background: #b0b0b0; padding: 24px; } .page { background: white; max-width: 7.5in; margin: 0 auto 28px; padding: 0.45in 0.5in; box-shadow: 0 4px 18px rgba(0,0,0,.28); min-height: 10.3in; } }
     @media print { body { background: white; padding: 0; } .page { padding: 0; box-shadow: none; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     .page { page-break-after: always; break-after: page; }
@@ -61,6 +65,7 @@ _GUIDE_CSS = """\
     .extension { background: #e8f5e9; border-left: 4px solid #15803d; padding: 6px 10px; margin: 4px 0 8px; border-radius: 0 4px 4px 0; font-size: 10pt; }
     .discuss { background: #fce7f3; border-left: 4px solid #9d174d; padding: 6px 10px; margin: 4px 0 8px; border-radius: 0 4px 4px 0; font-size: 10pt; }
 """
+)
 
 
 class RenderError(ValueError):
@@ -219,6 +224,6 @@ def render_teacher_guide(week: WeekDoc, student_name: str | None = None) -> str:
     title = _text(g["html_title"] or g["title"])
     return (
         '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n'
-        f"  <title>{title}</title>\n  <style>\n{font_face_css('Recursive')}{_GUIDE_CSS}  </style>\n</head>\n<body>\n\n"
+        f"  <title>{title}</title>\n  <style>\n{_GUIDE_CSS}  </style>\n</head>\n<body>\n\n"
         f"{body}\n\n</body>\n</html>"
     )

@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import re
-
 import copy
+import re
 
 import pytest
 from pydantic import ValidationError
