@@ -15,7 +15,7 @@ export function VersionFooter() {
   useEffect(() => {
     fetch('/api/version')
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setVersion(data))
+      .then(setVersion)
       .catch(() => setVersion(null));
   }, []);
 

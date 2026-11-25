@@ -130,6 +130,8 @@ function IdeaDetails({ idea }: { idea: LoopIdea }) {
   );
 }
 
+const gradeName = (grade: number) => (grade === 0 ? 'kindergarten' : `grade ${grade}`);
+
 function level(grade: number | null) {
   if (grade == null) return '—';
   return grade <= 0 ? 'K' : grade.toFixed(1).replace(/\.0$/, '');
@@ -141,10 +143,20 @@ function minutes(seconds: number | null) {
   return `${m}m ${Math.round(seconds % 60)}s`;
 }
 
+const COLUMNS = [
+  'Day',
+  'Lesson',
+  'Skills',
+  'Worksheets',
+  'Words',
+  'Passage level',
+  'Question level',
+];
+
 function ReviewPanel({ review }: { review: WeekReview }) {
   const warns = review.flags.filter((f) => f.level === 'warn');
-  const gradeLabel = review.grade === 0 ? 'kindergarten' : `grade ${review.grade}`;
   const tooHard = (g: number | null, slack: number) => g != null && g > review.grade + slack;
+  const hot = (on: boolean) => (on ? 'font-semibold text-primary-700' : '');
   return (
     <div className="space-y-4 rounded-md border border-neutral-300 p-3" data-testid="week-review">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -187,20 +199,18 @@ function ReviewPanel({ review }: { review: WeekReview }) {
       <section aria-label="Day by day">
         <h5 className="font-semibold text-neutral-900">Day by day</h5>
         <p className="text-xs text-neutral-700">
-          Reading levels are estimates (Flesch-Kincaid). The child is {gradeLabel}; a day is about{' '}
-          {review.word_budget} words for that grade.
+          Reading levels are estimates (Flesch-Kincaid). The child is {gradeName(review.grade)}; a
+          day is about {review.word_budget} words for that grade.
         </p>
         <div className="mt-1 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm" data-testid="review-days">
             <thead className="text-neutral-700">
               <tr>
-                <th className="py-1 pr-2 font-medium">Day</th>
-                <th className="py-1 pr-2 font-medium">Lesson</th>
-                <th className="py-1 pr-2 font-medium">Skills</th>
-                <th className="py-1 pr-2 font-medium">Worksheets</th>
-                <th className="py-1 pr-2 font-medium">Words</th>
-                <th className="py-1 pr-2 font-medium">Passage level</th>
-                <th className="py-1 font-medium">Question level</th>
+                {COLUMNS.map((col) => (
+                  <th key={col} className="py-1 pr-2 font-medium last:pr-0">
+                    {col}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="text-neutral-800">
@@ -212,19 +222,13 @@ function ReviewPanel({ review }: { review: WeekReview }) {
                     {d.skills.map((s) => s.subject || s.id).join(', ') || '—'}
                   </td>
                   <td className="py-1 pr-2">{d.kinds.join(', ')}</td>
-                  <td
-                    className={`py-1 pr-2 ${d.words > review.word_budget * 1.2 ? 'font-semibold text-primary-700' : ''}`}
-                  >
+                  <td className={`py-1 pr-2 ${hot(d.words > review.word_budget * 1.2)}`}>
                     {d.words}
                   </td>
-                  <td
-                    className={`py-1 pr-2 ${tooHard(d.passage_grade, 1) ? 'font-semibold text-primary-700' : ''}`}
-                  >
+                  <td className={`py-1 pr-2 ${hot(tooHard(d.passage_grade, 1))}`}>
                     {level(d.passage_grade)}
                   </td>
-                  <td
-                    className={`py-1 ${tooHard(d.prompt_grade, 1.5) ? 'font-semibold text-primary-700' : ''}`}
-                  >
+                  <td className={`py-1 ${hot(tooHard(d.prompt_grade, 1.5))}`}>
                     {level(d.prompt_grade)}
                   </td>
                 </tr>
@@ -324,6 +328,7 @@ function ChildCard({ child }: { child: LoopChild }) {
   const plan = child.plan;
   const run = (action: string, extra: { option?: string; week?: string } = {}) =>
     act.mutate({ action, ...extra });
+  const action = (id: string) => child.actions.find((a) => a.id === id);
 
   return (
     <Card data-testid="loop-child" data-student={child.student_id} className="space-y-4">
@@ -331,10 +336,7 @@ function ChildCard({ child }: { child: LoopChild }) {
         <h2 className="min-w-0 text-xl font-semibold text-neutral-900">
           {child.name}
           {child.grade != null && (
-            <span className="text-neutral-700">
-              {' '}
-              · {child.grade === 0 ? 'kindergarten' : `grade ${child.grade}`}
-            </span>
+            <span className="text-neutral-700"> · {gradeName(child.grade)}</span>
           )}
           {child.demo && (
             <Badge variant="default" className="ml-2 align-middle">
@@ -371,7 +373,7 @@ function ChildCard({ child }: { child: LoopChild }) {
           />
         </label>
         <ActionButton
-          action={child.actions.find((a) => a.id === 'new_week')!}
+          action={action('new_week')!}
           busy={busy}
           onRun={() => run('new_week', { week })}
         />
@@ -399,7 +401,7 @@ function ChildCard({ child }: { child: LoopChild }) {
                     size="sm"
                     variant="secondary"
                     className="mt-2"
-                    disabled={!child.actions.find((a) => a.id === 'pick')?.enabled || busy}
+                    disabled={!action('pick')?.enabled || busy}
                     onClick={() => run('pick', { option: o.option_id })}
                   >
                     Pick {o.option_id.toUpperCase()}
@@ -466,7 +468,7 @@ function ChildCard({ child }: { child: LoopChild }) {
           </span>
         ) : (
           <ActionButton
-            action={child.actions.find((a) => a.id === 'reset_weeks')!}
+            action={action('reset_weeks')!}
             busy={busy}
             onRun={() => setConfirmReset(true)}
           />
