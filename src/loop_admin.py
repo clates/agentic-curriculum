@@ -390,7 +390,7 @@ def overview(request: Request, family: str = Family):
             if sid is not None:
                 group["children"].append(_child(conn, fid, sid, blob, own))
         others = len(families) - (family in families)
-        if others:
+        if others and not _overview_audited_lately(conn, request):
             _audit(conn, request, None, "console.overview", None, {"families": others})
         return {
             "loop_switch": loop_integration.enabled(),
@@ -399,6 +399,21 @@ def overview(request: Request, family: str = Family):
         }
     finally:
         conn.close()
+
+
+OVERVIEW_AUDIT_EVERY_S = 600  # the console polls the overview every few seconds
+
+
+def _overview_audited_lately(conn: sqlite3.Connection, request: Request) -> bool:
+    """True when this admin's last ``console.overview`` row is under ten minutes old."""
+    user = getattr(getattr(request.state, "user", None), "id", None)
+    row = conn.execute(
+        "SELECT MAX(created_at) FROM audit_log WHERE action='console.overview' AND user_id IS ?",
+        (user,),
+    ).fetchone()
+    return bool(
+        row[0] and (jobs.utcnow() - jobs.parse_iso(row[0])).total_seconds() < OVERVIEW_AUDIT_EVERY_S
+    )
 
 
 def _look(

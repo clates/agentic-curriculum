@@ -1,7 +1,7 @@
 # ruff: noqa: F401, F811  (pytest fixtures are imported from the loop integration tests)
 """The loop console's API: every step can be pushed from here, through the loop's own code."""
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -408,6 +408,25 @@ def test_the_overview_shows_every_family_own_first_with_one_audit_row(two_famili
     assert "A secret" not in str(overview)
     admin = two_families["users"]["adminb"]
     assert audits(conn) == [(None, admin, "console.overview", None, '{"families": 2}')]
+
+
+def test_the_overview_is_audited_at_most_once_per_admin_per_ten_minutes(two_families):
+    conn, fam_a = two_families["conn"], two_families["fam_a"]
+    b = signed_in("adminb")
+    for _ in range(3):  # the console polls the overview every few seconds
+        assert b.get(f"{BASE}/overview").status_code == 200
+    act(b, "new_week", student="kid", week="2026-01-19")
+    act(b, "new_week", student="kid", week="2026-01-26")
+    actions = [a for _, _, a, _, _ in audits(conn)]
+    assert actions == ["console.overview", "console.new_week", "console.new_week"]
+    conn.execute(
+        "UPDATE audit_log SET created_at=? WHERE action='console.overview'",
+        (jobs.iso(jobs.utcnow() - timedelta(seconds=601)),),
+    )
+    conn.commit()
+    b.get(f"{BASE}/overview")
+    assert [a for _, _, a, _, _ in audits(conn)].count("console.overview") == 2
+    assert [f for f, _, a, _, _ in audits(conn) if a == "console.new_week"] == [fam_a, fam_a]
 
 
 def test_an_admin_on_their_own_family_writes_no_audit_row(two_families):
