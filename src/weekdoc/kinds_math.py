@@ -3,7 +3,7 @@
 K-2 bounds are enforced here so a model cannot hand a kindergartner a three-digit problem or a
 negative answer. Speed math is typed ``{a, op, b}`` (the renderer also still accepts the older
 free-text ``{q}`` / string problems for the offline scripts). The legacy ``mathWorksheet`` alias
-is deliberately not registered: hosted weeks use ``twoOperandWorksheet``.
+is registered in kinds_graphs with this same model.
 """
 
 from __future__ import annotations

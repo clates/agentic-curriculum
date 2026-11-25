@@ -171,9 +171,9 @@ def _tokens(value: Any) -> set[str]:
     if isinstance(value, str):
         return set(_TOKEN_RE.findall(value))
     if isinstance(value, dict):
-        return set().union(*(_tokens(v) for v in value.values()), set())
+        return set().union(*map(_tokens, value.values()))
     if isinstance(value, (list, tuple)):
-        return set().union(*(_tokens(v) for v in value), set())
+        return set().union(*map(_tokens, value))
     return set()
 
 

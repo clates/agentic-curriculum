@@ -33,20 +33,15 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import Discriminator, Field, StringConstraints, Tag, model_validator
+from pydantic import Discriminator, Field, StringConstraints, Tag, TypeAdapter, model_validator
 
 from .kinds import ItemRef, KindData, register
+from .kinds_classification import _unique
 from .kinds_comprehension import Text
 
 Color = Annotated[str, StringConstraints(pattern=r"^#[0-9a-fA-F]{6}$")]
 Decimal = Annotated[str, StringConstraints(pattern=r"^\d{1,6}(\.\d{1,6})?$")]
 ShapeName = Literal["circle", "square", "rectangle", "triangle"]
-
-
-def _unique(values: list[str], what: str) -> None:
-    folded = [v.strip().casefold() for v in values]
-    if len(set(folded)) != len(folded):
-        raise ValueError(f"{what} must be unique")
 
 
 class VisualData(KindData):
@@ -260,6 +255,7 @@ ShapeIdData = Annotated[
     ],
     Discriminator(_mode),
 ]
+_SHAPE_ID = TypeAdapter(ShapeIdData)
 
 
 def _shape_items(d: Any) -> list[ItemRef]:
@@ -283,22 +279,13 @@ class _ShapeIdModel(VisualData):
     @model_validator(mode="wrap")
     @classmethod
     def _dispatch(cls, values: Any, handler: Any) -> Any:
-        from pydantic import TypeAdapter
-
-        return TypeAdapter(ShapeIdData).validate_python(values)
+        return _SHAPE_ID.validate_python(values)
 
 
 register("shapeIdWorksheet", _ShapeIdModel, _shape_items)
 
 
 # ── pictureSequenceWorksheet ────────────────────────────────────────────────
-
-
-def _glyph(value: str) -> str:
-    # an emoji is a glyph, not an image file; ASCII letters would make it a word
-    if any(c.isascii() and c.isalpha() for c in value):
-        raise ValueError("emoji must be emoji characters, not words")
-    return value
 
 
 Emoji = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=12)]
@@ -310,7 +297,9 @@ class PictureStep(VisualData):
 
     @model_validator(mode="after")
     def _emoji(self) -> "PictureStep":
-        _glyph(self.emoji)
+        # an emoji is a glyph, not an image file; ASCII letters would make it a word
+        if any(c.isascii() and c.isalpha() for c in self.emoji):
+            raise ValueError("emoji must be emoji characters, not words")
         return self
 
 
@@ -361,14 +350,8 @@ class PartitionsArt(VisualData):
 
     @model_validator(mode="after")
     def _in_range(self) -> "PartitionsArt":
-        picked = (
-            []
-            if self.shaded is None
-            else (self.shaded if isinstance(self.shaded, list) else [self.shaded])
-        )
-        if self.broken is not None:
-            picked = picked + [self.broken]
-        if any(p >= self.parts for p in picked):
+        shaded = self.shaded if isinstance(self.shaded, list) else [self.shaded]
+        if any(p is not None and p >= self.parts for p in [*shaded, self.broken]):
             raise ValueError("broken/shaded wedge index must be less than parts")
         return self
 

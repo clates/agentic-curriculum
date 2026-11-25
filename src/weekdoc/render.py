@@ -84,8 +84,7 @@ def clean_name(name: str | None) -> str:
 
 def substitute_name(value: Any, name: str | None) -> Any:
     """Return ``value`` with every ``{{student_name}}`` replaced (strings, lists, dicts)."""
-    display = clean_name(name)
-    return _sub(value, display)
+    return _sub(value, clean_name(name))
 
 
 def _sub(value: Any, display: str) -> Any:
@@ -119,12 +118,11 @@ def _render_worksheet(kind: str, data: dict[str, Any], day: str, ws_id: str) -> 
 
 def render_packet(week: WeekDoc, student_name: str | None = None) -> str:
     doc = _prepared(week, student_name)
-    pages: list[tuple[str, str]] = []
-    for day in doc["days"]:
-        for ws in day["worksheets"]:
-            pages.append(
-                (day["day"], _render_worksheet(ws["kind"], ws["data"], day["day"], ws["id"]))
-            )
+    pages = [
+        (day["day"], _render_worksheet(ws["kind"], ws["data"], day["day"], ws["id"]))
+        for day in doc["days"]
+        for ws in day["worksheets"]
+    ]
     return _r.build_print_packet_html(pages, packet_title=doc["packet_title"])
 
 
@@ -133,10 +131,8 @@ def render_packet(week: WeekDoc, student_name: str | None = None) -> str:
 
 def render_prep_sheet(week: WeekDoc, student_name: str | None = None) -> str:
     doc = _prepared(week, student_name)
-    checks = sorted(
-        doc["prep_checks"],
-        key=lambda c: [d["day"] for d in doc["days"]].index(c["day"]),
-    )
+    order = [d["day"] for d in doc["days"]]
+    checks = sorted(doc["prep_checks"], key=lambda c: order.index(c["day"]))
     fragment = _r.render_worksheet_html(
         "prepCheckList",
         {
@@ -176,15 +172,12 @@ def _meta_line(pairs: list[list[str]]) -> str:
 def render_teacher_guide(week: WeekDoc, student_name: str | None = None) -> str:
     g = _prepared(week, student_name)["teacher_guide"]
     pages: list[list[str]] = []
-    last_cls = ""
     for i, day in enumerate(g["days"]):
         if i == 0 or day["page_break_before"]:
             pages.append([])
         cls = _DAY_CLASS.get(day["day"], "")
-        last_cls = cls
-        lines = [
-            f'  <h2{f" class={chr(34)}{cls}{chr(34)}" if cls else ""}>{_text(day["day"])} — {_text(day["title"])}</h2>'
-        ]
+        h2_cls = f' class="{cls}"' if cls else ""
+        lines = [f"  <h2{h2_cls}>{_text(day['day'])} — {_text(day['title'])}</h2>"]
         for block in day["blocks"]:
             if block["heading"] is not None:
                 lines.append(f"  <h3>{_text(block['heading'])}</h3>")
@@ -205,8 +198,7 @@ def render_teacher_guide(week: WeekDoc, student_name: str | None = None) -> str:
     pages[0].insert(0, "\n".join(head))
 
     summary = g["summary"]
-    if summary:
-        h2_cls = f' class="{last_cls}"' if last_cls else ""
+    if summary:  # its heading takes the last day's colour (h2_cls is left from the loop)
         items = "\n".join(f"    <li>{_text(it)}</li>" for it in summary["items"])
         parts = [
             '  <hr style="margin: 18px 0; border-color: #ccc;">',
@@ -218,9 +210,7 @@ def render_teacher_guide(week: WeekDoc, student_name: str | None = None) -> str:
             parts.append(f'  <p style="margin-top: 10px;">{_text(summary["closing"])}</p>')
         pages[-1].append("\n".join(parts))
 
-    body = "\n\n".join(
-        '<div class="page">\n' + "\n\n".join(chunk for chunk in page) + "\n</div>" for page in pages
-    )
+    body = "\n\n".join('<div class="page">\n' + "\n\n".join(page) + "\n</div>" for page in pages)
     title = _text(g["html_title"] or g["title"])
     return (
         '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n'

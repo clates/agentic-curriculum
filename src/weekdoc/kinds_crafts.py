@@ -25,7 +25,6 @@ Numbers are bounded so a page cannot be made absurdly large or an index point of
 
 from __future__ import annotations
 
-import re
 from typing import Annotated, Literal, Union
 
 from pydantic import Field, StringConstraints, field_validator, model_validator
@@ -33,7 +32,6 @@ from pydantic import Field, StringConstraints, field_validator, model_validator
 from .kinds import ItemRef, KindData, register
 from .kinds_comprehension import Text
 
-HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 PIXEL_MIN, PIXEL_MAX = 4, 32
 PIXEL_MAX_COLORS = 6  # the renderer's legend shows at most this many (_PC_LEGEND_MAX)
 
@@ -41,10 +39,6 @@ Hex = Annotated[str, StringConstraints(pattern=r"^#[0-9a-fA-F]{6}$")]
 Caption = Annotated[str, StringConstraints(max_length=80)]
 Inches = Annotated[float, Field(ge=0.5, le=7.5, allow_inf_nan=False)]
 Denominator = Annotated[int, Field(ge=1, le=24)]
-
-
-def _lower(v: str) -> str:
-    return v.lower()
 
 
 # ── cutCards ────────────────────────────────────────────────────────────────
@@ -159,31 +153,27 @@ class HeartsFigure(KindData):
         return self
 
 
-class _Fig(KindData):
-    pass
-
-
-class StripsBlock(_Fig):
+class StripsBlock(KindData):
     kind: Literal["fractionStrips"]
     data: StripsFigure
 
 
-class CirclesBlock(_Fig):
+class CirclesBlock(KindData):
     kind: Literal["fractionCircles"]
     data: CirclesFigure
 
 
-class AreaBlock(_Fig):
+class AreaBlock(KindData):
     kind: Literal["fractionArea"]
     data: AreaFigure
 
 
-class NumberLineBlock(_Fig):
+class NumberLineBlock(KindData):
     kind: Literal["fractionNumberLine"]
     data: NumberLineFigure
 
 
-class HeartsBlock(_Fig):
+class HeartsBlock(KindData):
     kind: Literal["heartBar"]
     data: HeartsFigure
 
@@ -204,7 +194,7 @@ class ColorEntry(KindData):
     @field_validator("hex")
     @classmethod
     def _norm(cls, v: str) -> str:
-        return _lower(v)
+        return v.lower()
 
 
 class ColorTaskData(KindData):

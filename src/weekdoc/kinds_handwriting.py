@@ -4,9 +4,9 @@ Hosted: alphabetWorksheet, handwritingWorksheet, letterWorksheet, writingScaffol
 mirrorMessageWorksheet. All five render from inline HTML/CSS/SVG only.
 
 Renderer dependency audit (src/worksheet_html_renderer.py):
-- Fonts: system stacks only ('Trebuchet MS', Georgia, Arial and generic fallbacks). There is no
-  @font-face, @import, webfont or font file, so nothing is fetched while rendering or printing.
-  The "trace" look is plain grey text, not a dotted or school-style font.
+- Fonts: embedded inline by print_fonts (data: URIs) or system stacks; there is no @import or
+  webfont URL, so nothing is fetched while rendering or printing. The "trace" look is plain grey
+  text, not a dotted or school-style font.
 - Images: handwriting ``items[].image_path`` and alphabet ``character_image_path`` become
   ``<img src=...>`` verbatim. A model-written value could be a local path or a remote URL
   (a tracking beacon the viewer's browser would fetch, or an unresolved local file). These

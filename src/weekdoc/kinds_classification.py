@@ -78,10 +78,7 @@ class TreeBranch(KindData):
     @property
     def blanks(self) -> int:
         # renderer default is one blank when neither count is given
-        for v in (self.blank_count, self.slot_count):
-            if v is not None:
-                return v
-        return 1
+        return next((v for v in (self.blank_count, self.slot_count) if v is not None), 1)
 
 
 class TreeMapData(KindData):
