@@ -198,7 +198,9 @@ def render_teacher_guide(week: WeekDoc, student_name: str | None = None) -> str:
     pages[0].insert(0, "\n".join(head))
 
     summary = g["summary"]
-    if summary:  # its heading takes the last day's colour (h2_cls is left from the loop)
+    if summary:  # its heading takes the last day's colour
+        last_cls = _DAY_CLASS.get(g["days"][-1]["day"], "")
+        h2_cls = f' class="{last_cls}"' if last_cls else ""
         items = "\n".join(f"    <li>{_text(it)}</li>" for it in summary["items"])
         parts = [
             '  <hr style="margin: 18px 0; border-color: #ccc;">',
