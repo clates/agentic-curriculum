@@ -12,24 +12,21 @@ import {
   weekRange,
   type PrintDoc,
 } from '@/lib/print';
-import { EmptyState, ErrorState, LoadingState, primaryButton } from './states';
+import {
+  BackLink,
+  DonePanel,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  primaryButton,
+  secondaryButton,
+} from './states';
 
 const c = copy.print;
-
-const secondaryButton =
-  'inline-flex min-h-11 w-full items-center justify-center rounded-md border-2 border-primary-600 bg-white px-6 py-3 font-medium text-primary-700 hover:bg-primary-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:border-neutral-700 disabled:text-neutral-700';
 
 function docText(doc: PrintDoc, name: string): { title: string; body: string } {
   if (doc === 'packet') return { title: c.docs.packet.title(name), body: c.docs.packet.body };
   return c.docs[doc];
-}
-
-function BackLink() {
-  return (
-    <Link href="/week" className="text-primary-700 mb-3 inline-block py-2 underline">
-      {c.back}
-    </Link>
-  );
 }
 
 /** The print screen for one child's finished week: open each document to print, then confirm. */
@@ -48,7 +45,7 @@ export function PrintWeek({ card }: { card: ChildCard }) {
         : c.notReady.writing(name);
     return (
       <>
-        <BackLink />
+        <BackLink label={c.back} />
         <EmptyState
           title={c.notReadyTitle}
           body={reason}
@@ -81,7 +78,7 @@ export function PrintWeek({ card }: { card: ChildCard }) {
 
   return (
     <>
-      <BackLink />
+      <BackLink label={c.back} />
       <h1 className="text-foreground mb-2 text-2xl font-semibold">{c.title(name)}</h1>
       {info.data ? (
         <p className="text-foreground text-lg font-medium" data-testid="week-title">
@@ -153,16 +150,12 @@ export function PrintWeek({ card }: { card: ChildCard }) {
             ) : null}
 
             {justMarked ? (
-              <div
-                role="status"
-                className="mt-6 rounded-md border border-sage-300 bg-white p-6 text-center"
-              >
-                <h2 className="text-foreground text-xl font-semibold">{c.doneTitle}</h2>
-                <p className="mt-2 text-neutral-700">{c.doneBody(name)}</p>
-                <Link href="/week" className={`${primaryButton} mt-4`}>
-                  {c.back}
-                </Link>
-              </div>
+              <DonePanel
+                title={c.doneTitle}
+                body={c.doneBody(name)}
+                back={c.back}
+                className="mt-6"
+              />
             ) : ready ? (
               <div className="mt-6 space-y-2">
                 {mark.isError ? (
@@ -177,7 +170,7 @@ export function PrintWeek({ card }: { card: ChildCard }) {
                   type="button"
                   onClick={confirm}
                   disabled={mark.isPending}
-                  className={secondaryButton}
+                  className={`${secondaryButton} w-full disabled:border-neutral-700 disabled:text-neutral-700`}
                 >
                   {mark.isPending ? c.confirming : c.confirm}
                 </button>

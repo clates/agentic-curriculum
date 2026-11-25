@@ -7,12 +7,10 @@ function Section({
   title,
   empty,
   items,
-  tag,
 }: {
   title: string;
   empty: string;
   items: (SkillItem & { tag?: string })[];
-  tag?: string;
 }) {
   return (
     <section className="rounded-md border border-neutral-200 bg-white p-5">
@@ -25,7 +23,7 @@ function Section({
             <li key={`${item.skill}-${i}`}>
               <p className="text-foreground">{item.skill}</p>
               <p className="text-sm text-neutral-700">
-                {[item.subject, item.tag ?? tag, item.why].filter(Boolean).join(' · ')}
+                {[item.subject, item.tag, item.why].filter(Boolean).join(' · ')}
               </p>
             </li>
           ))}

@@ -1,10 +1,49 @@
 'use client';
 
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { copy } from '@/lib/copy';
 
-const primaryButton =
+export const primaryButton =
   'inline-flex min-h-11 items-center justify-center rounded-md bg-primary-600 px-6 py-3 font-medium text-white hover:bg-primary-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
+
+export const secondaryButton =
+  'inline-flex min-h-11 items-center justify-center rounded-md border-2 border-primary-600 bg-white px-6 py-3 font-medium text-primary-700 hover:bg-primary-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
+
+/** The quiet link back to This week, above a screen's heading. */
+export function BackLink({ label }: { label: string }) {
+  return (
+    <Link href="/week" className="text-primary-700 mb-3 inline-block py-2 underline">
+      {label}
+    </Link>
+  );
+}
+
+/** Shown once something is sent or confirmed, with the way back to This week. */
+export function DonePanel({
+  title,
+  body,
+  back,
+  className = '',
+}: {
+  title: string;
+  body: string;
+  back: string;
+  className?: string;
+}) {
+  return (
+    <div
+      role="status"
+      className={`${className} rounded-md border border-sage-300 bg-white p-6 text-center`}
+    >
+      <h2 className="text-foreground text-xl font-semibold">{title}</h2>
+      <p className="mt-2 text-neutral-700">{body}</p>
+      <Link href="/week" className={`${primaryButton} mt-4`}>
+        {back}
+      </Link>
+    </div>
+  );
+}
 
 /** Shown while data loads. Announces itself politely to screen readers. */
 export function LoadingState({ label = copy.states.loadingLabel }: { label?: string }) {
@@ -62,8 +101,6 @@ export function ErrorState({
   );
 }
 
-export { primaryButton };
-
 /**
  * One place that turns a data query into the right state, so every screen gets loading, empty and
  * error handling the same way.
@@ -87,6 +124,6 @@ export function QueryState<T>({
 }) {
   if (isLoading) return <LoadingState />;
   if (error) return <ErrorState onRetry={onRetry} />;
-  if (data === undefined || data === null || (isEmpty && isEmpty(data))) return <>{empty}</>;
+  if (data == null || isEmpty?.(data)) return <>{empty}</>;
   return <>{children(data)}</>;
 }

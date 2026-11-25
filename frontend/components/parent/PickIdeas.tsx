@@ -12,19 +12,9 @@ import {
   type OptionId,
   type WeekPlan,
 } from '@/lib/pick';
-import { EmptyState, ErrorState, primaryButton } from './states';
+import { BackLink, EmptyState, ErrorState, primaryButton, secondaryButton } from './states';
 
 const c = copy.pick;
-const secondaryButton =
-  'inline-flex min-h-11 items-center justify-center rounded-md border-2 border-primary-600 bg-white px-6 py-3 font-medium text-primary-700 hover:bg-primary-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
-
-export function BackLink() {
-  return (
-    <Link href="/week" className="text-primary-700 mb-3 inline-block py-2 underline">
-      {c.back}
-    </Link>
-  );
-}
 
 function Working({ title, body }: { title: string; body: string }) {
   return (
@@ -97,8 +87,7 @@ function FreshIdeas({ plan, variant }: { plan: WeekPlan; variant: 'primary' | 's
     <div className="space-y-3">
       {fresh.isError ? (
         <ErrorState title={c.freshErrorTitle} body={message ?? c.freshErrorBody} onRetry={ask} />
-      ) : null}
-      {!fresh.isError ? (
+      ) : (
         <>
           <button
             type="button"
@@ -113,7 +102,7 @@ function FreshIdeas({ plan, variant }: { plan: WeekPlan; variant: 'primary' | 's
             </p>
           ) : null}
         </>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -275,7 +264,7 @@ export function PickIdeas({ plan }: { plan: WeekPlan }) {
 
   return (
     <>
-      <BackLink />
+      <BackLink label={c.back} />
       <h1 className="text-foreground mb-4 text-2xl font-semibold">{c.title(plan.first_name)}</h1>
       {body}
     </>
