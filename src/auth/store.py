@@ -49,13 +49,14 @@ class User:
     password_hash: str
     family_id: str
     disabled: bool
+    verified: bool = True  # False until a self-registered account confirms its email
 
 
 def _user(row) -> User | None:
-    return User(row[0], row[1], row[2], row[3], bool(row[4])) if row else None
+    return User(row[0], row[1], row[2], row[3], bool(row[4]), bool(row[5])) if row else None
 
 
-_COLS = "id, username, password_hash, family_id, disabled"
+_COLS = "id, username, password_hash, family_id, disabled, email_verified_at IS NOT NULL"
 
 
 def get_user(conn: sqlite3.Connection, username: str) -> User | None:
@@ -83,7 +84,8 @@ def create_family(conn: sqlite3.Connection, name: str) -> str:
 def create_user(
     conn: sqlite3.Connection, username: str, password: str, family_id: str = DEFAULT_FAMILY
 ) -> User | None:
-    """Create a user. Returns None (and changes nothing) when the username already exists."""
+    """Create a user (operator-made, so verified). Returns None (and changes nothing) when the
+    username already exists."""
     name = normalize_username(username)
     if not name or any(ch.isspace() for ch in name):
         raise UserError("Username must be a single word with no spaces.")
@@ -92,14 +94,22 @@ def create_user(
         return None
     if not conn.execute("SELECT 1 FROM family WHERE family_id=?", (family_id,)).fetchone():
         raise UserError(f"No such family: {family_id}")
-    user_id = f"usr_{uuid.uuid4().hex[:16]}"
-    conn.execute(
-        "INSERT INTO app_user (id, username, password_hash, family_id, created_at) "
-        "VALUES (?,?,?,?,?)",
-        (user_id, name, hash_password(password), family_id,
-         datetime.now(UTC).isoformat(timespec="seconds")),
-    )  # fmt: skip
+    insert_user(conn, name, hash_password(password), family_id, verified=True)
     return get_user(conn, name)
+
+
+def insert_user(
+    conn: sqlite3.Connection, name: str, password_hash: str, family_id: str, verified: bool
+) -> str:
+    """Insert an already-validated user row; returns its id."""
+    user_id = f"usr_{uuid.uuid4().hex[:16]}"
+    stamp = datetime.now(UTC).isoformat(timespec="seconds")
+    conn.execute(
+        "INSERT INTO app_user (id, username, password_hash, family_id, created_at, "
+        "email_verified_at) VALUES (?,?,?,?,?,?)",
+        (user_id, name, password_hash, family_id, stamp, stamp if verified else None),
+    )
+    return user_id
 
 
 def create_invite(conn: sqlite3.Connection, created_by: str | None, days: int = INVITE_DAYS) -> str:
@@ -113,7 +123,7 @@ def create_invite(conn: sqlite3.Connection, created_by: str | None, days: int = 
     return code
 
 
-def consume_invite(conn: sqlite3.Connection, code: str, user_id: str) -> bool:
+def consume_invite(conn: sqlite3.Connection, code: str, user_id: str | None) -> bool:
     """Spend a code. True only for an unused, unexpired one (atomic: the UPDATE decides)."""
     now = clock.now()
     return (

@@ -7,11 +7,11 @@ import os
 from collections.abc import Callable
 from urllib.parse import urlsplit
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from . import service, store
+from . import registration, service, store
 
 COOKIE_NAME = "curriculum_session"
 CLIENT_IP_HEADER = "x-curriculum-client-ip"
@@ -20,9 +20,13 @@ UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 # Reachable without a session. Each one has a reason:
 #   /auth/login   you have no session yet
 #   /auth/logout  harmless and must work with a stale cookie
+#   /auth/register, /auth/verify, /auth/resend  signing up happens before there is an account
 #   /health       the container healthcheck and deploy.sh poll it through the app (/api/health)
 #   /version      the version footer on the login page, and deploy checks
-PUBLIC_PATHS = frozenset({"/auth/login", "/auth/logout", "/health", "/version"})
+PUBLIC_PATHS = frozenset(
+    {"/auth/login", "/auth/logout", "/auth/register", "/auth/verify", "/auth/resend", "/health",
+     "/version"}
+)  # fmt: skip
 
 
 def auth_required() -> bool:
@@ -173,27 +177,92 @@ class LoginBody(BaseModel):
     password: str = Field(max_length=1024)
 
 
+def _held_back(result) -> JSONResponse | None:
+    """429 for a lockout, 503 when too many password checks are running; else None."""
+    status = {"locked": (429, "too_many_attempts"), "busy": (503, "busy")}.get(result.kind)
+    if status is None:
+        return None
+    return JSONResponse(
+        {"detail": status[1], "retry_after": result.retry_after},
+        status_code=status[0],
+        headers={"Retry-After": str(result.retry_after)},
+    )
+
+
+def _mail_later(background: BackgroundTasks, mail: tuple[str, str] | None) -> None:
+    """Mail goes out after the response, so its timing says nothing about the account."""
+    if mail:
+        background.add_task(registration.send_code, *mail)
+
+
 @router.post("/login")
-def login(body: LoginBody, request: Request, response: Response):
+def login(body: LoginBody, request: Request, response: Response, background: BackgroundTasks):
     result = service.attempt_login(
         body.username, body.password, client_ip(request), request.headers.get("user-agent")
     )
-    if result.kind == "locked":
-        return JSONResponse(
-            {"detail": "too_many_attempts", "retry_after": result.retry_after},
-            status_code=429,
-            headers={"Retry-After": str(result.retry_after)},
-        )
-    if result.kind == "busy":
-        return JSONResponse(
-            {"detail": "busy", "retry_after": result.retry_after},
-            status_code=503,
-            headers={"Retry-After": str(result.retry_after)},
-        )
+    if held := _held_back(result):
+        return held
+    if result.kind == "unverified" and result.user:
+        _mail_later(background, registration.issue_code(result.user.username))
+        return JSONResponse({"detail": "email_not_verified"}, status_code=403)
     if result.kind != "ok" or not result.token or not result.user:
         raise HTTPException(401, "invalid_credentials")
     set_session_cookie(response, request, result.token)
     return {"user": {"username": result.user.username}}
+
+
+CHECK_EMAIL = {"status": "check_email"}
+
+
+class RegisterBody(BaseModel):
+    email: str = Field(max_length=320)
+    password: str = Field(max_length=1024)
+    family_name: str = Field(max_length=200)
+    invite_code: str = Field(max_length=64)
+
+
+@router.post("/register", status_code=202)
+def register(body: RegisterBody, request: Request, background: BackgroundTasks):
+    try:
+        result = registration.register(
+            body.email, body.password, body.family_name, body.invite_code, client_ip(request)
+        )
+    except registration.RegistrationError as exc:
+        raise HTTPException(400, str(exc)) from None
+    if held := _held_back(result):
+        return held
+    if result.kind != "ok":
+        raise HTTPException(400, "invalid_invite")
+    _mail_later(background, result.mail)
+    return CHECK_EMAIL
+
+
+class VerifyBody(BaseModel):
+    email: str = Field(max_length=320)
+    code: str = Field(max_length=32)
+
+
+@router.post("/verify")
+def verify(body: VerifyBody, request: Request, response: Response):
+    result = registration.verify(
+        body.email, body.code, client_ip(request), request.headers.get("user-agent")
+    )
+    if held := _held_back(result):
+        return held
+    if result.kind != "ok" or not result.token or not result.user:
+        raise HTTPException(400, "invalid_code")
+    set_session_cookie(response, request, result.token)
+    return {"user": {"username": result.user.username}}
+
+
+class ResendBody(BaseModel):
+    email: str = Field(max_length=320)
+
+
+@router.post("/resend", status_code=202)
+def resend(body: ResendBody, background: BackgroundTasks):
+    _mail_later(background, registration.issue_code(body.email))
+    return CHECK_EMAIL
 
 
 @router.post("/logout")

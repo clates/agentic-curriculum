@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 from . import clock, lockout, passwords, store
@@ -39,9 +41,37 @@ def _slot_pool() -> threading.BoundedSemaphore:
         return _slots
 
 
+def _acquire(pool: threading.BoundedSemaphore) -> bool:
+    if pool.acquire(blocking=False):
+        return True
+    global _waiting
+    with _waiting_lock:
+        if _waiting >= MAX_WAITERS:
+            return False
+        _waiting += 1
+    try:
+        return pool.acquire(timeout=BUSY_WAIT_S)
+    finally:
+        with _waiting_lock:
+            _waiting -= 1
+
+
+@contextmanager
+def hash_slot() -> Iterator[bool]:
+    """Hold one of the few scrypt slots while the block runs; yields False (holding none) when
+    too busy, and the caller answers "busy" without recording anything."""
+    pool = _slot_pool()
+    got = _acquire(pool)
+    try:
+        yield got
+    finally:
+        if got:
+            pool.release()
+
+
 @dataclass(frozen=True)
 class LoginResult:
-    kind: str  # "ok" | "bad" | "locked" | "busy"
+    kind: str  # "ok" | "bad" | "locked" | "busy" | "unverified"
     token: str | None = None
     retry_after: int = 0
     user: store.User | None = None
@@ -50,24 +80,10 @@ class LoginResult:
 def attempt_login(
     username: str, password: str, ip: str, user_agent: str | None = None
 ) -> LoginResult:
-    pool = _slot_pool()
-    if not pool.acquire(blocking=False):
-        global _waiting
-        with _waiting_lock:
-            if _waiting >= MAX_WAITERS:
-                return LoginResult("busy", retry_after=BUSY_RETRY_AFTER_S)
-            _waiting += 1
-        try:
-            got = pool.acquire(timeout=BUSY_WAIT_S)
-        finally:
-            with _waiting_lock:
-                _waiting -= 1
+    with hash_slot() as got:
         if not got:
             return LoginResult("busy", retry_after=BUSY_RETRY_AFTER_S)
-    try:
         return _attempt(username, password, ip, user_agent)
-    finally:
-        pool.release()
 
 
 def _attempt(username: str, password: str, ip: str, user_agent: str | None) -> LoginResult:
@@ -84,6 +100,8 @@ def _attempt(username: str, password: str, ip: str, user_agent: str | None) -> L
         if not passwords.verify_password(password, user.password_hash):
             return LoginResult("bad")
         lockout.record_success(conn, name, ip, clock.now())
+        if not user.verified:  # the right password, so it is safe to say why
+            return LoginResult("unverified", user=user)
         if passwords.needs_rehash(user.password_hash):
             store.replace_hash(conn, user.id, passwords.hash_password(password))
         token = store.create_session(conn, user.id, user_agent)

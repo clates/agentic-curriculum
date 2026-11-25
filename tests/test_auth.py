@@ -497,7 +497,10 @@ def test_every_route_is_public_on_purpose_or_protected(required, client):
             else:
                 assert r.status_code == 401, f"{method} {path} answered {r.status_code} anonymously"
     assert ("GET", "/students") in seen and ("POST", "/auth/login") in seen
-    assert PUBLIC_PATHS == {"/auth/login", "/auth/logout", "/health", "/version"}
+    assert PUBLIC_PATHS == {
+        "/auth/login", "/auth/logout", "/auth/register", "/auth/verify", "/auth/resend",
+        "/health", "/version",
+    }  # fmt: skip
 
 
 def _reaches(dependant, call) -> bool:
