@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   studentsApi,
@@ -9,30 +9,14 @@ import {
   WeeklyPacketSummary,
 } from '@/lib/api';
 
-// ... (skipping some lines)
-
-// Generate weekly plan mutation
 export function useGenerateWeeklyPlan() {
   const queryClient = useQueryClient();
-
-  const onSuccess = useCallback(() => {
-    // Invalidate cached packet lists so they refresh
-    queryClient.invalidateQueries({ queryKey: ['all-weekly-packets'] });
-    queryClient.invalidateQueries({ queryKey: ['weekly-packets-stats'] });
-  }, [queryClient]);
-
   return useMutation({
     mutationFn: plansApi.generateWeeklyPlan,
-    onSuccess,
-  });
-}
-
-// Curriculum Graph hooks
-export function useCurriculumGraph(subject: string, prune: boolean = false) {
-  return useQuery({
-    queryKey: ['curriculum-graph', subject, prune],
-    queryFn: () => curriculumApi.getGraph(subject, prune),
-    enabled: !!subject,
+    // Refresh the cached packet lists (not awaited: the mutation settles without waiting for it)
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['all-weekly-packets'] });
+    },
   });
 }
 
@@ -51,9 +35,7 @@ export interface WeeklyPacketWithStudent extends WeeklyPacketSummary {
 export function useStudents() {
   return useQuery({
     queryKey: ['students'],
-    queryFn: async () => {
-      return await studentsApi.listStudents();
-    },
+    queryFn: () => studentsApi.listStudents(),
     staleTime: Infinity,
   });
 }
@@ -79,17 +61,21 @@ export function useEnrichedStudents() {
 
   const enrichedStudents = useMemo(() => {
     if (!students) return [];
-    return students.map((s) => ({
-      id: s.student_id,
-      name: parseMetadata(s.metadata_blob)?.name || 'Unknown',
-      grade: studentGradeLabel(s),
-      subject: parseBlob(s.plan_rules_blob)?.theme_rules?.theme_subjects?.[0] || '—',
-      masteredCount: parseBlob(s.progress_blob)?.mastered_standards?.length ?? 0,
-      totalStandards: parseBlob(s.progress_blob)?.standard_metadata
-        ? Object.keys(parseBlob(s.progress_blob).standard_metadata).length
-        : 0,
-      avatarUrl: parseMetadata(s.metadata_blob)?.avatar_url ?? undefined,
-    }));
+    return students.map((s) => {
+      const metadata = parseMetadata(s.metadata_blob);
+      const progress = parseBlob(s.progress_blob);
+      return {
+        id: s.student_id,
+        name: metadata?.name || 'Unknown',
+        grade: studentGradeLabel(s),
+        subject: parseBlob(s.plan_rules_blob)?.theme_rules?.theme_subjects?.[0] || '—',
+        masteredCount: progress?.mastered_standards?.length ?? 0,
+        totalStandards: progress?.standard_metadata
+          ? Object.keys(progress.standard_metadata).length
+          : 0,
+        avatarUrl: metadata?.avatar_url ?? undefined,
+      };
+    });
   }, [students]);
 
   return { students: enrichedStudents, isLoading, error };
@@ -101,31 +87,27 @@ export function useWeeklyPacketsStats() {
   const stats = useMemo(() => {
     if (!allPackets) return { activePlans: 0, totalWorksheets: 0 };
 
-    // Compute current Monday for "this week" filtering
+    // This week's Monday, as YYYY-MM-DD
     const now = new Date();
-    const dayOfWeek = (now.getDay() + 6) % 7; // Monday = 0
     const monday = new Date(now);
-    monday.setDate(now.getDate() - dayOfWeek);
-    const weekKey = monday.toISOString().slice(0, 10); // YYYY-MM-DD
-
-    const thisWeekPackets = allPackets.filter((p) => p.week_of === weekKey);
-    const activePlans = thisWeekPackets.length;
-    const totalWorksheets = allPackets.reduce((acc, packet) => {
-      if (!packet.worksheet_counts) return acc;
-      return acc + Object.values(packet.worksheet_counts).reduce((sum, count) => sum + count, 0);
-    }, 0);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const weekKey = monday.toISOString().slice(0, 10);
 
     return {
-      activePlans,
-      totalWorksheets,
+      activePlans: allPackets.filter((p) => p.week_of === weekKey).length,
+      totalWorksheets: allPackets.reduce(
+        (acc, packet) =>
+          acc + Object.values(packet.worksheet_counts ?? {}).reduce((sum, n) => sum + n, 0),
+        0
+      ),
     };
   }, [allPackets]);
 
   return { data: stats, isLoading };
 }
 
-// Base query for all weekly packets
-function useWeeklyPacketsBase() {
+// Every student's weekly packets, in one list
+export function useAllWeeklyPackets() {
   const { data: students } = useStudents();
 
   const studentIds = useMemo(() => students?.map((s) => s.student_id) ?? [], [students]);
@@ -133,8 +115,6 @@ function useWeeklyPacketsBase() {
   return useQuery({
     queryKey: ['all-weekly-packets', studentIds],
     queryFn: async () => {
-      if (studentIds.length === 0) return [];
-
       const allPackets = await Promise.all(
         students!.map(async (student) => {
           try {
@@ -150,7 +130,6 @@ function useWeeklyPacketsBase() {
           }
         })
       );
-
       return allPackets.flat();
     },
     enabled: studentIds.length > 0,
@@ -158,42 +137,23 @@ function useWeeklyPacketsBase() {
   });
 }
 
-// Aggregate all weekly packets across all students
-export function useAllWeeklyPackets() {
-  return useWeeklyPacketsBase();
-}
-
-// Get pending plans (status: 'ready' or 'draft')
-export function usePendingPackets() {
-  const { data: allPackets, isLoading, error } = useWeeklyPacketsBase();
-
-  const packets = useMemo(() => {
-    if (!allPackets) return [];
-    return allPackets.filter(
-      (packet) => (packet.status === 'ready' || packet.status === 'draft') && !packet.has_feedback
-    );
-  }, [allPackets]);
-
+function useFilteredPackets(keep: (packet: WeeklyPacketWithStudent) => boolean) {
+  const { data: allPackets, isLoading, error } = useAllWeeklyPackets();
+  const packets = useMemo(() => allPackets?.filter(keep) ?? [], [allPackets, keep]);
   return { packets, isLoading, error };
 }
 
-// Get completed plans (status: 'complete' or has feedback)
-export function useCompletedPackets() {
-  const { data: allPackets, isLoading, error } = useWeeklyPacketsBase();
+const isPending = (p: WeeklyPacketSummary) =>
+  (p.status === 'ready' || p.status === 'draft') && !p.has_feedback;
+const isCompleted = (p: WeeklyPacketSummary) => p.status === 'complete' || p.has_feedback;
 
-  const packets = useMemo(() => {
-    if (!allPackets) return [];
-    return allPackets.filter((packet) => packet.status === 'complete' || packet.has_feedback);
-  }, [allPackets]);
+export const usePendingPackets = () => useFilteredPackets(isPending);
+export const useCompletedPackets = () => useFilteredPackets(isCompleted);
 
-  return { packets, isLoading, error };
-}
-
-// Get system options (subjects, grades, etc.)
 export function useSystemOptions() {
   return useQuery({
     queryKey: ['system-options'],
     queryFn: systemApi.getOptions,
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    staleTime: 1000 * 60 * 60, // 1 hour
   });
 }

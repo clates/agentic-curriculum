@@ -156,36 +156,26 @@ export function errorMessage(error: unknown): string {
   return 'That did not work. Try again.';
 }
 
-export function useLoopAction(studentId: string) {
+/** A loop-admin call; the overview refreshes once it settles, whether it worked or not. */
+function useLoopMutation<V = void>(mutationFn: (v: V) => Promise<unknown>) {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (v: { action: string; option?: string; week?: string }) =>
-      (
-        await apiClient.post(`/loop-admin/students/${studentId}/actions/${v.action}`, {
-          option: v.option,
-          week: v.week || undefined,
-        })
-      ).data,
-    onSettled: () => qc.invalidateQueries({ queryKey: KEY }),
-  });
+  return useMutation({ mutationFn, onSettled: () => qc.invalidateQueries({ queryKey: KEY }) });
 }
 
-export function useSeedDemo() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => (await apiClient.post('/loop-admin/seed-demo')).data,
-    onSettled: () => qc.invalidateQueries({ queryKey: KEY }),
-  });
-}
+const post = async (url: string, body?: object) => (await apiClient.post(url, body)).data;
 
-export function useRetryJob() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (jobId: number) =>
-      (await apiClient.post(`/loop-admin/jobs/${jobId}/retry`)).data,
-    onSettled: () => qc.invalidateQueries({ queryKey: KEY }),
-  });
-}
+export const useLoopAction = (studentId: string) =>
+  useLoopMutation((v: { action: string; option?: string; week?: string }) =>
+    post(`/loop-admin/students/${studentId}/actions/${v.action}`, {
+      option: v.option,
+      week: v.week || undefined,
+    })
+  );
+
+export const useSeedDemo = () => useLoopMutation(() => post('/loop-admin/seed-demo'));
+
+export const useRetryJob = () =>
+  useLoopMutation((jobId: number) => post(`/loop-admin/jobs/${jobId}/retry`));
 
 export function useFeedForward(studentId: string, enabled: boolean) {
   return useQuery({

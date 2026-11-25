@@ -19,7 +19,6 @@ function parseInterests(raw: string | undefined): string[] {
     .slice(0, 8);
 }
 
-// Validation schema
 const studentSchema = z.object({
   student_id: z
     .string()
@@ -33,6 +32,14 @@ const studentSchema = z.object({
 });
 
 type StudentFormData = z.infer<typeof studentSchema>;
+
+const toMetadata = (data: StudentFormData) => ({
+  name: data.name,
+  birthday: data.birthday,
+  avatar_url: data.avatar_url || undefined,
+  notes: data.notes || undefined,
+  interests: parseInterests(data.interests),
+});
 
 export default function StudentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,48 +78,29 @@ export default function StudentsPage() {
     }
   }, [editingStudent, students, setValue]);
 
-  // Create student mutation
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingStudent(null);
+    reset();
+  };
+
+  const onSaved = () => {
+    queryClient.invalidateQueries({ queryKey: ['students'] });
+    handleCloseModal();
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: StudentFormData) =>
-      studentsApi.createStudent({
-        student_id: data.student_id,
-        metadata: {
-          name: data.name,
-          birthday: data.birthday,
-          avatar_url: data.avatar_url || undefined,
-          notes: data.notes || undefined,
-          interests: parseInterests(data.interests),
-        },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-      setIsModalOpen(false);
-      setEditingStudent(null);
-      reset();
-    },
+      studentsApi.createStudent({ student_id: data.student_id, metadata: toMetadata(data) }),
+    onSuccess: onSaved,
   });
 
-  // Update student mutation
   const updateMutation = useMutation({
     mutationFn: (data: StudentFormData) =>
-      studentsApi.updateStudent(data.student_id, {
-        metadata: {
-          name: data.name,
-          birthday: data.birthday,
-          avatar_url: data.avatar_url || undefined,
-          notes: data.notes || undefined,
-          interests: parseInterests(data.interests),
-        },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-      setIsModalOpen(false);
-      setEditingStudent(null);
-      reset();
-    },
+      studentsApi.updateStudent(data.student_id, { metadata: toMetadata(data) }),
+    onSuccess: onSaved,
   });
 
-  // Delete student mutation
   const deleteMutation = useMutation({
     mutationFn: (studentId: string) => studentsApi.deleteStudent(studentId),
     onSuccess: () => {
@@ -121,28 +109,13 @@ export default function StudentsPage() {
     },
   });
 
-  const onSubmit = (data: StudentFormData) => {
-    if (editingStudent) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
-    }
-  };
-
-  const handleDelete = (studentId: string) => {
-    deleteMutation.mutate(studentId);
-  };
+  const onSubmit = (data: StudentFormData) =>
+    (editingStudent ? updateMutation : createMutation).mutate(data);
 
   const handleAddNew = () => {
     setEditingStudent(null);
     reset();
     setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingStudent(null);
-    reset();
   };
 
   if (isLoading) {
@@ -349,7 +322,7 @@ export default function StudentsPage() {
                 <Button
                   variant="primary"
                   className="bg-danger-600 hover:bg-danger-700"
-                  onClick={() => handleDelete(deletingStudent)}
+                  onClick={() => deleteMutation.mutate(deletingStudent)}
                   disabled={deleteMutation.isPending}
                 >
                   {deleteMutation.isPending ? 'Deleting...' : 'Delete Student'}

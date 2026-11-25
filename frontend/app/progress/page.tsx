@@ -87,18 +87,16 @@ export default function ProgressPage() {
 
         {/* Legend */}
         <div className="mb-4 flex space-x-6">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded bg-green-100 border border-green-300"></div>
-            <span className="text-sm font-medium text-neutral-700">Mastered</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded bg-blue-100 border border-blue-300"></div>
-            <span className="text-sm font-medium text-neutral-700">Ready to Learn</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded bg-gray-100 border border-gray-300"></div>
-            <span className="text-sm font-medium text-neutral-700">Locked</span>
-          </div>
+          {[
+            ['Mastered', 'bg-green-100', 'border-green-300'],
+            ['Ready to Learn', 'bg-blue-100', 'border-blue-300'],
+            ['Locked', 'bg-gray-100', 'border-gray-300'],
+          ].map(([label, bg, border]) => (
+            <div key={label} className="flex items-center space-x-2">
+              <div className={`w-4 h-4 rounded ${bg} border ${border}`}></div>
+              <span className="text-sm font-medium text-neutral-700">{label}</span>
+            </div>
+          ))}
         </div>
 
         {/* Skill Tree Visualization */}

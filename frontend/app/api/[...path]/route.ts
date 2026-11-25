@@ -1,16 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Get backend URL from environment variable or default to localhost:8000
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8181';
+
+// Request headers passed to the backend when present. Login needs the session cookie and the facts
+// the backend uses to judge a request it cannot see for itself (it only ever talks to this proxy).
+const REQUEST_HEADERS = [
+  'Content-Type',
+  'Authorization',
+  'Cookie',
+  'Origin',
+  'Referer',
+  'Sec-Fetch-Site',
+  'User-Agent',
+];
+// Response headers passed back when present (file downloads and caching).
+const RESPONSE_HEADERS = [
+  'Content-Type',
+  'Content-Disposition',
+  'Content-Length',
+  'Cache-Control',
+  'ETag',
+];
+
+function copyHeaders(from: Headers, names: string[], to: Record<string, string>) {
+  for (const name of names) {
+    const value = from.get(name);
+    if (value) to[name] = value;
+  }
+}
 
 /**
  * Catch-all API route that proxies requests to the backend
  * This eliminates CORS issues and allows us to only expose port 3000
  */
 async function handler(request: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
-  // In Next.js 15+, params is a Promise
-  const { path } = await params;
-  const pathname = Array.isArray(path) ? path.join('/') : path;
+  const pathname = (await params).path.join('/');
 
   // Validate pathname doesn't contain suspicious patterns
   if (pathname.includes('..') || pathname.startsWith('/')) {
@@ -22,39 +46,17 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
     return NextResponse.json({ detail: 'request_too_large' }, { status: 413 });
   }
 
-  // Construct the backend URL
   const url = new URL(`${BACKEND_URL}/${pathname}`);
-
-  // Forward query parameters
   request.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.append(key, value);
   });
 
   try {
-    // Build request headers - only forward if present
-    const headers: HeadersInit = {};
-    if (request.headers.get('Content-Type')) {
-      headers['Content-Type'] = request.headers.get('Content-Type')!;
-    }
-    if (request.headers.get('Authorization')) {
-      headers['Authorization'] = request.headers.get('Authorization')!;
-    }
-
-    // Login: the session cookie, and the facts the backend needs to judge a request it cannot see
-    // for itself (it only ever talks to this proxy). It trusts the client address and protocol
-    // only because the connection comes from this machine.
-    const cookie = request.headers.get('Cookie');
-    if (cookie) headers['Cookie'] = cookie;
-    const origin = request.headers.get('Origin');
-    if (origin) headers['Origin'] = origin;
-    const referer = request.headers.get('Referer');
-    if (referer) headers['Referer'] = referer;
-    const fetchSite = request.headers.get('Sec-Fetch-Site');
-    if (fetchSite) headers['Sec-Fetch-Site'] = fetchSite;
-    const userAgent = request.headers.get('User-Agent');
-    if (userAgent) headers['User-Agent'] = userAgent;
-    // The RIGHTMOST entry is the hop our own front proxy appended; the ones to its left were
-    // supplied by the client and can say anything.
+    const headers: Record<string, string> = {};
+    copyHeaders(request.headers, REQUEST_HEADERS, headers);
+    // The backend trusts the client address and protocol only because the connection comes from
+    // this machine. The RIGHTMOST entry is the hop our own front proxy appended; the ones to its
+    // left were supplied by the client and can say anything.
     const forwarded = (request.headers.get('X-Forwarded-For') ?? '')
       .split(',')
       .map((part) => part.trim())
@@ -67,7 +69,6 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
     const host = request.headers.get('X-Forwarded-Host') || request.headers.get('Host');
     if (host) headers['X-Forwarded-Host'] = host;
 
-    // Forward the request to the backend
     const backendResponse = await fetch(url.toString(), {
       method: request.method,
       headers,
@@ -79,35 +80,8 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
         }),
     });
 
-    // Build response headers - forward all important headers from backend
-    const responseHeaders: HeadersInit = {};
-
-    // Forward Content-Type if present (critical for file downloads)
-    const contentType = backendResponse.headers.get('Content-Type');
-    if (contentType) {
-      responseHeaders['Content-Type'] = contentType;
-    }
-
-    // Forward other important headers for file downloads and caching
-    const contentDisposition = backendResponse.headers.get('Content-Disposition');
-    if (contentDisposition) {
-      responseHeaders['Content-Disposition'] = contentDisposition;
-    }
-
-    const contentLength = backendResponse.headers.get('Content-Length');
-    if (contentLength) {
-      responseHeaders['Content-Length'] = contentLength;
-    }
-
-    const cacheControl = backendResponse.headers.get('Cache-Control');
-    if (cacheControl) {
-      responseHeaders['Cache-Control'] = cacheControl;
-    }
-
-    const etag = backendResponse.headers.get('ETag');
-    if (etag) {
-      responseHeaders['ETag'] = etag;
-    }
+    const responseHeaders: Record<string, string> = {};
+    copyHeaders(backendResponse.headers, RESPONSE_HEADERS, responseHeaders);
 
     // Sessions: pass every Set-Cookie through untouched (there can be several).
     const setCookies = backendResponse.headers.getSetCookie();
@@ -121,18 +95,12 @@ async function handler(request: NextRequest, { params }: { params: Promise<{ pat
       return withCookies(new NextResponse(null, { status: 204, headers: responseHeaders }));
     }
 
-    const retryAfter = backendResponse.headers.get('Retry-After');
-    if (retryAfter) responseHeaders['Retry-After'] = retryAfter;
+    copyHeaders(backendResponse.headers, ['Retry-After'], responseHeaders);
 
-    // Get the response body as ArrayBuffer to ensure binary data is preserved
+    // As an ArrayBuffer, so binary downloads come through intact
     const data = await backendResponse.arrayBuffer();
-
-    // Return the response with the same status and forwarded headers
     return withCookies(
-      new NextResponse(data, {
-        status: backendResponse.status,
-        headers: responseHeaders,
-      })
+      new NextResponse(data, { status: backendResponse.status, headers: responseHeaders })
     );
   } catch (error) {
     console.error('Backend proxy error:', error);

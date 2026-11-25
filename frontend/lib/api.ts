@@ -1,11 +1,8 @@
 import axios from 'axios';
 
-// Use Next.js API routes as proxy to backend
-// This eliminates CORS issues and allows single-port deployment
-const API_BASE_URL = '/api';
-
+// Calls go through the app's own /api route, which proxies them to the backend (no CORS, one port)
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,6 +24,9 @@ apiClient.interceptors.response.use(undefined, (error) => {
   return Promise.reject(error);
 });
 
+const get = async <T>(url: string, params?: object): Promise<T> =>
+  (await apiClient.get<T>(url, { params })).data;
+
 // Student types
 export interface StudentProfile {
   student_id: string;
@@ -41,11 +41,6 @@ export interface StudentMetadata {
   avatar_url?: string;
   notes?: string;
   interests?: string[];
-}
-
-export interface ProgressBlob {
-  mastered_standards: string[];
-  developing_standards: string[];
 }
 
 // Weekly packet types
@@ -90,23 +85,12 @@ export interface SystemOptions {
 }
 
 export const systemApi = {
-  getOptions: async (): Promise<SystemOptions> => {
-    const { data } = await apiClient.get('/system/options');
-    return data;
-  },
+  getOptions: () => get<SystemOptions>('/system/options'),
 };
 
 // Students API
 export const studentsApi = {
-  listStudents: async (): Promise<StudentProfile[]> => {
-    const { data } = await apiClient.get('/students');
-    return data;
-  },
-
-  getStudent: async (studentId: string): Promise<StudentProfile> => {
-    const { data } = await apiClient.get(`/student/${studentId}`);
-    return data;
-  },
+  listStudents: () => get<StudentProfile[]>('/students'),
 
   createStudent: async (payload: {
     student_id: string;
@@ -132,13 +116,10 @@ export const studentsApi = {
     await apiClient.delete(`/student/${studentId}`);
   },
 
-  listWeeklyPackets: async (
+  listWeeklyPackets: (
     studentId: string,
     params?: { week_of?: string; page?: number; page_size?: number }
-  ): Promise<PaginatedResponse<WeeklyPacketSummary>> => {
-    const { data } = await apiClient.get(`/students/${studentId}/weekly-packets`, { params });
-    return data;
-  },
+  ) => get<PaginatedResponse<WeeklyPacketSummary>>(`/students/${studentId}/weekly-packets`, params),
 };
 
 // Helper functions to parse JSON blobs
@@ -148,17 +129,6 @@ export const parseMetadata = (metadataBlob: string | null): StudentMetadata | nu
     return JSON.parse(metadataBlob);
   } catch {
     return null;
-  }
-};
-
-export const parseProgress = (progressBlob: string | null): ProgressBlob => {
-  if (!progressBlob) {
-    return { mastered_standards: [], developing_standards: [] };
-  }
-  try {
-    return JSON.parse(progressBlob);
-  } catch {
-    return { mastered_standards: [], developing_standards: [] };
   }
 };
 
@@ -204,33 +174,19 @@ export interface PacketWorksheetsResponse {
   items: WorksheetItem[];
 }
 
+const packetUrl = (studentId: string, packetId: string) =>
+  `/students/${studentId}/weekly-packets/${packetId}`;
+
 // Plans API
 export const plansApi = {
-  getPacketDetail: async (studentId: string, packetId: string): Promise<WeeklyPacketDetail> => {
-    const { data } = await apiClient.get(`/students/${studentId}/weekly-packets/${packetId}`);
-    return data;
-  },
+  getPacketDetail: (studentId: string, packetId: string) =>
+    get<WeeklyPacketDetail>(packetUrl(studentId, packetId)),
 
-  getPacketWorksheets: async (
-    studentId: string,
-    packetId: string
-  ): Promise<PacketWorksheetsResponse> => {
-    const { data } = await apiClient.get(
-      `/students/${studentId}/weekly-packets/${packetId}/worksheets`
-    );
-    return data;
-  },
+  getPacketWorksheets: (studentId: string, packetId: string) =>
+    get<PacketWorksheetsResponse>(`${packetUrl(studentId, packetId)}/worksheets`),
 
-  getFeedback: async (studentId: string, packetId: string): Promise<FeedbackData | null> => {
-    try {
-      const { data } = await apiClient.get(
-        `/students/${studentId}/weekly-packets/${packetId}/feedback`
-      );
-      return data;
-    } catch {
-      return null;
-    }
-  },
+  getFeedback: (studentId: string, packetId: string) =>
+    get<FeedbackData>(`${packetUrl(studentId, packetId)}/feedback`).catch(() => null),
 
   submitFeedback: async (
     studentId: string,
@@ -240,12 +196,7 @@ export const plansApi = {
       quantity_feedback?: number;
     }
   ): Promise<void> => {
-    await apiClient.post(`/students/${studentId}/weekly-packets/${packetId}/feedback`, feedback);
-  },
-
-  downloadArtifact: (path: string): string => {
-    // This is now just for legacy - we should use artifact IDs from worksheets endpoint
-    return `${API_BASE_URL}/artifact?path=${encodeURIComponent(path)}`;
+    await apiClient.post(`${packetUrl(studentId, packetId)}/feedback`, feedback);
   },
 
   generateWeeklyPlan: async (payload: {
@@ -284,18 +235,6 @@ export interface CurriculumGraph {
 }
 
 export const curriculumApi = {
-  getGraph: async (subject: string, prune: boolean = false): Promise<CurriculumGraph> => {
-    const { data } = await apiClient.get(`/curriculum/graph/${subject}`, { params: { prune } });
-    return data;
-  },
-  getProgressMap: async (
-    studentId: string,
-    subject: string,
-    prune: boolean = true
-  ): Promise<CurriculumGraph> => {
-    const { data } = await apiClient.get(`/students/${studentId}/progress-map/${subject}`, {
-      params: { prune },
-    });
-    return data;
-  },
+  getProgressMap: (studentId: string, subject: string, prune: boolean = true) =>
+    get<CurriculumGraph>(`/students/${studentId}/progress-map/${subject}`, { prune }),
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, Button, Badge, Modal } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
@@ -38,13 +38,37 @@ function isFeedbackLocked(feedbackCompletedAt: string | null): boolean {
   return submitted < cutoff;
 }
 
+const formatDate = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+const MASTERY_OPTIONS = [
+  { value: 'STRUGGLING', label: 'Struggling', color: 'bg-red-100 text-red-800 border-red-200' },
+  {
+    value: 'DEVELOPING',
+    label: 'Developing',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  },
+  { value: 'MASTERED', label: 'Mastered', color: 'bg-green-100 text-green-800 border-green-200' },
+];
+
+const QUANTITY_OPTIONS = [
+  { value: 'TOO_LITTLE', label: 'Too Little' },
+  { value: 'JUST_RIGHT', label: 'Just Right' },
+  { value: 'TOO_MUCH', label: 'Too Much' },
+];
+
+const COMPLETED_COLUMNS = ['Student', 'Week Of', 'Subject', 'Grade', 'Artifacts', 'Updated'];
+
 export default function PlansPage() {
   const { data: students } = useStudents();
   const { packets: pendingPackets, isLoading: pendingLoading } = usePendingPackets();
   const { packets: completedPackets, isLoading: completedLoading } = useCompletedPackets();
   const { showToast } = useToast();
 
-  // Modal state
   const [planDetailOpen, setPlanDetailOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [selectedPacketIds, setSelectedPacketIds] = useState<{
@@ -54,12 +78,10 @@ export default function PlansPage() {
   const [masteryRating, setMasteryRating] = useState<string | null>(null);
   const [quantityRating, setQuantityRating] = useState<string | null>(null);
 
-  // Modal state for plan generation
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
-  // Helper to find the selected packet from lists
   const selectedPacket = useMemo(() => {
     if (!selectedPacketIds) return null;
     const allPackets = [...pendingPackets, ...completedPackets];
@@ -70,24 +92,20 @@ export default function PlansPage() {
   }, [selectedPacketIds, pendingPackets, completedPackets]);
 
   // Fetch existing feedback when the feedback modal is open for a packet that has feedback
+  const ids = [selectedPacketIds?.studentId, selectedPacketIds?.packetId] as const;
+  const sel = selectedPacketIds!; // the queries below only run once a packet is selected
+
   const { data: existingFeedback } = useQuery({
-    queryKey: ['packet-feedback', selectedPacketIds?.studentId, selectedPacketIds?.packetId],
-    queryFn: async () => {
-      if (!selectedPacketIds) return null;
-      return await plansApi.getFeedback(selectedPacketIds.studentId, selectedPacketIds.packetId);
-    },
+    queryKey: ['packet-feedback', ...ids],
+    queryFn: () => plansApi.getFeedback(sel.studentId, sel.packetId),
     enabled: !!selectedPacketIds && feedbackModalOpen && !!selectedPacket?.has_feedback,
   });
 
   // Pre-populate feedback modal with existing values when editing
   useEffect(() => {
     if (existingFeedback && feedbackModalOpen && masteryRating === null) {
-      const mastery = existingFeedback.mastery_feedback?.overall ?? null;
-      setMasteryRating(mastery);
-      if (
-        existingFeedback.quantity_feedback !== null &&
-        existingFeedback.quantity_feedback !== undefined
-      ) {
+      setMasteryRating(existingFeedback.mastery_feedback?.overall ?? null);
+      if (existingFeedback.quantity_feedback != null) {
         setQuantityRating(quantityToRating(existingFeedback.quantity_feedback));
       }
     }
@@ -95,106 +113,63 @@ export default function PlansPage() {
 
   // Fetch plan detail when packet is selected
   const { data: planDetail, isLoading: planDetailLoading } = useQuery({
-    queryKey: ['plan-detail', selectedPacketIds?.studentId, selectedPacketIds?.packetId],
-    queryFn: async () => {
-      if (!selectedPacketIds) return null;
-      return await plansApi.getPacketDetail(
-        selectedPacketIds.studentId,
-        selectedPacketIds.packetId
-      );
-    },
+    queryKey: ['plan-detail', ...ids],
+    queryFn: () => plansApi.getPacketDetail(sel.studentId, sel.packetId),
     enabled: !!selectedPacketIds && planDetailOpen,
   });
 
   // Fetch worksheet artifacts with IDs for downloads
   const { data: worksheetData } = useQuery({
-    queryKey: ['packet-worksheets', selectedPacketIds?.studentId, selectedPacketIds?.packetId],
-    queryFn: async () => {
-      if (!selectedPacketIds) return null;
-      return await plansApi.getPacketWorksheets(
-        selectedPacketIds.studentId,
-        selectedPacketIds.packetId
-      );
-    },
+    queryKey: ['packet-worksheets', ...ids],
+    queryFn: () => plansApi.getPacketWorksheets(sel.studentId, sel.packetId),
     enabled: !!selectedPacketIds && planDetailOpen,
   });
 
+  const resetRatings = () => {
+    setMasteryRating(null);
+    setQuantityRating(null);
+  };
+
+  const closePlanDetail = () => {
+    setPlanDetailOpen(false);
+    setSelectedPacketIds(null);
+  };
+
   const feedbackMutation = useMutation({
-    mutationFn: async ({
-      studentId,
-      packetId,
-      mastery,
-      quantity,
-    }: {
-      studentId: string;
-      packetId: string;
-      mastery: string;
-      quantity: string;
-    }) => {
-      // Convert quantity rating to integer
-      const quantityValue = QUANTITY_RATING_MAP[quantity] ?? 0;
-      await plansApi.submitFeedback(studentId, packetId, {
-        mastery_feedback: { overall: mastery },
-        quantity_feedback: quantityValue,
-      });
-    },
+    mutationFn: (v: { studentId: string; packetId: string; mastery: string; quantity: string }) =>
+      plansApi.submitFeedback(v.studentId, v.packetId, {
+        mastery_feedback: { overall: v.mastery },
+        quantity_feedback: QUANTITY_RATING_MAP[v.quantity] ?? 0,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-weekly-packets'] });
       setFeedbackModalOpen(false);
-      setPlanDetailOpen(false);
-      setSelectedPacketIds(null);
-      setMasteryRating(null);
-      setQuantityRating(null);
+      closePlanDetail();
+      resetRatings();
     },
     onError: (error: Error) => {
       showToast(error.message || 'Failed to submit feedback. Please try again.', 'error');
     },
   });
 
-  const { mutate: submitFeedback } = feedbackMutation;
-
-  const handleViewPlan = useCallback((packet: WeeklyPacketWithStudent) => {
-    setSelectedPacketIds({
-      studentId: packet.student_id,
-      packetId: packet.packet_id,
-    });
+  const handleViewPlan = (packet: WeeklyPacketWithStudent) => {
+    setSelectedPacketIds({ studentId: packet.student_id, packetId: packet.packet_id });
     setPlanDetailOpen(true);
-  }, []);
+  };
 
-  const handleProvideFeedback = useCallback(() => {
-    setMasteryRating(null);
-    setQuantityRating(null);
+  const handleProvideFeedback = () => {
+    resetRatings();
     setFeedbackModalOpen(true);
     setPlanDetailOpen(false);
-  }, []);
+  };
 
-  const handleSubmitFeedback = useCallback(() => {
+  const handleSubmitFeedback = () => {
     if (!selectedPacketIds || !masteryRating || !quantityRating) return;
-
-    submitFeedback({
-      studentId: selectedPacketIds.studentId,
-      packetId: selectedPacketIds.packetId,
+    feedbackMutation.mutate({
+      ...selectedPacketIds,
       mastery: masteryRating,
       quantity: quantityRating,
     });
-  }, [selectedPacketIds, masteryRating, quantityRating, submitFeedback]);
-
-  const handleDownloadArtifact = (downloadUrl: string) => {
-    // downloadUrl is already the correct path like /students/{id}/worksheet-artifacts/{artifact_id}
-    const fullUrl = `/api${downloadUrl}`;
-    window.open(fullUrl, '_blank');
-  };
-
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return dateStr;
-    }
   };
 
   const modalStudents = useMemo(
@@ -239,7 +214,7 @@ export default function PlansPage() {
         ) : (
           <>
             {/* Pending Plans - Prominent Section */}
-            {pendingPackets && pendingPackets.length > 0 && (
+            {pendingPackets.length > 0 && (
               <section className="mb-12">
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-foreground text-2xl font-semibold">Pending Plans</h2>
@@ -307,30 +282,19 @@ export default function PlansPage() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-neutral-600">Subject:</span>
-                            <span className="text-foreground ml-2 font-medium">
-                              {packet.subject}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-neutral-600">Grade:</span>
-                            <span className="text-foreground ml-2 font-medium">
-                              {packet.grade_level}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-neutral-600">Days:</span>
-                            <span className="text-foreground ml-2 font-medium">
-                              {packet.daily_count}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-neutral-600">Worksheets:</span>
-                            <span className="text-foreground ml-2 font-medium">
-                              {packet.artifact_count}
-                            </span>
-                          </div>
+                          {(
+                            [
+                              ['Subject', packet.subject],
+                              ['Grade', packet.grade_level],
+                              ['Days', packet.daily_count],
+                              ['Worksheets', packet.artifact_count],
+                            ] as const
+                          ).map(([label, value]) => (
+                            <div key={label}>
+                              <span className="text-neutral-600">{label}:</span>
+                              <span className="text-foreground ml-2 font-medium">{value}</span>
+                            </div>
+                          ))}
                         </div>
 
                         {packet.worksheet_counts &&
@@ -361,7 +325,7 @@ export default function PlansPage() {
             )}
 
             {/* Completed Plans Table */}
-            {completedPackets && completedPackets.length > 0 && (
+            {completedPackets.length > 0 && (
               <section>
                 <h2 className="text-foreground mb-6 text-2xl font-semibold">Completed Plans</h2>
                 <Card>
@@ -369,24 +333,14 @@ export default function PlansPage() {
                     <table className="w-full">
                       <thead className="border-b border-neutral-200 bg-neutral-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-neutral-600 uppercase">
-                            Student
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-neutral-600 uppercase">
-                            Week Of
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-neutral-600 uppercase">
-                            Subject
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-neutral-600 uppercase">
-                            Grade
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-neutral-600 uppercase">
-                            Artifacts
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-neutral-600 uppercase">
-                            Updated
-                          </th>
+                          {COMPLETED_COLUMNS.map((column) => (
+                            <th
+                              key={column}
+                              className="px-6 py-3 text-left text-xs font-medium tracking-wider text-neutral-600 uppercase"
+                            >
+                              {column}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-neutral-200 bg-white">
@@ -399,21 +353,20 @@ export default function PlansPage() {
                             <td className="text-foreground px-6 py-4 text-sm font-medium whitespace-nowrap">
                               {packet.studentName}
                             </td>
-                            <td className="px-6 py-4 text-sm whitespace-nowrap text-neutral-600">
-                              {formatDate(packet.week_of)}
-                            </td>
-                            <td className="px-6 py-4 text-sm whitespace-nowrap text-neutral-600">
-                              {packet.subject}
-                            </td>
-                            <td className="px-6 py-4 text-sm whitespace-nowrap text-neutral-600">
-                              {packet.grade_level}
-                            </td>
-                            <td className="px-6 py-4 text-sm whitespace-nowrap text-neutral-600">
-                              {packet.artifact_count}
-                            </td>
-                            <td className="px-6 py-4 text-sm whitespace-nowrap text-neutral-600">
-                              {formatDate(packet.updated_at)}
-                            </td>
+                            {[
+                              formatDate(packet.week_of),
+                              packet.subject,
+                              packet.grade_level,
+                              packet.artifact_count,
+                              formatDate(packet.updated_at),
+                            ].map((value, i) => (
+                              <td
+                                key={i}
+                                className="px-6 py-4 text-sm whitespace-nowrap text-neutral-600"
+                              >
+                                {value}
+                              </td>
+                            ))}
                           </tr>
                         ))}
                       </tbody>
@@ -424,42 +377,34 @@ export default function PlansPage() {
             )}
 
             {/* Empty State */}
-            {(!pendingPackets || pendingPackets.length === 0) &&
-              (!completedPackets || completedPackets.length === 0) && (
-                <div className="rounded-lg bg-white p-12 text-center shadow-sm">
-                  <svg
-                    className="mx-auto mb-4 h-16 w-16 text-neutral-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <h3 className="text-foreground mb-2 text-lg font-medium">No Plans Yet</h3>
-                  <p className="text-neutral-600">
-                    Weekly lesson plans will appear here once generated
-                  </p>
-                </div>
-              )}
+            {pendingPackets.length === 0 && completedPackets.length === 0 && (
+              <div className="rounded-lg bg-white p-12 text-center shadow-sm">
+                <svg
+                  className="mx-auto mb-4 h-16 w-16 text-neutral-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <h3 className="text-foreground mb-2 text-lg font-medium">No Plans Yet</h3>
+                <p className="text-neutral-600">
+                  Weekly lesson plans will appear here once generated
+                </p>
+              </div>
+            )}
           </>
         )}
       </main>
 
       {/* Modals */}
       {selectedPacket && planDetailOpen && (
-        <Modal
-          isOpen={planDetailOpen}
-          onClose={() => {
-            setPlanDetailOpen(false);
-            setSelectedPacketIds(null);
-          }}
-          title="Plan Details"
-        >
+        <Modal isOpen={planDetailOpen} onClose={closePlanDetail} title="Plan Details">
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold">{selectedPacket.studentName}</h3>
@@ -530,7 +475,10 @@ export default function PlansPage() {
                                 key={artifact.artifact_id}
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDownloadArtifact(artifact.download_url)}
+                                // download_url is a backend path; the app reaches it through /api
+                                onClick={() =>
+                                  window.open(`/api${artifact.download_url}`, '_blank')
+                                }
                                 className="text-xs"
                               >
                                 {item.resource_kind.replace('Worksheet', '')}{' '}
@@ -549,13 +497,7 @@ export default function PlansPage() {
             )}
 
             <div className="flex justify-end space-x-3 pt-4">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setPlanDetailOpen(false);
-                  setSelectedPacketIds(null);
-                }}
-              >
+              <Button variant="ghost" onClick={closePlanDetail}>
                 Close
               </Button>
               {selectedPacketIds && (
@@ -594,8 +536,7 @@ export default function PlansPage() {
           isOpen={feedbackModalOpen}
           onClose={() => {
             setFeedbackModalOpen(false);
-            setMasteryRating(null);
-            setQuantityRating(null);
+            resetRatings();
           }}
           title={selectedPacket.has_feedback ? 'Edit Feedback' : 'Provide Feedback'}
         >
@@ -612,23 +553,7 @@ export default function PlansPage() {
                 Overall Mastery
               </label>
               <div className="grid grid-cols-3 gap-3">
-                {[
-                  {
-                    value: 'STRUGGLING',
-                    label: 'Struggling',
-                    color: 'bg-red-100 text-red-800 border-red-200',
-                  },
-                  {
-                    value: 'DEVELOPING',
-                    label: 'Developing',
-                    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-                  },
-                  {
-                    value: 'MASTERED',
-                    label: 'Mastered',
-                    color: 'bg-green-100 text-green-800 border-green-200',
-                  },
-                ].map((option) => (
+                {MASTERY_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     type="button"
@@ -651,11 +576,7 @@ export default function PlansPage() {
                 Workload Amount
               </label>
               <div className="grid grid-cols-3 gap-3">
-                {[
-                  { value: 'TOO_LITTLE', label: 'Too Little' },
-                  { value: 'JUST_RIGHT', label: 'Just Right' },
-                  { value: 'TOO_MUCH', label: 'Too Much' },
-                ].map((option) => (
+                {QUANTITY_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     type="button"
