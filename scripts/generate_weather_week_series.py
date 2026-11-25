@@ -22,6 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("src"))
 
+from print_fonts import font_face_css, font_stack
 from worksheet_html_renderer import build_print_packet_html, render_worksheet_html
 
 
@@ -676,15 +677,21 @@ def generate_weather_week_series():
     out_path.write_text(html, encoding="utf-8")
 
     # Teacher guide
-    TEACHER_GUIDE = """<!DOCTYPE html>
+    # The adult typeface is embedded so the guide loads nothing over the network.
+    TEACHER_GUIDE = (
+        """<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Weather Week — Teacher Guide</title>
   <style>
-    @page { size: letter; margin: 0.5in 0.6in; }
+"""
+        + font_face_css("adult")
+        + """    @page { size: letter; margin: 0.5in 0.6in; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 11pt; color: #111; line-height: 1.55; }
+    body { font-family: """
+        + font_stack("adult")
+        + """; font-size: 11pt; color: #1B2433; line-height: 1.55; }
     @media screen { body { background: #b0b0b0; padding: 24px; } .page { background: white; max-width: 7.5in; margin: 0 auto 28px; padding: 0.45in 0.5in; box-shadow: 0 4px 18px rgba(0,0,0,.28); min-height: 10.3in; } }
     @media print { body { background: white; padding: 0; } .page { padding: 0; box-shadow: none; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     .page { page-break-after: always; break-after: page; }
@@ -877,6 +884,7 @@ def generate_weather_week_series():
 
 </body>
 </html>"""
+    )
 
     guide_path = output_dir / "weather_week_teacher_guide.html"
     guide_path.write_text(TEACHER_GUIDE, encoding="utf-8")

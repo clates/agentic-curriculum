@@ -7,6 +7,7 @@ import { Navigation } from '@/components/Navigation';
 import { useEnrichedStudents, useWeeklyPacketsStats, usePendingPackets } from '@/lib/hooks';
 import { GeneratePlanModal } from '@/components/GeneratePlanModal';
 import { useToast } from '@/components/ToastProvider';
+import { copy } from '@/lib/copy';
 
 export default function Dashboard() {
   const { students, isLoading: studentsLoading, error: studentsError } = useEnrichedStudents();
@@ -33,7 +34,7 @@ export default function Dashboard() {
         <nav className="border-b border-neutral-200 bg-white shadow-sm">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
-              <h1 className="text-primary-600 text-2xl font-semibold">CurricuLearn</h1>
+              <h1 className="text-primary-600 text-2xl font-semibold">{copy.app.name}</h1>
             </div>
           </div>
         </nav>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { copy } from '@/lib/copy';
 
 const NAV_LINKS = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -36,7 +37,7 @@ export function Navigation() {
               href="/dashboard"
               className="text-primary-600 hover:text-primary-700 text-2xl font-semibold"
             >
-              CurricuLearn
+              {copy.app.name}
             </a>
             <div className="hidden space-x-6 md:flex">
               {NAV_LINKS.map((link) => (

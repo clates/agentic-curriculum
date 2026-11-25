@@ -29,6 +29,11 @@ import math
 import os
 from typing import Any
 
+try:  # src/ on sys.path (scripts, the app)
+    from print_fonts import Audience, font_face_css, font_stack
+except ImportError:  # imported as a package module
+    from .print_fonts import Audience, font_face_css, font_stack  # type: ignore
+
 try:  # package context (tests, app): src.worksheet_html_renderer
     from .worksheets.ten_frame import TenFrameProblem
     from .worksheets.error_audit import decimal_stack_rows
@@ -1080,6 +1085,13 @@ _BLOCK_CSS = """\
     background: #fff; padding-right: 5px; font-size: 11pt; color: #999;
   }
 </style>"""
+
+
+def _font_css(audience: Audience) -> str:
+    """Embedded typeface for the page body: Andika for the child, Recursive for the adult."""
+    face, stack = font_face_css(audience), font_stack(audience)
+    return f"<style>\n{face}  body {{ font-family: {stack}; }}\n</style>"
+
 
 _HTML_WRAPPER = """\
 <!DOCTYPE html>
@@ -4299,6 +4311,7 @@ def build_print_packet_html(
     pages: list[tuple[str, str]],
     packet_title: str = "Weekly Worksheets",
     layout: str = "classic",
+    audience: Audience = "child",
 ) -> str:
     """
     Assemble a full printable HTML document from a list of (day_label, html_fragment) tuples.
@@ -4306,6 +4319,9 @@ def build_print_packet_html(
     ``layout`` selects the page-chrome stylesheet to include alongside the base
     CSS.  Block CSS is always included; it is namespaced under ``.fx-`` so it
     cannot affect the historical worksheet types.
+
+    ``audience`` picks the typeface: ``"child"`` (Andika, for beginning readers) or ``"adult"``
+    (Recursive). Fonts are embedded, so the page loads nothing over the network.
 
     Opens the browser print dialog automatically when loaded.
     """
@@ -4319,7 +4335,7 @@ def build_print_packet_html(
     # Auto-trigger print dialog; close tab after printing if opened as popup
     body += '\n<script>window.addEventListener("load", () => window.print());</script>'
 
-    css = _CSS + "\n" + _BLOCK_CSS
+    css = _CSS + "\n" + _BLOCK_CSS + "\n" + _font_css(audience)
     layout_css = get_layout(layout).css
     if layout_css:
         css += "\n" + layout_css

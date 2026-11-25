@@ -6,6 +6,7 @@
  * screen, and a browser test also checks the text that actually renders.
  */
 export const copy = {
+  // The product name, in one place: change it here and every screen and page title follows.
   app: { name: 'CurricuLearn' },
   nav: {
     label: 'Main',

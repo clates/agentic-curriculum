@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import re
 
 import pytest
 from pydantic import ValidationError
@@ -85,7 +86,10 @@ def test_no_image_or_network_references_are_rendered():
     for kind, data in CASES.items():
         html = _render(kind, data)
         assert "<img" not in html and "http://" not in html.replace("http://www.w3.org", "")
-        assert "@font-face" not in html and "@import" not in html
+        assert "@import" not in html
+        # Fonts are allowed only when embedded: every url() is inline data or an in-page #ref.
+        for url in re.findall(r"url\(\s*['\"]?([^)'\"]*)", html):
+            assert url.startswith(("data:", "#")), url
 
 
 def test_waivers_and_enumerators_split_as_designed():
