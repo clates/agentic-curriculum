@@ -88,3 +88,73 @@ def test_cli_grant_and_revoke(env, conn):
     r = _cli(env, "grant", "ghost", "admin")
     assert r.returncode == 1 and "No such user" in r.stderr
     assert _cli(env, "revoke", "ghost", "admin").returncode == 1
+
+
+# --- request dependencies ------------------------------------------------------------------
+
+
+@pytest.fixture
+def web_client():
+    """A small app with the real gate and /auth routes plus throwaway routes for the dependencies."""
+    from fastapi import Depends, FastAPI
+    from fastapi.testclient import TestClient
+
+    from auth.web import auth_gate, current_family, require_permission
+    from auth.web import router as auth_router
+
+    app = FastAPI(dependencies=[Depends(auth_gate)])
+    app.include_router(auth_router)
+
+    @app.get("/t/family")
+    def family(fid: str = Depends(current_family)):
+        return {"family": fid}
+
+    @app.get("/t/admin", dependencies=[Depends(require_permission("admin"))])
+    def admin_only():
+        return {"ok": True}
+
+    return TestClient(app)
+
+
+def _login(c, username="ana"):
+    assert c.post("/auth/login", json={"username": username, "password": PW}).status_code == 200
+
+
+def test_me_reports_permissions_when_login_off(web_client, monkeypatch):
+    monkeypatch.delenv("AUTH_REQUIRED", raising=False)
+    assert web_client.get("/auth/me").json() == {
+        "auth_required": False,
+        "user": None,
+        "permissions": ["admin"],
+    }
+    assert web_client.get("/t/admin").status_code == 200
+
+
+def test_me_reports_permissions_when_login_on(web_client, conn, monkeypatch):
+    monkeypatch.setenv("AUTH_REQUIRED", "1")
+    store.create_user(conn, "ana", PW)
+    _login(web_client)
+    assert web_client.get("/auth/me").json()["permissions"] == []
+    store.grant(conn, "ana", "admin")
+    assert web_client.get("/auth/me").json()["permissions"] == ["admin"]
+
+
+def test_revoke_takes_effect_on_the_next_request(web_client, conn, monkeypatch):
+    monkeypatch.setenv("AUTH_REQUIRED", "1")
+    store.create_user(conn, "ana", PW)
+    assert store.grant(conn, "ana", "admin")
+    _login(web_client)
+    assert web_client.get("/t/admin").status_code == 200
+    store.revoke(conn, "ana", "admin")
+    r = web_client.get("/t/admin")
+    assert (r.status_code, r.json()) == (404, {"detail": "Not Found"})
+
+
+def test_current_family_follows_the_session(web_client, conn, monkeypatch):
+    fid = store.create_family(conn, "Rivera")
+    store.create_user(conn, "ana", PW, fid)
+    monkeypatch.setenv("AUTH_REQUIRED", "1")
+    _login(web_client)
+    assert web_client.get("/t/family").json() == {"family": fid}
+    monkeypatch.delenv("AUTH_REQUIRED")
+    assert web_client.get("/t/family").json() == {"family": "fam_local"}

@@ -271,7 +271,11 @@ def test_a_garbage_cookie_is_401_and_gets_cleared(client, required):
 
 
 def test_me_when_login_is_off_says_so(client):
-    assert client.get("/auth/me").json() == {"auth_required": False, "user": None}
+    assert client.get("/auth/me").json() == {
+        "auth_required": False,
+        "user": None,
+        "permissions": ["admin"],
+    }
 
 
 def test_nothing_changes_when_login_is_off(client):
@@ -517,7 +521,11 @@ def test_docs_are_not_served_when_login_is_required(monkeypatch):
 def test_a_valid_session_passes_the_gate(client, user, required):
     login(client)
     assert client.get("/students").status_code == 200
-    assert client.get("/auth/me").json() == {"auth_required": True, "user": {"username": "parent"}}
+    assert client.get("/auth/me").json() == {
+        "auth_required": True,
+        "user": {"username": "parent"},
+        "permissions": [],
+    }
     assert client.get("/health").status_code == 200
 
 
