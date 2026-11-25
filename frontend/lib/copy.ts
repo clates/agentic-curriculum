@@ -40,6 +40,15 @@ export const copy = {
     title: 'Admin',
     loopTitle: 'Loop console',
     loopBody: 'Drive your family\u2019s children through each step of the loop.',
+    inviteTitle: 'Invite a family',
+    inviteBody:
+      'Make a one-time code. Give it to the family; it works once and expires in 14 days.',
+    inviteMake: 'Make an invite code',
+    inviteCopy: 'Copy',
+    inviteCopied: 'Copied',
+    inviteShownOnce: 'This code is shown only once. Copy it now.',
+    inviteExpires: (date: string) => `Expires ${date}`,
+    inviteFailed: 'We couldn\u2019t make a code just now. Please try again.',
   },
   states: {
     loadingLabel: 'Loading',

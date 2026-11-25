@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AdminOnly } from '@/components/admin/AdminOnly';
 import { Card } from '@/components/ui/Card';
+import { InviteCard } from '@/components/admin/InviteCard';
 import { copy } from '@/lib/copy';
 
 export const metadata: Metadata = { title: copy.admin.title };
@@ -21,6 +22,7 @@ export default function AdminPage() {
             {copy.admin.loopTitle}
           </Link>
         </Card>
+        <InviteCard />
       </main>
     </AdminOnly>
   );

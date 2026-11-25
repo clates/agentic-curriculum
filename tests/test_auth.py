@@ -530,7 +530,7 @@ def test_every_route_declares_its_family():
         assert _reaches(route.dependant, current_family), f"{path} does not ask for the family"
         if "{student_id}" in path:
             assert _reaches(route.dependant, owned_student_id), f"{path} skips the ownership check"
-        if path.startswith("/loop-admin/"):
+        if path.startswith(("/loop-admin/", "/admin-api/")):
             assert _reaches_admin(route.dependant), f"{path} is not admin-only"
     assert {"/students", "/this-week", "/generate_weekly_plan", "/student/{student_id}"} <= checked
 

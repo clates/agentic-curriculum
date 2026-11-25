@@ -22,6 +22,9 @@ SESSION_REFRESH_S = 3600
 USERNAME_MAX = 64
 USER_AGENT_MAX = 200
 PERMISSIONS = frozenset({"admin"})
+INVITE_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789"  # no 0 O 1 I L U
+INVITE_LENGTH = 10
+INVITE_DAYS = 14
 
 
 def connect() -> sqlite3.Connection:
@@ -97,6 +100,30 @@ def create_user(
          datetime.now(UTC).isoformat(timespec="seconds")),
     )  # fmt: skip
     return get_user(conn, name)
+
+
+def create_invite(conn: sqlite3.Connection, created_by: str | None, days: int = INVITE_DAYS) -> str:
+    """Make a single-use invite code. Returns the plain code: only its hash is stored."""
+    code = "".join(secrets.choice(INVITE_ALPHABET) for _ in range(INVITE_LENGTH))
+    now = clock.now()
+    conn.execute(
+        "INSERT INTO invite (code_hash, created_by, created_at, expires_at) VALUES (?,?,?,?)",
+        (token_hash(code), created_by, now, now + days * 86400),
+    )
+    return code
+
+
+def consume_invite(conn: sqlite3.Connection, code: str, user_id: str) -> bool:
+    """Spend a code. True only for an unused, unexpired one (atomic: the UPDATE decides)."""
+    now = clock.now()
+    return (
+        conn.execute(
+            "UPDATE invite SET used_at=?, used_by=? "
+            "WHERE code_hash=? AND used_at IS NULL AND expires_at > ?",
+            (now, user_id, token_hash(code.strip().upper()), now),
+        ).rowcount
+        == 1
+    )
 
 
 def permissions(conn: sqlite3.Connection, user_id: str) -> frozenset[str]:
