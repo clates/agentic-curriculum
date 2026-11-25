@@ -15,7 +15,6 @@ import os
 import glob
 import sys
 
-
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_FILE = os.environ.get("CURRICULUM_DB_PATH", os.path.join(PROJECT_ROOT, "curriculum.db"))
 STANDARDS_DIR = os.path.join(PROJECT_ROOT, "standards_data")
@@ -36,7 +35,10 @@ def is_flat_standard(record) -> bool:
     if not isinstance(record, dict):
         return False
     return (
-        all(isinstance(record.get(k), str) and record[k].strip() for k in ("id", "subject", "description"))
+        all(
+            isinstance(record.get(k), str) and record[k].strip()
+            for k in ("id", "subject", "description")
+        )
         and isinstance(record.get("grade"), int)
         and not isinstance(record.get("grade"), bool)
     )
@@ -125,9 +127,7 @@ def insert_dummy_student():
     )
 
     # Only insert if student doesn't already exist (avoid overwriting real data)
-    cursor.execute(
-        "SELECT 1 FROM student_profiles WHERE student_id = ?", (student_id,)
-    )
+    cursor.execute("SELECT 1 FROM student_profiles WHERE student_id = ?", (student_id,))
     if cursor.fetchone() is None:
         cursor.execute(
             """

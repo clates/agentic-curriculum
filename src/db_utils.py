@@ -8,7 +8,6 @@ import json
 import os
 import sqlite3
 
-
 # Always resolve the DB path relative to the project root so uvicorn reloads
 # or different working directories don't create duplicate SQLite files.
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

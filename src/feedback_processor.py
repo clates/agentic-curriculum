@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from typing import Any
 import json
 
-
 # Feedback rating constants
 MASTERY_RATINGS = {"NOT_STARTED", "DEVELOPING", "MASTERED", "BENCHED", "STRUGGLING"}
 QUANTITY_RATINGS = {-2, -1, 0, 1, 2}

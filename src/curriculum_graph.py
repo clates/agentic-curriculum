@@ -304,9 +304,7 @@ def load_from_db(db_path: str, subject_keyword: Optional[str] = None) -> CASEGra
     standards_items: list[dict] = []
     try:
         if subject_keyword:
-            cursor.execute(
-                "SELECT * FROM standards WHERE subject = ?", (subject_keyword,)
-            )
+            cursor.execute("SELECT * FROM standards WHERE subject = ?", (subject_keyword,))
         else:
             cursor.execute("SELECT * FROM standards")
         for r in cursor.fetchall():
