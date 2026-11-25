@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Friday cron script: send NTFY reminder to review weekly lesson feedback."""
+"""Friday cron script: send NTFY reminder to review weekly lesson feedback.
+
+The ntfy topic is the operator's, so only the operator's family (fam_local) is named.
+"""
 
 import json
 import logging
@@ -10,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from db_utils import list_students
 from ntfy import notify
+from packet_store import DEFAULT_FAMILY
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def send_reminder() -> None:
     try:
-        students = list_students()
+        students = list_students(DEFAULT_FAMILY)
         names = []
         for student in students:
             meta = json.loads(student.get("metadata_blob") or "{}")

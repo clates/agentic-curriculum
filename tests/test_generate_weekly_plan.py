@@ -290,6 +290,34 @@ def test_cost_cap_is_not_swallowed_into_fallback_content(run, monkeypatch):
     assert fresh.calls == []  # stopped before any model call
 
 
+def test_family_id_alone_bills_the_family_and_enforces_its_cap(run, monkeypatch):
+    """The route and the trio pass only family_id; that alone must reach the ledger and the cap."""
+    from llm import CostCapExceeded, CostCaps, InMemoryLedger, UsageContext, Usage
+
+    ledger = InMemoryLedger()
+    fake = FakeProvider()
+    run(fake)  # installs the DB/standards stubs
+    monkeypatch.setattr(agent, "_make_client", lambda: fake_client(fake, ledger=ledger))
+    agent.generate_weekly_plan("s1", 3, "Math", family_id="fam_b")
+    assert ledger.rows and {r["family_id"] for r in ledger.rows} == {"fam_b"}
+
+    capped = InMemoryLedger()
+    capped.record(
+        UsageContext(family_id="fam_b", student_id="s1"),
+        task="lesson",
+        model="m",
+        usage=Usage(cost_usd=0.02),
+        latency_s=0.0,
+        status="ok",
+    )
+    caps = CostCaps(family_month_usd=0.01)
+    fresh = FakeProvider()
+    monkeypatch.setattr(agent, "_make_client", lambda: fake_client(fresh, ledger=capped, caps=caps))
+    with pytest.raises(CostCapExceeded):
+        agent.generate_weekly_plan("s1", 3, "Math", family_id="fam_b")
+    assert fresh.calls == []  # refused before any model call
+
+
 def test_legacy_openai_env_names_still_work(monkeypatch):
     """Self-hosters with only OPENAI_API_KEY / OPENAI_MODEL keep working (M1.6b)."""
     from llm import default_client

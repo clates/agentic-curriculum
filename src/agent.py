@@ -631,7 +631,7 @@ def generate_weekly_plan(
     # Provider/key/model come from src/llm (OPENROUTER_API_KEY, legacy OPENAI_* still honoured).
     # The client is stateless and thread-safe, so one instance serves all executor workers.
     client = _make_client()
-    usage = usage or UsageContext(student_id=student_id)
+    usage = usage or UsageContext(family_id=family_id, student_id=student_id)
 
     student_profile = get_student_profile(student_id)
     if student_profile is None:

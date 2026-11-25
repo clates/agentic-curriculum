@@ -50,3 +50,14 @@ def test_does_not_raise_on_ntfy_failure():
     ):
         # Should not raise — reminder failure is non-fatal
         send_weekly_reminder.send_reminder()
+
+
+def test_names_only_the_operators_family():
+    """The ntfy topic is the operator's: other families' children are never listed."""
+    with (
+        patch("send_weekly_reminder.list_students", return_value=[]) as mock_list,
+        patch("send_weekly_reminder.notify"),
+    ):
+        send_weekly_reminder.send_reminder()
+
+    mock_list.assert_called_once_with("fam_local")
