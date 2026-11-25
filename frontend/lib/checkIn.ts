@@ -13,18 +13,24 @@ export interface QuickCheckIn {
   workload?: Workload;
 }
 
-export function useSendQuickCheckIn() {
+/** Both check-ins post to the week's feedback, with the workload only when the parent gave one. */
+function useSendFeedback<A extends { studentId: string; packetId: string; workload?: Workload }>(
+  body: (args: A) => object
+) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ studentId, packetId, rating, workload }: QuickCheckIn) => {
-      await apiClient.post(`/students/${studentId}/weekly-packets/${packetId}/feedback`, {
-        quick_rating: rating,
-        ...(workload === undefined ? {} : { workload }),
+    mutationFn: async (args: A) => {
+      await apiClient.post(`/students/${args.studentId}/weekly-packets/${args.packetId}/feedback`, {
+        ...body(args),
+        ...(args.workload === undefined ? {} : { workload: args.workload }),
       });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['this-week'] }),
   });
 }
+
+export const useSendQuickCheckIn = () =>
+  useSendFeedback((args: QuickCheckIn) => ({ quick_rating: args.rating }));
 
 export interface PrepCheck {
   check_id: string;
@@ -49,20 +55,12 @@ export function usePrepChecks(studentId: string, packetId: string | null | undef
   });
 }
 
-export function useSendCheckResults() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (args: {
+export const useSendCheckResults = () =>
+  useSendFeedback(
+    (args: {
       studentId: string;
       packetId: string;
       results: Record<string, CheckResult>;
       workload?: Workload;
-    }) => {
-      await apiClient.post(`/students/${args.studentId}/weekly-packets/${args.packetId}/feedback`, {
-        check_results: args.results,
-        ...(args.workload === undefined ? {} : { workload: args.workload }),
-      });
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['this-week'] }),
-  });
-}
+    }) => ({ check_results: args.results })
+  );

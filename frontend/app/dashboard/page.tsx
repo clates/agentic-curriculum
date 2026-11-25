@@ -9,6 +9,41 @@ import { GeneratePlanModal } from '@/components/GeneratePlanModal';
 import { useToast } from '@/components/ToastProvider';
 import { copy } from '@/lib/copy';
 
+const PEOPLE_ICON =
+  'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z';
+
+function OutlineIcon({ d, className }: { d: string; className: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={d} />
+    </svg>
+  );
+}
+
+function StatCard(props: {
+  className?: string;
+  iconBg: string;
+  iconColor: string;
+  icon: string;
+  value: React.ReactNode;
+  label: string;
+}) {
+  const cardClass = 'transition-transform hover:-translate-y-0.5';
+  return (
+    <Card className={props.className ? `${props.className} ${cardClass}` : cardClass}>
+      <div className="flex items-center space-x-4">
+        <div className={`${props.iconBg} flex h-12 w-12 items-center justify-center rounded-full`}>
+          <OutlineIcon d={props.icon} className={`${props.iconColor} h-6 w-6`} />
+        </div>
+        <div>
+          <p className="text-foreground text-3xl font-semibold">{props.value}</p>
+          <p className="text-sm text-neutral-600">{props.label}</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function Dashboard() {
   const { students, isLoading: studentsLoading, error: studentsError } = useEnrichedStudents();
   const { data: stats, isLoading: statsLoading } = useWeeklyPacketsStats();
@@ -22,10 +57,8 @@ export default function Dashboard() {
     grade: number;
   } | null>(null);
 
-  const progressPercentage = (mastered: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((mastered / total) * 100);
-  };
+  const progressPercentage = (mastered: number, total: number) =>
+    total === 0 ? 0 : Math.round((mastered / total) * 100);
 
   // Loading state
   if (studentsLoading) {
@@ -63,19 +96,10 @@ export default function Dashboard() {
       <div className="bg-background flex min-h-screen items-center justify-center">
         <Card className="max-w-md">
           <div className="text-center">
-            <svg
+            <OutlineIcon
               className="text-danger-500 mx-auto mb-4 h-12 w-12"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
             <h2 className="text-foreground mb-2 text-xl font-semibold">Failed to Load Students</h2>
             <p className="mb-4 text-neutral-600">
               Unable to connect to the backend API. Please make sure the backend server is running.
@@ -106,82 +130,29 @@ export default function Dashboard() {
           {/* Stats Cards */}
           <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-3">
             <a href="/students">
-              <Card className="cursor-pointer transition-transform hover:-translate-y-0.5">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-primary-100 flex h-12 w-12 items-center justify-center rounded-full">
-                    <svg
-                      className="text-primary-600 h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-foreground text-3xl font-semibold">{students.length}</p>
-                    <p className="text-sm text-neutral-600">Active Students</p>
-                  </div>
-                </div>
-              </Card>
+              <StatCard
+                className="cursor-pointer"
+                iconBg="bg-primary-100"
+                iconColor="text-primary-600"
+                icon={PEOPLE_ICON}
+                value={students.length}
+                label="Active Students"
+              />
             </a>
-
-            <Card className="transition-transform hover:-translate-y-0.5">
-              <div className="flex items-center space-x-4">
-                <div className="bg-secondary-100 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="text-secondary-600 h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-foreground text-3xl font-semibold">
-                    {statsLoading ? '...' : stats?.activePlans || 0}
-                  </p>
-                  <p className="text-sm text-neutral-600">Plans This Week</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="transition-transform hover:-translate-y-0.5">
-              <div className="flex items-center space-x-4">
-                <div className="bg-secondary-50 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="text-secondary-600 h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-foreground text-3xl font-semibold">
-                    {statsLoading ? '...' : stats?.totalWorksheets || 0}
-                  </p>
-                  <p className="text-sm text-neutral-600">Worksheets Ready</p>
-                </div>
-              </div>
-            </Card>
+            <StatCard
+              iconBg="bg-secondary-100"
+              iconColor="text-secondary-600"
+              icon="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              value={statsLoading ? '...' : stats?.activePlans || 0}
+              label="Plans This Week"
+            />
+            <StatCard
+              iconBg="bg-secondary-50"
+              iconColor="text-secondary-600"
+              icon="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              value={statsLoading ? '...' : stats?.totalWorksheets || 0}
+              label="Worksheets Ready"
+            />
           </div>
 
           {/* Your Students Section */}
@@ -192,19 +163,7 @@ export default function Dashboard() {
           {/* Student Cards Grid */}
           {students.length === 0 ? (
             <Card className="py-12 text-center">
-              <svg
-                className="mx-auto mb-4 h-16 w-16 text-neutral-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
+              <OutlineIcon className="mx-auto mb-4 h-16 w-16 text-neutral-300" d={PEOPLE_ICON} />
               <h3 className="text-foreground mb-2 text-lg font-medium">No Students Yet</h3>
               <p className="mb-4 text-neutral-600">Get started by adding your first student</p>
               <Button variant="primary">Add Student</Button>
@@ -270,40 +229,29 @@ export default function Dashboard() {
                     </div>
 
                     {/* Action Button */}
-                    {(() => {
-                      // Check if this student has pending packets
-                      const hasPendingPacket = pendingPackets?.some(
-                        (p) => p.student_id === student.id
-                      );
-
-                      if (hasPendingPacket) {
-                        return (
-                          <Link href="/plans" className="w-full block">
-                            <Button variant="primary" size="md" className="w-full">
-                              Submit Feedback
-                            </Button>
-                          </Link>
-                        );
-                      } else {
-                        return (
-                          <Button
-                            variant="secondary"
-                            size="md"
-                            className="w-full"
-                            onClick={() => {
-                              setSelectedStudent({
-                                id: student.id,
-                                name: student.name,
-                                grade: 0, // TODO: extract from student metadata
-                              });
-                              setGenerateModalOpen(true);
-                            }}
-                          >
-                            Generate Plan
-                          </Button>
-                        );
-                      }
-                    })()}
+                    {pendingPackets.some((p) => p.student_id === student.id) ? (
+                      <Link href="/plans" className="w-full block">
+                        <Button variant="primary" size="md" className="w-full">
+                          Submit Feedback
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="md"
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedStudent({
+                            id: student.id,
+                            name: student.name,
+                            grade: 0, // TODO: extract from student metadata
+                          });
+                          setGenerateModalOpen(true);
+                        }}
+                      >
+                        Generate Plan
+                      </Button>
+                    )}
                   </div>
                 </Card>
               ))}
@@ -315,14 +263,7 @@ export default function Dashboard() {
             className="from-primary-500 to-secondary-500 fixed right-8 bottom-8 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r text-white shadow-lg transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
             aria-label="Add Student"
           >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+            <OutlineIcon className="h-6 w-6" d="M12 4v16m8-8H4" />
           </button>
         </main>
       </div>
