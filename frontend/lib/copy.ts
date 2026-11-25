@@ -35,6 +35,12 @@ export const copy = {
     signOut: 'Sign out',
     signingOut: 'Signing out\u2026',
   },
+  admin: {
+    link: 'Admin',
+    title: 'Admin',
+    loopTitle: 'Loop console',
+    loopBody: 'Drive any child\u2019s week through each step of the loop.',
+  },
   states: {
     loadingLabel: 'Loading',
     loadingMessage: 'Just a moment…',

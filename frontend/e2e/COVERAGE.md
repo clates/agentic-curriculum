@@ -60,6 +60,14 @@ after it (`AUTH_BACKOFF_SCALE=0.2`); 429 with Retry-After; an owner is not locke
 address; a foreign Origin is refused. Backend rules (hashing, expiry, lockout math, route inventory,
 CLI) are in `tests/test_auth.py`. Open-redirect variants (`%09`, `%0a`, `%0d`, `%5c`, `//`, full URL), the rightmost forwarded address, the busy message, 413 and no-echo 422 are covered too. `E2E_SKIP_AUTH=1` leaves this project and its servers out (CI runs them). Gap: the Secure cookie flag is only asserted in pytest.
 
+## Admin panel and Admin link (`auth` project)
+
+| Route / flow                                            | Spec: tests                                                                                                                                                                            | Status  | Missing                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------ |
+| Admin link in the header, `/admin` panel, `/loop` guard | `auth/admin.spec.ts`: "a parent without admin sees no Admin link and is sent home from /admin and /loop", "an admin sees the Admin link, opens the panel and reaches the loop console" | covered | The link is not in the mobile tab bar by design. |
+| `/api/loop-admin/*` for a non-admin                     | `auth/admin.spec.ts`: "the console API answers 404 to a non-admin"                                                                                                                     | covered |                                                  |
+| Admin panel accessibility, 360px                        | `auth/admin.spec.ts`: "the admin panel is accessible and does not scroll sideways at 360px"                                                                                            | covered |                                                  |
+
 ## Hosted-week printing (backend serves, the app proxies)
 
 | Route / flow                                                                      | Spec: tests                                                                                                                                                                                                | Status  | Missing                                                                                 |
