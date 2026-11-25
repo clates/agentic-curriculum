@@ -18,7 +18,8 @@ between two versions. That matters most for the main way weeks fail: naming a st
 actually teaching it. A reviewer can check each standard ID in the docstring against what the days
 contain.
 
-**It is small.** A script is a few dozen kilobytes. The week it produces, with its images, is not.
+**It is small.** A script is a few dozen kilobytes. Its output is far bigger: a printable packet
+with every worksheet rendered, and for older weeks a folder of images.
 
 ## What it costs
 
@@ -33,5 +34,5 @@ the two could drift apart, and nobody could tell which one was the real week.
 
 The hosted app doesn't write scripts. There, a model writes each
 week as structured data (a "week document"), which the server validates and renders; see
-[Why hosted weeks are data](hosted-weeks-are-data.md). The reasons differ. On your own machine,
-you are the one who runs the code Claude wrote. On a shared server, nothing a model writes may run.
+[Why hosted weeks are data](hosted-weeks-are-data.md). The difference is who runs the code. Locally,
+you run code you asked Claude to write. A shared server must never run anything a model wrote.

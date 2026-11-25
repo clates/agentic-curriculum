@@ -150,7 +150,8 @@ venv/bin/python scripts/generate_<theme>_week_series.py
 - Both HTML files exist and are non-trivially sized (packet is typically 40–60 KB).
 - Read back one or two fragments from the packet HTML to spot-check content landed in the right
   fields (e.g. vocabulary in the sidebar, `response_lines: 0` rendered without write-in lines).
-- Tell the user to open the packet in a browser — the print dialog opens automatically.
+- Tell the user the full paths of the packet and the teacher guide, and to open the packet in a
+  browser (the print dialog opens automatically).
 
 **No tests are required for generated weeks** — the validation above is sufficient.
 

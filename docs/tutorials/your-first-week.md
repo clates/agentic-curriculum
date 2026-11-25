@@ -78,16 +78,12 @@ Type:
 ```
 
 Claude looks up standards for your student's grade, plans five days and writes every passage and
-question. This takes several minutes. When it finishes there is a new script in `scripts/` and a
-new folder of output, both named after the topic:
-
-```bash
-ls -d scripts/generate_volcano*_week_series.py volcano*_week_series
-```
+question. This takes several minutes. When it finishes, Claude tells you the paths of two files:
+the student packet and the teacher guide.
 
 ## 7. Look at your week
 
-Open the `.html` file in that folder whose name does not end in `teacher_guide`. It has the same shape as the weather week: five
+Open the student packet Claude named. It has the same shape as the weather week: five
 days, a narrator, and a teacher guide with an answer key. This week was written for your student's
 grade.
 

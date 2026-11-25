@@ -8,9 +8,10 @@ Before you start, the site must already be served over HTTPS through a proxy tha
 [Set up a new server](set-up-a-server.md) already is. For why this is required, see
 [Why the login needs HTTPS and a proxy](../explanation/login-and-https.md).
 
-## If your proxy is your own Caddy
+## If you run your own proxy
 
-Forward to the app with the visitor's real address, and keep the Host header unchanged:
+Skip this section on a server built with [Set up a new server](set-up-a-server.md): its Caddy is
+already configured. For a proxy you manage yourself, forward to the app with the visitor's real address, and keep the Host header unchanged:
 
 ```
 your-domain.example {
@@ -35,12 +36,12 @@ cd /srv/curriculum
 $EDITOR .env
 ```
 
-Add these lines, using your domain (separate several with commas):
+Add these lines, using your domain:
 
 ```
 AUTH_REQUIRED=1
 COOKIE_SECURE=1
-AUTH_ALLOWED_HOSTS=your-domain.example
+AUTH_ALLOWED_HOSTS=your-domain.example   # several domains: separate them with commas
 ```
 
 Recreate the containers so they read the new `.env` (a plain restart doesn't):
@@ -51,15 +52,15 @@ docker compose --env-file .deploy.env up -d --force-recreate
 
 ## Make the first account
 
+> **Every account sees every child in the install.** There is no separation between families yet,
+> so only make accounts for people you would show all of them to.
+
 ```bash
 docker compose --env-file .deploy.env exec -u appuser app python -m auth create-user <username>
 ```
 
 It asks for the password twice (at least 12 characters). Running it again for a name that
 already exists does nothing.
-
-Every account sees every child in the install, so only make accounts for people you would show
-all of them to.
 
 To script it, export `AUTH_NEW_PASSWORD` first and pass it through:
 `docker compose --env-file .deploy.env exec -u appuser -e AUTH_NEW_PASSWORD app python -m auth create-user <username>`.

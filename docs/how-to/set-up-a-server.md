@@ -53,9 +53,19 @@ install are covered in [`deploy/README.md`](../../deploy/README.md).
    Then confirm the lockout sees the real visitor address: follow "Check the real visitor address"
    in [`deploy/README.md`](../../deploy/README.md).
 
-10. **Harden SSH**. `bootstrap.sh` doesn't touch `sshd_config`. Set `PasswordAuthentication no` and
-    `PermitRootLogin no`, reload sshd, and limit port 22 in the cloud firewall to your own
-    addresses.
+10. **Harden SSH**. `bootstrap.sh` doesn't touch `sshd_config`, and the only user it creates,
+    `deploy`, has a key restricted to running deploys. So first make yourself an admin account and
+    confirm it works:
+
+    ```bash
+    adduser <you> && usermod -aG sudo <you>
+    mkdir -p /home/<you>/.ssh && cp ~/.ssh/authorized_keys /home/<you>/.ssh/
+    chown -R <you>:<you> /home/<you>/.ssh && chmod 700 /home/<you>/.ssh
+    ```
+
+    From a second terminal, check that `ssh <you>@<host>` and `sudo -v` both work. Only then set
+    `PasswordAuthentication no` and `PermitRootLogin no`, reload sshd, and limit port 22 in the
+    cloud firewall to your own addresses. Keep the first session open until you've logged in again.
 
 Never run `docker compose down -v` on the server. It deletes the `caddy_data` volume with the
 certificates, and issuing them again runs into Let's Encrypt rate limits.

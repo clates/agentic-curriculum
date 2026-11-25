@@ -52,11 +52,9 @@ In pytest, use `tests/llm_fakes.FakeProvider` with `fake_client()`.
    ```
 
 2. Commit with a conventional prefix: `feat:`, `fix:` or `docs:`. Pre-commit runs Black, Ruff and
-   Prettier, and the commit fails until they pass. A common miss in generator scripts is an
-   f-string with no placeholders.
-3. Before pushing, check the branch hasn't already been merged. If its tip shows up in
-   `git log origin/main --oneline`, branch again from `origin/main` and cherry-pick what hasn't
-   landed.
+   Prettier, and the commit fails until they pass.
+3. If the branch's tip already shows in `git log origin/main --oneline`, it was merged: branch
+   again from `origin/main` and cherry-pick what hasn't landed.
 4. Push and open a pull request, one concern per pull request:
 
    ```bash
@@ -78,7 +76,10 @@ Weeks are written with `/generate-week`, not by hand. The skill's rules are in
   exist in `curriculum.db` and be covered by a day. Name-dropped standards are the most common
   failure.
 
-A week good enough to share also gets its output copied into [`examples/`](examples/README.md).
+## Share a finished week
+
+Copy its output into `examples/<theme>-week/` (with a hyphen) and commit it with its script. See
+[`examples/README.md`](examples/README.md).
 
 ## Fix a failing dependency audit
 
