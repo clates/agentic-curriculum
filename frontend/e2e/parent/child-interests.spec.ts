@@ -21,10 +21,17 @@ async function openAdd(page: Page) {
   await expect(page.getByRole('dialog')).toBeVisible();
 }
 
-async function fillChild(page: Page, id: string, name: string) {
-  await page.getByLabel('Student ID').fill(id);
+async function fillChild(page: Page, name: string) {
   await page.getByLabel('Full Name').fill(name);
   await page.getByLabel('Birthday').fill('2018-01-15');
+}
+
+/** The id the server gives the next child created (the server picks ids; call before submit). */
+async function nextCreatedId(page: Page): Promise<string> {
+  const res = await page.waitForResponse(
+    (r) => r.request().method() === 'POST' && r.url().endsWith('/students') && r.status() === 201
+  );
+  return (await res.json()).student_id;
 }
 
 test.describe('Interests on the child form', () => {
@@ -32,11 +39,12 @@ test.describe('Interests on the child form', () => {
     page,
     request,
   }) => {
-    const id = uniqueId('int').replace(/-/g, '_');
-    const name = `Likes ${id}`;
+    const tag = uniqueId('int');
+    const id = nextCreatedId(page);
+    const name = `Likes ${tag}`;
     await openAdd(page);
     await expect(page.getByLabel('Interests (optional)')).toBeVisible();
-    await fillChild(page, id, name);
+    await fillChild(page, name);
     await page.getByLabel('Interests (optional)').fill('dinosaurs,  baking ; soccer');
     // The form itself must be accessible (the rest of this admin page is not in this PR's scope).
     const axe = await new AxeBuilder({ page })
@@ -47,7 +55,11 @@ test.describe('Interests on the child form', () => {
     await shot(page, 'topics-child-form');
     await page.getByRole('button', { name: 'Create Student' }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    expect((await metadataOf(request, id)).interests).toEqual(['dinosaurs', 'baking', 'soccer']);
+    expect((await metadataOf(request, await id)).interests).toEqual([
+      'dinosaurs',
+      'baking',
+      'soccer',
+    ]);
 
     await page.reload();
     const row = page.getByRole('heading', { name }).locator('../../..');
@@ -56,40 +68,43 @@ test.describe('Interests on the child form', () => {
     await page.getByLabel('Interests (optional)').fill('ocean animals');
     await page.getByRole('button', { name: 'Update Student' }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    const meta = await metadataOf(request, id);
+    const meta = await metadataOf(request, await id);
     expect(meta.interests).toEqual(['ocean animals']);
     expect(meta.name).toBe(name);
   });
 
   test('empty state: no interests is fine, and clearing them works', async ({ page, request }) => {
-    const id = uniqueId('none').replace(/-/g, '_');
+    const tag = uniqueId('none');
+    const id = nextCreatedId(page);
     await openAdd(page);
-    await fillChild(page, id, `Plain ${id}`);
+    await fillChild(page, `Plain ${tag}`);
     await page.getByRole('button', { name: 'Create Student' }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    expect((await metadataOf(request, id)).interests ?? []).toEqual([]);
+    expect((await metadataOf(request, await id)).interests ?? []).toEqual([]);
   });
 
   test('loading state while saving, then it closes', async ({ page, request }) => {
-    const id = uniqueId('slow').replace(/-/g, '_');
+    const tag = uniqueId('slow');
+    const id = nextCreatedId(page);
     await page.route('**/students', async (route) => {
       if (route.request().method() === 'POST') await new Promise((r) => setTimeout(r, 1500));
       await route.continue();
     });
     await openAdd(page);
-    await fillChild(page, id, `Slow ${id}`);
+    await fillChild(page, `Slow ${tag}`);
     await page.getByLabel('Interests (optional)').fill('music');
     await page.getByRole('button', { name: 'Create Student' }).click();
     await expect(page.getByRole('button', { name: 'Creating...' })).toBeDisabled();
     await expect(page.getByRole('dialog')).not.toBeVisible({ timeout: 15_000 });
-    expect((await metadataOf(request, id)).interests).toEqual(['music']);
+    expect((await metadataOf(request, await id)).interests).toEqual(['music']);
   });
 
   test('error state: a failed save shows a message and retrying works', async ({
     page,
     request,
   }) => {
-    const id = uniqueId('err').replace(/-/g, '_');
+    const tag = uniqueId('err');
+    const id = nextCreatedId(page);
     let fail = true;
     await page.route('**/students', (route) => {
       if (route.request().method() === 'POST' && fail) {
@@ -99,20 +114,21 @@ test.describe('Interests on the child form', () => {
       return route.continue();
     });
     await openAdd(page);
-    await fillChild(page, id, `Retry ${id}`);
+    await fillChild(page, `Retry ${tag}`);
     await page.getByLabel('Interests (optional)').fill('robots');
     await page.getByRole('button', { name: 'Create Student' }).click();
     await expect(page.getByRole('dialog').getByText(/failed|error|500/i)).toBeVisible();
     await expect(page.getByLabel('Interests (optional)')).toHaveValue('robots'); // kept
     await page.getByRole('button', { name: 'Create Student' }).click();
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    expect((await metadataOf(request, id)).interests).toEqual(['robots']);
+    expect((await metadataOf(request, await id)).interests).toEqual(['robots']);
   });
 
   test('keyboard only: tab to the field, type, submit', async ({ page, request }) => {
-    const id = uniqueId('kb').replace(/-/g, '_');
+    const tag = uniqueId('kb');
+    const id = nextCreatedId(page);
     await openAdd(page);
-    await fillChild(page, id, `Keys ${id}`);
+    await fillChild(page, `Keys ${tag}`);
     await page.getByLabel('Avatar URL (optional)').focus();
     await page.keyboard.press('Tab'); // the next field is interests
     await expect(page.getByLabel('Interests (optional)')).toBeFocused();
@@ -120,6 +136,6 @@ test.describe('Interests on the child form', () => {
     await page.getByRole('button', { name: 'Create Student' }).focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    expect((await metadataOf(request, id)).interests).toEqual(['chess']);
+    expect((await metadataOf(request, await id)).interests).toEqual(['chess']);
   });
 });

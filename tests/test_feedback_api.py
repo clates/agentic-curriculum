@@ -14,6 +14,8 @@ SRC_PATH = str(PROJECT_ROOT / "src")
 if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
 
+from migrations import apply_migrations  # noqa: E402
+
 MODULE_NAMES_TO_CLEAR = [
     "packet_store",
     "db_utils",
@@ -40,6 +42,7 @@ def _bootstrap_db(db_path: Path) -> None:
     )
     conn.commit()
     conn.close()
+    apply_migrations(db_path)  # the ownership check reads the real schema, as at app startup
 
 
 @pytest.fixture()

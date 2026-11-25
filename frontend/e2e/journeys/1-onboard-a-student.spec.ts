@@ -24,30 +24,19 @@ test.describe('1.1 Add a child', () => {
     await expect(page.getByRole('dialog').getByText('Add New Student')).toBeVisible();
   });
 
-  test('the form explains a malformed Student ID', async ({ page }) => {
+  test('the form asks for no ID (the server picks one) and flags a missing name', async ({
+    page,
+  }) => {
     await page.goto('/students');
     await page.getByRole('button', { name: 'Add Student' }).first().click();
-    await page.getByLabel('Student ID').fill('Invalid ID!');
-    await page.getByLabel('Full Name').fill('Test');
-    await page.getByLabel('Birthday').fill('2018-01-01');
+    await expect(page.getByLabel('Student ID')).toHaveCount(0);
     await page.getByRole('button', { name: 'Create Student' }).click();
-    await expect(
-      page.getByText('Use lowercase letters, numbers, and underscores only')
-    ).toBeVisible();
-  });
-
-  test('the form flags missing ID and name', async ({ page }) => {
-    await page.goto('/students');
-    await page.getByRole('button', { name: 'Add Student' }).first().click();
-    await page.getByRole('button', { name: 'Create Student' }).click();
-    await expect(page.getByText('Student ID is required')).toBeVisible();
     await expect(page.getByText('Name is required')).toBeVisible();
   });
 
   test('the form flags a missing birthday', async ({ page }) => {
     await page.goto('/students');
     await page.getByRole('button', { name: 'Add Student' }).first().click();
-    await page.getByLabel('Student ID').fill('test_no_bday');
     await page.getByLabel('Full Name').fill('Test Name');
     await page.getByRole('button', { name: 'Create Student' }).click();
     await expect(page.getByText('Format: YYYY-MM-DD')).toBeVisible();
@@ -68,11 +57,9 @@ test.describe('1.1 Add a child', () => {
   test('a valid child is created and shows up on the students list and the dashboard', async ({
     page,
   }) => {
-    const id = `e2e_onboard_${Date.now()}`;
-    const name = `Onboarded Child ${id}`;
+    const name = `Onboarded Child ${Date.now()}`;
     await page.goto('/students');
     await page.getByRole('button', { name: 'Add Student' }).first().click();
-    await page.getByLabel('Student ID').fill(id);
     await page.getByLabel('Full Name').fill(name);
     await page.getByLabel('Birthday').fill('2018-01-15');
     await page.getByRole('button', { name: 'Create Student' }).click();

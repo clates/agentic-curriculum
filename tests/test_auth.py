@@ -17,9 +17,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import db_utils  # noqa: E402
 from auth import clock, lockout, passwords, service, store  # noqa: E402
-from auth.web import COOKIE_NAME, PUBLIC_PATHS  # noqa: E402
+from auth.web import COOKIE_NAME, PUBLIC_PATHS, current_family  # noqa: E402
 from main import app  # noqa: E402
 from migrations import apply_migrations  # noqa: E402
+from tenancy import owned_student_id  # noqa: E402
 
 PASSWORD = "correct horse battery"
 FAST = passwords.ScryptParams(n=2**10, r=8, p=1)  # tests do not need the production cost
@@ -497,6 +498,29 @@ def test_every_route_is_public_on_purpose_or_protected(required, client):
                 assert r.status_code == 401, f"{method} {path} answered {r.status_code} anonymously"
     assert ("GET", "/students") in seen and ("POST", "/auth/login") in seen
     assert PUBLIC_PATHS == {"/auth/login", "/auth/logout", "/health", "/version"}
+
+
+def _reaches(dependant, call) -> bool:
+    return any(d.call is call or _reaches(d, call) for d in dependant.dependencies)
+
+
+def test_every_route_declares_its_family():
+    """Every non-public route acts for one family; every student route checks ownership.
+    Unscoped on purpose: public paths, /auth/*, the hello at /, and the shared standards data."""
+    checked = set()
+    for route in (r for r in iter_routes(app.routes) if isinstance(r, APIRoute)):
+        path = route.path
+        if path in PUBLIC_PATHS | {"/", "/system/options"}:
+            continue
+        if path.startswith(("/auth/", "/curriculum/")):
+            continue
+        if path.startswith("/loop-admin"):  # Task 5 scopes the loop console and removes this skip
+            continue
+        checked.add(path)
+        assert _reaches(route.dependant, current_family), f"{path} does not ask for the family"
+        if "{student_id}" in path:
+            assert _reaches(route.dependant, owned_student_id), f"{path} skips the ownership check"
+    assert {"/students", "/this-week", "/generate_weekly_plan", "/student/{student_id}"} <= checked
 
 
 def test_every_public_path_is_a_real_route():

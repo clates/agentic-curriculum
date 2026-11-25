@@ -93,7 +93,6 @@ export const studentsApi = {
   listStudents: () => get<StudentProfile[]>('/students'),
 
   createStudent: async (payload: {
-    student_id: string;
     metadata: StudentMetadata;
     plan_rules?: Record<string, unknown>;
   }): Promise<StudentProfile> => {
