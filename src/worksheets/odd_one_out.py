@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence
 
-from .base import BaseWorksheet
+from .base import BaseWorksheet, normalize_entries
 
 
 @dataclass(frozen=True)
@@ -40,10 +40,11 @@ class OddOneOutRow:
             raise ValueError("OddOneOutRow requires an items list")
         if not isinstance(items_raw, list) or len(items_raw) < 3:
             raise ValueError("OddOneOutRow requires at least 3 items")
-        items = [OddOneOutItem.from_mapping(i) for i in items_raw]
-        odd_item = payload.get("odd_item")
-        explanation = payload.get("explanation")
-        return cls(items=items, odd_item=odd_item, explanation=explanation)
+        return cls(
+            items=[OddOneOutItem.from_mapping(i) for i in items_raw],
+            odd_item=payload.get("odd_item"),
+            explanation=payload.get("explanation"),
+        )
 
 
 @dataclass
@@ -85,19 +86,6 @@ class OddOneOutWorksheet(BaseWorksheet):
         return "\n".join(lines)
 
 
-def _normalize_rows(rows: Sequence[OddOneOutRow | dict]) -> List[OddOneOutRow]:
-    """Convert rows to OddOneOutRow objects."""
-    normalized: List[OddOneOutRow] = []
-    for item in rows:
-        if isinstance(item, OddOneOutRow):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(OddOneOutRow.from_mapping(item))
-        else:
-            raise TypeError("Rows must be OddOneOutRow or dict entries")
-    return normalized
-
-
 def generate_odd_one_out_worksheet(
     *,
     rows: Sequence[OddOneOutRow | dict],
@@ -107,23 +95,10 @@ def generate_odd_one_out_worksheet(
     reasoning_lines: int = 2,
     metadata: dict | None = None,
 ) -> OddOneOutWorksheet:
-    """Create an odd-one-out worksheet.
-
-    Args:
-        rows: List of rows, each containing items to compare.
-        title: Worksheet title.
-        instructions: Instructions for students.
-        show_answers: Whether to show correct answers (for answer key).
-        reasoning_lines: Number of blank lines for student reasoning (min 1).
-        metadata: Optional metadata dictionary.
-
-    Returns:
-        OddOneOutWorksheet instance.
-
-    Raises:
-        ValueError: If no rows provided or rows have insufficient items.
-    """
-    normalized_rows = _normalize_rows(rows)
+    """Create an odd-one-out worksheet (reasoning_lines is clamped to at least 1)."""
+    normalized_rows = normalize_entries(
+        rows, OddOneOutRow, "Rows must be OddOneOutRow or dict entries"
+    )
     if not normalized_rows:
         raise ValueError("At least one row is required")
 

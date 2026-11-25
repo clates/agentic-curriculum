@@ -12,10 +12,21 @@ MAX_VOCAB_ENTRIES = 12
 MAX_RESPONSE_LINES = 8
 
 
-class TwoOperandProblem(BaseModel):
-    """Single vertical math problem (supports + / -)."""
+class _Strict(BaseModel):
+    """Base for every request model: unknown keys are rejected."""
 
     model_config = ConfigDict(extra="forbid")
+
+
+def _non_empty(value: str, field: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ValueError(f"{field} must be non-empty")
+    return value
+
+
+class TwoOperandProblem(_Strict):
+    """Single vertical math problem (supports + / -)."""
 
     operand_one: int = Field(..., description="Top operand for the vertical problem")
     operand_two: int = Field(..., description="Bottom operand for the vertical problem")
@@ -29,10 +40,8 @@ class TwoOperandProblem(BaseModel):
         return value
 
 
-class MathWorksheetRequest(BaseModel):
+class MathWorksheetRequest(_Strict):
     """Request payload for generate_two_operand_math_worksheet."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -46,10 +55,8 @@ class MathWorksheetRequest(BaseModel):
         return self
 
 
-class ReadingQuestion(BaseModel):
+class ReadingQuestion(_Strict):
     """Free-response reading comprehension prompt."""
-
-    model_config = ConfigDict(extra="forbid")
 
     prompt: str = Field(..., description="Question text rendered on the worksheet")
     response_lines: int = Field(default=2, ge=1, le=MAX_RESPONSE_LINES)
@@ -57,16 +64,11 @@ class ReadingQuestion(BaseModel):
     @field_validator("prompt")
     @classmethod
     def validate_prompt(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("prompt must be non-empty")
-        return value
+        return _non_empty(value, "prompt")
 
 
-class VocabularyEntry(BaseModel):
+class VocabularyEntry(_Strict):
     """Vocabulary drill line rendered at the bottom of the worksheet."""
-
-    model_config = ConfigDict(extra="forbid")
 
     term: str = Field(..., description="Vocabulary word")
     definition: Optional[str] = Field(default=None, description="Optional definition text")
@@ -75,16 +77,11 @@ class VocabularyEntry(BaseModel):
     @field_validator("term")
     @classmethod
     def validate_term(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("term must be non-empty")
-        return value
+        return _non_empty(value, "term")
 
 
-class ReadingWorksheetRequest(BaseModel):
+class ReadingWorksheetRequest(_Strict):
     """Request payload for generate_reading_comprehension_worksheet."""
-
-    model_config = ConfigDict(extra="forbid")
 
     passage_title: str = Field(...)
     passage: str = Field(...)
@@ -97,18 +94,12 @@ class ReadingWorksheetRequest(BaseModel):
     @field_validator("passage_title")
     @classmethod
     def validate_passage_title(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("passage_title must be non-empty")
-        return value
+        return _non_empty(value, "passage_title")
 
     @field_validator("passage")
     @classmethod
     def validate_passage(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("passage must be non-empty")
-        return value
+        return _non_empty(value, "passage")
 
     @model_validator(mode="after")
     def check_counts(self) -> "ReadingWorksheetRequest":
@@ -125,10 +116,8 @@ class ReadingWorksheetRequest(BaseModel):
 # dict keys consumed by the corresponding render function.
 
 
-class FeatureMatrixWorksheetRequest(BaseModel):
+class FeatureMatrixWorksheetRequest(_Strict):
     """Grid comparing items against a set of properties."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -137,20 +126,16 @@ class FeatureMatrixWorksheetRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)
 
 
-class TreeMapBranch(BaseModel):
+class TreeMapBranch(_Strict):
     """One branch of a tree map."""
-
-    model_config = ConfigDict(extra="forbid")
 
     name: str = Field(..., description="Branch label")
     prefilled: List[str] = Field(default_factory=list, description="Pre-filled slot values")
     blank_count: int = Field(default=1, ge=0, description="Number of blank write-in slots")
 
 
-class TreeMapWorksheetRequest(BaseModel):
+class TreeMapWorksheetRequest(_Strict):
     """Root + branches classification map."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -163,10 +148,8 @@ class TreeMapWorksheetRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)
 
 
-class OddOneOutRow(BaseModel):
+class OddOneOutRow(_Strict):
     """One row in an odd-one-out worksheet."""
-
-    model_config = ConfigDict(extra="forbid")
 
     items: List[str] = Field(
         ..., min_length=3, description="At least 3 items; one is the odd one out"
@@ -174,10 +157,8 @@ class OddOneOutRow(BaseModel):
     reasoning_lines: int = Field(default=1, ge=0)
 
 
-class OddOneOutWorksheetRequest(BaseModel):
+class OddOneOutWorksheetRequest(_Strict):
     """Circle the item that doesn't belong."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -185,10 +166,8 @@ class OddOneOutWorksheetRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)
 
 
-class MatchingWorksheetRequest(BaseModel):
+class MatchingWorksheetRequest(_Strict):
     """Two-column matching (draw a line) worksheet."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -205,10 +184,8 @@ class MatchingWorksheetRequest(BaseModel):
         return self
 
 
-class CauseEffectPair(BaseModel):
+class CauseEffectPair(_Strict):
     """One cause → effect pair."""
-
-    model_config = ConfigDict(extra="forbid")
 
     cause: str = Field(..., description="The cause (pre-filled)")
     effect: Optional[str] = Field(
@@ -219,10 +196,8 @@ class CauseEffectPair(BaseModel):
     )
 
 
-class CauseEffectWorksheetRequest(BaseModel):
+class CauseEffectWorksheetRequest(_Strict):
     """Cause and effect organizer."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -230,10 +205,8 @@ class CauseEffectWorksheetRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)
 
 
-class FrayerEntry(BaseModel):
+class FrayerEntry(_Strict):
     """One word entry in a Frayer Model."""
-
-    model_config = ConfigDict(extra="forbid")
 
     word: str = Field(..., description="The vocabulary word in the centre")
     quadrants: Dict[str, Any] = Field(
@@ -242,10 +215,8 @@ class FrayerEntry(BaseModel):
     )
 
 
-class FrayerModelWorksheetRequest(BaseModel):
+class FrayerModelWorksheetRequest(_Strict):
     """Frayer Model vocabulary organizer (4-quadrant)."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -256,18 +227,14 @@ class FrayerModelWorksheetRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)
 
 
-class WordSortCategory(BaseModel):
+class WordSortCategory(_Strict):
     """One category column in a word sort."""
-
-    model_config = ConfigDict(extra="forbid")
 
     label: str
 
 
-class WordSortWorksheetRequest(BaseModel):
+class WordSortWorksheetRequest(_Strict):
     """Sort word tiles into labelled categories."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -277,20 +244,16 @@ class WordSortWorksheetRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)
 
 
-class WritingScaffoldSection(BaseModel):
+class WritingScaffoldSection(_Strict):
     """One labelled section of a writing scaffold."""
-
-    model_config = ConfigDict(extra="forbid")
 
     label: str = Field(..., description="Section heading, e.g. 'Introduction'")
     starter: Optional[str] = Field(default=None, description="Optional sentence starter in italic")
     lines: int = Field(default=3, ge=1)
 
 
-class WritingScaffoldWorksheetRequest(BaseModel):
+class WritingScaffoldWorksheetRequest(_Strict):
     """Structured writing scaffold with labelled sections."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -299,10 +262,8 @@ class WritingScaffoldWorksheetRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)
 
 
-class TChartWorksheetRequest(BaseModel):
+class TChartWorksheetRequest(_Strict):
     """Two-column T-Chart comparison."""
-
-    model_config = ConfigDict(extra="forbid")
 
     title: Optional[str] = Field(default=None)
     instructions: Optional[str] = Field(default=None)
@@ -314,10 +275,8 @@ class TChartWorksheetRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None)
 
 
-class ResourceRequests(BaseModel):
+class ResourceRequests(_Strict):
     """Wrapper that mirrors daily_plan[n].resources."""
-
-    model_config = ConfigDict(extra="forbid")
 
     # Pillow-rendered (fallback for types without HTML renderer)
     mathWorksheet: Optional[MathWorksheetRequest] = Field(default=None)

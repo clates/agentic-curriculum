@@ -75,7 +75,7 @@ def _validate_clock_art(art: dict) -> None:
     try:
         hour = float(art.get("hour", 12))
     except (TypeError, ValueError):
-        raise ValueError(f"clock art needs numeric hour, got {art.get('hour')!r}")
+        raise ValueError(f"clock art needs numeric hour, got {art.get('hour')!r}") from None
     if not 0 <= hour <= 12:
         raise ValueError(f"clock art hour must be 0-12, got {hour!r}")
     minute = art.get("minute", 0)
@@ -108,7 +108,7 @@ def _validate_partitions_art(art: dict) -> None:
         for idx in idxs:
             if not isinstance(idx, int) or isinstance(idx, bool) or not 0 <= idx < parts:
                 raise ValueError(
-                    f"partitions {field!r} must be an integer index 0-{parts - 1}, " f"got {idx!r}"
+                    f"partitions {field!r} must be an integer index 0-{parts - 1}, got {idx!r}"
                 )
 
 
@@ -205,13 +205,11 @@ def _validate_fix_scaffold(scaffold: dict | None) -> None:
     for label, value in [("answer", answer), *[(f"addend[{i}]", a) for i, a in enumerate(addends)]]:
         if not isinstance(value, str) or "." not in value:
             raise ValueError(
-                f"decimal_stack {label} must be a decimal string like " f"'0.50', got {value!r}"
+                f"decimal_stack {label} must be a decimal string like '0.50', got {value!r}"
             )
         whole, _, frac = value.partition(".")
         if not whole.isdigit() or not frac.isdigit():
-            raise ValueError(
-                f"decimal_stack {label} must be digits around one '.', " f"got {value!r}"
-            )
+            raise ValueError(f"decimal_stack {label} must be digits around one '.', got {value!r}")
 
 
 def decimal_stack_rows(scaffold: dict, *, filled: bool = False) -> dict:
@@ -234,39 +232,19 @@ def decimal_stack_rows(scaffold: dict, *, filled: bool = False) -> dict:
     left = max(len(w) for w in wholes)
     right = max(len(f) for f in fracs)
 
-    def _term_row(term: str) -> list[tuple[str, str]]:
+    def _row(term: str, blank: bool) -> list[tuple[str, str]]:
         whole, _, frac = term.partition(".")
-        cells: list[tuple[str, str]] = []
-        for _ in range(left - len(whole)):
-            cells.append(("", "spacer"))
-        cells.extend((ch, "given") for ch in whole)
-        cells.append((".", "point"))
-        cells.extend((ch, "given") for ch in frac)
-        for _ in range(right - len(frac)):
-            cells.append(("0", "pad"))
-        return cells
+        digit = (lambda ch: ("", "write")) if blank else (lambda ch: (ch, "given"))
+        return (
+            [("", "spacer")] * (left - len(whole))
+            + [digit(ch) for ch in whole]
+            + [(".", "point")]
+            + [digit(ch) for ch in frac]
+            + [("0", "pad")] * (right - len(frac))
+        )
 
-    def _answer_row() -> list[tuple[str, str]]:
-        whole, _, frac = answer.partition(".")
-        cells: list[tuple[str, str]] = []
-        for _ in range(left - len(whole)):
-            cells.append(("", "spacer"))
-        if filled:
-            cells.extend((ch, "given") for ch in whole)
-            cells.append((".", "point"))
-            cells.extend((ch, "given") for ch in frac)
-            for _ in range(right - len(frac)):
-                cells.append(("0", "pad"))
-        else:
-            cells.extend(("", "write") for _ in whole)
-            cells.append((".", "point"))
-            cells.extend(("", "write") for _ in frac)
-            for _ in range(right - len(frac)):
-                cells.append(("0", "pad"))
-        return cells
-
-    terms = [_term_row(a) for a in addends]
-    ans = _answer_row()
+    terms = [_row(a, blank=False) for a in addends]
+    ans = _row(answer, blank=not filled)
     has_pads = any(kind == "pad" for row in terms + [ans] for _, kind in row)
     return {"terms": terms, "answer": ans, "has_pads": has_pads}
 

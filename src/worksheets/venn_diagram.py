@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence
 
-from .base import BaseWorksheet
+from .base import BaseWorksheet, normalize_entries
 
 
 @dataclass(frozen=True)
@@ -20,8 +20,7 @@ class VennDiagramEntry:
         text = payload.get("text")
         if not text:
             raise ValueError("VennDiagramEntry requires a text field")
-        category = payload.get("category")
-        return cls(text=text, category=category)
+        return cls(text=text, category=payload.get("category"))
 
 
 @dataclass
@@ -67,21 +66,6 @@ class VennDiagramWorksheet(BaseWorksheet):
         return "\n".join(lines)
 
 
-def _normalize_word_bank(items: Sequence[VennDiagramEntry | dict | str]) -> List[VennDiagramEntry]:
-    """Convert word bank entries to VennDiagramEntry objects."""
-    normalized: List[VennDiagramEntry] = []
-    for item in items:
-        if isinstance(item, VennDiagramEntry):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(VennDiagramEntry.from_mapping(item))
-        elif isinstance(item, str):
-            normalized.append(VennDiagramEntry(text=item))
-        else:
-            raise TypeError("Word bank entries must be VennDiagramEntry, dict, or str")
-    return normalized
-
-
 def generate_venn_diagram_worksheet(
     *,
     left_label: str,
@@ -95,32 +79,18 @@ def generate_venn_diagram_worksheet(
     instructions: str = "Sort the words from the word bank into the correct section of the Venn diagram.",
     metadata: dict | None = None,
 ) -> VennDiagramWorksheet:
-    """Create a Venn diagram worksheet with two overlapping circles.
-
-    Args:
-        left_label: Label for the left circle.
-        right_label: Label for the right circle.
-        word_bank: Words/phrases for students to sort. Can be strings, dicts, or VennDiagramEntry.
-        both_label: Label for the overlapping section (default "Both").
-        left_items: Pre-filled items in the left-only section.
-        right_items: Pre-filled items in the right-only section.
-        both_items: Pre-filled items in the both/overlap section.
-        title: Worksheet title.
-        instructions: Instructions for students.
-        metadata: Optional metadata dictionary.
-
-    Returns:
-        VennDiagramWorksheet instance.
-
-    Raises:
-        ValueError: If required labels are empty.
-    """
+    """Create a Venn diagram worksheet with two overlapping circles."""
     if not left_label.strip():
         raise ValueError("Left label is required")
     if not right_label.strip():
         raise ValueError("Right label is required")
 
-    normalized_bank = _normalize_word_bank(word_bank or [])
+    normalized_bank = normalize_entries(
+        word_bank or [],
+        VennDiagramEntry,
+        "Word bank entries must be VennDiagramEntry, dict, or str",
+        lambda text: VennDiagramEntry(text=text),
+    )
 
     return VennDiagramWorksheet(
         title=title,

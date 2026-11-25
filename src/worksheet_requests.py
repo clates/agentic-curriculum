@@ -15,11 +15,7 @@ try:  # Package-relative imports when available
         ReadingWorksheet,
         Worksheet,
     )
-    from .resource_models import (
-        MathWorksheetRequest,
-        ReadingWorksheetRequest,
-        ResourceRequests,
-    )
+    from .resource_models import MathWorksheetRequest, ResourceRequests
 except ImportError:  # Fallback for execution without package context
     CURRENT_DIR = os.path.dirname(__file__)
     if CURRENT_DIR not in sys.path:
@@ -29,11 +25,7 @@ except ImportError:  # Fallback for execution without package context
         ReadingWorksheet,
         Worksheet,
     )
-    from resource_models import (  # type: ignore
-        MathWorksheetRequest,
-        ReadingWorksheetRequest,
-        ResourceRequests,
-    )
+    from resource_models import MathWorksheetRequest, ResourceRequests  # type: ignore
 
 
 @dataclass
@@ -79,20 +71,8 @@ def _build_math_worksheet(request: MathWorksheetRequest) -> WorksheetArtifactPla
     )
 
 
-def _build_reading_worksheet(request: ReadingWorksheetRequest) -> WorksheetArtifactPlan:
-    """Reading uses the HTML renderer; the Pillow worksheet object is not built."""
-    data = request.model_dump()
-    return WorksheetArtifactPlan(
-        kind="readingWorksheet",
-        worksheet=None,
-        html_data=data,
-        filename_hint=_derive_filename("reading", request.metadata),
-        metadata=request.metadata or {},
-    )
-
-
 def _build_html_plan(kind: str, request: Any) -> WorksheetArtifactPlan:
-    """Generic builder for any HTML-rendered worksheet type."""
+    """Plan for an HTML-rendered type: the request payload goes straight to the renderer."""
     data = request.model_dump()
     metadata = data.get("metadata") or {}
     short_name = kind.replace("Worksheet", "").lower()
@@ -105,29 +85,30 @@ def _build_html_plan(kind: str, request: Any) -> WorksheetArtifactPlan:
     )
 
 
-# Map resource field name → builder function
-_HTML_BUILDERS = {
-    "featureMatrixWorksheet": _build_html_plan,
-    "treeMapWorksheet": _build_html_plan,
-    "oddOneOutWorksheet": _build_html_plan,
-    "matchingWorksheet": _build_html_plan,
-    "causeEffectWorksheet": _build_html_plan,
-    "frayerModelWorksheet": _build_html_plan,
-    "wordSortWorksheet": _build_html_plan,
-    "writingScaffoldWorksheet": _build_html_plan,
-    "tChartWorksheet": _build_html_plan,
+# Resource fields rendered via HTML, in build order.
+_HTML_KINDS = (
+    "readingWorksheet",
+    "featureMatrixWorksheet",
+    "treeMapWorksheet",
+    "oddOneOutWorksheet",
+    "matchingWorksheet",
+    "causeEffectWorksheet",
+    "frayerModelWorksheet",
+    "wordSortWorksheet",
+    "writingScaffoldWorksheet",
+    "tChartWorksheet",
     # Ported from PIL → HTML (PR #113)
-    "vennDiagramWorksheet": _build_html_plan,
-    "handwritingWorksheet": _build_html_plan,
-    "pixelCopyWorksheet": _build_html_plan,
-    "alphabetWorksheet": _build_html_plan,
-    "sequencingWorksheet": _build_html_plan,
-    "fillInBlankWorksheet": _build_html_plan,
-    "storyMapWorksheet": _build_html_plan,
-    "numberLineWorksheet": _build_html_plan,
-    "labeledDiagramWorksheet": _build_html_plan,
-    "twoOperandWorksheet": _build_html_plan,
-}
+    "vennDiagramWorksheet",
+    "handwritingWorksheet",
+    "pixelCopyWorksheet",
+    "alphabetWorksheet",
+    "sequencingWorksheet",
+    "fillInBlankWorksheet",
+    "storyMapWorksheet",
+    "numberLineWorksheet",
+    "labeledDiagramWorksheet",
+    "twoOperandWorksheet",
+)
 
 
 def build_worksheets_from_requests(
@@ -145,21 +126,13 @@ def build_worksheets_from_requests(
         except (ValidationError, ValueError) as exc:
             errors.append(WorksheetRequestError("mathWorksheet", str(exc)))
 
-    # HTML-rendered: reading
-    if resources.readingWorksheet:
-        try:
-            plans.append(_build_reading_worksheet(resources.readingWorksheet))
-        except (ValidationError, ValueError) as exc:
-            errors.append(WorksheetRequestError("readingWorksheet", str(exc)))
-
-    # HTML-rendered: all other types
-    for field_name, builder in _HTML_BUILDERS.items():
-        request = getattr(resources, field_name, None)
+    for kind in _HTML_KINDS:
+        request = getattr(resources, kind, None)
         if request is not None:
             try:
-                plans.append(builder(field_name, request))
+                plans.append(_build_html_plan(kind, request))
             except (ValidationError, ValueError) as exc:
-                errors.append(WorksheetRequestError(field_name, str(exc)))
+                errors.append(WorksheetRequestError(kind, str(exc)))
 
     return plans, errors
 

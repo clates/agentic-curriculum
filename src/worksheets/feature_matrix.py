@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence
 
-from .base import BaseWorksheet
+from .base import BaseWorksheet, normalize_entries
 
 
 @dataclass(frozen=True)
@@ -64,21 +64,6 @@ class FeatureMatrixWorksheet(BaseWorksheet):
         return "\n".join(lines)
 
 
-def _normalize_items(items: Sequence[FeatureMatrixItem | dict | str]) -> List[FeatureMatrixItem]:
-    """Convert items to FeatureMatrixItem objects."""
-    normalized: List[FeatureMatrixItem] = []
-    for item in items:
-        if isinstance(item, FeatureMatrixItem):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(FeatureMatrixItem.from_mapping(item))
-        elif isinstance(item, str):
-            normalized.append(FeatureMatrixItem(name=item))
-        else:
-            raise TypeError("Items must be FeatureMatrixItem, dict, or str")
-    return normalized
-
-
 def generate_feature_matrix_worksheet(
     *,
     items: Sequence[FeatureMatrixItem | dict | str],
@@ -88,23 +73,13 @@ def generate_feature_matrix_worksheet(
     show_answers: bool = False,
     metadata: dict | None = None,
 ) -> FeatureMatrixWorksheet:
-    """Create a feature matrix worksheet with items as rows and properties as columns.
-
-    Args:
-        items: List of items to classify (rows). Can be strings, dicts, or FeatureMatrixItem.
-        properties: List of property names (columns).
-        title: Worksheet title.
-        instructions: Instructions for students.
-        show_answers: Whether to show pre-checked answers (for answer key).
-        metadata: Optional metadata dictionary.
-
-    Returns:
-        FeatureMatrixWorksheet instance.
-
-    Raises:
-        ValueError: If no items or properties provided.
-    """
-    normalized_items = _normalize_items(items)
+    """Create a feature matrix worksheet with items as rows and properties as columns."""
+    normalized_items = normalize_entries(
+        items,
+        FeatureMatrixItem,
+        "Items must be FeatureMatrixItem, dict, or str",
+        lambda name: FeatureMatrixItem(name=name),
+    )
     if not normalized_items:
         raise ValueError("At least one item is required")
 

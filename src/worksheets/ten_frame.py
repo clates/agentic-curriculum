@@ -18,7 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence
 
-from .base import BaseWorksheet
+from .base import BaseWorksheet, normalize_entries
 
 MIN_ADDEND = 0
 MAX_ADDEND = 10
@@ -117,20 +117,6 @@ class TenFrameWorksheet(BaseWorksheet):
         return "\n\n".join(header + body)
 
 
-def _normalize_problems(
-    problems: Sequence[TenFrameProblem | dict],
-) -> List[TenFrameProblem]:
-    normalized: List[TenFrameProblem] = []
-    for item in problems:
-        if isinstance(item, TenFrameProblem):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(TenFrameProblem.from_mapping(item))
-        else:
-            raise TypeError("Problems must be TenFrameProblem or dict entries")
-    return normalized
-
-
 def _validate_problem(problem: TenFrameProblem) -> None:
     for name, value in (("addend_a", problem.addend_a), ("addend_b", problem.addend_b)):
         if not MIN_ADDEND <= value <= MAX_ADDEND:
@@ -170,7 +156,9 @@ def generate_ten_frame_worksheet(
         equation_lines: Ruled proof lines per problem.
         metadata: Optional metadata dictionary.
     """
-    normalized = _normalize_problems(problems)
+    normalized = normalize_entries(
+        problems, TenFrameProblem, "Problems must be TenFrameProblem or dict entries"
+    )
     if not normalized:
         raise ValueError("At least one problem is required")
     for problem in normalized:
