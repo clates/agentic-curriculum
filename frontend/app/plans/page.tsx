@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, Button, Badge, Modal } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
@@ -135,6 +135,8 @@ export default function PlansPage() {
     setSelectedPacketIds(null);
   };
 
+  // Set synchronously, so a double click can't submit twice before isPending lands.
+  const feedbackInFlight = useRef(false);
   const feedbackMutation = useMutation({
     mutationFn: (v: { studentId: string; packetId: string; mastery: string; quantity: string }) =>
       plansApi.submitFeedback(v.studentId, v.packetId, {
@@ -164,12 +166,12 @@ export default function PlansPage() {
   };
 
   const handleSubmitFeedback = () => {
-    if (!selectedPacketIds || !masteryRating || !quantityRating) return;
-    feedbackMutation.mutate({
-      ...selectedPacketIds,
-      mastery: masteryRating,
-      quantity: quantityRating,
-    });
+    if (!selectedPacketIds || !masteryRating || !quantityRating || feedbackInFlight.current) return;
+    feedbackInFlight.current = true;
+    feedbackMutation.mutate(
+      { ...selectedPacketIds, mastery: masteryRating, quantity: quantityRating },
+      { onSettled: () => (feedbackInFlight.current = false) }
+    );
   };
 
   const modalStudents = useMemo(

@@ -102,7 +102,7 @@ The scaffold and five daily plans are assembled into a single weekly plan object
 | Monthly cap per family | `LLM_CAP_FAMILY_MONTH_USD` | unlimited |
 | Parallel workers | `MAX_DAILY_PLAN_THREADS` | `5` |
 
-The system prompt (`src/prompts.py:247–255`) instructs the LLM that it is building content for a **homeschool environment** with one parent and one student, emphasising hands-on, at-home activities.
+The system message (`SYSTEM_MESSAGE` in `src/agent.py`) tells the model it is a K-12 education assistant and must reply with JSON only. The user prompt for each day carries the standard, the allowed materials and the parent's notes.
 
 Temperature and token limits come from `src/llm/models.json` (0.7 for the scaffold and lesson tasks). All calls use `response_format: {"type": "json_object"}` to enforce valid JSON output.
 

@@ -80,10 +80,6 @@ test.describe('4.1 Give feedback on a finished week', () => {
   });
 
   test('double-clicking submit sends feedback once', async ({ page, request }) => {
-    test.fail(
-      true,
-      'issue #211: the legacy feedback modal has no synchronous in-flight guard, so two back-to-back clicks POST twice'
-    );
     // Its own child and packet: the serial tests above have already consumed this describe's.
     const kid = await newChild(request, 'dc', { packet: 'legacy' });
     const fullName = `${kid.name} ${kid.lastName}`;

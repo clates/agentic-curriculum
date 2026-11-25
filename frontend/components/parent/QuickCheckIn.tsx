@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { copy } from '@/lib/copy';
 import { useSendQuickCheckIn, type QuickRating, type Workload } from '@/lib/checkIn';
 import { DonePanel, ErrorState, primaryButton } from './states';
@@ -22,6 +22,8 @@ export function QuickCheckIn({
   const [rating, setRating] = useState<QuickRating | null>(null);
   const [workload, setWorkload] = useState<Workload | null>(null);
   const send = useSendQuickCheckIn();
+  // Set synchronously, so a second tap in the same moment can't send again before isPending lands.
+  const inFlight = useRef(false);
 
   if (send.isSuccess) {
     return <DonePanel title={c.doneTitle} body={c.doneBody(firstName)} back={c.back} />;
@@ -31,8 +33,12 @@ export function QuickCheckIn({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (!rating) return;
-        send.mutate({ studentId, packetId, rating, workload: workload ?? undefined });
+        if (!rating || inFlight.current) return;
+        inFlight.current = true;
+        send.mutate(
+          { studentId, packetId, rating, workload: workload ?? undefined },
+          { onSettled: () => (inFlight.current = false) }
+        );
       }}
       className="space-y-6"
     >

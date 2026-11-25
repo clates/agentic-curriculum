@@ -49,11 +49,22 @@ function parseBlob(raw: string | null | undefined): Record<string, any> {
   }
 }
 
-function studentGradeLabel(student: any): string {
-  const grade = student?.grade_level;
-  if (grade === 0 || grade === '0') return 'Kindergarten';
-  if (grade != null) return `Grade ${grade}`;
-  return '—';
+// Same rule as the backend's model context (src/model_context.py): an explicit grade_level in the
+// metadata or plan rules, else placement from the birthday (age on 1 September, minus 5; 0 = K).
+function gradeFromBirthday(birthday: unknown, today = new Date()): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(typeof birthday === 'string' ? birthday : '');
+  if (!m) return null;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const startYear = today.getMonth() >= 7 ? today.getFullYear() : today.getFullYear() - 1;
+  const age = startYear - y - (9 < mo || (9 === mo && 1 < d) ? 1 : 0);
+  return Math.max(0, Math.min(12, age - 5));
+}
+
+function studentGradeLabel(metadata: any, rules: any): string {
+  const explicit = [metadata?.grade_level, rules?.grade_level].find((g) => Number.isInteger(g));
+  const grade = explicit ?? gradeFromBirthday(metadata?.birthday);
+  if (grade == null) return '—';
+  return grade === 0 ? 'Kindergarten' : `Grade ${grade}`;
 }
 
 export function useEnrichedStudents() {
@@ -67,7 +78,7 @@ export function useEnrichedStudents() {
       return {
         id: s.student_id,
         name: metadata?.name || 'Unknown',
-        grade: studentGradeLabel(s),
+        grade: studentGradeLabel(metadata, parseBlob(s.plan_rules_blob)),
         subject: parseBlob(s.plan_rules_blob)?.theme_rules?.theme_subjects?.[0] || '—',
         masteredCount: progress?.mastered_standards?.length ?? 0,
         totalStandards: progress?.standard_metadata
