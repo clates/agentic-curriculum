@@ -30,6 +30,10 @@ class TaskConfig:
     top_k: int | None = None
 
 
+def _models_file(env) -> Path:
+    return Path(env.get("LLM_MODELS_FILE") or DEFAULT_FILE)
+
+
 def _load(path: Path) -> dict:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -61,8 +65,7 @@ def task_config(
     (LLM_<FIELD>_<TASK>) still override everything. ``model`` forces a model (no fallback).
     """
     env = os.environ if env is None else env
-    path = path or Path(env.get("LLM_MODELS_FILE") or DEFAULT_FILE)
-    data = _load(path)
+    data = _load(path or _models_file(env))
     tasks = data.get("tasks", {})
     if task not in tasks:
         raise LLMConfigError(f"unknown LLM task {task!r}; known: {sorted(tasks)}")
@@ -127,9 +130,7 @@ def structured_mode(model: str, env=None, path: Path | None = None) -> str:
     forced = env.get("LLM_STRUCTURED_MODE")
     if forced in ("json_schema", "json_object"):
         return forced
-    prefixes = _load(path or Path(env.get("LLM_MODELS_FILE") or DEFAULT_FILE)).get(
-        "json_schema_models", []
-    )
+    prefixes = _load(path or _models_file(env)).get("json_schema_models", [])
     return "json_schema" if any(model.startswith(p) for p in prefixes) else "json_object"
 
 
@@ -138,6 +139,4 @@ def max_repairs(env=None, path: Path | None = None) -> int:
     raw = env.get("LLM_MAX_REPAIRS")
     if raw:
         return _num(raw, int, "LLM_MAX_REPAIRS")
-    return int(
-        _load(path or Path(env.get("LLM_MODELS_FILE") or DEFAULT_FILE)).get("max_repairs", 2)
-    )
+    return int(_load(path or _models_file(env)).get("max_repairs", 2))

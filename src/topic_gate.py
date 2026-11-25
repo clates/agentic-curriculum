@@ -82,7 +82,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "space",
         "Space",
-        "space planet moon star rocket astronaut galaxy comet orbit mars solar " "telescope",
+        "space planet moon star rocket astronaut galaxy comet orbit mars solar telescope",
         ("Mission to Mars", "Rocket Launch Week"),
         "{name} plans a trip to another planet.",
         "{name} plots a journey through space, reading and writing mission notes along the way.",
@@ -90,7 +90,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "dinosaurs",
         "Dinosaurs",
-        "dinosaur fossil trex rex jurassic paleontologist dig bone " "prehistoric",
+        "dinosaur fossil trex rex jurassic paleontologist dig bone prehistoric",
         ("Dinosaur Dig Site", "Fossil Hunters"),
         "{name} uncovers giant creatures from long ago.",
         "{name} reads fossil facts and uses them for writing and number puzzles.",
@@ -98,7 +98,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "baking",
         "Baking",
-        "bake baking cookie cake bread kitchen recipe cook cooking chef pie " "dough oven",
+        "bake baking cookie cake bread kitchen recipe cook cooking chef pie dough oven",
         ("Bakery Boss", "Kitchen Recipe Test"),
         "{name} runs a bakery and tests every recipe.",
         "{name} reads and writes recipes and measures like a real baker.",
@@ -106,7 +106,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "farm",
         "Farm life",
-        "farm barn tractor harvest crop cow chicken pig sheep orchard " "garden seed plant",
+        "farm barn tractor harvest crop cow chicken pig sheep orchard garden seed plant",
         ("Barnyard Chores", "Harvest Time on the Farm"),
         "{name} runs a farm from seed to harvest.",
         "{name} plans a farm, counts the harvest and writes about each day's work.",
@@ -114,7 +114,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "castles",
         "Castles and knights",
-        "castle knight dragon king queen medieval kingdom sword " "armor fortress",
+        "castle knight dragon king queen medieval kingdom sword armor fortress",
         ("Castle Under Siege", "Knights of the Round Table"),
         "{name} defends a castle and keeps the kingdom's records.",
         "{name} reads legends and solves castle problems with numbers and words.",
@@ -122,7 +122,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "detective",
         "Detective cases",
-        "detective clue case suspect crime sleuth evidence " "fingerprint spy",
+        "detective clue case suspect crime sleuth evidence fingerprint spy",
         ("Mystery at Midnight", "Clue Hunters Club"),
         "{name} cracks a case by following clues.",
         "{name} reads clues closely, writes case notes and checks each fact.",
@@ -130,7 +130,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "art",
         "Art and comics",
-        "art comic draw drawing paint painting cartoon artist gallery " "sketch color",
+        "art comic draw drawing paint painting cartoon artist gallery sketch color",
         ("Comic Book Studio", "The Young Artist Gallery"),
         "{name} makes a comic or artwork from scratch.",
         "{name} plans, writes and illustrates a small comic, practicing skills along the way.",
@@ -138,7 +138,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "music",
         "Music",
-        "music song band instrument drum guitar piano rhythm concert singer " "orchestra",
+        "music song band instrument drum guitar piano rhythm concert singer orchestra",
         ("Band Practice Week", "Songwriter Studio"),
         "{name} puts a band together for the big night.",
         "{name} writes lyrics, counts rhythms and reads about musicians.",
@@ -146,7 +146,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "robots",
         "Robots",
-        "robot machine engineer invention invent gadget circuit coding code " "computer",
+        "robot machine engineer invention invent gadget circuit coding code computer",
         ("Robot Workshop", "Inventor's Workbench"),
         "{name} designs a robot and tests how it works.",
         "{name} plans inventions, measures parts and writes up each test.",
@@ -154,7 +154,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "rainforest",
         "Rainforest",
-        "rainforest jungle amazon monkey parrot jaguar canopy tropical " "toucan",
+        "rainforest jungle amazon monkey parrot jaguar canopy tropical toucan",
         ("Rainforest Expedition", "Jungle Canopy Journal"),
         "{name} ventures deep into the jungle.",
         "{name} keeps an explorer's journal and studies the animals and plants.",
@@ -170,7 +170,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "mountains",
         "Mountains",
-        "mountain climb climbing hike hiking peak volcano canyon trail " "camp camping",
+        "mountain climb climbing hike hiking peak volcano canyon trail camp camping",
         ("Mountain Trail Camp", "Summit Climb Diary"),
         "{name} plans a climb to the very top.",
         "{name} plans the trail, reads about mountains and records the journey.",
@@ -178,7 +178,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "cities",
         "Cities and travel",
-        "city travel train airport bridge skyscraper country passport " "flight tour",
+        "city travel train airport bridge skyscraper country passport flight tour",
         ("Passport to Everywhere", "Around the World Trip"),
         "{name} plans a trip across the world.",
         "{name} reads about faraway places and plans routes, costs and postcards.",
@@ -186,7 +186,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "insects",
         "Bugs and insects",
-        "insect bug butterfly bee ant beetle spider ladybug " "caterpillar",
+        "insect bug butterfly bee ant beetle spider ladybug caterpillar",
         ("Bug Hunt Field Guide", "The Secret Life of Bees"),
         "{name} studies the tiniest creatures around.",
         "{name} observes bugs, draws field notes and counts what they find.",
@@ -194,7 +194,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "cars",
         "Vehicles",
-        "car truck race racing vehicle train plane airplane boat bicycle bike " "speed motor",
+        "car truck race racing vehicle train plane airplane boat bicycle bike speed motor",
         ("Race Day Pit Crew", "Build a Racing Team"),
         "{name} joins a pit crew and races to the finish.",
         "{name} reads about vehicles, times laps and writes race reports.",
@@ -202,7 +202,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "pets",
         "Pets and vets",
-        "pet dog cat puppy kitten hamster vet veterinarian " "shelter",
+        "pet dog cat puppy kitten hamster vet veterinarian shelter",
         ("Pet Care Clinic", "Shelter Pet Rescue"),
         "{name} runs a pet clinic and looks after every patient.",
         "{name} writes care plans, reads about animals and keeps the clinic's numbers.",
@@ -210,7 +210,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "body",
         "The human body",
-        "body heart brain bone muscle lung doctor health hospital " "nutrition",
+        "body heart brain bone muscle lung doctor health hospital nutrition",
         ("Inside the Human Body", "Doctor on Duty"),
         "{name} explores how the body works.",
         "{name} reads about the body, measures and records, and explains it back.",
@@ -218,7 +218,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "ancient",
         "Ancient Egypt",
-        "egypt egyptian pharaoh pyramid mummy nile hieroglyph ancient " "tomb",
+        "egypt egyptian pharaoh pyramid mummy nile hieroglyph ancient tomb",
         ("Secrets of the Pyramids", "Pharaoh for a Week"),
         "{name} uncovers the secrets of the pyramids.",
         "{name} decodes picture writing, reads ancient history and solves digs with numbers.",
@@ -226,7 +226,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "gardening",
         "Backyard nature",
-        "nature backyard pond bird forest tree leaf flower wildlife " "hiking creek",
+        "nature backyard pond bird forest tree leaf flower wildlife hiking creek",
         ("Backyard Nature Journal", "Bird Watchers Club"),
         "{name} becomes the expert on the wildlife outside the door.",
         "{name} observes nature, records data and writes up discoveries.",
@@ -234,7 +234,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "theater",
         "Putting on a play",
-        "play theater theatre stage actor drama puppet script " "performance",
+        "play theater theatre stage actor drama puppet script performance",
         ("Opening Night Theater", "Puppet Show Production"),
         "{name} writes and stages a show.",
         "{name} writes a script, practices reading aloud and plans the tickets and set.",
@@ -242,7 +242,7 @@ TOPICS: tuple[Topic, ...] = (
     _t(
         "money",
         "Running a shop",
-        "shop store market money coin price customer business " "lemonade entrepreneur bank",
+        "shop store market money coin price customer business lemonade entrepreneur bank",
         ("Lemonade Stand Boss", "Corner Shop Owner"),
         "{name} opens a shop and keeps the books.",
         "{name} prices goods, makes change and writes signs and orders.",
@@ -268,7 +268,7 @@ def _stem(word: str) -> str:
 
 
 def _tokens(text: str) -> list[str]:
-    return [t for t in re.findall(r"[a-z]+(?:'[a-z]+)?", (text or "").lower())]
+    return re.findall(r"[a-z]+(?:'[a-z]+)?", (text or "").lower())
 
 
 def content_stems(text: str) -> set[str]:
@@ -376,19 +376,12 @@ def template_options(
     recent: Iterable[str] = (),
 ) -> list[Topic]:
     """Three curated topics from three different themes, deterministic for ``seed``."""
-    recent = list(recent)
     picks: list[Topic] = []
-    for t in vetted_menu(seed, interests, recent, size=len(TOPICS)):
-        candidate = [*picks, t]
-        texts = [
-            OptionText(x.label, x.titles[0], x.hook.format(name=first_name)) for x in candidate
-        ]
-        if not distinctness_problems(texts):
-            picks = candidate
-        if len(picks) == 3:
-            break
-    if len(picks) < 3:  # everything recent: relax the recent filter, keep the options distinct
-        for t in sorted(TOPICS, key=lambda t: _digest(seed, t.key)):
+
+    def fill(pool: Iterable[Topic]) -> None:
+        for t in pool:
+            if len(picks) == 3:
+                return
             if t in picks:
                 continue
             texts = [
@@ -397,6 +390,8 @@ def template_options(
             ]
             if not distinctness_problems(texts):
                 picks.append(t)
-            if len(picks) == 3:
-                break
+
+    fill(vetted_menu(seed, interests, recent, size=len(TOPICS)))
+    # Everything recent: relax the recent filter, keep the options distinct.
+    fill(sorted(TOPICS, key=lambda t: _digest(seed, t.key)))
     return picks

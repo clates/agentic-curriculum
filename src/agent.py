@@ -12,7 +12,7 @@ import re
 import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any
 from pydantic import ValidationError
 
 # Add parent directory to path for imports
@@ -24,7 +24,6 @@ try:  # Prefer package-relative imports when available
     from .logic import get_filtered_standards
     from .resource_models import ResourceRequests
     from .worksheet_requests import build_worksheets_from_requests, WorksheetArtifactPlan
-    from .worksheets import Worksheet, ReadingWorksheet
     from .packet_store import save_weekly_packet
     from .worksheet_html_renderer import render_worksheet_html, HTML_SUPPORTED_KINDS
 except ImportError:  # Fallback for direct script execution
@@ -37,10 +36,8 @@ except ImportError:  # Fallback for direct script execution
     from packet_store import save_weekly_packet  # type: ignore
 
 
-# Maximum number of concurrent threads for generating daily lesson plans.
-# Default is 5 (one per weekday). Raising this may reduce latency but
-# increases OpenAI rate-limit pressure and local CPU usage.
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+# Concurrent daily-plan calls; 5 is one per weekday. More adds provider rate-limit pressure.
 MAX_DAILY_PLAN_THREADS = int(os.environ.get("MAX_DAILY_PLAN_THREADS", "5"))
 LOG_DIR = PROJECT_ROOT / "logs"
 GENERATE_WEEKLY_DIR = LOG_DIR / "generate-weekly"
@@ -146,7 +143,6 @@ class GenerationLogger:
         self.run_id = datetime.now().strftime("%Y%m%dT%H%M%S_%f")
         self.base_dir = GENERATE_WEEKLY_DIR / self.run_id
         self.daily_dir = self.base_dir / "daily_plans"
-        self.base_dir.mkdir(parents=True, exist_ok=True)
         self.daily_dir.mkdir(parents=True, exist_ok=True)
         self._day_slug_cache: dict[str, str] = {}
         self._day_slug_counts: dict[str, int] = {}
@@ -178,9 +174,24 @@ class GenerationLogger:
         return slug
 
     def _daily_path(self, day_label: str, suffix: str = "") -> Path:
-        slug = self._day_slug(day_label)
-        filename = f"{slug}{suffix}.json"
-        return self.daily_dir / filename
+        return self.daily_dir / f"{self._day_slug(day_label)}{suffix}.json"
+
+    def _write_exchange(
+        self, path: Path, request_payload: dict, response_payload: dict | None, error: str | None
+    ) -> None:
+        payload: dict[str, Any] = {"request": request_payload}
+        if response_payload is not None:
+            payload["response"] = response_payload
+        if error:
+            payload["error"] = error
+        self._write_json(path, payload)
+
+    def _write_content(
+        self, path: Path, parsed_content: dict | None, raw_content: str, error: str | None
+    ) -> None:
+        if parsed_content is None:
+            parsed_content = {"error": error or "parse_error", "raw_content": raw_content}
+        self._write_json(path, parsed_content)
 
     def log_weekly_scaffold_exchange(
         self,
@@ -188,12 +199,8 @@ class GenerationLogger:
         response_payload: dict | None = None,
         error: str | None = None,
     ) -> None:
-        payload: dict[str, Any] = {"request": request_payload}
-        if response_payload is not None:
-            payload["response"] = response_payload
-        if error:
-            payload["error"] = error
-        self._write_json(self.base_dir / "weekly_scaffold_llm_exchange.json", payload)
+        path = self.base_dir / "weekly_scaffold_llm_exchange.json"
+        self._write_exchange(path, request_payload, response_payload, error)
 
     def log_weekly_scaffold_content(
         self,
@@ -201,13 +208,8 @@ class GenerationLogger:
         raw_content: str,
         error: str | None = None,
     ) -> None:
-        if parsed_content is not None:
-            self._write_json(self.base_dir / "weekly_scaffold.json", parsed_content)
-        else:
-            self._write_json(
-                self.base_dir / "weekly_scaffold.json",
-                {"error": error or "parse_error", "raw_content": raw_content},
-            )
+        path = self.base_dir / "weekly_scaffold.json"
+        self._write_content(path, parsed_content, raw_content, error)
 
     def log_weekly_plan(self, weekly_plan: dict) -> None:
         self._write_json(self.base_dir / "weekly_plan.json", weekly_plan)
@@ -219,12 +221,8 @@ class GenerationLogger:
         response_payload: dict | None = None,
         error: str | None = None,
     ) -> None:
-        payload: dict[str, Any] = {"request": request_payload}
-        if response_payload is not None:
-            payload["response"] = response_payload
-        if error:
-            payload["error"] = error
-        self._write_json(self._daily_path(day_label, "_llm_exchange"), payload)
+        path = self._daily_path(day_label, "_llm_exchange")
+        self._write_exchange(path, request_payload, response_payload, error)
 
     def log_daily_response(
         self,
@@ -233,13 +231,8 @@ class GenerationLogger:
         raw_content: str,
         error: str | None = None,
     ) -> None:
-        if parsed_content is not None:
-            self._write_json(self._daily_path(day_label, "_response"), parsed_content)
-        else:
-            self._write_json(
-                self._daily_path(day_label, "_response"),
-                {"error": error or "parse_error", "raw_content": raw_content},
-            )
+        path = self._daily_path(day_label, "_response")
+        self._write_content(path, parsed_content, raw_content, error)
 
     def log_daily_plan(self, day_label: str, plan_payload: dict) -> None:
         self._write_json(self._daily_path(day_label), plan_payload)
@@ -258,29 +251,17 @@ class GenerationLogger:
 
 
 def create_lesson_plan_prompt(standard: dict, rules: dict) -> str:
-    """
-    Build the system prompt for the LLM to generate a lesson plan.
-
-    Args:
-        standard: Dictionary containing standard information (standard_id, subject, description, etc.)
-        rules: Dictionary containing parent rules (allowed_materials, parent_notes, etc.)
-
-    Returns:
-        A string containing the formatted prompt for the LLM
-    """
-    # Extract allowed materials and parent notes from rules
+    """The user prompt for one lesson plan, from a standard and the parent's rules."""
     allowed_materials = rules.get("allowed_materials", [])
-    # Default to keeping procedures under 3 steps if parent_notes not provided
     parent_notes = rules.get("parent_notes", "keep procedures under 3 steps")
 
-    # Build the prompt
     resource_guidance = f"""{RESOURCE_GUIDANCE}
 
 Example (trim fields you do not need):
 {RESOURCE_FEW_SHOT_JSON}
 """
 
-    prompt = f"""You are an expert K-12 educator. Create a lesson plan for the following educational standard.
+    return f"""You are an expert K-12 educator. Create a lesson plan for the following educational standard.
 
 Standard: {standard.get('description', '')}
 Subject: {standard.get('subject', '')}
@@ -316,17 +297,39 @@ Respond ONLY with valid JSON:
 If no worksheet is needed, omit the entire `resources` key.
 """
 
-    return prompt
-
 
 def _resolve_day_standards(assignment: dict, standards_by_id: dict, standards: list) -> list:
     """Return the ordered list of standards referenced by an assignment."""
     standard_ids = assignment.get("standard_ids", [])
-    day_standards = [standards_by_id.get(sid) for sid in standard_ids if sid in standards_by_id]
-    day_standards = [s for s in day_standards if s is not None]
-    if not day_standards:
-        day_standards = [standards[0]] if standards else []
-    return day_standards
+    day_standards = [standards_by_id[sid] for sid in standard_ids if sid in standards_by_id]
+    return day_standards or standards[:1]
+
+
+WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+SYSTEM_MESSAGE = "You are a helpful K-12 education assistant. Always respond with valid JSON only."
+
+
+def _json_request(client: LLMClient, task: str, prompt: str) -> tuple[list[dict], dict]:
+    """The chat messages for ``prompt`` and the request record the generation log keeps."""
+    messages = [
+        {"role": "system", "content": SYSTEM_MESSAGE},
+        {"role": "user", "content": prompt},
+    ]
+    request_payload = {
+        "task": task,
+        "model": client.config(task).model,
+        "messages": messages,
+        "response_format": {"type": "json_object"},
+    }
+    return messages, request_payload
+
+
+def _fallback_assignments(standards: list) -> list[dict]:
+    """One standard per weekday, used when the scaffold call fails."""
+    return [
+        {"day": day, "standard_ids": [s.get("standard_id")], "focus": f"Day {i+1} focus"}
+        for i, (day, s) in enumerate(zip(WEEKDAYS, standards, strict=False))
+    ]
 
 
 def _create_fallback_lesson_plan(day_standards: list, rules: dict) -> dict:
@@ -508,16 +511,8 @@ def _build_day_plan(
 ) -> dict:
     """Generate one day's plan inside the thread pool with deterministic fallbacks.
 
-    Args:
-        assignment: Dict containing `day`, `standard_ids`, and optional `focus` keys.
-        standards_by_id: Lookup of standard_id -> standard metadata.
-        standards: List of candidate standards (used for fallback selection).
-        rules: Parent preference metadata (materials, notes, etc.).
-        client: Thread-safe LLMClient (task "lesson" picks the model from src/llm/models.json).
-        usage: Who the call is billed to (opaque ids) for the usage ledger.
-
-    Returns:
-        Dict with `day`, `lesson_plan`, `standard`, `standards`, and `focus` keys.
+    ``assignment`` holds `day`, `standard_ids` and an optional `focus`; ``usage`` is who the call
+    is billed to. Returns a dict with `day`, `lesson_plan`, `standard`, `standards` and `focus`.
     """
     day = assignment.get("day") or ""
     day_focus = assignment.get("focus", "") or ""
@@ -538,20 +533,7 @@ def _build_day_plan(
         prompt += f"\n\nDay Focus: {day_focus}"
 
     resources_model: ResourceRequests | None = None
-
-    messages = [
-        {
-            "role": "system",
-            "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only.",
-        },
-        {"role": "user", "content": prompt},
-    ]
-    llm_request_payload = {
-        "task": "lesson",
-        "model": client.config("lesson").model,
-        "messages": messages,
-        "response_format": {"type": "json_object"},
-    }
+    messages, llm_request_payload = _json_request(client, "lesson", prompt)
 
     try:
         response = client.complete(
@@ -565,7 +547,6 @@ def _build_day_plan(
             generation_logger.log_daily_error(day, "request_failed", str(e), llm_request_payload)
         print(f"Warning: Failed to generate lesson plan for {day}: {e}")
         lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
-        resources_model = None
     else:
         if generation_logger:
             generation_logger.log_daily_llm_exchange(
@@ -579,7 +560,6 @@ def _build_day_plan(
             if generation_logger:
                 generation_logger.log_daily_response(day, None, response_content, str(e))
             lesson_plan = _create_fallback_lesson_plan(day_standards, rules)
-            resources_model = None
         else:
             lesson_plan, resources_model = _extract_lesson_and_resources(payload, day)
             if generation_logger:
@@ -638,32 +618,20 @@ def _make_client() -> LLMClient:
 def generate_weekly_plan(
     student_id: str, grade_level: int, subject: str, *, usage: UsageContext | None = None
 ) -> dict:
-    """
-    Generate a weekly lesson plan for a student using LLM.
+    """Generate (and save) a student's weekly plan: one scaffold call, then one call per day.
 
-    Args:
-        student_id: Unique identifier for the student
-        grade_level: Grade level for the standards
-        subject: Subject area (may be overridden by theme rules)
-
-    Returns:
-        A dictionary containing the complete weekly plan with daily lesson plans
-
-    Raises:
-        ValueError: If student not found or API key not set
-        CostCapExceeded: If the family's model budget is used up (no fallback content is made)
+    Raises ValueError if the student or their standards are missing or the API key is not set,
+    and CostCapExceeded if the family's model budget is used up (no fallback content is made).
     """
     # Provider/key/model come from src/llm (OPENROUTER_API_KEY, legacy OPENAI_* still honoured).
     # The client is stateless and thread-safe, so one instance serves all executor workers.
     client = _make_client()
     usage = usage or UsageContext(student_id=student_id)
 
-    # Get student profile and parse rules
     student_profile = get_student_profile(student_id)
     if student_profile is None:
         raise ValueError(f"Student with id '{student_id}' not found")
 
-    # Parse plan_rules_blob to get rules
     rules = json.loads(student_profile["plan_rules_blob"] or "{}")
 
     # Get standards for the student. We request more than 5 to have flexibility
@@ -765,19 +733,7 @@ Respond with a JSON object in this exact format:
   ]
 }}"""
 
-    scaffold_messages = [
-        {
-            "role": "system",
-            "content": "You are a helpful K-12 education assistant. Always respond with valid JSON only.",
-        },
-        {"role": "user", "content": scaffold_prompt},
-    ]
-    scaffold_request_payload = {
-        "task": "scaffold",
-        "model": client.config("scaffold").model,
-        "messages": scaffold_messages,
-        "response_format": {"type": "json_object"},
-    }
+    scaffold_messages, scaffold_request_payload = _json_request(client, "scaffold", scaffold_prompt)
 
     scaffold_raw_content = ""
     try:
@@ -794,53 +750,30 @@ Respond with a JSON object in this exact format:
         print(f"Warning: Failed to parse scaffold JSON: {e}")
         generation_logger.log_weekly_scaffold_content(None, scaffold_raw_content, str(e))
         weekly_overview = "Weekly plan using standard curriculum progression"
-        daily_assignments = [
-            {
-                "day": day,
-                "standard_ids": [standards[i].get("standard_id")],
-                "focus": f"Day {i+1} focus",
-            }
-            for i, day in enumerate(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
-            if i < len(standards)
-        ]
+        daily_assignments = _fallback_assignments(standards)
     except Exception as e:
         print(f"Warning: Failed to generate scaffold: {e}")
         generation_logger.log_weekly_scaffold_exchange(scaffold_request_payload, error=str(e))
-        generation_logger.log_weekly_scaffold_content(None, scaffold_raw_content or "", str(e))
+        generation_logger.log_weekly_scaffold_content(None, scaffold_raw_content, str(e))
         weekly_overview = "Weekly plan using standard curriculum progression"
-        daily_assignments = [
-            {
-                "day": day,
-                "standard_ids": [standards[i].get("standard_id")],
-                "focus": f"Day {i+1} focus",
-            }
-            for i, day in enumerate(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
-            if i < len(standards)
-        ]
+        daily_assignments = _fallback_assignments(standards)
     else:
         generation_logger.log_weekly_scaffold_content(weekly_scaffold, scaffold_raw_content)
         daily_assignments = weekly_scaffold.get("daily_assignments", [])
         weekly_overview = weekly_scaffold.get("weekly_overview", "")
 
-    # Ensure we have exactly 5 days
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    if len(daily_assignments) != 5:
-        # Adjust to exactly 5 days
+    if len(daily_assignments) != 5:  # pad or trim to exactly Monday-Friday
         while len(daily_assignments) < 5:
+            n = len(daily_assignments)
             daily_assignments.append(
                 {
-                    "day": days[len(daily_assignments)],
-                    "standard_ids": [
-                        standards[min(len(daily_assignments), len(standards) - 1)].get(
-                            "standard_id"
-                        )
-                    ],
+                    "day": WEEKDAYS[n],
+                    "standard_ids": [standards[min(n, len(standards) - 1)].get("standard_id")],
                     "focus": "Additional practice",
                 }
             )
         daily_assignments = daily_assignments[:5]
 
-    # Create a lookup for standards by ID
     standards_by_id = {s.get("standard_id"): s for s in standards}
 
     # Build daily plan concurrently based on scaffold
