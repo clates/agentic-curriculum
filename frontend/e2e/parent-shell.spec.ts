@@ -35,6 +35,18 @@ test.describe('Parent shell', () => {
     await shot(page, 'm10-1-empty');
   });
 
+  test('with login off the operator is the admin: the Admin link shows, opens the panel, and is not in the tab bar', async ({
+    page,
+  }) => {
+    await page.goto('/week');
+    await page.getByRole('link', { name: 'Admin' }).first().click();
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByRole('link', { name: 'Loop console' })).toBeVisible();
+    await page.goto('/week');
+    await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+    await expect(page.getByTestId('tab-bar').getByRole('link', { name: 'Admin' })).toHaveCount(0);
+  });
+
   test('This week shows a loading state, then content', async ({ page }) => {
     let release: () => void = () => {};
     const gate = new Promise<void>((r) => (release = r));

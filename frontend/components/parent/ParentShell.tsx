@@ -25,7 +25,8 @@ const TABS = [
 export function ParentShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [leaving, setLeaving] = useState(false);
-  // Is a login in use? When it is off (self-hosting, dev) no sign-out is shown and nothing changes.
+  // Sign-out only shows when a login is in use. The Admin link shows to anyone allowed to admin:
+  // with login off that is the operator, who is the only user.
   const { data: me } = useMe();
   const signedIn = Boolean(me?.auth_required && me.user);
   const isAdmin = Boolean(me?.permissions.includes('admin'));
@@ -57,16 +58,16 @@ export function ParentShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          {signedIn ? (
-            <div className="flex items-center gap-2">
-              {isAdmin ? (
-                <Link
-                  href="/admin"
-                  className="flex min-h-11 items-center px-2 text-sm text-neutral-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                >
-                  {copy.admin.link}
-                </Link>
-              ) : null}
+          <div className="flex items-center gap-2">
+            {isAdmin ? (
+              <Link
+                href="/admin"
+                className="flex min-h-11 items-center px-2 text-sm text-neutral-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              >
+                {copy.admin.link}
+              </Link>
+            ) : null}
+            {signedIn ? (
               <button
                 type="button"
                 onClick={signOut}
@@ -75,8 +76,8 @@ export function ParentShell({ children }: { children: ReactNode }) {
               >
                 {leaving ? copy.login.signingOut : copy.login.signOut}
               </button>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </header>
       <main
