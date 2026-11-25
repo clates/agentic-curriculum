@@ -162,14 +162,12 @@ from .error_audit import (
     FIX_MODES,
 )
 
-
 # Ten-frame ("Make Ten") worksheet components
 from .ten_frame import (
     TenFrameProblem,
     TenFrameWorksheet,
     generate_ten_frame_worksheet,
 )
-
 
 # Factory for creating worksheets from JSON payloads
 from .factory import WorksheetFactory
