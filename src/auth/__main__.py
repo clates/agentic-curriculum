@@ -4,10 +4,11 @@
     python -m auth set-password <username>
     python -m auth disable <username>
     python -m auth enable <username>
+    python -m auth grant <username> <permission>     (permission: admin)
+    python -m auth revoke <username> <permission>
     python -m auth unlock [<username>]   (no name: forget every lockout, addresses included)
 
-WARNING: there is no per-family separation yet. Every account sees ALL data; `--family` only
-accepts the default family. Do not create an account for anyone you would not show every child.
+`--family` takes any existing family id.
 
 The password comes from the AUTH_NEW_PASSWORD environment variable or a hidden prompt, never a
 command-line argument (arguments show up in process lists and shell history).
@@ -41,7 +42,6 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m auth",
         description=__doc__.split("\n")[0],
-        epilog="No per-family separation yet: every account sees all data.",
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
     create = sub.add_parser("create-user", help="make an account (does nothing if it exists)")
@@ -49,12 +49,15 @@ def main(argv: list[str] | None = None) -> int:
     create.add_argument(
         "--family",
         default=store.DEFAULT_FAMILY,
-        help="only the default family is allowed: per-family separation is not built, so every "
-        "account sees all data",
+        help="the id of an existing family",
     )
     sub.add_parser("unlock", help="forget lockouts: one user's, or all of them").add_argument(
         "username", nargs="?"
     )
+    for name in ("grant", "revoke"):
+        p = sub.add_parser(name, help=f"{name} a permission")
+        p.add_argument("username")
+        p.add_argument("permission")
     for name in ("set-password", "disable", "enable"):
         sub.add_parser(name).add_argument("username")
     args = parser.parse_args(argv)
@@ -82,6 +85,16 @@ def main(argv: list[str] | None = None) -> int:
                 print("No such user.", file=sys.stderr)
                 return 1
             print("Password changed. Every session for this user was signed out.")
+        elif args.cmd in ("grant", "revoke"):
+            try:
+                done = getattr(store, args.cmd)(conn, args.username, args.permission)
+            except store.UserError as err:
+                print(f"Not changed: {err}", file=sys.stderr)
+                return 1
+            if not done:
+                print("No such user.", file=sys.stderr)
+                return 1
+            print(f"{args.cmd.capitalize()}: {args.permission} for {args.username}.")
         elif args.cmd == "unlock":
             removed = store.clear_attempts(conn, args.username)
             print(f"Cleared {removed} lockout record(s).")

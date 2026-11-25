@@ -747,11 +747,10 @@ def test_the_attempt_table_is_capped(user, now, monkeypatch):
     assert not db_rows("SELECT 1 FROM login_attempt WHERE key='n0|1.1.1.1'")  # oldest went first
 
 
-def test_create_user_refuses_any_other_family(tmp_path):
+def test_create_user_refuses_an_unknown_family(tmp_path):
     r = run_cli(tmp_path, "create-user", "mama", "--family", "fam_other", password=PASSWORD)
-    assert r.returncode == 1 and "per-family separation is not built" in r.stderr
+    assert r.returncode == 1 and "No such family" in r.stderr
     assert db_rows("SELECT COUNT(*) FROM app_user") == [(0,)]
-    assert "every account sees all data" in run_cli(tmp_path, "create-user", "--help").stdout
 
 
 def test_validation_errors_on_auth_do_not_echo_the_input(client):
