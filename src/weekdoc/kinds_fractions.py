@@ -56,11 +56,12 @@ def _same_value(n: int, d: int, n2: int, d2: int) -> bool:
 Fraction = Annotated[str, StringConstraints(strip_whitespace=True, max_length=8)]
 
 
-def _check_answer(answer: str | None, shaded: int | None, parts: int | None) -> None:
+def _check_answer(answer: str | None, shaded: int | None, parts: int) -> None:
+    """Parse ``answer``; when ``shaded`` is given it must equal ``shaded / parts``."""
     if answer is None:
         return
     n, d = parse_fraction(answer)
-    if shaded is not None and parts is not None and not _same_value(n, d, shaded, parts):
+    if shaded is not None and not _same_value(n, d, shaded, parts):
         raise ValueError(f"answer {answer} does not match {shaded} of {parts} shaded")
 
 
@@ -85,7 +86,7 @@ class Strip(KindData):
             raise ValueError("shade indices repeat")
         if self.shade and not self.color:
             raise ValueError("a shaded strip needs a color or the shading is invisible")
-        _check_answer(self.answer, len(self.shade) if self.shade else None, self.denominator)
+        _check_answer(self.answer, len(self.shade) or None, self.denominator)
         return self
 
 
@@ -120,7 +121,7 @@ class Circle(KindData):
     def _bounds(self) -> "Circle":
         if self.shaded > self.parts:
             raise ValueError(f"shaded {self.shaded} is more than the {self.parts} parts")
-        _check_answer(self.answer, self.shaded if self.shaded else None, self.parts)
+        _check_answer(self.answer, self.shaded or None, self.parts)
         return self
 
 
@@ -166,20 +167,10 @@ class Grid(KindData):
             raise ValueError(f"shaded indices {bad} are outside 0..{cells - 1}")
         if len(set(self.shaded)) != len(self.shaded):
             raise ValueError("shaded indices repeat")
-        unequal = bool(self.cols_spec or self.rows_spec) and not (
-            _equal(self.cols_spec) and _equal(self.rows_spec)
-        )
-        if self.answer is not None:
-            n, d = parse_fraction(self.answer)
-            if self.shaded and not unequal and not _same_value(n, d, len(self.shaded), cells):
-                raise ValueError(
-                    f"answer {self.answer} does not match {len(self.shaded)} of {cells} shaded"
-                )
+        # Unequal parts have no simple fraction to check the answer against.
+        equal = all(s is None or len(set(s)) == 1 for s in (self.cols_spec, self.rows_spec))
+        _check_answer(self.answer, len(self.shaded) if self.shaded and equal else None, cells)
         return self
-
-
-def _equal(spec: list[float] | None) -> bool:
-    return spec is None or len(set(spec)) == 1
 
 
 class FractionAreaData(KindData):

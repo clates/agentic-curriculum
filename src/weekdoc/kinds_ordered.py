@@ -16,6 +16,7 @@ from typing import Annotated, Any, Literal, Union
 from pydantic import Discriminator, Field, Tag, model_validator
 
 from .kinds import ItemRef, KindData, register
+from .kinds_classification import _unique
 from .kinds_comprehension import Text
 
 # ── sequencingWorksheet ─────────────────────────────────────────────────────
@@ -95,9 +96,7 @@ class FillInBlankData(KindData):
         if gaps != list(range(1, len(gaps) + 1)):
             raise ValueError(f"gaps must be numbered 1..n in order, got {gaps}")
         if self.word_bank:
-            folded = [w.casefold() for w in self.word_bank]
-            if len(set(folded)) != len(folded):
-                raise ValueError("word_bank must be unique")
+            _unique(self.word_bank, "word_bank")
             if len(self.word_bank) < len(gaps):
                 raise ValueError(f"word_bank has {len(self.word_bank)} words for {len(gaps)} gaps")
         return self
