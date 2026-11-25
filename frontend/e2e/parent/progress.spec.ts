@@ -16,7 +16,7 @@ async function openChild(page: Page, name: string) {
     timeout: 20_000,
   });
   await expect(
-    page.getByTestId('progress-sentence').or(page.locator('main h2').first())
+    page.getByTestId('progress-sentence').or(page.locator('main h2')).first()
   ).toBeVisible({
     timeout: 20_000,
   });
