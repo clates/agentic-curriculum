@@ -9,7 +9,7 @@ import sqlite3
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping
 
 try:  # Prefer package-relative import when available
     from .db_utils import DB_FILE, ensure_student  # type: ignore
@@ -69,8 +69,7 @@ def _build_summary(weekly_plan: Mapping[str, Any]) -> dict[str, Any]:
             resource_days += 1
         for kind, payload in resources.items():
             artifacts = payload.get("artifacts") or []
-            count = worksheet_counts.get(kind, 0) + len(artifacts)
-            worksheet_counts[kind] = count
+            worksheet_counts[kind] = worksheet_counts.get(kind, 0) + len(artifacts)
             artifact_count += len(artifacts)
 
     return {
@@ -87,10 +86,6 @@ def _insert_weekly_packet(
     status: str,
 ) -> None:
     now = _utc_now()
-    summary = _build_summary(weekly_plan)
-    payload_json = _json(weekly_plan)
-    summary_json = _json(summary)
-
     conn.execute(
         """
         INSERT INTO weekly_packets (
@@ -125,8 +120,8 @@ def _insert_weekly_packet(
             weekly_plan.get("week_of"),
             status,
             weekly_plan.get("weekly_overview"),
-            summary_json,
-            payload_json,
+            _json(_build_summary(weekly_plan)),
+            _json(weekly_plan),
             now,
             now,
         ),
@@ -183,8 +178,7 @@ def _persist_artifacts(
         return
 
     for kind, payload in resources.items():
-        artifacts = payload.get("artifacts") or []
-        for artifact in artifacts:
+        for artifact in payload.get("artifacts") or []:
             metadata = {
                 key: value
                 for key, value in artifact.items()
@@ -239,10 +233,7 @@ def save_weekly_packet(
 
 
 def _compute_etag(packet_id: str, updated_at: str) -> str:
-    """Return a deterministic etag string for a packet."""
-
-    payload = f"{packet_id}:{updated_at}".encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
+    return hashlib.sha256(f"{packet_id}:{updated_at}".encode("utf-8")).hexdigest()
 
 
 def _deserialize_summary(summary_json: str | None) -> dict[str, Any]:
@@ -262,7 +253,6 @@ def list_weekly_packets(
     week_of: str | None = None,
 ) -> tuple[list[dict[str, Any]], bool]:
     """Return packet summaries for a student ordered by week desc."""
-
     ensure_schema()
     limit = max(1, limit)
     query = [
@@ -276,22 +266,17 @@ def list_weekly_packets(
     if week_of:
         query.append("AND wp.week_of = ?")
         params.append(week_of)
-    query.append("ORDER BY wp.week_of DESC, wp.updated_at DESC")
-    query.append("LIMIT ? OFFSET ?")
-    params.extend([limit + 1, offset])
+    query += ["ORDER BY wp.week_of DESC, wp.updated_at DESC", "LIMIT ? OFFSET ?"]
+    params += [limit + 1, offset]
 
-    sql = "\n".join(query)
     conn = _get_connection()
     try:
-        rows = conn.execute(sql, params).fetchall()
+        rows = conn.execute("\n".join(query), params).fetchall()
     finally:
         conn.close()
 
-    has_more = len(rows) > limit
-    rows_to_use: Sequence[sqlite3.Row] = rows[:limit]
-
     summaries: list[dict[str, Any]] = []
-    for row in rows_to_use:
+    for row in rows[:limit]:
         summary = _deserialize_summary(row["summary_json"])
         feedback_completed_at = row["feedback_completed_at"]
         summaries.append(
@@ -312,12 +297,11 @@ def list_weekly_packets(
             }
         )
 
-    return summaries, has_more
+    return summaries, len(rows) > limit
 
 
 def get_weekly_packet(student_id: str, packet_id: str) -> dict[str, Any] | None:
     """Return persisted packet payload for a student or None when missing."""
-
     ensure_schema()
     conn = _get_connection()
     try:
@@ -341,11 +325,10 @@ def get_weekly_packet(student_id: str, packet_id: str) -> dict[str, Any] | None:
     except json.JSONDecodeError as exc:  # pragma: no cover - unexpected
         raise ValueError(f"Corrupted payload for packet {packet_id}: {exc}") from exc
 
-    updated_at = row["updated_at"]
     return {
         "payload": payload,
-        "updated_at": updated_at,
-        "etag": _compute_etag(packet_id, updated_at),
+        "updated_at": row["updated_at"],
+        "etag": _compute_etag(packet_id, row["updated_at"]),
     }
 
 
@@ -357,9 +340,24 @@ def _packet_exists(conn: sqlite3.Connection, student_id: str, packet_id: str) ->
     return row is not None
 
 
+def _artifact_dict(row: sqlite3.Row, packet_id: str) -> dict[str, Any]:
+    metadata_json = row["metadata_json"]
+    return {
+        "artifact_id": row["id"],
+        "packet_id": packet_id,
+        "day_label": row["day_label"],
+        "kind": row["kind"],
+        "file_format": row["file_format"],
+        "file_path": row["file_path"],
+        "checksum": row["checksum"],
+        "file_size_bytes": row["file_size_bytes"],
+        "metadata": json.loads(metadata_json) if metadata_json else None,
+        "created_at": row["created_at"],
+    }
+
+
 def list_packet_artifacts(student_id: str, packet_id: str) -> list[dict[str, Any]] | None:
     """Return artifacts for a packet when the student owns it."""
-
     ensure_schema()
     conn = _get_connection()
     try:
@@ -378,31 +376,11 @@ def list_packet_artifacts(student_id: str, packet_id: str) -> list[dict[str, Any
     finally:
         conn.close()
 
-    artifacts: list[dict[str, Any]] = []
-    for row in rows:
-        metadata_json = row["metadata_json"]
-        metadata = json.loads(metadata_json) if metadata_json else None
-        artifacts.append(
-            {
-                "artifact_id": row["id"],
-                "packet_id": packet_id,
-                "day_label": row["day_label"],
-                "kind": row["kind"],
-                "file_format": row["file_format"],
-                "file_path": row["file_path"],
-                "checksum": row["checksum"],
-                "file_size_bytes": row["file_size_bytes"],
-                "metadata": metadata,
-                "created_at": row["created_at"],
-            }
-        )
-
-    return artifacts
+    return [_artifact_dict(row, packet_id) for row in rows]
 
 
 def get_artifact_for_student(student_id: str, artifact_id: int) -> dict[str, Any] | None:
     """Return artifact metadata + path when student owns it."""
-
     ensure_schema()
     conn = _get_connection()
     try:
@@ -421,23 +399,53 @@ def get_artifact_for_student(student_id: str, artifact_id: int) -> dict[str, Any
     finally:
         conn.close()
 
-    if row is None:
-        return None
+    return None if row is None else _artifact_dict(row, row["packet_id"])
 
-    metadata_json = row["metadata_json"]
-    metadata = json.loads(metadata_json) if metadata_json else None
-    return {
-        "artifact_id": row["id"],
-        "packet_id": row["packet_id"],
-        "day_label": row["day_label"],
-        "kind": row["kind"],
-        "file_format": row["file_format"],
-        "file_path": row["file_path"],
-        "checksum": row["checksum"],
-        "file_size_bytes": row["file_size_bytes"],
-        "metadata": metadata,
-        "created_at": row["created_at"],
-    }
+
+def _upsert_feedback(
+    conn: sqlite3.Connection,
+    student_id: str,
+    packet_id: str,
+    now: str,
+    mastery_json: str | None,
+    quantity_feedback: int | None,
+    check_results_json: str | None,
+    quick_rating: str | None,
+    derived_json: str | None,
+) -> int:
+    """Insert or replace a packet's one feedback row (bumping ``version``); return the version."""
+    conn.execute(
+        """
+        INSERT INTO packet_feedback (
+            packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
+            check_results_json, quick_rating, derived_mastery_json, version, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        ON CONFLICT(family_id, packet_id) DO UPDATE SET
+            completed_at = excluded.completed_at,
+            mastery_feedback_blob = excluded.mastery_feedback_blob,
+            quantity_feedback = excluded.quantity_feedback,
+            check_results_json = excluded.check_results_json,
+            quick_rating = excluded.quick_rating,
+            derived_mastery_json = excluded.derived_mastery_json,
+            version = packet_feedback.version + 1,
+            updated_at = excluded.updated_at
+        """,
+        (
+            packet_id,
+            student_id,
+            now,
+            mastery_json,
+            quantity_feedback,
+            check_results_json,
+            quick_rating,
+            derived_json,
+            now,
+        ),
+    )
+    return conn.execute(
+        "SELECT version FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
+        (packet_id, student_id),
+    ).fetchone()[0]
 
 
 def save_packet_feedback(
@@ -456,46 +464,21 @@ def save_packet_feedback(
     is the per-standard rating that was derived and applied. Saving again bumps ``version``.
     """
     ensure_schema()
-
     conn = _get_connection()
     try:
-        # Verify packet exists and belongs to student
         if not _packet_exists(conn, student_id, packet_id):
             raise ValueError(f"Packet {packet_id} not found for student {student_id}")
-
-        now = _utc_now()
-        conn.execute(
-            """
-            INSERT INTO packet_feedback (
-                packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
-                check_results_json, quick_rating, derived_mastery_json, version, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
-            ON CONFLICT(family_id, packet_id) DO UPDATE SET
-                completed_at = excluded.completed_at,
-                mastery_feedback_blob = excluded.mastery_feedback_blob,
-                quantity_feedback = excluded.quantity_feedback,
-                check_results_json = excluded.check_results_json,
-                quick_rating = excluded.quick_rating,
-                derived_mastery_json = excluded.derived_mastery_json,
-                version = packet_feedback.version + 1,
-                updated_at = excluded.updated_at
-            """,
-            (
-                packet_id,
-                student_id,
-                now,
-                _json(mastery_feedback) if mastery_feedback else None,
-                quantity_feedback,
-                _json(check_results) if check_results else None,
-                quick_rating,
-                _json(derived_mastery) if derived_mastery else None,
-                now,
-            ),
+        version = _upsert_feedback(
+            conn,
+            student_id,
+            packet_id,
+            _utc_now(),
+            _json(mastery_feedback) if mastery_feedback else None,
+            quantity_feedback,
+            _json(check_results) if check_results else None,
+            quick_rating,
+            _json(derived_mastery) if derived_mastery else None,
         )
-        version = conn.execute(
-            "SELECT version FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
-            (packet_id, student_id),
-        ).fetchone()[0]
         conn.commit()
         return version
     finally:
@@ -505,7 +488,6 @@ def save_packet_feedback(
 def get_packet_feedback(student_id: str, packet_id: str) -> dict[str, Any] | None:
     """Retrieve feedback for a weekly packet."""
     ensure_schema()
-
     conn = _get_connection()
     try:
         row = conn.execute(
