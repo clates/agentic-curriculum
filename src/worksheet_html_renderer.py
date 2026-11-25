@@ -1081,6 +1081,16 @@ _BLOCK_CSS = """\
   }
 </style>"""
 
+def _font_css(audience: str) -> str:
+    """Embedded typeface for the page body: Andika for the child, Recursive for the adult."""
+    try:
+        from print_fonts import ADULT_FAMILY, KID_FAMILY, font_face_css
+    except ImportError:  # imported as a package module
+        from .print_fonts import ADULT_FAMILY, KID_FAMILY, font_face_css  # type: ignore
+    family, stack = ("Recursive", ADULT_FAMILY) if audience == "adult" else ("Andika", KID_FAMILY)
+    return f"<style>\n{font_face_css(family)}  body {{ font-family: {stack}; }}\n</style>"
+
+
 _HTML_WRAPPER = """\
 <!DOCTYPE html>
 <html lang="en">
@@ -4299,6 +4309,7 @@ def build_print_packet_html(
     pages: list[tuple[str, str]],
     packet_title: str = "Weekly Worksheets",
     layout: str = "classic",
+    audience: str = "child",
 ) -> str:
     """
     Assemble a full printable HTML document from a list of (day_label, html_fragment) tuples.
@@ -4306,6 +4317,9 @@ def build_print_packet_html(
     ``layout`` selects the page-chrome stylesheet to include alongside the base
     CSS.  Block CSS is always included; it is namespaced under ``.fx-`` so it
     cannot affect the historical worksheet types.
+
+    ``audience`` picks the typeface: ``"child"`` (Andika, for beginning readers) or ``"adult"``
+    (Recursive). Fonts are embedded, so the page loads nothing over the network.
 
     Opens the browser print dialog automatically when loaded.
     """
@@ -4319,7 +4333,7 @@ def build_print_packet_html(
     # Auto-trigger print dialog; close tab after printing if opened as popup
     body += '\n<script>window.addEventListener("load", () => window.print());</script>'
 
-    css = _CSS + "\n" + _BLOCK_CSS
+    css = _CSS + "\n" + _BLOCK_CSS + "\n" + _font_css(audience)
     layout_css = get_layout(layout).css
     if layout_css:
         css += "\n" + layout_css

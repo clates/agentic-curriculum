@@ -21,9 +21,11 @@ from typing import Any
 
 try:  # package context
     from .. import worksheet_html_renderer as _r
+    from ..print_fonts import font_face_css
 except ImportError:  # scripts put src/ on sys.path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     import worksheet_html_renderer as _r  # type: ignore
+    from print_fonts import font_face_css  # type: ignore
 
 from .models import WeekDoc
 
@@ -36,7 +38,7 @@ _DAY_CLASS = {"Tuesday": "tue", "Wednesday": "wed", "Thursday": "thu", "Friday":
 _GUIDE_CSS = """\
     @page { size: letter; margin: 0.5in 0.6in; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 11pt; color: #111; line-height: 1.55; }
+    body { font-family: 'Recursive', 'Trebuchet MS', Arial, sans-serif; font-size: 11pt; color: #1B2433; line-height: 1.55; }
     @media screen { body { background: #b0b0b0; padding: 24px; } .page { background: white; max-width: 7.5in; margin: 0 auto 28px; padding: 0.45in 0.5in; box-shadow: 0 4px 18px rgba(0,0,0,.28); min-height: 10.3in; } }
     @media print { body { background: white; padding: 0; } .page { padding: 0; box-shadow: none; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     .page { page-break-after: always; break-after: page; }
@@ -139,7 +141,9 @@ def render_prep_sheet(week: WeekDoc, student_name: str | None = None) -> str:
         },
         "",
     )
-    return _r.build_print_packet_html([("", fragment)], packet_title=f"Prep Sheet: {doc['title']}")
+    return _r.build_print_packet_html(
+        [("", fragment)], packet_title=f"Prep Sheet: {doc['title']}", audience="adult"
+    )
 
 
 # ── Teacher guide ───────────────────────────────────────────────────────────
@@ -215,6 +219,6 @@ def render_teacher_guide(week: WeekDoc, student_name: str | None = None) -> str:
     title = _text(g["html_title"] or g["title"])
     return (
         '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n'
-        f"  <title>{title}</title>\n  <style>\n{_GUIDE_CSS}  </style>\n</head>\n<body>\n\n"
+        f"  <title>{title}</title>\n  <style>\n{font_face_css('Recursive')}{_GUIDE_CSS}  </style>\n</head>\n<body>\n\n"
         f"{body}\n\n</body>\n</html>"
     )
