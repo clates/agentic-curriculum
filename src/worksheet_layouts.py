@@ -210,6 +210,4 @@ LAYOUT_NAMES: frozenset[str] = frozenset(LAYOUTS)
 
 def get_layout(name: str | None) -> Layout:
     """Return the named layout, falling back to ``classic`` for None/unknown names."""
-    if not name:
-        return LAYOUTS["classic"]
     return LAYOUTS.get(name, LAYOUTS["classic"])
