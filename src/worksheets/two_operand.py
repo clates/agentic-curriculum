@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Sequence, Tuple
 
-from .base import BaseWorksheet
+from .base import BaseWorksheet, normalize_entries
 
 
 class Operator(str, Enum):
@@ -88,18 +88,6 @@ class MathWorksheet(BaseWorksheet):
 Worksheet = MathWorksheet
 
 
-def _normalize_problems(problems: Sequence[TwoOperandProblem | dict]) -> List[TwoOperandProblem]:
-    normalized: List[TwoOperandProblem] = []
-    for item in problems:
-        if isinstance(item, TwoOperandProblem):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(TwoOperandProblem.from_mapping(item))
-        else:
-            raise TypeError("Problems must be TwoOperandProblem or dict entries")
-    return normalized
-
-
 def generate_two_operand_math_worksheet(
     problems: Sequence[TwoOperandProblem | dict],
     *,
@@ -108,7 +96,9 @@ def generate_two_operand_math_worksheet(
     metadata: dict | None = None,
 ) -> MathWorksheet:
     """Create a worksheet object for K-1 math practice."""
-    normalized = _normalize_problems(problems)
+    normalized = normalize_entries(
+        problems, TwoOperandProblem, "Problems must be TwoOperandProblem or dict entries"
+    )
     if not normalized:
         raise ValueError("At least one problem is required")
 

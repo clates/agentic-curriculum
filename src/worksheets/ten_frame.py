@@ -18,7 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence
 
-from .base import BaseWorksheet
+from .base import BaseWorksheet, normalize_entries
 
 MIN_ADDEND = 0
 MAX_ADDEND = 10
@@ -108,44 +108,23 @@ class TenFrameWorksheet(BaseWorksheet):
                 frame_a += f" ({prob.fill_a})"
             if prob.fill_b != "black":
                 frame_b += f" ({prob.fill_b})"
-            block.append(
-                f"    [ten-frame: {frame_a}] [ten-frame: {frame_b}]"
-            )
+            block.append(f"    [ten-frame: {frame_a}] [ten-frame: {frame_b}]")
             if self.show_answers:
-                block.append(
-                    f"    **Proof:** {' , '.join(prob.proof_equations())}"
-                )
+                block.append(f"    **Proof:** {' , '.join(prob.proof_equations())}")
             else:
                 block.append("    Proof:" + " _" * 20 * self.equation_lines)
             body.append("\n".join(block))
         return "\n\n".join(header + body)
 
 
-def _normalize_problems(
-    problems: Sequence[TenFrameProblem | dict],
-) -> List[TenFrameProblem]:
-    normalized: List[TenFrameProblem] = []
-    for item in problems:
-        if isinstance(item, TenFrameProblem):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(TenFrameProblem.from_mapping(item))
-        else:
-            raise TypeError("Problems must be TenFrameProblem or dict entries")
-    return normalized
-
-
 def _validate_problem(problem: TenFrameProblem) -> None:
     for name, value in (("addend_a", problem.addend_a), ("addend_b", problem.addend_b)):
         if not MIN_ADDEND <= value <= MAX_ADDEND:
-            raise ValueError(
-                f"{name} must be between {MIN_ADDEND} and {MAX_ADDEND}, got {value}"
-            )
+            raise ValueError(f"{name} must be between {MIN_ADDEND} and {MAX_ADDEND}, got {value}")
     for name, fill in (("fill_a", problem.fill_a), ("fill_b", problem.fill_b)):
         if not isinstance(fill, str) or not 1 <= len(fill) <= 24:
             raise ValueError(
-                f"{name} must be a CSS color or emoji string "
-                f"(1-24 chars), got {fill!r}"
+                f"{name} must be a CSS color or emoji string " f"(1-24 chars), got {fill!r}"
             )
     if problem.total > MAX_SUM:
         raise ValueError(
@@ -177,7 +156,9 @@ def generate_ten_frame_worksheet(
         equation_lines: Ruled proof lines per problem.
         metadata: Optional metadata dictionary.
     """
-    normalized = _normalize_problems(problems)
+    normalized = normalize_entries(
+        problems, TenFrameProblem, "Problems must be TenFrameProblem or dict entries"
+    )
     if not normalized:
         raise ValueError("At least one problem is required")
     for problem in normalized:

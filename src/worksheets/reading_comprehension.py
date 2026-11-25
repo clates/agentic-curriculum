@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence
 
-from .base import BaseWorksheet
+from .base import BaseWorksheet, normalize_entries
 
 
 @dataclass(frozen=True)
@@ -80,34 +80,6 @@ class ReadingWorksheet(BaseWorksheet):
         return "\n".join(output)
 
 
-def _normalize_questions(items: Sequence[ReadingQuestion | dict]) -> List[ReadingQuestion]:
-    normalized: List[ReadingQuestion] = []
-    for item in items:
-        if isinstance(item, ReadingQuestion):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(ReadingQuestion.from_mapping(item))
-        else:
-            raise TypeError("Questions must be ReadingQuestion or dict entries")
-    if not normalized:
-        raise ValueError("At least one reading question is required")
-    return normalized
-
-
-def _normalize_vocabulary(items: Sequence[VocabularyEntry | dict] | None) -> List[VocabularyEntry]:
-    if not items:
-        return []
-    normalized: List[VocabularyEntry] = []
-    for item in items:
-        if isinstance(item, VocabularyEntry):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(VocabularyEntry.from_mapping(item))
-        else:
-            raise TypeError("Vocabulary entries must be VocabularyEntry or dict entries")
-    return normalized
-
-
 def generate_reading_comprehension_worksheet(
     *,
     passage_title: str,
@@ -118,8 +90,16 @@ def generate_reading_comprehension_worksheet(
     instructions: str = "Read the passage carefully, then answer the questions and review the vocabulary.",
     metadata: dict | None = None,
 ) -> ReadingWorksheet:
-    normalized_questions = _normalize_questions(questions)
-    normalized_vocab = _normalize_vocabulary(vocabulary)
+    normalized_questions = normalize_entries(
+        questions, ReadingQuestion, "Questions must be ReadingQuestion or dict entries"
+    )
+    if not normalized_questions:
+        raise ValueError("At least one reading question is required")
+    normalized_vocab = normalize_entries(
+        vocabulary or [],
+        VocabularyEntry,
+        "Vocabulary entries must be VocabularyEntry or dict entries",
+    )
 
     if not passage.strip():
         raise ValueError("Reading passage text is required")

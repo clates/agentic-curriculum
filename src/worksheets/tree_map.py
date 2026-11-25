@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Sequence
 
-from .base import BaseWorksheet
+from .base import BaseWorksheet, normalize_entries
 
 
 @dataclass(frozen=True)
@@ -16,8 +16,7 @@ class TreeMapSlot:
 
     @classmethod
     def from_mapping(cls, payload: dict) -> "TreeMapSlot":
-        text = payload.get("text")
-        return cls(text=text)
+        return cls(text=payload.get("text"))
 
 
 @dataclass(frozen=True)
@@ -94,19 +93,6 @@ class TreeMapWorksheet(BaseWorksheet):
         return "\n".join(lines)
 
 
-def _normalize_branches(branches: Sequence[TreeMapBranch | dict]) -> List[TreeMapBranch]:
-    """Convert branches to TreeMapBranch objects."""
-    normalized: List[TreeMapBranch] = []
-    for item in branches:
-        if isinstance(item, TreeMapBranch):
-            normalized.append(item)
-        elif isinstance(item, dict):
-            normalized.append(TreeMapBranch.from_mapping(item))
-        else:
-            raise TypeError("Branches must be TreeMapBranch or dict entries")
-    return normalized
-
-
 def generate_tree_map_worksheet(
     *,
     root_label: str,
@@ -116,26 +102,13 @@ def generate_tree_map_worksheet(
     instructions: str = "Fill in the tree map by writing words from the word bank in the correct category.",
     metadata: dict | None = None,
 ) -> TreeMapWorksheet:
-    """Create a tree map worksheet with hierarchical structure.
-
-    Args:
-        root_label: Label for the root/top-level category.
-        branches: List of branches under the root.
-        word_bank: Optional list of words for students to sort.
-        title: Worksheet title.
-        instructions: Instructions for students.
-        metadata: Optional metadata dictionary.
-
-    Returns:
-        TreeMapWorksheet instance.
-
-    Raises:
-        ValueError: If root_label is empty or no branches provided.
-    """
+    """Create a tree map worksheet with hierarchical structure."""
     if not root_label.strip():
         raise ValueError("Root label is required")
 
-    normalized_branches = _normalize_branches(branches)
+    normalized_branches = normalize_entries(
+        branches, TreeMapBranch, "Branches must be TreeMapBranch or dict entries"
+    )
     if not normalized_branches:
         raise ValueError("At least one branch is required")
 

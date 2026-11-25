@@ -7,10 +7,7 @@ and structural relationship worksheets (Venn diagrams, feature matrices, odd-one
 
 from __future__ import annotations
 
-# Base classes
 from .base import BaseWorksheet
-
-# Two-operand math worksheet components
 from .two_operand import (
     Operator,
     TwoOperandProblem,
@@ -19,141 +16,46 @@ from .two_operand import (
     generate_two_operand_math_worksheet,
     format_vertical_problem,
 )
-
-# Reading comprehension worksheet components
 from .reading_comprehension import (
     ReadingQuestion,
     VocabularyEntry,
     ReadingWorksheet,
     generate_reading_comprehension_worksheet,
 )
-
-# Venn diagram worksheet components
-from .venn_diagram import (
-    VennDiagramEntry,
-    VennDiagramWorksheet,
-    generate_venn_diagram_worksheet,
-)
-
-# Feature matrix worksheet components
+from .venn_diagram import VennDiagramEntry, VennDiagramWorksheet, generate_venn_diagram_worksheet
 from .feature_matrix import (
     FeatureMatrixItem,
     FeatureMatrixWorksheet,
     generate_feature_matrix_worksheet,
 )
-
-# Odd one out worksheet components
-from .odd_one_out import (
-    OddOneOutRow,
-    OddOneOutWorksheet,
-    generate_odd_one_out_worksheet,
-)
-
-# Tree map worksheet components
-from .tree_map import (
-    TreeMapSlot,
-    TreeMapBranch,
-    TreeMapWorksheet,
-    generate_tree_map_worksheet,
-)
-
-# Handwriting worksheet components
-from .handwriting import (
-    HandwritingItem,
-    HandwritingWorksheet,
-    generate_handwriting_worksheet,
-)
-
-# Pixel copy worksheet components
-from .pixel_copy import (
-    PixelCopyWorksheet,
-    generate_pixel_copy_worksheet,
-)
-
-# Matching worksheet components
-from .matching import (
-    MatchingItem,
-    MatchingWorksheet,
-    generate_matching_worksheet,
-)
-
-# Alphabet worksheet components
-from .alphabet import (
-    AlphabetWorksheet,
-    generate_alphabet_worksheet,
-)
-
-# Sequencing worksheet components
-from .sequencing import (
-    SequencingStep,
-    SequencingWorksheet,
-    generate_sequencing_worksheet,
-)
-
-# T-Chart worksheet components
-from .t_chart import (
-    TChartColumn,
-    TChartWorksheet,
-    generate_t_chart_worksheet,
-)
-
-# Fill-in-the-blank worksheet components
+from .odd_one_out import OddOneOutRow, OddOneOutWorksheet, generate_odd_one_out_worksheet
+from .tree_map import TreeMapSlot, TreeMapBranch, TreeMapWorksheet, generate_tree_map_worksheet
+from .handwriting import HandwritingItem, HandwritingWorksheet, generate_handwriting_worksheet
+from .pixel_copy import PixelCopyWorksheet, generate_pixel_copy_worksheet
+from .matching import MatchingItem, MatchingWorksheet, generate_matching_worksheet
+from .alphabet import AlphabetWorksheet, generate_alphabet_worksheet
+from .sequencing import SequencingStep, SequencingWorksheet, generate_sequencing_worksheet
+from .t_chart import TChartColumn, TChartWorksheet, generate_t_chart_worksheet
 from .fill_in_the_blank import (
     FillBlankSegment,
     FillBlankWorksheet,
     generate_fill_in_the_blank_worksheet,
 )
-
-# Word sort worksheet components
-from .word_sort import (
-    WordSortTile,
-    WordSortWorksheet,
-    generate_word_sort_worksheet,
-)
-
-# Story map worksheet components
-from .story_map import (
-    StoryMapField,
-    StoryMapWorksheet,
-    generate_story_map_worksheet,
-)
-
-# Cause and effect worksheet components
-from .cause_effect import (
-    CauseEffectPair,
-    CauseEffectWorksheet,
-    generate_cause_effect_worksheet,
-)
-
-# Number line worksheet components
-from .number_line import (
-    NumberLineTask,
-    NumberLineWorksheet,
-    generate_number_line_worksheet,
-)
-
-# Writing scaffold worksheet components
+from .word_sort import WordSortTile, WordSortWorksheet, generate_word_sort_worksheet
+from .story_map import StoryMapField, StoryMapWorksheet, generate_story_map_worksheet
+from .cause_effect import CauseEffectPair, CauseEffectWorksheet, generate_cause_effect_worksheet
+from .number_line import NumberLineTask, NumberLineWorksheet, generate_number_line_worksheet
 from .writing_scaffold import (
     ScaffoldSection,
     WritingScaffoldWorksheet,
     generate_writing_scaffold_worksheet,
 )
-
-# Labeled diagram worksheet components
 from .labeled_diagram import (
     DiagramLabel,
     LabeledDiagramWorksheet,
     generate_labeled_diagram_worksheet,
 )
-
-# Frayer model worksheet components
-from .frayer_model import (
-    FrayerModelEntry,
-    FrayerModelWorksheet,
-    generate_frayer_model_worksheet,
-)
-
-# Error audit ("Bug Hunt") worksheet components
+from .frayer_model import FrayerModelEntry, FrayerModelWorksheet, generate_frayer_model_worksheet
 from .error_audit import (
     ErrorAuditSpecimen,
     ErrorAuditWorksheet,
@@ -161,115 +63,81 @@ from .error_audit import (
     decimal_stack_rows,
     FIX_MODES,
 )
-
-
-# Ten-frame ("Make Ten") worksheet components
-from .ten_frame import (
-    TenFrameProblem,
-    TenFrameWorksheet,
-    generate_ten_frame_worksheet,
-)
-
-
-# Factory for creating worksheets from JSON payloads
+from .ten_frame import TenFrameProblem, TenFrameWorksheet, generate_ten_frame_worksheet
 from .factory import WorksheetFactory
 
 __all__ = [
-    # Base
     "BaseWorksheet",
-    # Two-operand
     "Operator",
     "TwoOperandProblem",
     "MathWorksheet",
     "Worksheet",  # Backward compatibility alias
     "generate_two_operand_math_worksheet",
     "format_vertical_problem",
-    # Reading comprehension
     "ReadingQuestion",
     "VocabularyEntry",
     "ReadingWorksheet",
     "generate_reading_comprehension_worksheet",
-    # Venn diagram
     "VennDiagramEntry",
     "VennDiagramWorksheet",
     "generate_venn_diagram_worksheet",
-    # Feature matrix
     "FeatureMatrixItem",
     "FeatureMatrixWorksheet",
     "generate_feature_matrix_worksheet",
-    # Odd one out
     "OddOneOutRow",
     "OddOneOutWorksheet",
     "generate_odd_one_out_worksheet",
-    # Tree map
     "TreeMapSlot",
     "TreeMapBranch",
     "TreeMapWorksheet",
     "generate_tree_map_worksheet",
-    # Handwriting
     "HandwritingItem",
     "HandwritingWorksheet",
     "generate_handwriting_worksheet",
-    # Alphabet
     "AlphabetWorksheet",
     "generate_alphabet_worksheet",
-    # Pixel Copy
     "PixelCopyWorksheet",
     "generate_pixel_copy_worksheet",
-    # Matching
     "MatchingItem",
     "MatchingWorksheet",
     "generate_matching_worksheet",
-    # Sequencing
     "SequencingStep",
     "SequencingWorksheet",
     "generate_sequencing_worksheet",
-    # T-Chart
     "TChartColumn",
     "TChartWorksheet",
     "generate_t_chart_worksheet",
-    # Fill-in-the-blank
     "FillBlankSegment",
     "FillBlankWorksheet",
     "generate_fill_in_the_blank_worksheet",
-    # Word sort
     "WordSortTile",
     "WordSortWorksheet",
     "generate_word_sort_worksheet",
-    # Story map
     "StoryMapField",
     "StoryMapWorksheet",
     "generate_story_map_worksheet",
-    # Cause and effect
     "CauseEffectPair",
     "CauseEffectWorksheet",
     "generate_cause_effect_worksheet",
-    # Number line
     "NumberLineTask",
     "NumberLineWorksheet",
     "generate_number_line_worksheet",
-    # Writing scaffold
     "ScaffoldSection",
     "WritingScaffoldWorksheet",
     "generate_writing_scaffold_worksheet",
-    # Labeled diagram
     "DiagramLabel",
     "LabeledDiagramWorksheet",
     "generate_labeled_diagram_worksheet",
-    # Frayer model
     "FrayerModelEntry",
     "FrayerModelWorksheet",
     "generate_frayer_model_worksheet",
-    # Error audit ("Bug Hunt")
     "ErrorAuditSpecimen",
     "ErrorAuditWorksheet",
     "generate_error_audit_worksheet",
     "decimal_stack_rows",
     "FIX_MODES",
-    # Ten-frame ("Make Ten")
     "TenFrameProblem",
     "TenFrameWorksheet",
     "generate_ten_frame_worksheet",
-    # Factory
     "WorksheetFactory",
 ]
