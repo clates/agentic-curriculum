@@ -2176,6 +2176,7 @@ def _render_cut_cards(data: dict, primary: str, light: str) -> str:
         f'<div class="fx-cards" style="grid-template-columns:repeat({cols},1fr);">' f"{tiles}</div>"
     )
 
+
 # ── Parent Prep Sheet (prepCheckList) ──────────────────────────────────────
 
 _PREP_CSS = """\
@@ -2376,15 +2377,11 @@ def _render_ten_frame(data: dict, primary: str, light: str) -> str:
             # Single source of truth: the model's make-ten proof logic.
             prob_model = TenFrameProblem.from_mapping(prob)
             key_lines = "".join(
-                f'<div class="tf-key">{_h(eq)}</div>'
-                for eq in prob_model.proof_equations()
+                f'<div class="tf-key">{_h(eq)}</div>' for eq in prob_model.proof_equations()
             )
             proof = f'<div class="tf-proof-label">Make ten:</div>{key_lines}'
         else:
-            proof = (
-                '<div class="tf-proof-label">Make ten:</div>'
-                + _answer_lines(equation_lines)
-            )
+            proof = '<div class="tf-proof-label">Make ten:</div>' + _answer_lines(equation_lines)
         cards_html += (
             f'<div class="tf-card" style="border-color:{primary};">'
             f'<div class="tf-prompt">{idx}. {_h(head)}</div>'
@@ -2406,6 +2403,8 @@ def _render_ten_frame(data: dict, primary: str, light: str) -> str:
 <div class="ws-instructions">{instructions}</div>
 {cards_html}
 """
+
+
 def _svg_partitions(
     parts: int,
     broken: int | None = None,
@@ -2437,9 +2436,14 @@ def _svg_partitions(
         d = step * 0.38
         edges[broken] -= d
         edges[broken + 1] += d
-    shade = [] if starter else (
-        [int(s) for s in shaded] if isinstance(shaded, (list, tuple))
-        else ([int(shaded)] if shaded is not None else [])
+    shade = (
+        []
+        if starter
+        else (
+            [int(s) for s in shaded]
+            if isinstance(shaded, (list, tuple))
+            else ([int(shaded)] if shaded is not None else [])
+        )
     )
     out = []
     for i in shade:
@@ -2461,8 +2465,7 @@ def _svg_partitions(
             f'y2="{cy - r * math.cos(aa):.1f}" stroke="{stroke}" stroke-width="2"/>'
         )
     out.append(
-        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{stroke}" '
-        f'stroke-width="3"/>'
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{stroke}" ' f'stroke-width="3"/>'
     )
     return f'<svg width="160" height="160" viewBox="0 0 160 160">{"".join(out)}</svg>'
 
@@ -2494,8 +2497,7 @@ def _html_decimal_stack(scaffold: dict, filled: bool) -> str:
 
     ncols = len(grid["terms"][0]) + 1 if grid["terms"] else 1
     terms = "".join(
-        _row(cells, plus=(i == len(grid["terms"]) - 1))
-        for i, cells in enumerate(grid["terms"])
+        _row(cells, plus=(i == len(grid["terms"]) - 1)) for i, cells in enumerate(grid["terms"])
     )
     rule = f'<tr class="ea-dec-rule"><td colspan="{ncols}"></td></tr>'
     answer = _row(grid["answer"])
@@ -2592,22 +2594,15 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
                     )
             if fix_mode == "rewrite":
                 if spec.get("fix_scaffold"):
-                    stage += _html_decimal_stack(
-                        spec["fix_scaffold"], filled=show_answers
-                    )
+                    stage += _html_decimal_stack(spec["fix_scaffold"], filled=show_answers)
                 else:
                     stage += "<div>Fix:</div>" + _answer_lines(fix_lines)
             elif fix_mode == "redraw":
                 art = spec.get("art") or {}
                 if spec.get("blank_fix_circle") and art.get("kind") == "partitions":
-                    scaffold = (
-                        '<div class="ea-art">'
-                        + _svg_partitions(2, blank=True)
-                        + "</div>"
-                    )
+                    scaffold = '<div class="ea-art">' + _svg_partitions(2, blank=True) + "</div>"
                     stage += (
-                        "<div>Redraw it fixed — draw the lines in the circle:</div>"
-                        f"{scaffold}"
+                        "<div>Redraw it fixed — draw the lines in the circle:</div>" f"{scaffold}"
                     )
                 else:
                     scaffold = ""
@@ -2625,13 +2620,13 @@ def _render_error_audit(data: dict, primary: str, light: str) -> str:
                             + "</div>"
                         )
                     stage += f"<div>Redraw it fixed:</div>{scaffold}" + (
-                        '<div class="ea-redrawbox"></div>' if not scaffold else
-                        '<div class="ea-redrawbox ea-with-starter"></div>'
+                        '<div class="ea-redrawbox"></div>'
+                        if not scaffold
+                        else '<div class="ea-redrawbox ea-with-starter"></div>'
                     )
             if verify:
                 stage += (
-                    '<div class="ea-check">'
-                    '<span class="ea-box"></span>Re-checked my fix</div>'
+                    '<div class="ea-check">' '<span class="ea-box"></span>Re-checked my fix</div>'
                 )
         cards_html += (
             f'<div class="ea-card" style="border-color:{primary};">'
@@ -2744,9 +2739,11 @@ _TRACE_OPACITIES = (1.0, 0.65, 0.40, 0.20)
 _PC_PLACEHOLDER_PALETTE = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4"]
 _PC_LEGEND_MAX = 6
 
+
 def _escape_attr(text: object) -> str:
     """Escape for use inside an SVG attribute (quotes included)."""
     return _html.escape(str(text), quote=True)
+
 
 def _svg_venn(
     left_label: str,
@@ -2782,8 +2779,7 @@ def _svg_venn(
         y = y_start
         for it in items:
             parts.append(
-                f'<text class="venn-item" x="{x}" y="{y}" '
-                f'text-anchor="middle">{_h(it)}</text>'
+                f'<text class="venn-item" x="{x}" y="{y}" ' f'text-anchor="middle">{_h(it)}</text>'
             )
             y += line_h
         return "".join(parts)
@@ -2822,13 +2818,13 @@ def _svg_venn(
         "</svg>"
     )
 
+
 def _render_venn_diagram(data: dict, primary: str, light: str) -> str:
     """Render a vennDiagramWorksheet payload as an HTML fragment."""
     title = data.get("title", "Venn Diagram")
     instructions = data.get(
         "instructions",
-        "Sort the words from the word bank into the correct section of "
-        "the Venn diagram.",
+        "Sort the words from the word bank into the correct section of " "the Venn diagram.",
     )
     left_label = data.get("left_label", "Left")
     right_label = data.get("right_label", "Right")
@@ -2876,9 +2872,7 @@ def _render_venn_diagram(data: dict, primary: str, light: str) -> str:
     header = ""
     day_label = data.get("day_label", "")
     if day_label:
-        header = (
-            f'<div class="ws-day" style="color:{primary};">{_h(day_label)}</div>'
-        )
+        header = f'<div class="ws-day" style="color:{primary};">{_h(day_label)}</div>'
 
     return f"""\
 {header}
@@ -2897,6 +2891,7 @@ def _hw_image_html(item: dict) -> str:
     if path:
         return f'<img class="hw-image" src="{_h(path)}" alt="{_h(item.get("text", ""))}">'
     return '<div class="hw-image-blank"></div>'
+
 
 def _hw_cell(item: dict, primary: str) -> str:
     """One practice cell: picture, traceable word, ruled write lines."""
@@ -2917,6 +2912,7 @@ def _hw_cell(item: dict, primary: str) -> str:
         f"{sub_html}"
         "</div>"
     )
+
 
 def _render_handwriting(data: dict, primary: str, light: str) -> str:
     """Render a handwriting worksheet as an HTML fragment.
@@ -2968,6 +2964,7 @@ def _pc_placeholder_colors(grid_size: int) -> list[list[str]]:
         for r in range(n)
     ]
 
+
 def _pc_reference_colors(image_path: str | None, grid_size: int) -> list[list[str]]:
     """Grid of hex colours sampled from *image_path* (NEAREST, like the PIL renderer).
 
@@ -2985,13 +2982,14 @@ def _pc_reference_colors(image_path: str | None, grid_size: int) -> list[list[st
             pixelated = bg.resize((n, n), Image.Resampling.NEAREST)
             px = pixelated.load()
             return [
-                ["#{:02x}{:02x}{:02x}".format(*px[c, r][:3]) for c in range(n)]
-                for r in range(n)
+                ["#{:02x}{:02x}{:02x}".format(*px[c, r][:3]) for c in range(n)] for r in range(n)
             ]
         except Exception as exc:
             import logging
+
             logging.getLogger(__name__).warning("pixel_copy: cannot read %s: %s", image_path, exc)
     return _pc_placeholder_colors(n)
+
 
 def _svg_pixel_grid(colors: list, grid_size: int, cell_px: int) -> str:
     """Inline-SVG pixel grid.
@@ -3032,16 +3030,16 @@ def _svg_pixel_grid(colors: list, grid_size: int, cell_px: int) -> str:
         f'shape-rendering="crispEdges">{"".join(parts)}</svg>'
     )
 
+
 def _pc_cell_px(grid_size: int) -> int:
     """Cell side in px: target ~336px per grid so two fit side by side when printed."""
     n = max(1, int(grid_size))
     return max(6, min(18, 336 // n))
 
+
 def _pc_legend(colors: list, primary: str, light: str) -> str:
     """Colour key showing the distinct colours used in the reference grid."""
-    counts = Counter(
-        cell for row in colors for cell in row if cell
-    )
+    counts = Counter(cell for row in colors for cell in row if cell)
     if not counts:
         return ""
     swatches = "".join(
@@ -3056,6 +3054,7 @@ def _pc_legend(colors: list, primary: str, light: str) -> str:
         f'<div class="pc-legend-row">{swatches}</div>'
         "</div>"
     )
+
 
 def _render_pixel_copy(data: dict, primary: str, light: str) -> str:
     """Render a pixel copy worksheet as an HTML fragment.
@@ -3105,42 +3104,39 @@ def _render_pixel_copy(data: dict, primary: str, light: str) -> str:
 """
 
 
-
 def _trace_row(char: str) -> str:
     """One ruled line with four fading trace letters (PIL 'trace-a-long')."""
     chars = "".join(
         f'<span class="abc-trace-char" style="color:rgba(0,0,0,{op:.2f});">{_h(char)}</span>'
         for op in _TRACE_OPACITIES
     )
-    return (
-        f'<div class="abc-rule"><div class="abc-trace-row">{chars}</div></div>'
-    )
+    return f'<div class="abc-rule"><div class="abc-trace-row">{chars}</div></div>'
+
 
 def _free_line() -> str:
     """Ruled line with nothing on it — free practice."""
     return '<div class="abc-rule"></div>'
 
+
 def _spacing_line(letter: str) -> str:
     """Spacing practice row of '__  __' starter blanks (PIL line 4)."""
-    pairs = "".join(
-        "<span>__&nbsp;&nbsp;__</span>" for _ in range(8)
-    )
+    pairs = "".join("<span>__&nbsp;&nbsp;__</span>" for _ in range(8))
     return (
         f'<div class="abc-practice-label">Write {_h(letter)} {_h(letter.lower())} '
         f"in the blanks to practice spacing:</div>"
         f'<div class="abc-spacing-row">{pairs}</div>'
     )
 
+
 def _words_column(heading: str, words: list, primary: str, light: str) -> str:
-    items = "".join(
-        f'<div class="abc-word">&#8226;&nbsp;&nbsp;{_h(w)}</div>' for w in words
-    )
+    items = "".join(f'<div class="abc-word">&#8226;&nbsp;&nbsp;{_h(w)}</div>' for w in words)
     return (
         f'<div class="abc-words-col" style="border-color:{primary};background:{light};">'
         f'<div class="abc-words-title" style="color:{primary};">{_h(heading)}</div>'
         f"{items}"
         f"</div>"
     )
+
 
 def _render_alphabet(data: dict, primary: str, light: str) -> str:
     """Render an alphabet worksheet fragment.
@@ -3177,28 +3173,22 @@ def _render_alphabet(data: dict, primary: str, light: str) -> str:
         f'<div class="abc-practice">'
         f'<div class="abc-practice-label">Trace and write the letter '
         f"{_h(letter)}:</div>"
-        f"{_trace_row(letter)}"       # Line 1: uppercase, fading
+        f"{_trace_row(letter)}"  # Line 1: uppercase, fading
         f"{_trace_row(letter.lower())}"  # Line 2: lowercase, fading
         f'<div class="abc-practice-label">Now write it on your own:</div>'
-        f"{_free_line()}"              # Line 3: free practice
-        f"{_spacing_line(letter)}"      # Line 4: spacing blanks
+        f"{_free_line()}"  # Line 3: free practice
+        f"{_spacing_line(letter)}"  # Line 4: spacing blanks
         f"</div>"
     )
 
     words = (
         '<div class="abc-words"><div class="abc-words-grid">'
-        + _words_column(
-            f"Words that start with {letter}", starting_words, primary, light
-        )
-        + _words_column(
-            f"Words that have {letter} in them", containing_words, primary, light
-        )
+        + _words_column(f"Words that start with {letter}", starting_words, primary, light)
+        + _words_column(f"Words that have {letter} in them", containing_words, primary, light)
         + "</div></div>"
     )
 
-    instructions = _h(
-        data.get("instructions", "Practice your letters and reading words!")
-    )
+    instructions = _h(data.get("instructions", "Practice your letters and reading words!"))
 
     return f"""\
 {dh}
@@ -3209,8 +3199,6 @@ def _render_alphabet(data: dict, primary: str, light: str) -> str:
 {practice}
 {words}
 """
-
-
 
 
 def _render_sequencing(data: dict, primary: str, light: str) -> str:
@@ -3300,7 +3288,12 @@ def _fib_segment_fields(seg: Any) -> tuple[str | None, int | None, bool]:
             int(seg["gap"]) if seg.get("gap") is not None else None,
             bool(seg.get("newline", False)),
         )
-    return (getattr(seg, "text", None), getattr(seg, "gap", None), bool(getattr(seg, "newline", False)))
+    return (
+        getattr(seg, "text", None),
+        getattr(seg, "gap", None),
+        bool(getattr(seg, "newline", False)),
+    )
+
 
 def _render_fill_in_the_blank(data: dict, primary: str, light: str) -> str:
     """Render a fill-in-the-blank worksheet as an HTML fragment.
@@ -3345,9 +3338,7 @@ def _render_fill_in_the_blank(data: dict, primary: str, light: str) -> str:
                 )
     paras_html.append("".join(para_parts))
 
-    paras = "".join(
-        f'<p class="fib-para">{body}</p>' for body in paras_html if body
-    )
+    paras = "".join(f'<p class="fib-para">{body}</p>' for body in paras_html if body)
     passage_html = f'<div class="fib-passage">{paras}</div>'
 
     # -- Word bank (shuffled display order) ----------------------------------
@@ -3363,9 +3354,7 @@ def _render_fill_in_the_blank(data: dict, primary: str, light: str) -> str:
             f"</div>"
         )
 
-    instructions = _h(
-        data.get("instructions", "Use the word bank to fill in the blanks.")
-    )
+    instructions = _h(data.get("instructions", "Use the word bank to fill in the blanks."))
 
     return f"""\
 {dh}
@@ -3384,6 +3373,7 @@ def _story_title_row() -> str:
         '<div class="sm-story-title-line"></div>'
         "</div>"
     )
+
 
 def _field_box(field: dict, show_answers: bool, light: str, primary: str) -> str:
     label = _h(field.get("label", ""))
@@ -3405,6 +3395,7 @@ def _field_box(field: dict, show_answers: bool, light: str, primary: str) -> str
         f'<div class="sm-box-body">{prompt_html}{body}</div>'
         f"</div>"
     )
+
 
 def _render_story_map(data: dict, primary: str, light: str) -> str:
     """Render a story map worksheet as an HTML fragment."""
@@ -3445,16 +3436,17 @@ def _render_story_map(data: dict, primary: str, light: str) -> str:
 """
 
 
-
 def _fmt_num(value: float) -> str:
     """Format a tick value the same way the PIL renderer labels ticks."""
     return str(int(value)) if float(value) == int(value) else str(value)
+
 
 def _task_get(task: Any, key: str, default: Any = None) -> Any:
     """Read a field from a task that is either a plain dict or a dataclass."""
     if isinstance(task, dict):
         return task.get(key, default)
     return getattr(task, key, default)
+
 
 def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
     """Render one task as an SVG number line fragment.
@@ -3507,10 +3499,10 @@ def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
         f'<line class="nl-axis" x1="{x1 - 8:.1f}" y1="{line_y:.1f}" '
         f'x2="{x2 + 8:.1f}" y2="{line_y:.1f}"/>',
         f'<polygon class="nl-axis" fill="#111" points="'
-        f'{x2 + 14:.1f},{line_y:.1f} {x2 + 4:.1f},{line_y - 5.5:.1f} '
+        f"{x2 + 14:.1f},{line_y:.1f} {x2 + 4:.1f},{line_y - 5.5:.1f} "
         f'{x2 + 4:.1f},{line_y + 5.5:.1f}"/>',
         f'<polygon class="nl-axis" fill="#111" points="'
-        f'{x1 - 14:.1f},{line_y:.1f} {x1 - 4:.1f},{line_y - 5.5:.1f} '
+        f"{x1 - 14:.1f},{line_y:.1f} {x1 - 4:.1f},{line_y - 5.5:.1f} "
         f'{x1 - 4:.1f},{line_y + 5.5:.1f}"/>',
     ]
 
@@ -3579,6 +3571,7 @@ def _svg_number_line(task: Any, show_answers: bool, primary: str) -> str:
     parts.append("</svg>")
     return "".join(parts)
 
+
 def _render_number_line(data: dict, primary: str, light: str) -> str:
     """Render a number line worksheet as an HTML fragment."""
     title = data.get("title", "Number Line")
@@ -3598,9 +3591,7 @@ def _render_number_line(data: dict, primary: str, light: str) -> str:
     task_html = ""
     for idx, task in enumerate(tasks, 1):
         prompt = _task_get(task, "prompt") or ""
-        prompt_html = (
-            f'<div class="nl-prompt"><strong>{idx}.</strong> {_h(prompt)}</div>'
-        )
+        prompt_html = f'<div class="nl-prompt"><strong>{idx}.</strong> {_h(prompt)}</div>'
         svg = _svg_number_line(task, show_answers, primary)
         if not svg:
             continue
@@ -3634,6 +3625,7 @@ def _label_dicts(labels: list) -> list[dict]:
             )
     return out
 
+
 def _diagram_html(labels: list[dict], image_path: str | None, primary: str) -> str:
     """Diagram box: image if provided, else placeholder, with callout dots."""
     if image_path:
@@ -3654,27 +3646,18 @@ def _diagram_html(labels: list[dict], image_path: str | None, primary: str) -> s
             f"{_h(lbl.get('number', idx + 1))}</div>"
         )
 
-    return (
-        f'<div class="ld-diagram">{inner}{"".join(dots)}'
-        f"</div>"
-    )
+    return f'<div class="ld-diagram">{inner}{"".join(dots)}' f"</div>"
+
 
 def _word_bank_html(labels: list[dict], primary: str, light: str) -> str:
     """Shuffled tile bank of the label answers (plus optional hints)."""
-    tiles = [
-        {"answer": lbl.get("answer", ""), "hint": lbl.get("hint")}
-        for lbl in labels
-    ]
+    tiles = [{"answer": lbl.get("answer", ""), "hint": lbl.get("hint")} for lbl in labels]
     random.shuffle(tiles)
 
     tile_html = "".join(
         f'<span class="ld-word-tile" style="border-color:{_h(primary)};">'
         f"{_h(t['answer'])}"
-        + (
-            f'<span class="ld-word-tile-hint">{_h(t["hint"])}</span>'
-            if t["hint"]
-            else ""
-        )
+        + (f'<span class="ld-word-tile-hint">{_h(t["hint"])}</span>' if t["hint"] else "")
         + "</span>"
         for t in tiles
     )
@@ -3685,6 +3668,7 @@ def _word_bank_html(labels: list[dict], primary: str, light: str) -> str:
         f'<div class="ld-word-bank-tiles">{tile_html}</div>'
         f"</div>"
     )
+
 
 def _label_slot(label: dict, show_answers: bool) -> str:
     """One numbered slot: '3. ______________' or the answer in answer mode."""
@@ -3698,6 +3682,7 @@ def _label_slot(label: dict, show_answers: bool) -> str:
         f'<span class="ld-label-number">{number}.</span>'
         f"{body}</div>"
     )
+
 
 def _render_labeled_diagram(data: dict, primary: str, light: str) -> str:
     """Render a labeled diagram worksheet as an HTML fragment."""
@@ -3722,9 +3707,7 @@ def _render_labeled_diagram(data: dict, primary: str, light: str) -> str:
     slots = "".join(_label_slot(lbl, show_answers) for lbl in labels)
     labels_html = f'<div class="ld-labels">{slots}</div>' if slots else ""
 
-    instructions = _h(
-        data.get("instructions", "Label each part of the diagram.")
-    )
+    instructions = _h(data.get("instructions", "Label each part of the diagram."))
 
     return f"""{_LD_CSS}
 {dh}
@@ -3738,9 +3721,6 @@ def _render_labeled_diagram(data: dict, primary: str, light: str) -> str:
 {bank}
 {labels_html}
 """
-
-
-
 
 
 def _render_two_operand(data: dict, primary: str, light: str) -> str:
@@ -3776,12 +3756,10 @@ def _render_two_operand(data: dict, primary: str, light: str) -> str:
             f'<div class="to-row"><span class="to-op">{op}</span>{b.rjust(width)}</div>'
             f'<div class="to-underline" style="width:{width * 1.2}em;"></div>'
             f'<div class="to-answer-box"></div>'
-            f'</div></div>'
+            f"</div></div>"
         )
 
-    instructions = _h(
-        data.get("instructions", "Solve each problem. Show your work if needed.")
-    )
+    instructions = _h(data.get("instructions", "Solve each problem. Show your work if needed."))
 
     return f"""\
 {dh}
