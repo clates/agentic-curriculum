@@ -194,7 +194,8 @@ def test_an_unverified_email_registering_again_replaces_the_pending_account(clie
     code = invite()
     r = register(client, password=NEW, family="Renamed", code=code)
     assert r.status_code == 202
-    assert counts() == {"family": 2, "user": 1, "challenge": 1}  # fam_local + the pending family
+    # fam_local + the pending family; the old code is kept (retired) to count toward the daily cap
+    assert counts() == {"family": 2, "user": 1, "challenge": 2}
     assert rows("SELECT f.name FROM family f JOIN app_user u USING (family_id)") == [("Renamed",)]
     assert used(code)
     second = last_code()
@@ -371,8 +372,23 @@ def test_re_registering_a_pending_email_cannot_take_it_over(client):
 def test_the_right_code_with_a_wrong_password_fails_and_counts(client):
     register(client)
     assert verify(client, last_code(), password="not the password").status_code == 400
-    assert rows("SELECT attempts FROM auth_challenge") == [(1,)]
+    assert rows("SELECT attempts FROM auth_challenge") == [(0,)]  # no try used: it could never win
+    [(failures,)] = rows(
+        "SELECT failures FROM login_attempt WHERE scope='user_ip' AND key=?",
+        f"verify:{EMAIL}|testclient",
+    )
+    assert failures == 1  # but the lockout counts it
     assert verify(client, last_code()).status_code == 200
+
+
+def test_wrong_passwords_do_not_burn_the_challenge(client, now, monkeypatch):
+    monkeypatch.setenv("AUTH_BACKOFF_SCALE", "0.001")  # keep the lockout out of the way
+    register(client)
+    for _ in range(registration.MAX_ATTEMPTS + 2):
+        now.t += 1
+        assert verify(client, last_code(), password="a stranger's guess").status_code == 400
+    now.t += 1
+    assert verify(client, last_code()).status_code == 200  # the owner's code still works
 
 
 def test_every_verify_failure_looks_the_same(client, now, monkeypatch):
@@ -456,3 +472,52 @@ def test_mail_goes_out_on_a_daemon_thread(monkeypatch):
     monkeypatch.setattr(registration.threading, "Thread", lambda **k: made.append(k) or real(**k))
     registration.send_later(EMAIL, "123456")  # the fixture's wrapper joins the thread
     assert made[0]["daemon"] is True and seen[0] is not threading.main_thread()
+
+
+# --- final fixes: header-shaped emails, resend limits ---------------------------------------
+
+
+@pytest.mark.parametrize(
+    "email", ["a,victim@t.com", "x<victim@t.com>", '"x"@t.com', "a b@t.com", "a@t", "a@t..com"]
+)
+def test_header_shaped_emails_get_the_plain_400(client, email):
+    r = register(client, email=email)
+    assert r.status_code == 400 and r.json() == {"detail": "Enter a valid email address."}
+    assert counts()["user"] == 0 and outbox() == []
+
+
+def test_many_resends_from_one_ip_are_held_whatever_the_email(client, now):
+    register(client)
+    for i in range(lockout.IP_CEILING):
+        email = EMAIL if i % 2 else f"nobody{i}@example.com"
+        r = client.post("/auth/resend", json={"email": email})
+        assert r.status_code == 202 and r.json() == {"status": "check_email"}
+    for email in (EMAIL, "nobody@example.com"):
+        r = client.post("/auth/resend", json={"email": email})
+        assert r.status_code == 429 and r.json()["detail"] == "too_many_attempts"
+        assert int(r.headers["Retry-After"]) > 0
+    now.t += lockout.IP_LOCK_S + 1
+    assert client.post("/auth/resend", json={"email": EMAIL}).status_code == 202
+
+
+def test_at_most_ten_codes_per_account_in_a_day(client, now, monkeypatch):
+    monkeypatch.setenv("AUTH_BACKOFF_SCALE", "0.001")  # resend cooldown and IP limit out of the way
+    register(client)  # code 1
+    register(client)  # code 2: registering again always issues one
+    now.t += 1
+    client.post("/auth/login", json={"username": EMAIL, "password": PW})  # code 3
+    for _ in range(registration.CODES_PER_DAY - 3):
+        now.t += 1
+        client.post("/auth/resend", json={"email": EMAIL})
+    assert len(outbox()) == registration.CODES_PER_DAY
+    tenth = last_code()
+    now.t += 1
+    r = client.post("/auth/resend", json={"email": EMAIL})  # the 11th
+    assert r.status_code == 202 and r.json() == {"status": "check_email"}
+    assert register(client).status_code == 202
+    assert len(outbox()) == registration.CODES_PER_DAY  # nothing more sent
+    assert last_code() == tenth
+    now.t += registration.DAY_S  # a rolling day: the first codes have aged out
+    client.post("/auth/resend", json={"email": EMAIL})
+    assert len(outbox()) == registration.CODES_PER_DAY + 1
+    assert verify(client, last_code()).status_code == 200

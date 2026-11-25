@@ -34,7 +34,13 @@ test.describe('Creating an account', () => {
   test('register, enter the emailed code and land on This week', async ({ page }) => {
     const email = newEmail();
     await register(page, email);
-    await page.getByLabel('6-digit code').fill(await latestCode(email));
+    const code = await latestCode(email);
+    const field = page.getByLabel('6-digit code');
+    await field.fill(`${code.slice(0, 3)} ${code.slice(3)}`); // pasted with a space, as mail shows it
+    await expect(field).toHaveValue(code);
+    await field.fill('');
+    await field.pressSequentially(`${code.slice(0, 3)} -${code.slice(3)}9`); // typed, one extra digit
+    await expect(field).toHaveValue(code);
     await page.getByRole('button', { name: 'Confirm' }).click();
     await expect(page).toHaveURL(/\/week$/);
     expect((await sessionCookie(page.context()))?.httpOnly).toBe(true);

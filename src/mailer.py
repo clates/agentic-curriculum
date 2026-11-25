@@ -1,9 +1,9 @@
 """Outgoing email: SMTP in production, a JSON-lines outbox file in dev and tests.
 
 Env: SMTP_HOST, SMTP_PORT (587 STARTTLS; 465 implicit TLS), SMTP_USER, SMTP_PASSWORD, SMTP_FROM
-(default SMTP_USER), MAILER_OUTBOX (path; every message is appended as one JSON line). With
-neither SMTP_HOST nor MAILER_OUTBOX set, nothing is sent. The password and message bodies are
-never logged.
+(default SMTP_USER; with neither, sending over SMTP raises MailError), MAILER_OUTBOX (path; every
+message is appended as one JSON line). With neither SMTP_HOST nor MAILER_OUTBOX set, nothing is
+sent. Mail goes only to the given recipients. The password and message bodies are never logged.
 """
 
 from __future__ import annotations
@@ -39,9 +39,12 @@ def send(to: str | list[str], subject: str, body: str) -> None:
     host = os.environ["SMTP_HOST"].strip()
     port = int(os.environ.get("SMTP_PORT", "587") or 587)
     user = os.environ.get("SMTP_USER", "").strip()
+    sender = os.environ.get("SMTP_FROM", "").strip() or user
+    if not sender:
+        raise MailError("mail not sent: set SMTP_FROM or SMTP_USER")
     msg = EmailMessage()
     msg["Subject"] = subject
-    msg["From"] = os.environ.get("SMTP_FROM", "").strip() or user or recipients[0]
+    msg["From"] = sender
     msg["To"] = ", ".join(recipients)
     msg.set_content(body)
     context = ssl.create_default_context()
@@ -55,6 +58,6 @@ def send(to: str | list[str], subject: str, body: str) -> None:
                 server.starttls(context=context)
             if user:
                 server.login(user, os.environ.get("SMTP_PASSWORD", ""))
-            server.send_message(msg)
+            server.send_message(msg, to_addrs=recipients)
     except (smtplib.SMTPException, OSError) as exc:
         raise MailError(f"mail transport failed: {type(exc).__name__}") from None

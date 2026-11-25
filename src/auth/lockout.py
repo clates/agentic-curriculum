@@ -11,7 +11,7 @@ Three layers, so nobody can lock the real owner out from somewhere else:
   behind the same public address cannot stop the owner's own phone at home; the pair layer's own
   backoff still applies, so someone who shares that address can still trigger the pair lock
   (`python -m auth unlock` clears it, and the 30-day session cookie means the owner rarely needs
-  to type the password).
+  to type the password). Code resends count here too (``reserve_ip``), with no pair to exempt.
 * ``user``     one username across all addresses (a spread-out attack). 30 wrong tries inside an hour
   make addresses this user has never signed in from wait 30 s, doubling up to 5 minutes. An
   address the owner has signed in from in the last 30 days is never held by this layer, so the
@@ -164,18 +164,7 @@ def reserve(conn: sqlite3.Connection, username: str, ip: str, now: float) -> flo
             lock_count=0,
         )
 
-        # -- address ceiling over a rolling window
-        failures, window = (ip_row[0], ip_row[1]) if ip_row else (0, now)
-        if now - window > IP_WINDOW_S * s:
-            failures, window = 0, now
-        failures += 1
-        lock_until = ip_row[3] if ip_row else 0.0  # a known pair passing through keeps the lock
-        if failures >= IP_CEILING:
-            lock_until, failures, window = now + IP_LOCK_S * s, 0, now
-        _save(
-            conn, "ip", ip_key, failures=failures, window_start=window, last_failure_at=now,
-            locked_until=lock_until,
-        )  # fmt: skip
+        _count_ip(conn, ip_key, ip_row, now)
 
         # -- username ceiling across addresses: slows strangers, never the known address
         failures, window, count = (user[0], user[1], user[4]) if user else (0, now, 0)
@@ -193,6 +182,40 @@ def reserve(conn: sqlite3.Connection, username: str, ip: str, now: float) -> flo
             conn, "user", user_key, failures=failures, window_start=window, last_failure_at=now,
             locked_until=lock_until, lock_count=count,
         )  # fmt: skip
+        conn.execute("COMMIT")
+        return 0.0
+    except BaseException:
+        conn.execute("ROLLBACK")
+        raise
+
+
+def _count_ip(conn, ip_key: str, ip_row, now: float) -> None:
+    """The address ceiling over a rolling window."""
+    s = scale()
+    failures, window = (ip_row[0], ip_row[1]) if ip_row else (0, now)
+    if now - window > IP_WINDOW_S * s:
+        failures, window = 0, now
+    failures += 1
+    lock_until = ip_row[3] if ip_row else 0.0  # a known pair passing through keeps the lock
+    if failures >= IP_CEILING:
+        lock_until, failures, window = now + IP_LOCK_S * s, 0, now
+    _save(
+        conn, "ip", ip_key, failures=failures, window_start=window, last_failure_at=now,
+        locked_until=lock_until,
+    )  # fmt: skip
+
+
+def reserve_ip(conn: sqlite3.Connection, ip: str, now: float) -> float:
+    """Gate and count one request against the address layer alone (no username, no password).
+    Returns seconds to wait (> 0 means locked and nothing was recorded)."""
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        _prune(conn, now)
+        row = _row(conn, "ip", ip)
+        if row and row[3] > now:
+            conn.execute("COMMIT")
+            return math.ceil(row[3] - now)
+        _count_ip(conn, ip, row, now)
         conn.execute("COMMIT")
         return 0.0
     except BaseException:

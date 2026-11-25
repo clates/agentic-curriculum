@@ -1,13 +1,16 @@
 """Self-registration: an invite code, then a 6-digit code by email.
 
-Codes live in ``auth_challenge`` (purpose 'verify_email', subject the email, only a SHA-256 kept),
-one per email: issuing a new one deletes the old. They last 15 minutes and allow 5 tries.
+Codes live in ``auth_challenge`` (purpose 'verify_email', subject the email, only a SHA-256 kept).
+Only the newest code for an email works: issuing one retires the others, which are kept for a day
+so that at most 10 codes go to one email in 24 hours. A code lasts 15 minutes and allows 5 tries;
+a try without the account's password (which can never succeed) does not use one up.
 Verifying needs the code AND the account's password, so re-registering a pending email cannot
 hand the attacker the victim's verification. Register and resend answer the same whether or not
 the email has an account; every accepted registration spends its invite. Failed registers and
 verifies count against the login lockout keyed per email (``register:<email>``,
 ``verify:<email>``), so failures pile up on the email across resends and one email's trouble
-never touches another's. Mail goes out on a daemon thread, after the response.
+never touches another's. Every resend counts against the address's login lockout.
+Mail goes out on a daemon thread, after the response.
 Times are unix seconds from ``auth.clock``. No code, password or email body is ever logged.
 """
 
@@ -33,8 +36,10 @@ PURPOSE = "verify_email"
 CODE_TTL_S = 15 * 60
 MAX_ATTEMPTS = 5
 RESEND_S = 60  # times AUTH_BACKOFF_SCALE
+CODES_PER_DAY = 10
+DAY_S = 86400
 FAMILY_NAME_MAX = 80
-EMAIL_RE = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
+EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$")
 SUBJECT = "Your sign-in code"
 BODY = (
     "Your sign-in code is {code}.\n\n"
@@ -62,9 +67,23 @@ def normalize_email(raw: str) -> str | None:
     return email if len(email) <= store.USERNAME_MAX and EMAIL_RE.fullmatch(email) else None
 
 
-def _new_code(conn, email: str, now: float) -> str:
+def _new_code(conn, email: str, now: float) -> str | None:
+    """Inside the transaction: a new code that retires the old ones, or None past the daily cap."""
+    mine = "purpose=? AND subject=?"
+    conn.execute(
+        f"DELETE FROM auth_challenge WHERE {mine} AND CAST(created_at AS REAL) <= ?",
+        (PURPOSE, email, now - DAY_S),
+    )
+    (issued,) = conn.execute(
+        f"SELECT COUNT(*) FROM auth_challenge WHERE {mine}", (PURPOSE, email)
+    ).fetchone()
+    if issued >= CODES_PER_DAY:
+        return None
+    conn.execute(
+        f"UPDATE auth_challenge SET expires_at=MIN(CAST(expires_at AS REAL), ?) WHERE {mine}",
+        (now, PURPOSE, email),
+    )
     code = f"{secrets.randbelow(10**6):06d}"
-    conn.execute("DELETE FROM auth_challenge WHERE purpose=? AND subject=?", (PURPOSE, email))
     conn.execute(
         "INSERT INTO auth_challenge (challenge_id, purpose, subject, code_hash, created_at, "
         "expires_at) VALUES (?,?,?,?,?,?)",
@@ -159,17 +178,22 @@ def verify(email: str, code: str, password: str, ip: str, user_agent: str | None
 
 
 def _use_code(conn, address, code, password_ok, user, now, user_agent) -> str | None:
-    """Inside the transaction: a session token on a match, else None (a miss counts a try)."""
+    """Inside the transaction: a session token on a match, else None. A wrong code with the right
+    password counts a try; a wrong password never could have worked, so it costs no try (the
+    lockout still counts it)."""
     row = conn.execute(
         "SELECT challenge_id, code_hash, attempts, expires_at FROM auth_challenge "
-        "WHERE purpose=? AND subject=? AND consumed_at IS NULL",
+        "WHERE purpose=? AND subject=? AND consumed_at IS NULL "
+        "ORDER BY rowid DESC LIMIT 1",  # the newest
         (PURPOSE, address),
     ).fetchone()
     # The account must be the one whose password was checked (not replaced since).
     live = user is not None and store.get_user(conn, address) == user and not user.disabled
     if not (row and live and row[2] < MAX_ATTEMPTS and float(row[3]) > now):
         return None
-    if not (password_ok and hmac.compare_digest(row[1], store.token_hash(code.strip()))):
+    if not password_ok:
+        return None
+    if not hmac.compare_digest(row[1], store.token_hash(code.strip())):
         conn.execute(
             "UPDATE auth_challenge SET attempts=attempts+1 WHERE challenge_id=?", (row[0],)
         )
@@ -214,6 +238,18 @@ def issue_code(email: str) -> tuple[str, str] | None:
         return (address, code) if code else None
     finally:
         conn.close()
+
+
+def resend(email: str, ip: str) -> Result:
+    """Every request counts against the address (whatever the email); a held address waits."""
+    conn = store.connect()
+    try:
+        wait = lockout.reserve_ip(conn, ip, clock.now())
+    finally:
+        conn.close()
+    if wait > 0:
+        return Result("locked", retry_after=int(wait))
+    return Result("ok", mail=issue_code(email))
 
 
 def send_code(email: str, code: str) -> None:

@@ -265,8 +265,11 @@ class ResendBody(BaseModel):
 
 
 @router.post("/resend", status_code=202)
-def resend(body: ResendBody):
-    _mail_later(registration.issue_code(body.email))
+def resend(body: ResendBody, request: Request):
+    result = registration.resend(body.email, client_ip(request))
+    if held := _held_back(result):
+        return held
+    _mail_later(result.mail)
     return CHECK_EMAIL
 
 

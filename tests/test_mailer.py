@@ -40,8 +40,8 @@ class FakeSMTP:
         if password == "bad":
             raise smtplib.SMTPAuthenticationError(535, b"nope " + password.encode())
 
-    def send_message(self, msg):
-        self.msg = msg
+    def send_message(self, msg, to_addrs=None):
+        self.msg, self.to_addrs = msg, to_addrs
 
 
 def test_outbox_gets_one_json_line_per_message(monkeypatch, tmp_path):
@@ -80,6 +80,25 @@ def test_smtp_uses_from_starttls_and_login(monkeypatch):
     assert s.msg["From"] == "Family <noreply@example.com>"
     assert s.msg["To"] == "a@x.com"
     assert s.msg["Subject"] == "Subj"
+    assert s.to_addrs == ["a@x.com"]
+
+
+def test_smtp_sends_only_to_the_explicit_list(monkeypatch):
+    FakeSMTP.instances.clear()
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setenv("SMTP_HOST", "smtp.example.com")
+    monkeypatch.setenv("SMTP_FROM", "noreply@example.com")
+    mailer.send(["a@x.com", "b@x.com"], "S", "B")
+    assert FakeSMTP.instances[0].to_addrs == ["a@x.com", "b@x.com"]
+
+
+def test_no_from_address_raises_and_never_uses_the_recipient(monkeypatch):
+    FakeSMTP.instances.clear()
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setenv("SMTP_HOST", "smtp.example.com")
+    with pytest.raises(mailer.MailError):
+        mailer.send("a@x.com", "S", "B")
+    assert FakeSMTP.instances == []  # nothing was connected to
 
 
 def test_transport_failure_raises_mailerror_without_password(monkeypatch):

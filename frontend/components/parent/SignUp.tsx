@@ -43,7 +43,6 @@ function Field(props: {
   autoComplete?: string;
   hint?: string;
   inputMode?: 'numeric';
-  maxLength?: number;
 }) {
   const id = `signup-${props.label.replace(/\W+/g, '-').toLowerCase()}`;
   return (
@@ -57,7 +56,6 @@ function Field(props: {
         type={props.type ?? 'text'}
         autoComplete={props.autoComplete}
         inputMode={props.inputMode}
-        maxLength={props.maxLength}
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
@@ -186,7 +184,7 @@ export function CheckEmail({
     setProblem('');
     setResent(false);
     try {
-      await apiClient.post('/auth/verify', { email, code: code.trim(), password });
+      await apiClient.post('/auth/verify', { email, code, password });
       window.location.assign(next); // a full load, so the new cookie is on the next request
     } catch (error) {
       setProblem(problemFor(error, () => copy.signUp.badCode));
@@ -211,9 +209,8 @@ export function CheckEmail({
           label={copy.signUp.code}
           autoComplete="one-time-code"
           inputMode="numeric"
-          maxLength={6}
           value={code}
-          onChange={setCode}
+          onChange={(value) => setCode(value.replace(/\D/g, '').slice(0, 6))}
         />
         <div role="alert" className="min-h-6 text-neutral-900">
           {problem}
@@ -223,7 +220,7 @@ export function CheckEmail({
         </div>
         <button
           type="submit"
-          disabled={sending || code.trim().length !== 6}
+          disabled={sending || code.length !== 6}
           className={`${primaryButton} w-full disabled:cursor-not-allowed disabled:opacity-60`}
         >
           {sending ? copy.signUp.confirming : copy.signUp.confirm}
