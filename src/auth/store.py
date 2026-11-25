@@ -21,6 +21,7 @@ SESSION_LIFETIME_S = 30 * 86400
 SESSION_REFRESH_S = 3600
 USERNAME_MAX = 64
 USER_AGENT_MAX = 200
+PERMISSIONS = frozenset({"admin"})
 
 
 def connect() -> sqlite3.Connection:
@@ -66,15 +67,20 @@ class UserError(ValueError):
     pass
 
 
+def create_family(conn: sqlite3.Connection, name: str) -> str:
+    """Make a family and return its id (fam_ + 12 hex)."""
+    family_id = f"fam_{uuid.uuid4().hex[:12]}"
+    conn.execute(
+        "INSERT INTO family (family_id, name, created_at) VALUES (?,?,?)",
+        (family_id, name, datetime.now(UTC).isoformat(timespec="seconds")),
+    )
+    return family_id
+
+
 def create_user(
     conn: sqlite3.Connection, username: str, password: str, family_id: str = DEFAULT_FAMILY
 ) -> User | None:
     """Create a user. Returns None (and changes nothing) when the username already exists."""
-    if family_id != DEFAULT_FAMILY:
-        raise UserError(
-            "Only the default family (fam_local) is allowed: per-family separation is not built "
-            "yet, so every account sees all data."
-        )
     name = normalize_username(username)
     if not name or any(ch.isspace() for ch in name):
         raise UserError("Username must be a single word with no spaces.")
@@ -91,6 +97,40 @@ def create_user(
          datetime.now(UTC).isoformat(timespec="seconds")),
     )  # fmt: skip
     return get_user(conn, name)
+
+
+def permissions(conn: sqlite3.Connection, user_id: str) -> frozenset[str]:
+    rows = conn.execute(
+        "SELECT permission FROM user_permission WHERE user_id=?", (user_id,)
+    ).fetchall()
+    return frozenset(r[0] for r in rows)
+
+
+def grant(conn: sqlite3.Connection, username: str, permission: str) -> bool:
+    """Give a user a permission (idempotent). False when the user does not exist."""
+    if permission not in PERMISSIONS:
+        raise UserError(
+            f"Unknown permission: {permission} (known: {', '.join(sorted(PERMISSIONS))})"
+        )
+    user = get_user(conn, username)
+    if not user:
+        return False
+    conn.execute(
+        "INSERT OR IGNORE INTO user_permission (user_id, permission, granted_at) VALUES (?,?,?)",
+        (user.id, permission, datetime.now(UTC).isoformat(timespec="seconds")),
+    )
+    return True
+
+
+def revoke(conn: sqlite3.Connection, username: str, permission: str) -> bool:
+    """Take a permission away. False when the user does not exist."""
+    user = get_user(conn, username)
+    if not user:
+        return False
+    conn.execute(
+        "DELETE FROM user_permission WHERE user_id=? AND permission=?", (user.id, permission)
+    )
+    return True
 
 
 def set_password(conn: sqlite3.Connection, username: str, password: str) -> bool:

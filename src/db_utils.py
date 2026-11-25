@@ -74,12 +74,16 @@ def get_student_profile(student_id: str) -> dict | None:
     return rows[0] if rows else None
 
 
-def list_students() -> list[dict]:
-    """Every student profile, as dicts shaped like get_student_profile's."""
-    return _query_profiles()
+def list_students(family_id: str | None = None) -> list[dict]:
+    """Student profiles (the family's, when given), as dicts shaped like get_student_profile's."""
+    if family_id is None:
+        return _query_profiles()
+    return _query_profiles(" WHERE family_id = ?", (family_id,))
 
 
-def create_student(student_id: str, metadata: dict, plan_rules: dict) -> dict:
+def create_student(
+    student_id: str, metadata: dict, plan_rules: dict, family_id: str = "fam_local"
+) -> dict:
     """Create a student profile with empty progress; ValueError if the id is taken."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -98,11 +102,11 @@ def create_student(student_id: str, metadata: dict, plan_rules: dict) -> dict:
 
         cursor.execute(
             """
-            INSERT INTO student_profiles 
-            (student_id, progress_blob, plan_rules_blob, metadata_blob)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO student_profiles
+            (student_id, progress_blob, plan_rules_blob, metadata_blob, family_id)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (student_id, progress_blob, plan_rules_blob, metadata_blob),
+            (student_id, progress_blob, plan_rules_blob, metadata_blob, family_id),
         )
         conn.commit()
 

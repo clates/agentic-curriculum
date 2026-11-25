@@ -87,7 +87,7 @@ def automation_client(tmp_path, monkeypatch):
 def test_feedback_submission_queues_trio_generation(automation_client):
     trio_calls = []
 
-    def fake_trio(student_id):
+    def fake_trio(student_id, family):
         trio_calls.append(student_id)
 
     with patch("src.main.generate_trio_for_student", fake_trio):

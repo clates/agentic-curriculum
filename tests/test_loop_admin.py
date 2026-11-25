@@ -251,3 +251,122 @@ def test_a_written_week_can_be_reviewed_with_its_run_record(api, conn, db_path, 
     act(api, "new_week", week="2026-01-19")
     newer = wp.latest_plan_for_student(conn, FAM, "kid")
     assert api.get(f"{BASE}/students/kid/weeks/{newer.plan_id}/review").status_code == 409
+
+
+# --- login on: admin only, and only for the admin's own family -----------------------------------
+
+PASSWORD = "correct horse battery"
+
+
+@pytest.fixture
+def two_families(db_path, monkeypatch):
+    """Family A owns the fixture's "kid", with a week and a dead job. Family B owns "b_kid" and has
+    an admin and an ordinary parent. Both are created families, so nothing can lean on fam_local."""
+    from auth import passwords, store
+
+    monkeypatch.setenv("AUTH_REQUIRED", "1")
+    monkeypatch.setattr(passwords, "CURRENT", passwords.ScryptParams(n=2**10, r=8, p=1))
+    c = jobs.connect(db_path)
+    fam_a, fam_b = store.create_family(c, "A"), store.create_family(c, "B")
+    c.execute("UPDATE student_profiles SET family_id=? WHERE student_id='kid'", (fam_a,))
+    c.execute(
+        "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob, metadata_blob,"
+        " family_id) VALUES ('b_kid', '{}', '{}', ?, ?)",
+        ('{"name": "Bea", "grade_level": 2}', fam_b),
+    )
+    for name, fam in (("parenta", fam_a), ("adminb", fam_b), ("parentb", fam_b)):
+        store.create_user(c, name, PASSWORD, fam)
+    store.grant(c, "adminb", "admin")
+    c.commit()
+    plan = wp.create_plan(c, fam_a, "kid", "2026-01-12")
+    job = jobs.enqueue(c, fam_a, "outline", f"outlines:{plan.plan_id}", {"plan_id": plan.plan_id})[
+        0
+    ]
+    c.execute("UPDATE jobs SET state='dead', last_error='A secret' WHERE id=?", (job.id,))
+    c.commit()
+    yield {"conn": c, "fam_a": fam_a, "fam_b": fam_b, "plan_id": plan.plan_id, "job_id": job.id}
+    c.close()
+
+
+def signed_in(username):
+    from main import app
+
+    c = TestClient(app)
+    assert (
+        c.post("/auth/login", json={"username": username, "password": PASSWORD}).status_code == 200
+    )
+    return c
+
+
+def rows(conn):
+    tables = ("week_plan", "jobs", "student_profiles")
+    return {t: conn.execute(f"SELECT * FROM {t} ORDER BY 1").fetchall() for t in tables}
+
+
+def console_routes():
+    from fastapi.routing import APIRoute
+
+    from main import app
+    from tests.test_auth import iter_routes
+
+    return [
+        (m, r.path)
+        for r in iter_routes(app.routes)
+        if isinstance(r, APIRoute) and r.path.startswith(BASE)
+        for m in r.methods
+    ]
+
+
+def test_console_is_404_for_non_admins_with_login_on(two_families):
+    b = signed_in("parentb")
+    before = rows(two_families["conn"])
+    routes = console_routes()
+    assert len(routes) == 6
+    for method, path in routes:  # B's own child: the refusal is about the permission, not the child
+        url = path.format(
+            student_id="b_kid", plan_id=two_families["plan_id"], action="new_week",
+            job_id=two_families["job_id"],
+        )  # fmt: skip
+        r = b.request(method, url, json={} if method == "POST" else None)
+        assert r.status_code == 404 and r.json() == {"detail": "Not Found"}, f"{method} {path}"
+    assert rows(two_families["conn"]) == before
+    assert signed_in("adminb").get(f"{BASE}/overview").status_code == 200
+
+
+def test_console_acts_for_the_admins_family(two_families):
+    conn, plan_id = two_families["conn"], two_families["plan_id"]
+    b = signed_in("adminb")
+    overview = b.get(f"{BASE}/overview").json()
+    assert [c["student_id"] for c in overview["children"]] == ["b_kid"]
+    assert overview["queue"]["dead"] == [] and "A secret" not in str(overview)
+    before = rows(conn)
+    for action in ("new_week", "skip_checkin", "generate_ideas", "reset_weeks"):
+        r = act(b, action, student="kid", week="2026-01-19")
+        assert r.status_code == 404 and r.json() == {"detail": "Student not found"}, action
+    for path in ("kid/feed-forward", f"kid/weeks/{plan_id}/review"):
+        r = b.get(f"{BASE}/students/{path}")
+        assert r.status_code == 404 and r.json() == {"detail": "Student not found"}, path
+    assert b.get(f"{BASE}/students/b_kid/weeks/{plan_id}/review").status_code == 404  # A's plan
+    assert b.post(f"{BASE}/jobs/{two_families['job_id']}/retry").status_code == 404
+    assert rows(conn) == before  # nothing written for A, and A's dead job stays dead
+    # and B's own child works, in B's family
+    assert act(b, "new_week", student="b_kid", week="2026-01-19").status_code == 200
+    assert (
+        wp.latest_plan_for_student(conn, two_families["fam_b"], "b_kid").week_start == "2026-01-19"
+    )
+
+
+def test_seed_demo_lands_in_the_admins_family_and_never_collides(two_families):
+    conn = two_families["conn"]
+    assert loop_integration.seed_demo(conn) == loop_integration.DEMO_STUDENT  # the CLI: fam_local
+    b = signed_in("adminb")
+    r = b.post(f"{BASE}/seed-demo")
+    assert r.status_code == 200 and r.json()["child"]["demo"] is True
+    sid = r.json()["child"]["student_id"]
+    assert sid != loop_integration.DEMO_STUDENT
+    assert b.post(f"{BASE}/seed-demo").json()["child"]["student_id"] == sid  # repeatable
+    owners = dict(conn.execute("SELECT student_id, family_id FROM student_profiles").fetchall())
+    assert owners[sid] == two_families["fam_b"] and owners["demo_child"] == "fam_local"
+    assert [c["student_id"] for c in b.get(f"{BASE}/overview").json()["children"]] == sorted(
+        ["b_kid", sid]
+    )

@@ -17,6 +17,7 @@ if SRC not in sys.path:
 
 from src.feedback_processor import process_mastery_feedback  # noqa: E402
 from src.progress_summary import build_progress_summary, skill_label  # noqa: E402
+from migrations import apply_migrations  # noqa: E402
 
 NOW = "2026-02-02T12:00:00Z"
 STANDARDS = {
@@ -116,6 +117,7 @@ def client(tmp_path, monkeypatch):
     )
     conn.commit()
     conn.close()
+    apply_migrations(db)  # the ownership check reads the real schema, as at app startup
     return TestClient(main.app)
 
 

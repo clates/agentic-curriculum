@@ -17,9 +17,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import db_utils  # noqa: E402
 from auth import clock, lockout, passwords, service, store  # noqa: E402
-from auth.web import COOKIE_NAME, PUBLIC_PATHS  # noqa: E402
+from auth.web import COOKIE_NAME, PUBLIC_PATHS, current_family  # noqa: E402
 from main import app  # noqa: E402
 from migrations import apply_migrations  # noqa: E402
+from tenancy import owned_student_id  # noqa: E402
 
 PASSWORD = "correct horse battery"
 FAST = passwords.ScryptParams(n=2**10, r=8, p=1)  # tests do not need the production cost
@@ -271,7 +272,11 @@ def test_a_garbage_cookie_is_401_and_gets_cleared(client, required):
 
 
 def test_me_when_login_is_off_says_so(client):
-    assert client.get("/auth/me").json() == {"auth_required": False, "user": None}
+    assert client.get("/auth/me").json() == {
+        "auth_required": False,
+        "user": None,
+        "permissions": ["admin"],
+    }
 
 
 def test_nothing_changes_when_login_is_off(client):
@@ -495,6 +500,41 @@ def test_every_route_is_public_on_purpose_or_protected(required, client):
     assert PUBLIC_PATHS == {"/auth/login", "/auth/logout", "/health", "/version"}
 
 
+def _reaches(dependant, call) -> bool:
+    return any(d.call is call or _reaches(d, call) for d in dependant.dependencies)
+
+
+def _reaches_admin(dependant) -> bool:
+    """require_permission("admin") makes a fresh closure, so match it by name and captured value."""
+    return any(
+        (
+            getattr(d.call, "__qualname__", "") == "require_permission.<locals>.check"
+            and d.call.__closure__[0].cell_contents == "admin"
+        )
+        or _reaches_admin(d)
+        for d in dependant.dependencies
+    )
+
+
+def test_every_route_declares_its_family():
+    """Every non-public route acts for one family; every student route checks ownership.
+    Unscoped on purpose: public paths, /auth/*, the hello at /, and the shared standards data."""
+    checked = set()
+    for route in (r for r in iter_routes(app.routes) if isinstance(r, APIRoute)):
+        path = route.path
+        if path in PUBLIC_PATHS | {"/", "/system/options"}:
+            continue
+        if path.startswith(("/auth/", "/curriculum/")):
+            continue
+        checked.add(path)
+        assert _reaches(route.dependant, current_family), f"{path} does not ask for the family"
+        if "{student_id}" in path:
+            assert _reaches(route.dependant, owned_student_id), f"{path} skips the ownership check"
+        if path.startswith("/loop-admin/"):
+            assert _reaches_admin(route.dependant), f"{path} is not admin-only"
+    assert {"/students", "/this-week", "/generate_weekly_plan", "/student/{student_id}"} <= checked
+
+
 def test_every_public_path_is_a_real_route():
     paths = {r.path for r in iter_routes(app.routes)}
     assert PUBLIC_PATHS <= paths
@@ -517,7 +557,11 @@ def test_docs_are_not_served_when_login_is_required(monkeypatch):
 def test_a_valid_session_passes_the_gate(client, user, required):
     login(client)
     assert client.get("/students").status_code == 200
-    assert client.get("/auth/me").json() == {"auth_required": True, "user": {"username": "parent"}}
+    assert client.get("/auth/me").json() == {
+        "auth_required": True,
+        "user": {"username": "parent"},
+        "permissions": [],
+    }
     assert client.get("/health").status_code == 200
 
 
@@ -747,11 +791,10 @@ def test_the_attempt_table_is_capped(user, now, monkeypatch):
     assert not db_rows("SELECT 1 FROM login_attempt WHERE key='n0|1.1.1.1'")  # oldest went first
 
 
-def test_create_user_refuses_any_other_family(tmp_path):
+def test_create_user_refuses_an_unknown_family(tmp_path):
     r = run_cli(tmp_path, "create-user", "mama", "--family", "fam_other", password=PASSWORD)
-    assert r.returncode == 1 and "per-family separation is not built" in r.stderr
+    assert r.returncode == 1 and "No such family" in r.stderr
     assert db_rows("SELECT COUNT(*) FROM app_user") == [(0,)]
-    assert "every account sees all data" in run_cli(tmp_path, "create-user", "--help").stdout
 
 
 def test_validation_errors_on_auth_do_not_echo_the_input(client):

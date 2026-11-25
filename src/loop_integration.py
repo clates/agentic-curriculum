@@ -113,24 +113,30 @@ def install() -> bool:
 DEMO_STUDENT = "demo_child"
 
 
-def seed_demo(conn: sqlite3.Connection) -> str:
-    """Add a made-up child to the local family, to watch the loop with no real student data.
+def demo_student_id(family_id: str = LOCAL_FAMILY_ID) -> str:
+    """The demo child's id in this family. Student ids are global (the student_profiles primary
+    key), so a created family gets its own id instead of colliding with another family's demo."""
+    return DEMO_STUDENT if family_id == LOCAL_FAMILY_ID else f"{DEMO_STUDENT}_{family_id}"
+
+
+def seed_demo(conn: sqlite3.Connection, family_id: str = LOCAL_FAMILY_ID) -> str:
+    """Add a made-up child to the family, to watch the loop with no real student data.
     Safe to repeat. Returns the student id."""
     conn.execute(
         "INSERT OR IGNORE INTO student_profiles (student_id, progress_blob, plan_rules_blob, "
         "metadata_blob, family_id) VALUES (?,?,?,?,?)",
         (
-            DEMO_STUDENT,
+            demo_student_id(family_id),
             "{}",
             json.dumps(
                 {"interests": ["dinosaurs", "space"], "parent_notes": "Short, hands-on tasks"}
             ),
             json.dumps({"name": "Demo", "grade_level": 2}),
-            LOCAL_FAMILY_ID,
+            family_id,
         ),
     )
     conn.commit()
-    return DEMO_STUDENT
+    return demo_student_id(family_id)
 
 
 def next_monday(today) -> str:

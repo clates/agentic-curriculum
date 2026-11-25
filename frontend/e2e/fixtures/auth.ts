@@ -40,6 +40,15 @@ export function createAccount(prefix = 'parent'): Account {
   return { username, password: PASSWORD };
 }
 
+/** Give an account a permission the way the owner does: `python -m auth grant`. */
+export function grant(username: string, permission = 'admin') {
+  execFileSync(`${ROOT}/venv/bin/python`, ['-m', 'auth', 'grant', username, permission], {
+    cwd: `${ROOT}/src`,
+    env: { ...process.env, PYTHONPATH: `${ROOT}/src`, CURRICULUM_DB_PATH: DB_FILE },
+    stdio: 'pipe',
+  });
+}
+
 /** A made-up client address, unique to one test. */
 export function uniqueIp(): string {
   const r = () => Math.floor(Math.random() * 254) + 1;

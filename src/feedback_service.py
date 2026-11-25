@@ -55,18 +55,22 @@ class FeedbackOutcome:
     derived_mastery: dict[str, str]
 
 
-def load_prep_checks(student_id: str, packet_id: str) -> list[Any]:
+def load_prep_checks(
+    student_id: str, packet_id: str, family_id: str = packet_store.DEFAULT_FAMILY
+) -> list[Any]:
     """Prep checks (objects with ``id`` and ``standard_id``) from the M2.6 derived check index."""
     return [
         SimpleNamespace(id=row["check_id"], standard_id=row["standard_id"], day=row["day"])
-        for row in week_store.list_prep_checks(student_id, packet_id)
+        for row in week_store.list_prep_checks(student_id, packet_id, family_id=family_id)
     ]
 
 
-def _packet_standard_ids(student_id: str, packet_id: str, checks: list[Any]) -> list[str]:
+def _packet_standard_ids(
+    student_id: str, packet_id: str, checks: list[Any], family_id: str
+) -> list[str]:
     ids = {c.standard_id for c in checks}
     if not ids:
-        packet = packet_store.get_weekly_packet(student_id, packet_id) or {}
+        packet = packet_store.get_weekly_packet(student_id, packet_id, family_id=family_id) or {}
         for day in (packet.get("payload") or {}).get("daily_plan", []):
             for std in day.get("standards") or []:
                 sid = std.get("standard_id") if isinstance(std, dict) else std
@@ -80,11 +84,12 @@ def derive_mastery(
     packet_id: str,
     check_results: dict[str, str] | None,
     quick_rating: str | None,
+    family_id: str = packet_store.DEFAULT_FAMILY,
 ) -> tuple[dict[str, str] | None, dict[str, str]]:
     """Return (normalized raw check_results or None, derived {standard_id: state})."""
     if check_results and quick_rating:
         raise FeedbackError("Send check_results or quick_rating, not both")
-    checks = load_prep_checks(student_id, packet_id)
+    checks = load_prep_checks(student_id, packet_id, family_id)
     if check_results:
         if not checks:
             raise FeedbackError("This packet has no checks to record results against")
@@ -99,7 +104,8 @@ def derive_mastery(
         state = _QUICK_TO_MASTERY[quick_rating]
         if state is None:
             return None, {}
-        return None, {sid: state for sid in _packet_standard_ids(student_id, packet_id, checks)}
+        ids = _packet_standard_ids(student_id, packet_id, checks, family_id)
+        return None, {sid: state for sid in ids}
     return None, {}
 
 
@@ -110,6 +116,7 @@ def apply_feedback(
     check_results: dict[str, str] | None = None,
     quick_rating: str | None = None,
     workload: int | None = None,
+    family_id: str = packet_store.DEFAULT_FAMILY,
 ) -> FeedbackOutcome:
     """Record (or edit) a packet's feedback atomically. Raises FeedbackError / ValueError."""
     if check_results is None and quick_rating is None and workload is None:
@@ -120,13 +127,15 @@ def apply_feedback(
         except ValueError as exc:
             raise FeedbackError(str(exc)) from exc
     packet_store.ensure_schema()
-    raw_results, derived = derive_mastery(student_id, packet_id, check_results, quick_rating)
+    raw_results, derived = derive_mastery(
+        student_id, packet_id, check_results, quick_rating, family_id
+    )
     now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
     conn = packet_store._get_connection()
     try:
         conn.execute("BEGIN IMMEDIATE")
-        if not packet_store._packet_exists(conn, student_id, packet_id):
+        if not packet_store._packet_exists(conn, student_id, packet_id, family_id):
             raise ValueError(f"Packet {packet_id} not found for student {student_id}")
         student = conn.execute(
             "SELECT progress_blob, plan_rules_blob FROM student_profiles WHERE student_id = ?",
@@ -136,8 +145,8 @@ def apply_feedback(
             raise ValueError(f"Student {student_id} not found")
         old = conn.execute(
             "SELECT check_results_json, quick_rating, quantity_feedback, version "
-            "FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
-            (packet_id, student_id),
+            "FROM packet_feedback WHERE packet_id = ? AND student_id = ? AND family_id = ?",
+            (packet_id, student_id, family_id),
         ).fetchone()
 
         if (
@@ -179,6 +188,7 @@ def apply_feedback(
             json.dumps(raw_results) if raw_results else None,
             quick_rating,
             derived_json,
+            family_id,
         )
         conn.execute("COMMIT")
         return FeedbackOutcome(True, version, derived)

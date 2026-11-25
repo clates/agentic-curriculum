@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import os
+from collections.abc import Callable
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -138,6 +139,32 @@ def auth_gate(request: Request, response: Response) -> None:
         set_session_cookie(response, request, token)
 
 
+def current_family(request: Request) -> str:
+    """The caller's family: fam_local with login off, otherwise the session user's."""
+    return request.state.user.family_id if auth_required() else store.DEFAULT_FAMILY
+
+
+def user_permissions(request: Request) -> frozenset[str]:
+    """Every permission with login off; otherwise read from the store on each request."""
+    if not auth_required():
+        return store.PERMISSIONS
+    conn = store.connect()
+    try:
+        return store.permissions(conn, request.state.user.id)
+    finally:
+        conn.close()
+
+
+def require_permission(permission: str) -> Callable:
+    """Dependency: 404 (not 403, so the route's existence is not revealed) without the permission."""
+
+    def check(request: Request) -> None:
+        if permission not in user_permissions(request):
+            raise HTTPException(404, "Not Found")
+
+    return check
+
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -183,10 +210,11 @@ def logout(request: Request, response: Response):
 
 @router.get("/me")
 def me(request: Request):
+    permissions = sorted(user_permissions(request))
     if not auth_required():
-        return {"auth_required": False, "user": None}
+        return {"auth_required": False, "user": None, "permissions": permissions}
     user = request.state.user
-    return {"auth_required": True, "user": {"username": user.username}}
+    return {"auth_required": True, "user": {"username": user.username}, "permissions": permissions}
 
 
 # --- request size and validation errors on /auth/* -------------------------------------------

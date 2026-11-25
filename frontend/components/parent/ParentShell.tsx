@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { apiClient } from '@/lib/api';
 import { copy } from '@/lib/copy';
+import { useMe } from '@/lib/useMe';
 
 const TABS = [
   { href: '/week', label: copy.nav.thisWeek, icon: 'M5 4h14v16H5zM5 9h14M9 2v4M15 2v4' },
@@ -23,16 +24,12 @@ const TABS = [
 /** Phone-first shell: a title bar, the page, and a thumb-reachable tab bar (top links on desktop). */
 export function ParentShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [signedIn, setSignedIn] = useState(false);
   const [leaving, setLeaving] = useState(false);
-
-  // Is a login in use? When it is off (self-hosting, dev) nothing is shown and nothing changes.
-  useEffect(() => {
-    apiClient
-      .get('/auth/me')
-      .then(({ data }) => setSignedIn(Boolean(data?.auth_required && data?.user)))
-      .catch(() => setSignedIn(false));
-  }, []);
+  // Sign-out only shows when a login is in use. The Admin link shows to anyone allowed to admin:
+  // with login off that is the operator, who is the only user.
+  const { data: me } = useMe();
+  const signedIn = Boolean(me?.auth_required && me.user);
+  const isAdmin = Boolean(me?.permissions.includes('admin'));
 
   async function signOut() {
     setLeaving(true);
@@ -61,16 +58,26 @@ export function ParentShell({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          {signedIn ? (
-            <button
-              type="button"
-              onClick={signOut}
-              disabled={leaving}
-              className="min-h-11 px-2 text-sm text-neutral-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-            >
-              {leaving ? copy.login.signingOut : copy.login.signOut}
-            </button>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {isAdmin ? (
+              <Link
+                href="/admin"
+                className="flex min-h-11 items-center px-2 text-sm text-neutral-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              >
+                {copy.admin.link}
+              </Link>
+            ) : null}
+            {signedIn ? (
+              <button
+                type="button"
+                onClick={signOut}
+                disabled={leaving}
+                className="min-h-11 px-2 text-sm text-neutral-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+              >
+                {leaving ? copy.login.signingOut : copy.login.signOut}
+              </button>
+            ) : null}
+          </div>
         </div>
       </header>
       <main

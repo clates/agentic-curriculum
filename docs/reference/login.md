@@ -21,12 +21,15 @@ Background: [Why the login needs HTTPS and a proxy](../explanation/login-and-htt
 
 | Command | Effect |
 |---|---|
-| `create-user <username>` | makes an account in `fam_local`. Does nothing if the name exists. `--family` accepts only `fam_local` |
+| `create-user <username>` | makes an account. Does nothing if the name exists. `--family <id>` names any existing family; the default is `fam_local` |
 | `set-password <username>` | sets the password, signs the user out everywhere, clears their lockouts |
 | `disable <username>` | locks the account and signs it out |
 | `enable <username>` | unlocks the account and clears its lockouts |
 | `unlock <username>` | clears that user's lockouts |
 | `unlock` | clears every lockout, address locks included |
+| `grant <username> <permission>` | gives the user a permission. Known permissions: `admin` |
+| `revoke <username> <permission>` | takes it away |
+| `list-users` | one line per user: username, family id, `enabled` or `disabled`, comma-separated permissions (`-` for none). Never prints password hashes |
 
 Passwords: at least 12 characters, never accepted as a command-line argument.
 
@@ -60,4 +63,25 @@ wait. After that, the reply is "Busy right now" and no wrong try is counted.
 
 ## Families
 
-There is no separation between families yet. Every account sees all data in the install.
+- Every account belongs to one family and sees only that family's children, packets, weeks, plans
+  and jobs.
+- Another family's record answers 404 with the same body as a missing record, never 403.
+- With login off, every request acts for `fam_local`.
+- With login on, new child ids are server-generated: `stu_` plus 10 characters. The add-child form
+  has no ID field.
+
+## Permissions
+
+Stored in the `user_permission` table. The only permission is `admin`.
+
+| Where | Behaviour |
+|---|---|
+| Check | read on every request, so a revoke applies on the next request |
+| Login off | the operator counts as admin |
+| `GET /auth/me` | returns `permissions`, a sorted list |
+| `/admin` | page with a "Loop console" card linking to `/loop`. Non-admins are sent home |
+| `/loop` | admin only. Non-admins are sent home |
+| `/loop-admin/*` | admin only. Everyone else gets 404 |
+| Header | the "Admin" link shows only for admins |
+
+The console acts for the admin's own family.

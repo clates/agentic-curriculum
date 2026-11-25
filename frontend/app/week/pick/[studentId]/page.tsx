@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { use } from 'react';
+import { isAxiosError } from 'axios';
 import { copy } from '@/lib/copy';
 import { serverMessage, useWeekPlan } from '@/lib/pick';
 import { EmptyState, ErrorState, LoadingState, primaryButton } from '@/components/parent/states';
@@ -14,7 +15,9 @@ export default function PickPage({ params }: { params: Promise<{ studentId: stri
   if (query.isLoading) return <LoadingState />;
   if (query.error) {
     const { code } = serverMessage(query.error);
-    if (code === 'unknown_child' || code === 'no_plan') {
+    // A child that is missing or not ours is a plain 404 ("Student not found").
+    const notFound = isAxiosError(query.error) && query.error.response?.status === 404;
+    if (notFound || code === 'unknown_child' || code === 'no_plan') {
       return (
         <EmptyState
           title={copy.pick.unknownChild}

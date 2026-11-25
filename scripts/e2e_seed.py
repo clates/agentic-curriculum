@@ -184,7 +184,9 @@ _PLAN_PATH = {
 }
 
 
-def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") -> None:
+def create_plan(
+    student_id: str, status: str, week_start: str = "2026-01-05", family_id: str = "fam_local"
+) -> None:
     """Create the student's week plan and walk it to ``status`` with legal loop events."""
     import week_plan as wp  # noqa: E402
     from loop_state import Event, advance  # noqa: E402
@@ -224,13 +226,13 @@ def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") ->
     conn = sqlite3.connect(_db_path())
     try:
         conn.execute("PRAGMA foreign_keys = ON")
-        plan = wp.create_plan(conn, "fam_local", student_id, week_start)
+        plan = wp.create_plan(conn, family_id, student_id, week_start)
         for kind in _PLAN_PATH[status]:
             payload = {}
             if kind == "outlines_ready":
                 wp.store_outlines(
                     conn,
-                    "fam_local",
+                    family_id,
                     plan.plan_id,
                     OutlineSet.model_validate(
                         {
@@ -246,7 +248,7 @@ def create_plan(student_id: str, status: str, week_start: str = "2026-01-05") ->
                 payload = {"option_id": "b"}
             elif kind == "authoring_done":
                 payload = {"packet_id": f"e2e_{student_id}"}
-            advance(conn, "fam_local", plan.plan_id, Event(kind, payload=payload))
+            advance(conn, family_id, plan.plan_id, Event(kind, payload=payload))
     finally:
         conn.close()
     print(f"plan for {student_id} is {status}")

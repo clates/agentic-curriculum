@@ -20,10 +20,6 @@ function parseInterests(raw: string | undefined): string[] {
 }
 
 const studentSchema = z.object({
-  student_id: z
-    .string()
-    .min(1, 'Student ID is required')
-    .regex(/^[a-z0-9_]+$/, 'Use lowercase letters, numbers, and underscores only'),
   name: z.string().min(1, 'Name is required'),
   birthday: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format: YYYY-MM-DD'),
   avatar_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
@@ -66,7 +62,6 @@ export default function StudentsPage() {
       if (student) {
         const metadata = parseMetadata(student.metadata_blob);
         if (metadata) {
-          setValue('student_id', student.student_id);
           setValue('name', metadata.name);
           setValue('birthday', metadata.birthday);
           setValue('avatar_url', metadata.avatar_url || '');
@@ -91,13 +86,13 @@ export default function StudentsPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: StudentFormData) =>
-      studentsApi.createStudent({ student_id: data.student_id, metadata: toMetadata(data) }),
+      studentsApi.createStudent({ metadata: toMetadata(data) }), // the server picks the id
     onSuccess: onSaved,
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: StudentFormData) =>
-      studentsApi.updateStudent(data.student_id, { metadata: toMetadata(data) }),
+    mutationFn: ({ id, data }: { id: string; data: StudentFormData }) =>
+      studentsApi.updateStudent(id, { metadata: toMetadata(data) }),
     onSuccess: onSaved,
   });
 
@@ -110,7 +105,9 @@ export default function StudentsPage() {
   });
 
   const onSubmit = (data: StudentFormData) =>
-    (editingStudent ? updateMutation : createMutation).mutate(data);
+    editingStudent
+      ? updateMutation.mutate({ id: editingStudent, data })
+      : createMutation.mutate(data);
 
   const handleAddNew = () => {
     setEditingStudent(null);
@@ -232,14 +229,16 @@ export default function StudentsPage() {
           title={isEditing ? 'Edit Student' : 'Add New Student'}
         >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input
-              label="Student ID"
-              {...register('student_id')}
-              error={errors.student_id?.message}
-              helperText="Use lowercase letters, numbers, and underscores (e.g., student_01)"
-              disabled={isEditing}
-              className={isEditing ? 'cursor-not-allowed bg-neutral-100' : ''}
-            />
+            {editingStudent && (
+              <Input
+                id="field-student_id"
+                label="Student ID"
+                value={editingStudent}
+                readOnly
+                disabled
+                className="cursor-not-allowed bg-neutral-100"
+              />
+            )}
 
             <Input label="Full Name" {...register('name')} error={errors.name?.message} />
 

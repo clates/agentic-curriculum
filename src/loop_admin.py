@@ -10,7 +10,8 @@ service, the job queue), so forcing a step cannot reach a state the loop could n
 moves a plan backwards: to start over, reset the child's weeks. The console works whether or not
 ``LOOP_JOBS_ENABLED`` is set: it queues jobs itself, and the worker runs them either way.
 
-The routes sit behind the global login gate like every other route.
+The routes sit behind the global login gate like every other route, need the ``admin`` permission
+(404 without it, so the console's existence is not revealed) and act only for the caller's family.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ import sqlite3
 from datetime import date, timedelta
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 try:
@@ -31,6 +32,7 @@ try:
     from .candidate_selector import NoCandidates, load_candidate_inputs, select_week_standards  # type: ignore
     from .db_utils import get_db_path  # type: ignore
     from .model_context import build_model_context  # type: ignore
+    from .tenancy import owned_student_id  # type: ignore
 except ImportError:
     import jobs  # type: ignore
     import loop_integration  # type: ignore
@@ -42,9 +44,15 @@ except ImportError:
     from candidate_selector import NoCandidates, load_candidate_inputs, select_week_standards  # type: ignore
     from db_utils import get_db_path  # type: ignore
     from model_context import build_model_context  # type: ignore
+    from tenancy import owned_student_id  # type: ignore
 
-FAMILY = loop_integration.LOCAL_FAMILY_ID
-router = APIRouter(prefix="/loop-admin", tags=["loop-admin"])
+from auth.web import current_family, require_permission
+
+router = APIRouter(
+    prefix="/loop-admin", tags=["loop-admin"], dependencies=[Depends(require_permission("admin"))]
+)
+Family = Depends(current_family)
+Owned = Depends(owned_student_id)
 
 # (key, label, who does it)
 STEPS = (
@@ -137,12 +145,12 @@ def _actions(plan: wp.WeekPlan | None) -> list[dict[str, Any]]:
     ]
 
 
-def _plan_jobs(conn: sqlite3.Connection, plan_id: str) -> list[dict[str, Any]]:
+def _plan_jobs(conn: sqlite3.Connection, family: str, plan_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         "SELECT id, kind, state, attempts, max_attempts, last_error, run_after FROM jobs "
         "WHERE family_id=? AND (idempotency_key LIKE ? OR idempotency_key LIKE ?) "
         "ORDER BY id DESC LIMIT 6",
-        (FAMILY, f"outlines:{plan_id}%", f"author:{plan_id}:%"),
+        (family, f"outlines:{plan_id}%", f"author:{plan_id}:%"),
     ).fetchall()
     return [{**dict(r), "last_error": (r["last_error"] or "")[:300] or None} for r in rows]
 
@@ -183,7 +191,7 @@ def _idea(o, info: dict[str, dict[str, str]]) -> dict[str, Any]:
     }
 
 
-def _plan_view(conn: sqlite3.Connection, plan: wp.WeekPlan) -> dict[str, Any]:
+def _plan_view(conn: sqlite3.Connection, family: str, plan: wp.WeekPlan) -> dict[str, Any]:
     options = plan.outlines.options if plan.outlines else []
     info = _skill_info(conn, [s for o in options for s in o.standard_ids])
     return {
@@ -195,7 +203,7 @@ def _plan_view(conn: sqlite3.Connection, plan: wp.WeekPlan) -> dict[str, Any]:
         "needs_attention": plan.needs_attention,
         "pick_deadline": plan.pick_deadline,
         "outlines": [_idea(o, info) for o in options],
-        "jobs": _plan_jobs(conn, plan.plan_id),
+        "jobs": _plan_jobs(conn, family, plan.plan_id),
     }
 
 
@@ -209,11 +217,11 @@ def _picked_idea(plan: wp.WeekPlan):
         return None
 
 
-def _grade(conn: sqlite3.Connection, student_id: str) -> int | None:
+def _grade(conn: sqlite3.Connection, family: str, student_id: str) -> int | None:
     """The grade the engine and the author use (from the profile, the last week, or the birthday)."""
     row = conn.execute(
         "SELECT metadata_blob, plan_rules_blob FROM student_profiles WHERE family_id=? AND student_id=?",
-        (FAMILY, student_id),
+        (family, student_id),
     ).fetchone()
     if row is None:
         return None
@@ -221,18 +229,20 @@ def _grade(conn: sqlite3.Connection, student_id: str) -> int | None:
         return build_model_context(
             row[0],
             row[1],
-            fallback_grade=pick_service._latest_packet_grade(conn, FAMILY, student_id),
+            fallback_grade=pick_service._latest_packet_grade(conn, family, student_id),
         ).grade
     except Exception:  # an incomplete profile: show no grade rather than fail the page
         return None
 
 
-def _weeks(conn: sqlite3.Connection, student_id: str, limit: int = 6) -> list[dict[str, Any]]:
+def _weeks(
+    conn: sqlite3.Connection, family: str, student_id: str, limit: int = 6
+) -> list[dict[str, Any]]:
     """The child's recent weeks, newest first, so an earlier week can still be reviewed."""
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
         "SELECT * FROM week_plan WHERE family_id=? AND student_id=? ORDER BY week_start DESC LIMIT ?",
-        (FAMILY, student_id, limit),
+        (family, student_id, limit),
     ).fetchall()
     out = []
     for r in rows:
@@ -250,33 +260,35 @@ def _weeks(conn: sqlite3.Connection, student_id: str, limit: int = 6) -> list[di
     return out
 
 
-def _child(conn: sqlite3.Connection, student_id: str, metadata_blob: str | None) -> dict[str, Any]:
+def _child(
+    conn: sqlite3.Connection, family: str, student_id: str, metadata_blob: str | None
+) -> dict[str, Any]:
     meta = _meta(metadata_blob)
-    plan = wp.latest_plan_for_student(conn, FAMILY, student_id)
+    plan = wp.latest_plan_for_student(conn, family, student_id)
     return {
         "student_id": student_id,
         "name": (meta.get("name") or student_id).split()[0],
-        "grade": _grade(conn, student_id),
-        "demo": student_id == loop_integration.DEMO_STUDENT,
-        "plan": _plan_view(conn, plan) if plan else None,
-        "weeks": _weeks(conn, student_id),
+        "grade": _grade(conn, family, student_id),
+        "demo": student_id == loop_integration.demo_student_id(family),
+        "plan": _plan_view(conn, family, plan) if plan else None,
+        "weeks": _weeks(conn, family, student_id),
         "steps": _steps(plan.status if plan else None),
         "actions": _actions(plan),
     }
 
 
-def _child_row(conn: sqlite3.Connection, student_id: str) -> dict[str, Any]:
+def _child_row(conn: sqlite3.Connection, family: str, student_id: str) -> dict[str, Any]:
     row = conn.execute(
         "SELECT metadata_blob FROM student_profiles WHERE family_id=? AND student_id=?",
-        (FAMILY, student_id),
+        (family, student_id),
     ).fetchone()
     if row is None:
         raise _refuse(404, "No such child.")
-    return _child(conn, student_id, row[0])
+    return _child(conn, family, student_id, row[0])
 
 
-def _queue(conn: sqlite3.Connection) -> dict[str, Any]:
-    st = jobs.status(conn)
+def _queue(conn: sqlite3.Connection, family: str) -> dict[str, Any]:
+    st = jobs.status(conn, family_id=family)
     waited = None
     if st["oldest_ready_run_after"]:
         waited = round(
@@ -294,38 +306,38 @@ def _queue(conn: sqlite3.Connection) -> dict[str, Any]:
 
 
 @router.get("/overview")
-def overview():
+def overview(family: str = Family):
     conn = _open()
     try:
         rows = conn.execute(
             "SELECT student_id, metadata_blob FROM student_profiles WHERE family_id=? "
             "ORDER BY student_id",
-            (FAMILY,),
+            (family,),
         ).fetchall()
         return {
             "loop_switch": loop_integration.enabled(),
-            "children": [_child(conn, sid, blob) for sid, blob in rows],
-            "queue": _queue(conn),
+            "children": [_child(conn, family, sid, blob) for sid, blob in rows],
+            "queue": _queue(conn, family),
         }
     finally:
         conn.close()
 
 
 @router.get("/students/{student_id}/feed-forward")
-def feed_forward(student_id: str, week: str | None = None):
+def feed_forward(student_id: str = Owned, week: str | None = None, family: str = Family):
     """What the engine would pick for this child's next week, from mastery alone. No model call."""
     conn = _open()
     try:
         try:
-            student = pick_service.get_student(conn, FAMILY, student_id)
+            student = pick_service.get_student(conn, family, student_id)
         except pick_service.PickError as exc:
             raise _refuse(exc.status, exc.message) from exc
-        latest = wp.latest_plan_for_student(conn, FAMILY, student_id)
+        latest = wp.latest_plan_for_student(conn, family, student_id)
         week_start = week or (latest.week_start if latest else _next_monday(None))
         context = build_model_context(
             student.metadata_blob,
             student.plan_rules_blob,
-            fallback_grade=pick_service._latest_packet_grade(conn, FAMILY, student_id),
+            fallback_grade=pick_service._latest_packet_grade(conn, family, student_id),
         )
         progress = _meta(student.progress_blob)
         known = {
@@ -379,13 +391,13 @@ def _run_record(packet_id: str) -> dict[str, Any] | None:
 
 
 @router.get("/students/{student_id}/weeks/{plan_id}/review")
-def review(student_id: str, plan_id: str):
+def review(plan_id: str, student_id: str = Owned, family: str = Family):
     """Is this week well formed and well curated? Facts and flags from the saved week, no model call."""
     conn = _open()
     try:
-        _child_row(conn, student_id)
+        _child_row(conn, family, student_id)
         try:
-            plan = wp.get_plan(conn, FAMILY, plan_id)
+            plan = wp.get_plan(conn, family, plan_id)
         except wp.PlanNotFound as exc:
             raise _refuse(404, "No such week.") from exc
         if plan.student_id != student_id:
@@ -394,7 +406,7 @@ def review(student_id: str, plan_id: str):
             raise _refuse(409, "This week has not been written yet.")
         import week_store  # at call time: it snapshots the database path when imported
 
-        week = week_store.get_week(student_id, plan.packet_id, family_id=FAMILY)
+        week = week_store.get_week(student_id, plan.packet_id, family_id=family)
         if week is None:
             raise _refuse(404, "The written week could not be found.")
         idea = _picked_idea(plan)
@@ -402,7 +414,7 @@ def review(student_id: str, plan_id: str):
         ids = planned + [s for d in week.days for s in d.standards]
         result = week_review.review_week(
             week,
-            grade=_grade(conn, student_id) or 0,
+            grade=_grade(conn, family, student_id) or 0,
             skills=_skill_info(conn, ids),
             planned=planned,
             run=_run_record(plan.packet_id),
@@ -450,114 +462,116 @@ def _require(plan: wp.WeekPlan | None, *statuses: str) -> wp.WeekPlan:
 
 
 @router.post("/students/{student_id}/actions/{action}")
-def act(student_id: str, action: str, body: ActionBody | None = None):
+def act(action: str, body: ActionBody | None = None, student_id: str = Owned, family: str = Family):
     body = body or ActionBody()
     conn = _open()
     try:
-        _child_row(conn, student_id)  # 404 for an unknown child
-        plan = wp.latest_plan_for_student(conn, FAMILY, student_id)
+        _child_row(conn, family, student_id)  # 404 for a child with no profile
+        plan = wp.latest_plan_for_student(conn, family, student_id)
         try:
-            _run(conn, student_id, plan, action, body)
+            _run(conn, family, student_id, plan, action, body)
         except pick_service.PickError as exc:
             raise _refuse(exc.status, exc.message) from exc
         except loop_state.IllegalTransition as exc:
             raise _refuse(409, str(exc)) from exc
         except print_week.PlanNotReady as exc:
             raise _refuse(409, f"Not possible while the week is “{exc.status}”.") from exc
-        return {"child": _child_row(conn, student_id)}
+        return {"child": _child_row(conn, family, student_id)}
     finally:
         conn.close()
 
 
-def _run(conn, student_id: str, plan: wp.WeekPlan | None, action: str, body: ActionBody) -> None:
+def _run(
+    conn, family: str, student_id: str, plan: wp.WeekPlan | None, action: str, body: ActionBody
+) -> None:
     if action == "new_week":
         week = body.week or _next_monday(plan.week_start if plan else None)
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", week) or date.fromisoformat(week).weekday() != 0:
             raise _refuse(422, "A week starts on a Monday (YYYY-MM-DD).")
         exists = conn.execute(
             "SELECT 1 FROM week_plan WHERE family_id=? AND student_id=? AND week_start=?",
-            (FAMILY, student_id, week),
+            (family, student_id, week),
         ).fetchone()
         if exists:
             raise _refuse(409, f"There is already a week starting {week}.")
-        wp.create_plan(conn, FAMILY, student_id, week)
+        wp.create_plan(conn, family, student_id, week)
     elif action == "skip_checkin":
         plan = _require(plan, "awaiting_feedback")
         res = loop_state.advance(
             conn,
-            FAMILY,
+            family,
             plan.plan_id,
             loop_state.Event("feedback_submitted", key=f"console:{plan.plan_id}"),
         )
-        loop_integration.enqueue_outline(conn, FAMILY, res.plan.plan_id)
+        loop_integration.enqueue_outline(conn, family, res.plan.plan_id)
     elif action == "generate_ideas":
         plan = _require(plan, "outlining", "awaiting_pick", "expired")
         if plan.status == "outlining":  # the job exists or is missing: make sure it is queued
-            _ensure_job_runs(conn, loop_integration.enqueue_outline(conn, FAMILY, plan.plan_id))
+            _ensure_job_runs(conn, loop_integration.enqueue_outline(conn, family, plan.plan_id))
         else:  # fresh ideas now, in this request (a model call, so it can take a while)
             from llm import LLMError
 
             try:
-                pick_service.regenerate(conn, FAMILY, student_id, plan.plan_id, limits=_NoCap())
+                pick_service.regenerate(conn, family, student_id, plan.plan_id, limits=_NoCap())
             except LLMError as exc:
                 raise _refuse(502, "The model could not write ideas just now. Try again.") from exc
     elif action == "pick":
         plan = _require(plan, "awaiting_pick")
         if body.option is None:
             raise _refuse(422, "Say which idea: a, b or c.")
-        pick_service.pick(conn, FAMILY, student_id, body.option, plan.plan_id)
-        loop_integration.enqueue_author(conn, FAMILY, plan.plan_id, body.option)
+        pick_service.pick(conn, family, student_id, body.option, plan.plan_id)
+        loop_integration.enqueue_author(conn, family, plan.plan_id, body.option)
     elif action == "author_now":
         plan = _require(plan, "authoring")
         _ensure_job_runs(
-            conn, loop_integration.enqueue_author(conn, FAMILY, plan.plan_id, plan.picked_option)
+            conn, loop_integration.enqueue_author(conn, family, plan.plan_id, plan.picked_option)
         )
     elif action == "mark_printed":
         plan = _require(plan, "ready")
-        print_week.mark_printed(conn, FAMILY, student_id, plan.plan_id)
+        print_week.mark_printed(conn, family, student_id, plan.plan_id)
     elif action == "reset_weeks":
-        _reset(conn, student_id)
+        _reset(conn, family, student_id)
     else:
         raise _refuse(404, "Unknown action.")
 
 
-def _reset(conn: sqlite3.Connection, student_id: str) -> None:
+def _reset(conn: sqlite3.Connection, family: str, student_id: str) -> None:
     """Throw away this child's weeks and the jobs for them (loop events go with each plan). The
     child, their progress and any saved packets stay. For testing."""
     plan_ids = [
         r[0]
         for r in conn.execute(
-            "SELECT plan_id FROM week_plan WHERE family_id=? AND student_id=?", (FAMILY, student_id)
+            "SELECT plan_id FROM week_plan WHERE family_id=? AND student_id=?", (family, student_id)
         )
     ]
     for pid in plan_ids:
         conn.execute(
             "DELETE FROM jobs WHERE family_id=? AND (idempotency_key LIKE ? OR idempotency_key LIKE ?)",
-            (FAMILY, f"outlines:{pid}%", f"author:{pid}:%"),
+            (family, f"outlines:{pid}%", f"author:{pid}:%"),
         )
-    conn.execute("DELETE FROM week_plan WHERE family_id=? AND student_id=?", (FAMILY, student_id))
+    conn.execute("DELETE FROM week_plan WHERE family_id=? AND student_id=?", (family, student_id))
     conn.commit()
 
 
 @router.post("/seed-demo")
-def seed_demo():
+def seed_demo(family: str = Family):
     conn = _open()
     try:
-        sid = loop_integration.seed_demo(conn)
-        return {"child": _child_row(conn, sid)}
+        sid = loop_integration.seed_demo(conn, family)
+        return {"child": _child_row(conn, family, sid)}
     finally:
         conn.close()
 
 
 @router.post("/jobs/{job_id}/retry")
-def retry_job(job_id: int):
+def retry_job(job_id: int, family: str = Family):
     conn = _open()
     try:
         job = jobs.get_job(conn, job_id)
-        if job is None or job.family_id != FAMILY:
+        if job is None or job.family_id != family:
             raise _refuse(404, "No such job.")
         if not jobs.retry_dead(conn, job_id):
             raise _refuse(409, "Only a job that gave up can be retried.")
-        return {"queue": _queue(conn)}
+        return {"queue": _queue(conn, family)}
     finally:
         conn.close()

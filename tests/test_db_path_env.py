@@ -16,6 +16,8 @@ SRC_PATH = str(PROJECT_ROOT / "src")
 if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
 
+from migrations import apply_migrations  # noqa: E402
+
 MODULES = [
     "packet_store",
     "db_utils",
@@ -49,6 +51,7 @@ def _build_db(path: Path) -> None:
     )
     conn.commit()
     conn.close()
+    apply_migrations(path)  # the ownership check reads the real schema, as at app startup
 
 
 @pytest.fixture
