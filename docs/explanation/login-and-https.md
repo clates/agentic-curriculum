@@ -78,13 +78,16 @@ needs the password chosen at sign-up. Otherwise a stranger who registers a pendi
 could be handed the real owner's confirmation. Codes are short-lived and allow few tries because 6
 digits are easy to guess otherwise.
 
-## Why register never reveals accounts
+## Why register and resend never reveal accounts
 
-"That email is already registered" tells a stranger who uses the app. So register and resend
-answer the same either way, and a code goes out only when there is a pending account to send it
-to. Every accepted registration also uses up its invite, so a stranger can't tell a taken address
-from a new one by whether the invite survived. Replies take the same time, and the mail is sent
-after the reply, so timing says nothing either.
+"That email is already registered" tells a stranger who uses the app. So the register and resend
+answers are identical whatever the email, and a code goes out only when there is a pending account
+to send it to. Every accepted registration also uses up its invite, so a stranger can't tell a
+taken address from a new one by whether the invite survived. Register spends the same password
+hashing on every path and the mail is sent after the reply, so timing reveals little.
+
+Signing in is different: with the right password, it does show that an account is still pending,
+because the person who knows the password is the one who needs to hear it.
 
 The cost is a plain failure when the code never arrives. The sign-up screen offers a new code, and
 the answer to that looks the same.

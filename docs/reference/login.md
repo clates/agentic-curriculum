@@ -53,11 +53,12 @@ invite code. Then "Check your email" asks for the 6-digit code.
 |---|---|---|
 | `POST /auth/register` | `email`, `password`, `family_name`, `invite_code` | 202 `{"status": "check_email"}`. 400 for a bad email, family name or password, or `invalid_invite` |
 | `POST /auth/verify` | `email`, `code`, `password` | the session cookie and `user` on success. 400 `invalid_code` otherwise |
-| `POST /auth/resend` | `email` | 202 `{"status": "check_email"}`, always |
+| `POST /auth/resend` | `email` | 202 `{"status": "check_email"}`, unless the address is held (429) |
 
 429 `too_many_attempts` and 503 `busy` can answer any of them, with `retry_after` in seconds.
 Sign-in to an unverified account with the right password answers 403 `email_not_verified` and
-mails a fresh code.
+mails a fresh code if the last one is over a minute old. Registering again with a pending email
+always issues a new code (and replaces that account's password and family name).
 
 ### Invite codes
 
@@ -78,11 +79,13 @@ account (nothing is created and no mail is sent).
 |---|---|
 | Format | 6 digits, mailed from `SMTP_FROM` |
 | Valid for | 15 minutes |
-| Tries | 5 per code. A new code replaces the old one |
+| Tries | 5 per code. A new code replaces the old one. A try with the wrong password uses none (the lockout still counts it) |
 | To verify | the email, the code and the account's password |
 | Resend | at most once a minute per email, for an account that is still unverified |
+| Codes per account | at most 10 in any 24 hours, from register, resend and sign-in together. Past that the answer is the same and nothing is sent |
+| Resend per address | every resend counts against the address's sign-in limit (20 in 10 minutes holds it for 10 minutes), whatever the email |
 | Lockouts | wrong registers and verifies count per email and per address, like sign-in tries |
-| Email | lower-cased and trimmed, at most 64 characters. It is the username |
+| Email | lower-cased and trimmed, at most 64 characters, letters, digits and `. _ % + -` before the `@`, and dot-separated letters, digits and `-` after it. It is the username |
 | Family name | 1 to 80 characters |
 
 Register and resend answer the same whether or not the email has an account. Accounts made with

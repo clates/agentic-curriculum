@@ -30,7 +30,7 @@ E1 registration", "Design: E5.4 ...", and "Builder-check calls" 1, 3, 4, 5, 9.
   appears in a log line.
 - Passwords: the existing rules (`auth.passwords.validate_new_password`, 12+ characters).
 - Email is the username for new accounts: lower-cased, trimmed, at most 64 characters, matching
-  `^[^@\s]+@[^@\s]+\.[^@\s]+$`. Existing username accounts keep working.
+  `^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$`. Existing username accounts keep working.
 - Mail goes from `SMTP_FROM` via `SMTP_*` (STARTTLS on 587). With `SMTP_HOST` unset, nothing is
   sent; with `MAILER_OUTBOX` set, each message is appended as one JSON line to that file.
 - Python: black and ruff, 100-character lines. Frontend: Prettier, `npm run lint:copy`. No test
