@@ -344,24 +344,33 @@ def read_this_week(family: str = Depends(current_family)):
 
 
 @app.get("/students/{student_id}/weekly-packets/{packet_id}/checks")
-def read_packet_checks(packet_id: str, student_id: str = Depends(owned_student_id)):
+def read_packet_checks(
+    packet_id: str,
+    student_id: str = Depends(owned_student_id),
+    family: str = Depends(current_family),
+):
     """The parent's check-by-check list for a finished week (empty if it has no structured checks)."""
     profile = get_student_profile(student_id)
     if profile is None:
         raise HTTPException(status_code=404, detail="Student not found")
-    if get_weekly_packet(student_id, packet_id) is None:
+    if get_weekly_packet(student_id, packet_id, family_id=family) is None:
         raise HTTPException(status_code=404, detail="Packet not found")
     first = first_name_of(profile.get("metadata_blob"))
-    return {"checks": check_cards(student_id, packet_id, first)}
+    return {"checks": check_cards(student_id, packet_id, first, family)}
 
 
 @app.get("/students/{student_id}/weekly-packets/{packet_id}/print-info")
-def read_print_info(packet_id: str, student_id: str = Depends(owned_student_id)):
+def read_print_info(
+    packet_id: str,
+    student_id: str = Depends(owned_student_id),
+    family: str = Depends(current_family),
+):
     """Which documents this week can print (structured weeks: packet, guide, prep; legacy: packet)."""
-    packet = get_weekly_packet(student_id, packet_id)
+    packet = get_weekly_packet(student_id, packet_id, family_id=family)
     if packet is None:
         raise HTTPException(status_code=404, detail="Packet not found")
-    return print_info(student_id, packet_id, packet, get_week(student_id, packet_id))
+    week = get_week(student_id, packet_id, family_id=family)
+    return print_info(student_id, packet_id, packet, week)
 
 
 @app.post("/students/{student_id}/week-plans/{plan_id}/printed")
@@ -454,7 +463,10 @@ def create_weekly_plan(request: PlanRequest, family: str = Depends(current_famil
 
     try:
         plan = generate_weekly_plan(
-            student_id=request.student_id, grade_level=request.grade_level, subject=request.subject
+            student_id=request.student_id,
+            grade_level=request.grade_level,
+            subject=request.subject,
+            family_id=family,
         )
         log_context["response"] = plan
         log_context["status"] = "success"
@@ -479,6 +491,7 @@ def create_weekly_plan(request: PlanRequest, family: str = Depends(current_famil
 )
 def list_student_weekly_packets(
     student_id: str = Depends(owned_student_id),
+    family: str = Depends(current_family),
     week_of: str | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=50),
@@ -491,6 +504,7 @@ def list_student_weekly_packets(
         limit=page_size,
         offset=offset,
         week_of=week_of,
+        family_id=family,
     )
     next_page = page + 1 if has_more else None
     return {
@@ -512,9 +526,10 @@ def get_student_weekly_packet(
     packet_id: str,
     response: Response,
     student_id: str = Depends(owned_student_id),
+    family: str = Depends(current_family),
 ):
     """Return the stored weekly packet payload."""
-    packet = get_weekly_packet(student_id, packet_id)
+    packet = get_weekly_packet(student_id, packet_id, family_id=family)
     if packet is None:
         raise HTTPException(status_code=404, detail="Weekly packet not found")
     response.headers["ETag"] = f'"{packet["etag"]}"'
@@ -566,9 +581,13 @@ def _artifact_headers(artifact: dict[str, Any]) -> dict[str, str]:
     "/students/{student_id}/weekly-packets/{packet_id}/worksheets",
     response_model=WorksheetArtifactManifest,
 )
-def list_packet_worksheet_manifest(packet_id: str, student_id: str = Depends(owned_student_id)):
+def list_packet_worksheet_manifest(
+    packet_id: str,
+    student_id: str = Depends(owned_student_id),
+    family: str = Depends(current_family),
+):
     """Return grouped worksheet artifact metadata for a packet."""
-    artifacts = list_packet_artifacts(student_id, packet_id)
+    artifacts = list_packet_artifacts(student_id, packet_id, family_id=family)
     if artifacts is None:
         raise HTTPException(status_code=404, detail="Weekly packet not found")
 
@@ -609,9 +628,13 @@ def list_packet_worksheet_manifest(packet_id: str, student_id: str = Depends(own
     "/students/{student_id}/worksheet-artifacts/{artifact_id}",
     name="download_worksheet_artifact",
 )
-def download_worksheet_artifact(artifact_id: int, student_id: str = Depends(owned_student_id)):
+def download_worksheet_artifact(
+    artifact_id: int,
+    student_id: str = Depends(owned_student_id),
+    family: str = Depends(current_family),
+):
     """Stream a worksheet artifact when the student owns it."""
-    artifact = get_artifact_for_student(student_id, artifact_id)
+    artifact = get_artifact_for_student(student_id, artifact_id, family_id=family)
     if artifact is None:
         raise HTTPException(status_code=404, detail="Artifact not found")
 
@@ -664,6 +687,7 @@ def _student_first_name(student_id: str) -> str | None:
 def print_weekly_packet(
     packet_id: str,
     student_id: str = Depends(owned_student_id),
+    family: str = Depends(current_family),
     doc: Literal["packet", "guide", "prep"] | None = Query(
         None,
         description="Structured weeks only: packet (default), guide or prep, rendered on demand.",
@@ -678,11 +702,11 @@ def print_weekly_packet(
     packet, the teacher guide or the parent prep sheet. Legacy packets ignore nothing: asking
     them for ``guide`` or ``prep`` is a 404.
     """
-    packet = get_weekly_packet(student_id, packet_id)
+    packet = get_weekly_packet(student_id, packet_id, family_id=family)
     if packet is None:
         raise HTTPException(status_code=404, detail="Packet not found")
 
-    week = get_week(student_id, packet_id)
+    week = get_week(student_id, packet_id, family_id=family)
     if week is not None:
         renderers = {
             "packet": render_packet,
@@ -695,7 +719,7 @@ def print_weekly_packet(
     if doc not in (None, "packet"):
         raise HTTPException(status_code=404, detail="This packet has no structured week")
 
-    artifacts = list_packet_artifacts(student_id, packet_id)
+    artifacts = list_packet_artifacts(student_id, packet_id, family_id=family)
     if artifacts is None:
         raise HTTPException(status_code=404, detail="Packet not found")
 
@@ -739,7 +763,7 @@ def _submit_feedback_v2(
     background_tasks: BackgroundTasks,
 ) -> None:
     """v2: check_results or quick_rating (+ workload), applied transactionally and idempotently."""
-    if get_weekly_packet(student_id, packet_id) is None:
+    if get_weekly_packet(student_id, packet_id, family_id=family) is None:
         raise HTTPException(status_code=404, detail="Packet not found")
     if not get_student_profile(student_id):
         raise HTTPException(status_code=404, detail="Student not found")
@@ -750,13 +774,14 @@ def _submit_feedback_v2(
             check_results=request.check_results,
             quick_rating=request.quick_rating,
             workload=request.workload,
+            family_id=family,
         )
     except FeedbackError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     if outcome.changed:  # an exact repeat must not re-trigger plan generation
-        background_tasks.add_task(generate_trio_for_student, student_id)
+        background_tasks.add_task(generate_trio_for_student, student_id, family)
         background_tasks.add_task(loop_integration.on_feedback, family, student_id)
 
 
@@ -783,13 +808,13 @@ def submit_packet_feedback(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    if get_weekly_packet(student_id, packet_id) is None:
+    if get_weekly_packet(student_id, packet_id, family_id=family) is None:
         raise HTTPException(status_code=404, detail="Packet not found")
     profile = get_student_profile(student_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    existing_feedback = get_packet_feedback(student_id, packet_id)
+    existing_feedback = get_packet_feedback(student_id, packet_id, family_id=family)
     feedback_date = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
     progress_blob = profile["progress_blob"] or json.dumps(
@@ -822,8 +847,10 @@ def submit_packet_feedback(
             plan_rules=plan_rules_payload,
             progress=progress_payload,
         )
-        save_packet_feedback(student_id, packet_id, mastery_feedback, quantity_feedback)
-        background_tasks.add_task(generate_trio_for_student, student_id)
+        save_packet_feedback(
+            student_id, packet_id, mastery_feedback, quantity_feedback, family_id=family
+        )
+        background_tasks.add_task(generate_trio_for_student, student_id, family)
         background_tasks.add_task(loop_integration.on_feedback, family, student_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -833,9 +860,13 @@ def submit_packet_feedback(
     "/students/{student_id}/weekly-packets/{packet_id}/feedback",
     response_model=FeedbackResponse,
 )
-def get_packet_feedback_endpoint(packet_id: str, student_id: str = Depends(owned_student_id)):
+def get_packet_feedback_endpoint(
+    packet_id: str,
+    student_id: str = Depends(owned_student_id),
+    family: str = Depends(current_family),
+):
     """Retrieve feedback for a weekly packet."""
-    feedback = get_packet_feedback(student_id, packet_id)
+    feedback = get_packet_feedback(student_id, packet_id, family_id=family)
     if feedback is None:
         raise HTTPException(status_code=404, detail="Feedback not found for this packet")
     return FeedbackResponse(**feedback)

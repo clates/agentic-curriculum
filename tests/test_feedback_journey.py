@@ -94,7 +94,7 @@ def api(tmp_path, monkeypatch):
         "stu_throwaway", PID, _week_with_checks(CHECKS), grade_level=2, week_of="2026-01-05"
     )
     triggers = []
-    monkeypatch.setattr(main, "generate_trio_for_student", lambda sid: triggers.append(sid))
+    monkeypatch.setattr(main, "generate_trio_for_student", lambda sid, family: triggers.append(sid))
     return TestClient(main.app), triggers
 
 

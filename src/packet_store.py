@@ -84,9 +84,10 @@ def _insert_weekly_packet(
     conn: sqlite3.Connection,
     weekly_plan: Mapping[str, Any],
     status: str,
+    family_id: str,
 ) -> None:
     now = _utc_now()
-    conn.execute(
+    cur = conn.execute(
         """
         INSERT INTO weekly_packets (
             packet_id,
@@ -99,8 +100,9 @@ def _insert_weekly_packet(
             summary_json,
             payload_json,
             created_at,
-            updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            updated_at,
+            family_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(packet_id) DO UPDATE SET
             student_id = excluded.student_id,
             grade_level = excluded.grade_level,
@@ -111,6 +113,7 @@ def _insert_weekly_packet(
             summary_json = excluded.summary_json,
             payload_json = excluded.payload_json,
             updated_at = excluded.updated_at
+        WHERE weekly_packets.family_id = excluded.family_id
         """,
         (
             weekly_plan.get("plan_id"),
@@ -124,14 +127,18 @@ def _insert_weekly_packet(
             _json(weekly_plan),
             now,
             now,
+            family_id,
         ),
     )
+    if cur.rowcount == 0:
+        raise ValueError(f"Packet {weekly_plan.get('plan_id')} belongs to another family")
 
 
 def _persist_daily_lessons(
     conn: sqlite3.Connection,
     packet_id: str,
     daily_plan: Iterable[Mapping[str, Any]],
+    family_id: str,
 ) -> None:
     for day in daily_plan:
         day_label = day.get("day") or ""
@@ -146,8 +153,9 @@ def _persist_daily_lessons(
                 resources_json,
                 worksheet_plans_json,
                 resource_errors_json,
-                created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                created_at,
+                family_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 packet_id,
@@ -159,12 +167,15 @@ def _persist_daily_lessons(
                 _json(day.get("worksheet_plans")),
                 _json(day.get("resource_errors")),
                 _utc_now(),
+                family_id,
             ),
         )
         daily_lesson_id = cursor.lastrowid
         if daily_lesson_id is None:  # pragma: no cover - sqlite guarantees an id for inserts
             raise RuntimeError("Failed to persist daily lesson row")
-        _persist_artifacts(conn, packet_id, daily_lesson_id, day_label, day.get("resources"))
+        _persist_artifacts(
+            conn, packet_id, daily_lesson_id, day_label, day.get("resources"), family_id
+        )
 
 
 def _persist_artifacts(
@@ -173,6 +184,7 @@ def _persist_artifacts(
     daily_lesson_id: int,
     day_label: str,
     resources: Mapping[str, Any] | None,
+    family_id: str,
 ) -> None:
     if not resources:
         return
@@ -196,8 +208,9 @@ def _persist_artifacts(
                     checksum,
                     file_size_bytes,
                     metadata_json,
-                    created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    created_at,
+                    family_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     packet_id,
@@ -210,6 +223,7 @@ def _persist_artifacts(
                     artifact.get("size_bytes"),
                     _json(metadata or None),
                     _utc_now(),
+                    family_id,
                 ),
             )
 
@@ -217,6 +231,8 @@ def _persist_artifacts(
 def save_weekly_packet(
     weekly_plan: Mapping[str, Any],
     status: str = READY_STATUS,
+    *,
+    family_id: str = DEFAULT_FAMILY,
 ) -> None:
     """Persist a generated weekly packet and its related rows in one transaction."""
     ensure_schema()
@@ -226,10 +242,10 @@ def save_weekly_packet(
         raise ValueError("weekly_plan must include plan_id")
 
     with _get_connection() as conn:
-        ensure_student(DEFAULT_FAMILY, weekly_plan.get("student_id"), conn)
-        _insert_weekly_packet(conn, weekly_plan, status)
+        ensure_student(family_id, weekly_plan.get("student_id"), conn)
+        _insert_weekly_packet(conn, weekly_plan, status, family_id)
         conn.execute("DELETE FROM daily_lessons WHERE packet_id = ?", (packet_id,))
-        _persist_daily_lessons(conn, packet_id, weekly_plan.get("daily_plan", []))
+        _persist_daily_lessons(conn, packet_id, weekly_plan.get("daily_plan", []), family_id)
 
 
 def _compute_etag(packet_id: str, updated_at: str) -> str:
@@ -251,6 +267,7 @@ def list_weekly_packets(
     limit: int,
     offset: int = 0,
     week_of: str | None = None,
+    family_id: str = DEFAULT_FAMILY,
 ) -> tuple[list[dict[str, Any]], bool]:
     """Return packet summaries for a student ordered by week desc."""
     ensure_schema()
@@ -260,9 +277,9 @@ def list_weekly_packets(
         "    pf.completed_at AS feedback_completed_at",
         "FROM weekly_packets wp",
         "LEFT JOIN packet_feedback pf ON pf.packet_id = wp.packet_id AND pf.student_id = wp.student_id",
-        "WHERE wp.student_id = ?",
+        "WHERE wp.student_id = ? AND wp.family_id = ?",
     ]
-    params: list[Any] = [student_id]
+    params: list[Any] = [student_id, family_id]
     if week_of:
         query.append("AND wp.week_of = ?")
         params.append(week_of)
@@ -300,7 +317,9 @@ def list_weekly_packets(
     return summaries, len(rows) > limit
 
 
-def get_weekly_packet(student_id: str, packet_id: str) -> dict[str, Any] | None:
+def get_weekly_packet(
+    student_id: str, packet_id: str, *, family_id: str = DEFAULT_FAMILY
+) -> dict[str, Any] | None:
     """Return persisted packet payload for a student or None when missing."""
     ensure_schema()
     conn = _get_connection()
@@ -309,10 +328,10 @@ def get_weekly_packet(student_id: str, packet_id: str) -> dict[str, Any] | None:
             """
             SELECT payload_json, updated_at
             FROM weekly_packets
-            WHERE packet_id = ? AND student_id = ?
+            WHERE packet_id = ? AND student_id = ? AND family_id = ?
             LIMIT 1
             """,
-            (packet_id, student_id),
+            (packet_id, student_id, family_id),
         ).fetchone()
     finally:
         conn.close()
@@ -332,10 +351,13 @@ def get_weekly_packet(student_id: str, packet_id: str) -> dict[str, Any] | None:
     }
 
 
-def _packet_exists(conn: sqlite3.Connection, student_id: str, packet_id: str) -> bool:
+def _packet_exists(
+    conn: sqlite3.Connection, student_id: str, packet_id: str, family_id: str = DEFAULT_FAMILY
+) -> bool:
     row = conn.execute(
-        "SELECT 1 FROM weekly_packets WHERE packet_id = ? AND student_id = ? LIMIT 1",
-        (packet_id, student_id),
+        "SELECT 1 FROM weekly_packets WHERE packet_id = ? AND student_id = ? AND family_id = ?"
+        " LIMIT 1",
+        (packet_id, student_id, family_id),
     ).fetchone()
     return row is not None
 
@@ -356,12 +378,14 @@ def _artifact_dict(row: sqlite3.Row, packet_id: str) -> dict[str, Any]:
     }
 
 
-def list_packet_artifacts(student_id: str, packet_id: str) -> list[dict[str, Any]] | None:
+def list_packet_artifacts(
+    student_id: str, packet_id: str, *, family_id: str = DEFAULT_FAMILY
+) -> list[dict[str, Any]] | None:
     """Return artifacts for a packet when the student owns it."""
     ensure_schema()
     conn = _get_connection()
     try:
-        if not _packet_exists(conn, student_id, packet_id):
+        if not _packet_exists(conn, student_id, packet_id, family_id):
             return None
         rows = conn.execute(
             """
@@ -379,7 +403,9 @@ def list_packet_artifacts(student_id: str, packet_id: str) -> list[dict[str, Any
     return [_artifact_dict(row, packet_id) for row in rows]
 
 
-def get_artifact_for_student(student_id: str, artifact_id: int) -> dict[str, Any] | None:
+def get_artifact_for_student(
+    student_id: str, artifact_id: int, *, family_id: str = DEFAULT_FAMILY
+) -> dict[str, Any] | None:
     """Return artifact metadata + path when student owns it."""
     ensure_schema()
     conn = _get_connection()
@@ -391,10 +417,10 @@ def get_artifact_for_student(student_id: str, artifact_id: int) -> dict[str, Any
                    wa.created_at, wp.student_id
             FROM worksheet_artifacts wa
             JOIN weekly_packets wp ON wa.packet_id = wp.packet_id
-            WHERE wa.id = ? AND wp.student_id = ?
+            WHERE wa.id = ? AND wp.student_id = ? AND wp.family_id = ?
             LIMIT 1
             """,
-            (artifact_id, student_id),
+            (artifact_id, student_id, family_id),
         ).fetchone()
     finally:
         conn.close()
@@ -412,14 +438,15 @@ def _upsert_feedback(
     check_results_json: str | None,
     quick_rating: str | None,
     derived_json: str | None,
+    family_id: str = DEFAULT_FAMILY,
 ) -> int:
     """Insert or replace a packet's one feedback row (bumping ``version``); return the version."""
     conn.execute(
         """
         INSERT INTO packet_feedback (
             packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
-            check_results_json, quick_rating, derived_mastery_json, version, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+            check_results_json, quick_rating, derived_mastery_json, version, updated_at, family_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
         ON CONFLICT(family_id, packet_id) DO UPDATE SET
             completed_at = excluded.completed_at,
             mastery_feedback_blob = excluded.mastery_feedback_blob,
@@ -440,11 +467,12 @@ def _upsert_feedback(
             quick_rating,
             derived_json,
             now,
+            family_id,
         ),
     )
     return conn.execute(
-        "SELECT version FROM packet_feedback WHERE packet_id = ? AND student_id = ?",
-        (packet_id, student_id),
+        "SELECT version FROM packet_feedback WHERE packet_id = ? AND family_id = ?",
+        (packet_id, family_id),
     ).fetchone()[0]
 
 
@@ -457,6 +485,7 @@ def save_packet_feedback(
     check_results: dict[str, str] | None = None,
     quick_rating: str | None = None,
     derived_mastery: dict[str, str] | None = None,
+    family_id: str = DEFAULT_FAMILY,
 ) -> int:
     """Save (insert or replace) the one feedback row for a packet; returns its version.
 
@@ -466,7 +495,7 @@ def save_packet_feedback(
     ensure_schema()
     conn = _get_connection()
     try:
-        if not _packet_exists(conn, student_id, packet_id):
+        if not _packet_exists(conn, student_id, packet_id, family_id):
             raise ValueError(f"Packet {packet_id} not found for student {student_id}")
         version = _upsert_feedback(
             conn,
@@ -478,6 +507,7 @@ def save_packet_feedback(
             _json(check_results) if check_results else None,
             quick_rating,
             _json(derived_mastery) if derived_mastery else None,
+            family_id,
         )
         conn.commit()
         return version
@@ -485,7 +515,9 @@ def save_packet_feedback(
         conn.close()
 
 
-def get_packet_feedback(student_id: str, packet_id: str) -> dict[str, Any] | None:
+def get_packet_feedback(
+    student_id: str, packet_id: str, *, family_id: str = DEFAULT_FAMILY
+) -> dict[str, Any] | None:
     """Retrieve feedback for a weekly packet."""
     ensure_schema()
     conn = _get_connection()
@@ -495,10 +527,10 @@ def get_packet_feedback(student_id: str, packet_id: str) -> dict[str, Any] | Non
             SELECT packet_id, student_id, completed_at, mastery_feedback_blob, quantity_feedback,
                    check_results_json, quick_rating, derived_mastery_json, version
             FROM packet_feedback
-            WHERE packet_id = ? AND student_id = ?
+            WHERE packet_id = ? AND student_id = ? AND family_id = ?
             LIMIT 1
             """,
-            (packet_id, student_id),
+            (packet_id, student_id, family_id),
         ).fetchone()
     finally:
         conn.close()

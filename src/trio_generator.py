@@ -15,12 +15,14 @@ from subject_picker import pick_subjects
 logger = logging.getLogger(__name__)
 
 
-def _get_grade_level(student_id: str, metadata_fallback: dict | None = None) -> int:
+def _get_grade_level(
+    student_id: str, metadata_fallback: dict | None = None, family_id: str = "fam_local"
+) -> int:
     """Return grade_level from the student's most recent weekly packet.
 
     Falls back to metadata_fallback["grade_level"] if no packets exist, then to 0.
     """
-    packets, _ = list_weekly_packets(student_id, limit=1, offset=0)
+    packets, _ = list_weekly_packets(student_id, limit=1, offset=0, family_id=family_id)
     if packets:
         return packets[0].get("grade_level", 0)
     if metadata_fallback is not None:
@@ -28,14 +30,14 @@ def _get_grade_level(student_id: str, metadata_fallback: dict | None = None) -> 
     return 0
 
 
-def generate_trio_for_student(student_id: str) -> None:
+def generate_trio_for_student(student_id: str, family_id: str = "fam_local") -> None:
     """Generate 3 lesson plans for a student and push NTFY on completion or failure."""
     profile = get_student_profile(student_id)
     metadata = json.loads(profile.get("metadata_blob") or "{}") if profile else {}
     name = metadata.get("name", student_id)
 
     try:
-        grade_level = _get_grade_level(student_id, metadata_fallback=metadata)
+        grade_level = _get_grade_level(student_id, metadata_fallback=metadata, family_id=family_id)
         subjects = pick_subjects(student_id)
 
         with ThreadPoolExecutor(max_workers=3) as executor:
@@ -45,6 +47,7 @@ def generate_trio_for_student(student_id: str) -> None:
                     student_id=student_id,
                     grade_level=grade_level,
                     subject=subject,
+                    family_id=family_id,
                 ): subject
                 for subject in subjects
             }

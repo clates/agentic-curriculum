@@ -19,9 +19,14 @@ except ImportError:  # Fallback for direct script execution
     from weekdoc.render import substitute_name  # type: ignore
 
 
-def check_cards(student_id: str, packet_id: str, first_name: str | None) -> list[dict]:
+def check_cards(
+    student_id: str,
+    packet_id: str,
+    first_name: str | None,
+    family_id: str = week_store.DEFAULT_FAMILY,
+) -> list[dict]:
     """The packet's checks in document order; empty for a week with no structured checks."""
-    week = week_store.get_week(student_id, packet_id)
+    week = week_store.get_week(student_id, packet_id, family_id=family_id)
     if week is None:
         return []
     return [

@@ -1,7 +1,7 @@
 """Family isolation (E0): with login on, a family reads and writes only its own children.
 
-Family A is fam_local (the legacy packet and feedback stores still write there); family B is a
-second family. A owns one child with a profile, a legacy packet (for its worksheet artifact), a
+Families A and B are both created families (neither is fam_local), so a path that still assumes
+fam_local fails here. A owns one child with a profile, a legacy packet (for its worksheet artifact), a
 structured week with feedback, a ready week plan and an open one. B is signed in and asks for A's things by id.
 """
 
@@ -50,11 +50,15 @@ def _point_app_at(db: Path, monkeypatch) -> None:
             monkeypatch.setitem(fn.__globals__, "DB_FILE", str(db))
 
 
-def _seed_family_a(conn: sqlite3.Connection) -> dict:
+def _seed_family_a(conn: sqlite3.Connection, fam: str) -> dict:
     conn.execute(
         "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob, metadata_blob,"
-        " family_id) VALUES (?, '{}', '{}', ?, 'fam_local')",
-        (KID, json.dumps({"name": "Ada Lovelace", "birthday": "2018-03-04", "grade_level": 3})),
+        " family_id) VALUES (?, '{}', '{}', ?, ?)",
+        (
+            KID,
+            json.dumps({"name": "Ada Lovelace", "birthday": "2018-03-04", "grade_level": 3}),
+            fam,
+        ),
     )
     for subject in ("Math", "Science", "English"):
         for n in range(1, 6):
@@ -65,13 +69,14 @@ def _seed_family_a(conn: sqlite3.Connection) -> dict:
             )
     conn.commit()
     main.get_weekly_packet.__globals__["save_weekly_packet"](
-        build_weekly_plan(plan_id=PACKET, student_id=KID)
+        build_weekly_plan(plan_id=PACKET, student_id=KID), family_id=fam
     )
     week = json.loads((ROOT / "tests/fixtures/weekdoc/weather_week.json").read_text("utf-8"))
-    main.get_week.__globals__["save_week"](KID, WEEK, week, grade_level=3, week_of="2026-01-06")
-    main.save_packet_feedback(KID, WEEK, {"MATH.4.1": "MASTERED"}, 0)
-    e2e_seed.create_plan(KID, "ready", "2026-01-05")
-    e2e_seed.create_plan(KID, "awaiting_pick", "2026-01-12")
+    save_week = main.get_week.__globals__["save_week"]
+    save_week(KID, WEEK, week, grade_level=3, week_of="2026-01-06", family_id=fam)
+    main.save_packet_feedback(KID, WEEK, {"MATH.4.1": "MASTERED"}, 0, family_id=fam)
+    e2e_seed.create_plan(KID, "ready", "2026-01-05", fam)
+    e2e_seed.create_plan(KID, "awaiting_pick", "2026-01-12", fam)
     ready = conn.execute(
         "SELECT plan_id FROM week_plan WHERE student_id = ? AND status = 'ready'", (KID,)
     ).fetchone()[0]
@@ -90,7 +95,8 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(passwords, "CURRENT", passwords.ScryptParams(n=2**10, r=8, p=1))
     _point_app_at(db, monkeypatch)
     monkeypatch.setattr(main, "_log_dir", lambda: tmp_path / "logs")
-    monkeypatch.setattr(main, "generate_trio_for_student", lambda sid: None)
+    trio = []
+    monkeypatch.setattr(main, "generate_trio_for_student", lambda *args: trio.append(args))
     agent = main.generate_weekly_plan.__globals__
     fake = FakeProvider()
     monkeypatch.setitem(agent, "_make_client", lambda: fake_client(fake))
@@ -107,11 +113,11 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr("llm.structured.default_client", lambda: llm_client(SmartProvider()))
     apply_migrations(db)
     conn = sqlite3.connect(db)
-    family_b = store.create_family(conn, "B")
-    store.create_user(conn, "parenta", PASSWORD)  # fam_local
+    family_a, family_b = store.create_family(conn, "A"), store.create_family(conn, "B")
+    store.create_user(conn, "parenta", PASSWORD, family_a)
     store.create_user(conn, "parentb", PASSWORD, family_b)
-    ids = _seed_family_a(conn)
-    yield {"db": db, "conn": conn, "ids": ids, "fake": fake}
+    ids = _seed_family_a(conn, family_a)
+    yield {"db": db, "conn": conn, "ids": ids, "fake": fake, "family_a": family_a, "trio": trio}
     conn.close()
 
 
@@ -179,7 +185,7 @@ def test_family_b_cannot_write_family_a(env):
         assert r.status_code == 404, f"{method} {path} answered {r.status_code}"
         assert r.json() == {"detail": "Student not found"}, path
     assert snapshot(env["conn"]) == before
-    assert env["fake"].calls == []  # no model call was made for B
+    assert env["fake"].calls == [] and env["trio"] == []  # no model call or trio for B
 
 
 def test_family_a_still_works(env):
@@ -192,6 +198,12 @@ def test_family_a_still_works(env):
     for method, path, body in writes(env["ids"]):
         r = a.request(method, path, json=body)
         assert r.status_code in (200, 201, 204), f"{method} {path}: {r.status_code} {r.text}"
+        if path == "/generate_weekly_plan":  # the new packet is saved in A's family
+            saved = env["conn"].execute(
+                "SELECT family_id FROM weekly_packets WHERE packet_id = ?", (r.json()["plan_id"],)
+            )
+            assert saved.fetchall() == [(env["family_a"],)]
+    assert env["trio"] == [(KID, env["family_a"])]  # the feedback hook runs for A's family
 
 
 def test_new_ids_are_generated_with_login_on(env):
@@ -219,4 +231,4 @@ def test_client_ids_still_work_with_login_off(env, monkeypatch):
     assert re.fullmatch(r"stu_[a-z2-7]{10}", generated)
     row = env["conn"].execute("SELECT family_id FROM student_profiles WHERE student_id = 'kid1'")
     assert row.fetchone() == ("fam_local",)
-    assert {"kid1", generated, KID} <= {s["student_id"] for s in c.get("/students").json()}
+    assert {s["student_id"] for s in c.get("/students").json()} == {"kid1", generated}

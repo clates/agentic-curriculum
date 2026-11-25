@@ -78,7 +78,7 @@ def feedback_client(tmp_path: Path, monkeypatch):
     packet_feedback_calls: list[tuple[str, str, dict[str, str] | None, int | None]] = []
     stored_feedback: dict[tuple[str, str], dict[str, Any]] = {}
 
-    def fake_save(student_id: str, packet_id: str, mastery_feedback, quantity_feedback):
+    def fake_save(student_id: str, packet_id: str, mastery_feedback, quantity_feedback, **_):
         packet_feedback_calls.append((student_id, packet_id, mastery_feedback, quantity_feedback))
         stored_feedback[(student_id, packet_id)] = {
             "packet_id": packet_id,
@@ -88,15 +88,15 @@ def feedback_client(tmp_path: Path, monkeypatch):
             "quantity_feedback": quantity_feedback,
         }
 
-    def fake_get(student_id: str, packet_id: str):
+    def fake_get(student_id: str, packet_id: str, **_):
         return stored_feedback.get((student_id, packet_id))
 
     monkeypatch.setattr(main_module, "save_packet_feedback", fake_save)
     monkeypatch.setattr(main_module, "get_packet_feedback", fake_get)
-    monkeypatch.setattr(main_module, "generate_trio_for_student", lambda student_id: None)
+    monkeypatch.setattr(main_module, "generate_trio_for_student", lambda student_id, family: None)
 
     # For the packet-existence check, return a stub payload for any packet_id
-    def fake_get_weekly_packet(student_id: str, packet_id: str):
+    def fake_get_weekly_packet(student_id: str, packet_id: str, **_):
         return {"payload": {"plan_id": packet_id, "student_id": student_id}}
     monkeypatch.setattr(main_module, "get_weekly_packet", fake_get_weekly_packet)
 

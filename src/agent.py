@@ -616,7 +616,12 @@ def _make_client() -> LLMClient:
 
 
 def generate_weekly_plan(
-    student_id: str, grade_level: int, subject: str, *, usage: UsageContext | None = None
+    student_id: str,
+    grade_level: int,
+    subject: str,
+    *,
+    usage: UsageContext | None = None,
+    family_id: str = "fam_local",
 ) -> dict:
     """Generate (and save) a student's weekly plan: one scaffold call, then one call per day.
 
@@ -836,7 +841,7 @@ Respond with a JSON object in this exact format:
     generation_logger.log_weekly_plan(weekly_plan)
 
     try:
-        save_weekly_packet(weekly_plan)
+        save_weekly_packet(weekly_plan, family_id=family_id)
     except Exception as exc:  # pragma: no cover - relies on sqlite errors
         print(f"Error: Failed to persist weekly packet {plan_id}: {exc}")
         raise
