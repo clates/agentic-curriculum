@@ -220,20 +220,16 @@ def author_week(
                 usage=usage,
                 check=check,
             )
-        except StructuredOutputError as exc:
-            step = _step_from_budget(name, budget, start, time.monotonic() - t0)
-            step.errors = list(exc.errors)
-            run.steps.append(step)
-            run.final_errors = list(exc.errors)
-            return None, "validation"
-        except CostCapExceeded as exc:
-            step = _step_from_budget(name, budget, start, time.monotonic() - t0)
-            run.steps.append(step)
-            run.final_errors = [str(exc)]
-            return None, BUDGET_EXCEEDED
         except LLMError as exc:
             step = _step_from_budget(name, budget, start, time.monotonic() - t0)
             run.steps.append(step)
+            if isinstance(exc, StructuredOutputError):
+                step.errors = list(exc.errors)
+                run.final_errors = list(exc.errors)
+                return None, "validation"
+            if isinstance(exc, CostCapExceeded):
+                run.final_errors = [str(exc)]
+                return None, BUDGET_EXCEEDED
             run.final_errors = [f"{type(exc).__name__}: {exc}"]
             return None, PROVIDER_ERROR
         step = _step_from_budget(name, budget, start, time.monotonic() - t0)

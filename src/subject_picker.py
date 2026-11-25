@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import sys
-from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -11,8 +10,6 @@ from curriculum_graph import load_from_db
 from db_utils import get_db_path, get_student_profile
 
 logger = logging.getLogger(__name__)
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def pick_subjects(student_id: str) -> list[str]:
@@ -43,11 +40,10 @@ def pick_subjects(student_id: str) -> list[str]:
     selected = [s for s in ranked if scores.get(s, 0) > 0][:3]
 
     # Fill remaining slots from SUBJECTS rotation (preserve order, skip already selected)
-    if len(selected) < 3:
-        for subject in SUBJECTS:
-            if subject not in selected:
-                selected.append(subject)
-            if len(selected) == 3:
-                break
+    for subject in SUBJECTS:
+        if len(selected) == 3:
+            break
+        if subject not in selected:
+            selected.append(subject)
 
     return selected
