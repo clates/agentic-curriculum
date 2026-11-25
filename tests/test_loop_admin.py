@@ -38,9 +38,13 @@ def act(api, action, student="kid", **body):
     return api.post(f"{BASE}/students/{student}/actions/{action}", json=body)
 
 
+def children(overview):
+    return [c for f in overview["families"] for c in f["children"]]
+
+
 def child(api, student="kid"):
     return next(
-        c for c in api.get(f"{BASE}/overview").json()["children"] if c["student_id"] == student
+        c for c in children(api.get(f"{BASE}/overview").json()) if c["student_id"] == student
     )
 
 
@@ -253,7 +257,7 @@ def test_a_written_week_can_be_reviewed_with_its_run_record(api, conn, db_path, 
     assert api.get(f"{BASE}/students/kid/weeks/{newer.plan_id}/review").status_code == 409
 
 
-# --- login on: admin only, and only for the admin's own family -----------------------------------
+# --- login on: admin only; an admin sees every family, and each look at another is audited ------
 
 PASSWORD = "correct horse battery"
 
@@ -269,13 +273,11 @@ def two_families(db_path, monkeypatch):
     c = jobs.connect(db_path)
     fam_a, fam_b = store.create_family(c, "A"), store.create_family(c, "B")
     c.execute("UPDATE student_profiles SET family_id=? WHERE student_id='kid'", (fam_a,))
-    c.execute(
-        "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob, metadata_blob,"
-        " family_id) VALUES ('b_kid', '{}', '{}', ?, ?)",
-        ('{"name": "Bea", "grade_level": 2}', fam_b),
-    )
-    for name, fam in (("parenta", fam_a), ("adminb", fam_b), ("parentb", fam_b)):
-        store.create_user(c, name, PASSWORD, fam)
+    add_child(c, "b_kid", "Bea", fam_b)
+    users = {
+        name: store.create_user(c, name, PASSWORD, fam).id
+        for name, fam in (("parenta", fam_a), ("adminb", fam_b), ("parentb", fam_b))
+    }
     store.grant(c, "adminb", "admin")
     c.commit()
     plan = wp.create_plan(c, fam_a, "kid", "2026-01-12")
@@ -284,8 +286,20 @@ def two_families(db_path, monkeypatch):
     ]
     c.execute("UPDATE jobs SET state='dead', last_error='A secret' WHERE id=?", (job.id,))
     c.commit()
-    yield {"conn": c, "fam_a": fam_a, "fam_b": fam_b, "plan_id": plan.plan_id, "job_id": job.id}
+    yield {
+        "conn": c, "fam_a": fam_a, "fam_b": fam_b, "plan_id": plan.plan_id, "job_id": job.id,
+        "users": users,
+    }  # fmt: skip
     c.close()
+
+
+def add_child(conn, student_id, name, family_id):
+    conn.execute(
+        "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob, metadata_blob,"
+        " family_id) VALUES (?, '{}', '{}', ?, ?)",
+        (student_id, f'{{"name": "{name}", "grade_level": 2}}', family_id),
+    )
+    conn.commit()
 
 
 def signed_in(username):
@@ -299,8 +313,17 @@ def signed_in(username):
 
 
 def rows(conn):
-    tables = ("week_plan", "jobs", "student_profiles")
+    tables = ("week_plan", "jobs", "student_profiles", "audit_log")
     return {t: conn.execute(f"SELECT * FROM {t} ORDER BY 1").fetchall() for t in tables}
+
+
+def audits(conn):
+    return [
+        tuple(r)
+        for r in conn.execute(
+            "SELECT family_id, user_id, action, target, detail_json FROM audit_log ORDER BY 1"
+        )
+    ]
 
 
 def console_routes():
@@ -322,38 +345,83 @@ def test_console_is_404_for_non_admins_with_login_on(two_families):
     before = rows(two_families["conn"])
     routes = console_routes()
     assert len(routes) == 6
-    for method, path in routes:  # B's own child: the refusal is about the permission, not the child
-        url = path.format(
-            student_id="b_kid", plan_id=two_families["plan_id"], action="new_week",
-            job_id=two_families["job_id"],
-        )  # fmt: skip
-        r = b.request(method, url, json={} if method == "POST" else None)
-        assert r.status_code == 404 and r.json() == {"detail": "Not Found"}, f"{method} {path}"
-    assert rows(two_families["conn"]) == before
+    for student in ("b_kid", "kid"):  # their own child, and another family's: the same refusal
+        for method, path in routes:
+            url = path.format(
+                student_id=student, plan_id=two_families["plan_id"], action="new_week",
+                job_id=two_families["job_id"],
+            )  # fmt: skip
+            r = b.request(method, url, json={} if method == "POST" else None)
+            assert r.status_code == 404 and r.json() == {"detail": "Not Found"}, f"{method} {path}"
+    assert rows(two_families["conn"]) == before  # nothing written, not even an audit row
     assert signed_in("adminb").get(f"{BASE}/overview").status_code == 200
 
 
-def test_console_acts_for_the_admins_family(two_families):
-    conn, plan_id = two_families["conn"], two_families["plan_id"]
+def test_an_admin_acts_on_another_familys_child_and_each_request_is_audited(two_families):
+    conn, fam_a, plan_id = two_families["conn"], two_families["fam_a"], two_families["plan_id"]
+    admin = two_families["users"]["adminb"]
     b = signed_in("adminb")
-    overview = b.get(f"{BASE}/overview").json()
-    assert [c["student_id"] for c in overview["children"]] == ["b_kid"]
-    assert overview["queue"]["dead"] == [] and "A secret" not in str(overview)
-    before = rows(conn)
-    for action in ("new_week", "skip_checkin", "generate_ideas", "reset_weeks"):
-        r = act(b, action, student="kid", week="2026-01-19")
-        assert r.status_code == 404 and r.json() == {"detail": "Student not found"}, action
-    for path in ("kid/feed-forward", f"kid/weeks/{plan_id}/review"):
-        r = b.get(f"{BASE}/students/{path}")
-        assert r.status_code == 404 and r.json() == {"detail": "Student not found"}, path
+
+    r = act(b, "new_week", student="kid", week="2026-01-19")
+    assert r.status_code == 200 and r.json()["child"]["plan"]["week_start"] == "2026-01-19"
+    assert wp.latest_plan_for_student(conn, fam_a, "kid").week_start == "2026-01-19"  # A's week
+    assert audits(conn) == [(fam_a, admin, "console.new_week", "kid", None)]
+
+    conn.execute("DELETE FROM audit_log")
+    conn.commit()
+    assert b.get(f"{BASE}/students/kid/feed-forward").status_code == 200
+    assert b.get(f"{BASE}/students/kid/weeks/{plan_id}/review").status_code == 409  # not written
+    assert b.post(f"{BASE}/jobs/{two_families['job_id']}/retry").status_code == 200
+    assert jobs.get_job(conn, two_families["job_id"]).state == "queued"
+    assert audits(conn) == [
+        (fam_a, admin, "console.view", "kid", None),
+        (fam_a, admin, "console.view", "kid", None),
+        (fam_a, admin, "console.retry", f"job:{two_families['job_id']}", None),
+    ]
+
+    conn.execute("DELETE FROM audit_log")
+    conn.commit()
+    r = act(b, "new_week", student="nobody")  # a missing child or job: the same 404 as before
+    assert r.status_code == 404 and r.json() == {"detail": "Student not found"}
+    assert act(b, "teleport", student="kid").status_code == 404  # an unknown name is not recorded
+    r = b.post(f"{BASE}/jobs/99999/retry")
+    assert r.status_code == 404 and r.json() == {"detail": {"message": "No such job."}}
     assert b.get(f"{BASE}/students/b_kid/weeks/{plan_id}/review").status_code == 404  # A's plan
-    assert b.post(f"{BASE}/jobs/{two_families['job_id']}/retry").status_code == 404
-    assert rows(conn) == before  # nothing written for A, and A's dead job stays dead
-    # and B's own child works, in B's family
+    assert audits(conn) == []
+
+
+def test_the_overview_shows_every_family_own_first_with_one_audit_row(two_families):
+    conn, fam_a, fam_b = two_families["conn"], two_families["fam_a"], two_families["fam_b"]
+    from auth import store
+
+    fam_c = store.create_family(conn, "Cedars")
+    add_child(conn, "c_kid", "Cy", fam_c)
+    overview = signed_in("adminb").get(f"{BASE}/overview").json()
+    assert [(f["family_id"], f["name"], f["own"]) for f in overview["families"]] == [
+        (fam_b, "B", True), (fam_a, "A", False), (fam_c, "Cedars", False),
+    ]  # fmt: skip
+    assert [[c["student_id"] for c in f["children"]] for f in overview["families"]] == [
+        ["b_kid"], ["kid"], ["c_kid"],
+    ]  # fmt: skip
+    # the whole queue, but another family's error text is not shown (it can quote a child's data)
+    assert [d["id"] for d in overview["queue"]["dead"]] == [two_families["job_id"]]
+    assert "A secret" not in str(overview)
+    admin = two_families["users"]["adminb"]
+    assert audits(conn) == [(None, admin, "console.overview", None, '{"families": 2}')]
+
+
+def test_an_admin_on_their_own_family_writes_no_audit_row(two_families):
+    conn = two_families["conn"]
+    conn.execute("DELETE FROM student_profiles WHERE student_id='kid'")
+    conn.commit()
+    b = signed_in("adminb")
+    assert [f["own"] for f in b.get(f"{BASE}/overview").json()["families"]] == [True]
     assert act(b, "new_week", student="b_kid", week="2026-01-19").status_code == 200
+    assert b.get(f"{BASE}/students/b_kid/feed-forward").status_code == 200
     assert (
         wp.latest_plan_for_student(conn, two_families["fam_b"], "b_kid").week_start == "2026-01-19"
     )
+    assert audits(conn) == []
 
 
 def test_seed_demo_lands_in_the_admins_family_and_never_collides(two_families):
@@ -367,6 +435,5 @@ def test_seed_demo_lands_in_the_admins_family_and_never_collides(two_families):
     assert b.post(f"{BASE}/seed-demo").json()["child"]["student_id"] == sid  # repeatable
     owners = dict(conn.execute("SELECT student_id, family_id FROM student_profiles").fetchall())
     assert owners[sid] == two_families["fam_b"] and owners["demo_child"] == "fam_local"
-    assert [c["student_id"] for c in b.get(f"{BASE}/overview").json()["children"]] == sorted(
-        ["b_kid", sid]
-    )
+    own = b.get(f"{BASE}/overview").json()["families"][0]
+    assert own["own"] and [c["student_id"] for c in own["children"]] == sorted(["b_kid", sid])

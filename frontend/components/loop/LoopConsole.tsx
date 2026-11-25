@@ -482,7 +482,7 @@ export function LoopConsole() {
   const overview = useLoopOverview();
   const seed = useSeedDemo();
   const data = overview.data;
-  const hasDemo = data?.children.some((c) => c.demo);
+  const hasDemo = data?.families.some((f) => f.own && f.children.some((c) => c.demo));
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 [overflow-wrap:anywhere]">
@@ -513,8 +513,22 @@ export function LoopConsole() {
         </p>
       )}
 
-      {data?.children.map((c) => (
-        <ChildCard key={c.student_id} child={c} />
+      {data?.families.map((f) => (
+        <section
+          key={f.family_id}
+          aria-label={f.name}
+          data-testid="loop-family"
+          data-own={f.own}
+          className="space-y-4"
+        >
+          <h2 className="text-xl font-semibold text-neutral-900">
+            {f.name}
+            {f.own ? ' (yours)' : ''}
+          </h2>
+          {f.children.map((c) => (
+            <ChildCard key={c.student_id} child={c} />
+          ))}
+        </section>
       ))}
 
       {data && !hasDemo && (

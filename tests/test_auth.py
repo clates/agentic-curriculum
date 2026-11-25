@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import db_utils  # noqa: E402
 from auth import clock, lockout, passwords, service, store  # noqa: E402
 from auth.web import COOKIE_NAME, PUBLIC_PATHS, current_family  # noqa: E402
+from loop_admin import admin_student  # noqa: E402
 from main import app  # noqa: E402
 from migrations import apply_migrations  # noqa: E402
 from tenancy import owned_student_id  # noqa: E402
@@ -531,10 +532,17 @@ def test_every_route_declares_its_family():
             continue
         checked.add(path)
         assert _reaches(route.dependant, current_family), f"{path} does not ask for the family"
-        if "{student_id}" in path:
-            assert _reaches(route.dependant, owned_student_id), f"{path} skips the ownership check"
+        console = path.startswith("/loop-admin/")
         if path.startswith(("/loop-admin/", "/admin-api/")):
             assert _reaches_admin(route.dependant), f"{path} is not admin-only"
+        # the console may act on any family's child, through admin_student and only behind admin
+        if _reaches(route.dependant, admin_student):
+            assert console and _reaches_admin(route.dependant), f"{path} reaches admin_student"
+        if "{student_id}" in path:
+            allowed = (owned_student_id, admin_student) if console else (owned_student_id,)
+            assert any(
+                _reaches(route.dependant, d) for d in allowed
+            ), f"{path} skips the ownership check"
     assert {"/students", "/this-week", "/generate_weekly_plan", "/student/{student_id}"} <= checked
 
 
