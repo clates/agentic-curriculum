@@ -29,6 +29,13 @@ class ModelStudentContext:
     reading_level: str | None = None
     interests: tuple[str, ...] = field(default_factory=tuple)
     parent_notes: str | None = None
+    math_grade: int | None = None
+    la_grade: int | None = None
+
+    def grade_for(self, subject: str) -> int:
+        """The grade the planner uses for a subject: math has its own, the rest follow language arts."""
+        own = self.math_grade if subject == "Math" else self.la_grade
+        return self.grade if own is None else own
 
     @property
     def grade_label(self) -> str:
@@ -37,6 +44,10 @@ class ModelStudentContext:
     def prompt_lines(self) -> str:
         """The child's facts as prompt text. This is the only text about the child that leaves."""
         lines = [f"First name: {self.first_name}", f"Grade: {self.grade_label}"]
+        if self.math_grade is not None:
+            lines.append(f"Math grade: {GRADE_LABELS.get(self.math_grade)}")
+        if self.la_grade is not None:
+            lines.append(f"Language arts grade: {GRADE_LABELS.get(self.la_grade)}")
         if self.reading_level:
             lines.append(f"Reading level: {self.reading_level}")
         if self.interests:
@@ -54,6 +65,11 @@ def _blob(value: Any) -> dict[str, Any]:
     except (TypeError, ValueError):
         return {}
     return loaded if isinstance(loaded, dict) else {}
+
+
+def _subject_grade(raw: Any) -> int | None:
+    ok = isinstance(raw, int) and not isinstance(raw, bool) and 0 <= raw <= 12
+    return raw if ok else None
 
 
 def first_name(full_name: str | None) -> str:
@@ -120,4 +136,6 @@ def build_model_context(
         reading_level=reading[:MAX_READING_CHARS] or None,
         interests=_interests(meta.get("interests") or rules.get("interests")),
         parent_notes=notes[:MAX_NOTES_CHARS] or None,
+        math_grade=_subject_grade(meta.get("math_grade")),
+        la_grade=_subject_grade(meta.get("la_grade")),
     )
