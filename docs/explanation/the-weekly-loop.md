@@ -80,9 +80,11 @@ adding a child: one for math, one for reading and writing. The planner picks Mat
 math grade and every other subject near the reading and writing grade. A single grade would
 under-challenge one subject or overwhelm the other.
 
-Parents guess at a grade, and a guess is rough. The grades are starting points. The first
-check-ins show what the child already knows, and feed forward adjusts from there. The form says
-so, so a wrong first guess doesn't feel like a mistake to fix.
+Parents guess at a grade, and a guess is rough. The grades are starting points. The stored
+grades don't change afterwards: calibration happens through mastery. The first check-ins show what
+the child already knows, those skills move, and feed forward picks the next ones from there rather
+than by changing the grades. The form says so, so a wrong first guess doesn't feel like a mistake
+to fix.
 
 ## What's not there yet
 

@@ -32,17 +32,23 @@ The child's first week starts straight away. You don't wait for Friday.
 - Added Monday to Wednesday: the week starts this Monday.
 - Added Thursday to Sunday: the week starts next Monday.
 
-The days are in the family's timezone. With the weekly loop on, ideas for the week are generated.
+The days are in the server's default timezone, `SCHEDULER_DEFAULT_TZ` (New York unless the
+operator changed it). If the operator set a timezone for your family, the days are in that one
+instead; see [Set a family's timezone](run-the-worker.md#set-a-familys-timezone). With the weekly
+loop on, ideas for the week are generated.
 With it off, the plan is made but no ideas are. See
 [Run the worker](run-the-worker.md#turn-the-loop-on-on-the-server).
 
-The grades are starting points. The planner adjusts after the first few check-ins.
+The grades are starting points and stay as you set them. The planner adjusts from what the first
+few check-ins show the child knows.
 
 ## If something goes wrong
 
 - **"You can add up to five children."** The family is full. Delete a child first.
 - **The form reports too many interests, or one that is too long.** Use up to 8, each up to 40
   characters.
+- **"Something in the form needs fixing."** Check each answer against the limits above and save
+  again.
 - **"We couldn't save this just now."** Try again.
 
 Fields, limits and responses: [Children reference](../reference/children.md). Why grades are

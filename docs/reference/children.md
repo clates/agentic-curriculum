@@ -4,7 +4,8 @@ Adding a child to a family. Steps: [Add a child](../how-to/add-a-child.md).
 
 ## `POST /children`
 
-Needs a signed-in family. Adds a child and starts its first week.
+Adds a child to the caller's family and starts its first week. With the login on, it needs a
+signed-in family. With the login off, the child goes to the server's one family.
 
 Request body. Unknown fields are refused, and numbers must be real integers (not `"3"`, `3.0` or
 `true`).
@@ -22,12 +23,15 @@ The server also stores `grade_level`, set to `la_grade`.
 | Status | Meaning |
 |---|---|
 | 201 | Added. Body: `{"student_id": "...", "week_start": "YYYY-MM-DD"}` |
+| 401 | Login on and not signed in. Nothing is created |
 | 409 | `too_many_children`: the family already has 5 |
 | 422 | Invalid input |
 
 ## First week
 
-`week_start` is the Monday of the child's first week, using the family's local date.
+`week_start` is the Monday of the child's first week, using the family's local date: the
+family's timezone in `family_settings`, else `SCHEDULER_DEFAULT_TZ`. If that timezone doesn't load,
+the UTC date is used.
 
 | Added on | First week starts |
 |---|---|
