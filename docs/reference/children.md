@@ -64,15 +64,15 @@ A child with no `math_grade` or `la_grade` (an older profile) is planned at its 
 |---|---|
 | `/welcome` | The form, for a family with no children. Sends a family that has children to `/week` |
 | `/children/new` | The form, or a notice when the family has 5 |
-| `/week` | An "Add a child" button when login is on and the family has fewer than 5. Each child's card links to "Past weeks" and "How it's going" |
-| `/children/{student_id}` | The child's page: "Past weeks", then "How it's going". "We couldn't find that child" for an unknown child |
+| `/week` | An "Add a child" button when login is on and the family has fewer than 5. Each child's card links to "Past weeks" and "Skills by subject" |
+| `/children/{student_id}` | The child's page: "Past weeks", then "Skills by subject". "We couldn't find that child" for an unknown child. The browser tab reads "Your child" |
 
 ### Child page
 
 | Section | Shows |
 |---|---|
-| Past weeks | Weeks already written, newest first, up to 50. Each links to the documents that exist: the child's pages, the teacher guide, the prep sheet. A week still being written is not listed |
-| How it's going | One bar per subject from `GET /students/{student_id}/coverage`: solid, shaky, still to come |
+| Past weeks | Weeks already written, newest first, up to 50. Each shows "Checked in" or "Not checked in yet" (`has_feedback` in the weekly-packets list) and links to the documents that exist: the child's pages, the teacher guide, the prep sheet. A week still being written is not listed |
+| Skills by subject | One bar per subject from `GET /students/{student_id}/coverage`: solid, shaky, still to come. A child with no history has bars that are all still to come. "Nothing to show yet" only when the child's grades have no skills and there is no progress |
 
 Only the newest 50 weeks show. Older weeks stay saved but have no link here.
 
