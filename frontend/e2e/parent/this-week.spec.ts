@@ -36,7 +36,10 @@ test.describe('This week (real API)', () => {
       await expect(card).toHaveAttribute('data-next-action', c.action);
       await expect(card.getByRole('heading')).toHaveText(c.title);
       if (c.button) await expect(card.getByRole('link', { name: c.button })).toBeVisible();
-      else await expect(card.getByRole('link')).toHaveCount(0);
+      else
+        await expect(
+          card.getByRole('link').filter({ hasNotText: /^(Past weeks|How it’s going)$/ })
+        ).toHaveCount(0);
       await expect(page.locator('body')).not.toContainText('Testerson'); // first name only
       await expectNoViolations(page);
       await expectNoBannedWords(page);

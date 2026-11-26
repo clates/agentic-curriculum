@@ -257,7 +257,9 @@ test.describe('Loop-state copy', () => {
     await page.goto('/week');
     const card = page.locator('[data-testid="child-card"]', { hasText: 'Zed' });
     await expect(card).toContainText('You don’t need to do anything.', { timeout: 20_000 });
-    await expect(card.getByRole('link')).toHaveCount(0);
+    await expect(
+      card.getByRole('link').filter({ hasNotText: /^(Past weeks|How it’s going)$/ })
+    ).toHaveCount(0);
     await expectNoViolations(page);
     await expectNoBannedWords(page);
   });

@@ -100,13 +100,13 @@ def create_packet(student_id: str, packet_id: str) -> None:
     print(f"created packet {packet_id} for student {student_id}")
 
 
-def create_week(student_id: str, packet_id: str) -> None:
+def create_week(student_id: str, packet_id: str, week_of: str = "2026-01-06") -> None:
     """Seed a ready structured week (the weather-week fixture, 10 prep checks)."""
     import week_store  # noqa: E402
 
     fixture = PROJECT_ROOT / "tests" / "fixtures" / "weekdoc" / "weather_week.json"
     week = json.loads(fixture.read_text(encoding="utf-8"))
-    week_store.save_week(student_id, packet_id, week, grade_level=0, week_of="2026-01-06")
+    week_store.save_week(student_id, packet_id, week, grade_level=0, week_of=week_of)
     print(f"created structured week {packet_id} for student {student_id}")
 
 
@@ -352,10 +352,10 @@ if __name__ == "__main__":
         set_progress(sys.argv[2])
 
     elif cmd == "create_week":
-        if len(sys.argv) != 4:
-            print("Usage: e2e_seed.py create_week <student_id> <packet_id>")
+        if len(sys.argv) not in (4, 5):
+            print("Usage: e2e_seed.py create_week <student_id> <packet_id> [week_of]")
             sys.exit(1)
-        create_week(sys.argv[2], sys.argv[3])
+        create_week(*sys.argv[2:])
 
     elif cmd == "expire_plan":
         expire_plan(sys.argv[2])

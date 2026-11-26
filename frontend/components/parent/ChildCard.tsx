@@ -3,6 +3,9 @@ import { copy } from '@/lib/copy';
 import type { ChildCard as Card } from '@/lib/thisWeek';
 import { primaryButton } from './states';
 
+const linkClass =
+  'text-primary-700 inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
+
 function weekLabel(iso: string): string {
   const d = new Date(`${iso}T12:00:00`);
   return `${copy.thisWeek.weekOf} ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
@@ -39,6 +42,14 @@ export function ChildCard({ card }: { card: Card }) {
           {text.button}
         </Link>
       ) : null}
+      <p className="mt-3 flex flex-wrap gap-x-5">
+        <Link href={`/children/${card.student_id}#past-weeks`} className={linkClass}>
+          {copy.thisWeek.pastWeeks}
+        </Link>
+        <Link href={`/children/${card.student_id}#coverage`} className={linkClass}>
+          {copy.thisWeek.howItsGoing}
+        </Link>
+      </p>
     </li>
   );
 }

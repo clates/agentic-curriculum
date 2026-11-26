@@ -103,8 +103,8 @@ export function seedPlan(studentId: string, status: string, weekStart = '2099-01
 }
 
 /** Seed a finished structured week with ten check-by-check prompts for the child. */
-export function seedWeek(studentId: string, packetId: string): void {
-  seedScript('create_week', studentId, packetId);
+export function seedWeek(studentId: string, packetId: string, weekOf?: string): void {
+  seedScript('create_week', studentId, packetId, ...(weekOf ? [weekOf] : []));
 }
 
 export interface LlmUsageRow {
