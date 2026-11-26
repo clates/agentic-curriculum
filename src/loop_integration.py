@@ -17,7 +17,7 @@ import json
 import logging
 import os
 import sqlite3
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 
 try:
     from . import authoring_kickoff, jobs, loop_state, scheduler, week_plan as wp  # type: ignore
@@ -141,6 +141,33 @@ def seed_demo(conn: sqlite3.Connection, family_id: str = LOCAL_FAMILY_ID) -> str
 
 def next_monday(today) -> str:
     return (today + timedelta(days=7 - today.weekday())).isoformat()
+
+
+def first_week_start(today: date) -> str:
+    """A new child's first week: added Monday-Wednesday, this week's Monday; else next Monday."""
+    monday = today - timedelta(days=today.weekday())
+    return (monday + timedelta(days=7 if today.weekday() >= 3 else 0)).isoformat()
+
+
+def begin_first_week(
+    conn: sqlite3.Connection, student_id: str, family_id: str, now: datetime
+) -> str:
+    """Give a new child a week plan for its first week (family-local date) and return that Monday.
+
+    Loop on: start the week (skip the check-in, queue the outlines). Loop off: only make the plan,
+    as the This week page would, so nothing is queued or paid for. Never raises: the child is
+    already saved, and This week makes a missing plan on its next read."""
+    week = first_week_start(now.astimezone(scheduler.family_tz(conn, family_id)).date())
+    try:
+        if enabled():
+            start_week(conn, student_id, week, family_id=family_id)
+        else:
+            wp.create_plan(conn, family_id, student_id, week)
+    except Exception:
+        if conn.in_transaction:
+            conn.rollback()
+        logger.exception("loop: could not start the first week for a new child")
+    return week
 
 
 def start_week(

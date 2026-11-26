@@ -70,6 +70,14 @@ def default_tz() -> str:
     return os.environ.get("SCHEDULER_DEFAULT_TZ") or DEFAULT_TZ
 
 
+def family_tz(conn: sqlite3.Connection, family_id: str) -> ZoneInfo:
+    """The family's own timezone (family_settings), else the deployment default."""
+    row = conn.execute(
+        "SELECT timezone FROM family_settings WHERE family_id = ?", (family_id,)
+    ).fetchone()
+    return ZoneInfo((row[0] if row else None) or default_tz())
+
+
 def local_at(monday: date, days: int, at: time, tz: ZoneInfo) -> datetime:
     """The wall-clock moment ``monday + days`` at ``at`` in ``tz`` (aware)."""
     return datetime.combine(monday + timedelta(days=days), at, tzinfo=tz)
