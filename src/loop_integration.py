@@ -17,7 +17,7 @@ import json
 import logging
 import os
 import sqlite3
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 try:
     from . import authoring_kickoff, jobs, loop_state, scheduler, week_plan as wp  # type: ignore
@@ -156,14 +156,16 @@ def begin_first_week(
 
     Loop on: start the week (skip the check-in, queue the outlines). Loop off: only make the plan,
     as the This week page would, so nothing is queued or paid for. Never raises: the child is
-    already saved, and This week makes a missing plan on its next read."""
-    week = first_week_start(now.astimezone(scheduler.family_tz(conn, family_id)).date())
+    already saved, and This week makes a missing plan on its next read. A timezone that does not
+    load falls back to the UTC date. SystemExit is caught too: start_week raises it."""
+    week = first_week_start(now.astimezone(UTC).date())
     try:
+        week = first_week_start(now.astimezone(scheduler.family_tz(conn, family_id)).date())
         if enabled():
             start_week(conn, student_id, week, family_id=family_id)
         else:
             wp.create_plan(conn, family_id, student_id, week)
-    except Exception:
+    except (Exception, SystemExit):
         if conn.in_transaction:
             conn.rollback()
         logger.exception("loop: could not start the first week for a new child")

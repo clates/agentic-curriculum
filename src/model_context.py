@@ -10,6 +10,7 @@ leak into a prompt by accident. Every prompt that mentions the child must be bui
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
@@ -72,9 +73,14 @@ def _subject_grade(raw: Any) -> int | None:
     return raw if ok else None
 
 
+_SPACES = re.compile(r"[\s\x00-\x1f\x7f-\x9f]+")
+
+
 def first_name(full_name: str | None) -> str:
-    name = (full_name or "").strip()
-    return name.split(" ")[0] if name else "Your child"
+    """The first word of a parent-typed name, at most 40 characters. Every run of whitespace or
+    control characters counts as one space, so a name can't add lines to a prompt."""
+    name = _SPACES.sub(" ", full_name or "").strip()
+    return name.split(" ")[0][:40] if name else "Your child"
 
 
 def grade_from_birthday(birthday: str | None, today: date) -> int | None:

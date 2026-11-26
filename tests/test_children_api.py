@@ -121,6 +121,32 @@ def test_a_failure_starting_the_week_keeps_the_child(db, monkeypatch):
     assert kids(db) == [r.json()["student_id"]]
 
 
+def test_a_timezone_that_does_not_load_keeps_the_child(db):
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "INSERT INTO family_settings (family_id, timezone, updated_at) VALUES (?,?,?)",
+        ("fam_local", "Not/AZone", "x"),
+    )
+    conn.commit()
+    conn.close()
+    r = TestClient(main.app).post("/children", json=CHILD)
+    assert r.status_code == 201, r.text
+    assert kids(db) == [r.json()["student_id"]]
+    assert r.json()["week_start"] == "2026-11-23"  # the UTC date (a Wednesday)
+
+
+def test_a_start_week_that_exits_keeps_the_child(db, monkeypatch):
+    monkeypatch.setenv("LOOP_JOBS_ENABLED", "1")
+
+    def exits(*args, **kwargs):
+        raise SystemExit("no child")
+
+    monkeypatch.setattr(loop_integration, "start_week", exits)
+    r = TestClient(main.app).post("/children", json=CHILD)
+    assert r.status_code == 201, r.text
+    assert kids(db) == [r.json()["student_id"]]
+
+
 def test_the_sixth_child_is_refused_and_nothing_is_written(db):
     c = TestClient(main.app)
     for _ in range(5):
