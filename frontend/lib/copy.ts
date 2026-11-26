@@ -108,6 +108,7 @@ export const copy = {
     interestTooLong: 'Each interest can be up to 40 characters. Please shorten the longest one.',
     tooMany: 'You can add up to five children. To add another, please remove one first.',
     failed: 'We couldn\u2019t save this just now. Please try again.',
+    invalid: 'Something in the form needs fixing. Please check each answer and save again.',
     addButton: 'Add a child',
   },
   thisWeek: {

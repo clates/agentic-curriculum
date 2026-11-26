@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,6 +10,9 @@ import { Button, Input, Modal } from '@/components/ui';
 import { Navigation } from '@/components/Navigation';
 import { studentsApi, parseMetadata } from '@/lib/api';
 import { useStudents } from '@/lib/hooks';
+import { useMe } from '@/lib/useMe';
+import { copy } from '@/lib/copy';
+import { primaryButton } from '@/components/parent/states';
 
 // "dinosaurs, baking" -> ['dinosaurs', 'baking'] (the weekly topics are built from these)
 function parseInterests(raw: string | undefined): string[] {
@@ -42,7 +46,9 @@ export default function StudentsPage() {
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
   const [deletingStudent, setDeletingStudent] = useState<string | null>(null);
 
-  const { data: students, isLoading } = useStudents();
+  const { data: students, isLoading: studentsLoading } = useStudents();
+  const me = useMe();
+  const isLoading = studentsLoading || me.isLoading;
   const queryClient = useQueryClient();
 
   const {
@@ -137,6 +143,14 @@ export default function StudentsPage() {
 
   const isEditing = !!editingStudent;
   const activeMutation = isEditing ? updateMutation : createMutation;
+  // Login on: a new child goes through the parent form (two grades, first week), not this one.
+  const addButton = me.data?.auth_required ? (
+    <Link href="/children/new" className={primaryButton}>
+      {copy.childForm.addButton}
+    </Link>
+  ) : (
+    <Button onClick={handleAddNew}>Add Student</Button>
+  );
 
   return (
     <div className="bg-background min-h-screen">
@@ -147,7 +161,7 @@ export default function StudentsPage() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-foreground text-3xl font-semibold">Manage Students</h1>
-          <Button onClick={handleAddNew}>Add Student</Button>
+          {addButton}
         </div>
 
         {/* Students List */}
@@ -168,7 +182,7 @@ export default function StudentsPage() {
             </svg>
             <h3 className="text-foreground mb-2 text-lg font-medium">No Students Yet</h3>
             <p className="mb-4 text-neutral-600">Get started by adding your first student</p>
-            <Button onClick={handleAddNew}>Add Student</Button>
+            {addButton}
           </div>
         ) : (
           <div className="space-y-4">

@@ -4,8 +4,8 @@
  * never held on /welcome.
  */
 import type { Page } from '@playwright/test';
-import { test, expect, PASSWORD, createInvite, latestCode, createAccount } from '../fixtures/auth';
-import { signIn } from '../fixtures/auth';
+import { test, expect, PASSWORD, createInvite, latestCode, signIn } from '../fixtures/auth';
+import type { Account } from '../fixtures/auth';
 import { expectNoViolations, expectNoBannedWords, uniqueId } from '../fixtures/parent';
 import { expectNoHorizontalScroll } from '../fixtures/e2e-hardening';
 
@@ -31,8 +31,7 @@ async function fillChild(page: Page, name: string) {
   await page.getByRole('button', { name: 'Save and plan the week' }).click();
 }
 
-async function signedInFamily(page: Page) {
-  const account = createAccount();
+async function signedInFamily(page: Page, account: Account) {
   await page.goto('/login');
   await signIn(page, account);
   await expect(page).toHaveURL(/\/(welcome|week)$/);
@@ -65,8 +64,11 @@ test.describe('Welcome and adding children', () => {
     await expect(page.getByTestId('child-card').filter({ hasText: 'Maya' })).toBeVisible();
   });
 
-  test('interests over the limits get a specific message and send nothing', async ({ page }) => {
-    await signedInFamily(page);
+  test('interests over the limits get a specific message and send nothing', async ({
+    page,
+    account,
+  }) => {
+    await signedInFamily(page, account);
     await page.goto('/welcome');
     let posts = 0;
     page.on('request', (r) => {
@@ -95,8 +97,24 @@ test.describe('Welcome and adding children', () => {
     await expect(page).toHaveURL(/\/week$/);
   });
 
-  test('a new family can sign out from /welcome', async ({ page }) => {
-    await signedInFamily(page);
+  test('a 422 from the server says something in the form needs fixing', async ({
+    page,
+    account,
+  }) => {
+    await signedInFamily(page, account);
+    await page.goto('/welcome');
+    await page.route('**/api/children', (route) =>
+      route.fulfill({ status: 422, json: { detail: [] } })
+    );
+    await fillChild(page, 'Maya');
+    await expect(page.locator('#main').getByRole('alert')).toContainText(
+      'Something in the form needs fixing'
+    );
+    await expect(page).toHaveURL(/\/welcome$/);
+  });
+
+  test('a new family can sign out from /welcome', async ({ page, account }) => {
+    await signedInFamily(page, account);
     await page.goto('/welcome');
     await page.getByRole('button', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/login$/);
@@ -104,16 +122,28 @@ test.describe('Welcome and adding children', () => {
 
   test('a signed-in family with no children is sent to /welcome from This week', async ({
     page,
+    account,
   }) => {
-    await signedInFamily(page);
+    await signedInFamily(page, account);
+    // The empty state must not flash while the redirect is pending.
+    await page.addInitScript(() => {
+      const w = window as unknown as { sawEmpty?: boolean };
+      new MutationObserver(() => {
+        if (document.body?.innerText.includes('No children yet')) w.sawEmpty = true;
+      }).observe(document, { childList: true, subtree: true, characterData: true });
+    });
     await page.goto('/week');
     await expect(page).toHaveURL(/\/welcome$/);
+    expect(await page.evaluate(() => (window as unknown as { sawEmpty?: boolean }).sawEmpty)).toBe(
+      undefined
+    );
   });
 
   test('"Add a child" adds a second child; at five the button is gone and a sixth is refused', async ({
     page,
+    account,
   }) => {
-    await signedInFamily(page);
+    await signedInFamily(page, account);
     expect((await addChildViaApi(page, 'Ada')).status()).toBe(201);
     await page.goto('/week');
     await page.getByRole('link', { name: 'Add a child' }).click();
@@ -144,8 +174,23 @@ test.describe('Welcome and adding children', () => {
     await expect(page.getByLabel('First name')).toHaveCount(0);
   });
 
-  test('a family with children opening /welcome is sent to This week', async ({ page }) => {
-    await signedInFamily(page);
+  test('from the Children tab, adding a child goes to /children/new', async ({ page, account }) => {
+    await signedInFamily(page, account);
+    await addChildViaApi(page, 'Ada');
+    await page.goto('/week');
+    await page.getByTestId('tab-bar').getByRole('link', { name: 'Children' }).click();
+    await expect(page).toHaveURL(/\/students$/);
+    await page.getByRole('link', { name: 'Add a child' }).first().click();
+    await expect(page).toHaveURL(/\/children\/new$/);
+    await expect(page.getByLabel('Math grade')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add Student' })).toHaveCount(0);
+  });
+
+  test('a family with children opening /welcome is sent to This week', async ({
+    page,
+    account,
+  }) => {
+    await signedInFamily(page, account);
     await addChildViaApi(page, 'Ada');
     await page.goto('/welcome');
     await expect(page).toHaveURL(/\/week$/);
@@ -153,9 +198,10 @@ test.describe('Welcome and adding children', () => {
 
   test('/welcome and /children/new are accessible and do not scroll sideways at 360px', async ({
     page,
+    account,
   }) => {
     await page.setViewportSize({ width: 360, height: 740 });
-    await signedInFamily(page);
+    await signedInFamily(page, account);
     await page.goto('/welcome');
     await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
     await expectNoViolations(page);

@@ -14,8 +14,9 @@ const MAX_INTERESTS = 8;
 const MAX_INTEREST_LENGTH = 40;
 const GRADES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
-/** "a, b ,, c" -> ["a", "b", "c"]: trimmed, blanks dropped. The server checks the limits. */
-export const splitInterests = (text: string) =>
+/** "a, b ,, c" -> ["a", "b", "c"]: trimmed, blanks dropped. The form checks the interest limits
+ * before saving; the server checks every limit again and answers 422. */
+const splitInterests = (text: string) =>
   text
     .split(',')
     .map((item) => item.trim())
@@ -86,8 +87,14 @@ export function ChildForm() {
       await queryClient.invalidateQueries({ queryKey: ['students'] });
       router.push('/week');
     } catch (error) {
-      const tooMany = isAxiosError(error) && error.response?.status === 409;
-      setProblem(tooMany ? copy.childForm.tooMany : copy.childForm.failed);
+      const status = isAxiosError(error) ? error.response?.status : undefined;
+      setProblem(
+        status === 409
+          ? copy.childForm.tooMany
+          : status === 422
+            ? copy.childForm.invalid
+            : copy.childForm.failed
+      );
       setSaving(false);
     }
   }

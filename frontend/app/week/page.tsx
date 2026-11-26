@@ -12,20 +12,23 @@ import { EmptyState, QueryState, primaryButton, secondaryButton } from '@/compon
 
 export default function ThisWeekPage() {
   const query = useThisWeek();
-  const { data: me } = useMe();
+  const { data: me, isLoading: meLoading } = useMe();
   const router = useRouter();
   // Login on and no children yet: this is a new family, so start with the welcome page.
   const firstRun = Boolean(me?.auth_required) && query.data?.length === 0;
   useEffect(() => {
     if (firstRun) router.replace('/welcome');
   }, [firstRun, router]);
+  // Until we know whether to redirect, and while the redirect is pending, keep the loading state
+  // up rather than flash "No children yet".
+  const loading = query.isLoading || meLoading || firstRun;
 
   return (
     <>
       <h1 className="text-foreground text-2xl font-semibold">{copy.thisWeek.title}</h1>
       <p className="mb-4 text-neutral-700">{copy.thisWeek.intro}</p>
       <QueryState
-        isLoading={query.isLoading}
+        isLoading={loading}
         error={query.error}
         data={query.data}
         isEmpty={(cards) => cards.length === 0}
@@ -35,7 +38,10 @@ export default function ThisWeekPage() {
             title={copy.thisWeek.emptyTitle}
             body={copy.thisWeek.emptyBody}
             action={
-              <Link href="/students" className={primaryButton}>
+              <Link
+                href={me?.auth_required ? '/children/new' : '/students'}
+                className={primaryButton}
+              >
                 {copy.thisWeek.emptyAction}
               </Link>
             }

@@ -30,7 +30,10 @@ test.describe('Landing and signing in', () => {
     await shot(page, 'm7-login-landing');
   });
 
-  test('signing in lands on This week', async ({ page, account }) => {
+  test('signing in a family with no children lands on the welcome page', async ({
+    page,
+    account,
+  }) => {
     await page.goto('/');
     await signIn(page, account);
     await expect(page).toHaveURL(/\/welcome$/);
