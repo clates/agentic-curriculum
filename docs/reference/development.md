@@ -82,7 +82,7 @@ Full spec: [`api_reference.yaml`](../../api_reference.yaml), also at
 | Planning | `POST /generate_weekly_plan`, `GET /students/{id}/weekly-packets[/{packet_id}]` |
 | Resources | `GET /students/{id}/weekly-packets/{id}/worksheets`, `GET /students/{id}/worksheet-artifacts/{id}` |
 | Feedback | `POST /students/{id}/weekly-packets/{id}/feedback` ([Friday form](friday-form.md)) |
-| Curriculum | `GET /curriculum/graph/{subject}`, `GET /students/{id}/progress-map/{subject}` |
+| Curriculum | `GET /curriculum/graph/{subject}`, `GET /students/{id}/progress-map/{subject}`, `GET /students/{id}/coverage` ([details](children.md#get-studentsstudent_idcoverage)) |
 | System | `GET /health`, `GET /system/options` |
 
 ## Model settings

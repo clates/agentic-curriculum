@@ -64,8 +64,44 @@ A child with no `math_grade` or `la_grade` (an older profile) is planned at its 
 |---|---|
 | `/welcome` | The form, for a family with no children. Sends a family that has children to `/week` |
 | `/children/new` | The form, or a notice when the family has 5 |
-| `/week` | An "Add a child" button when login is on and the family has fewer than 5 |
+| `/week` | An "Add a child" button when login is on and the family has fewer than 5. Each child's card links to "Past weeks" and "How it's going" |
+| `/children/{student_id}` | The child's page: "Past weeks", then "How it's going". "We couldn't find that child" for an unknown child |
+
+### Child page
+
+| Section | Shows |
+|---|---|
+| Past weeks | Weeks already written, newest first, up to 50. Each links to the documents that exist: the child's pages, the teacher guide, the prep sheet. A week still being written is not listed |
+| How it's going | One bar per subject from `GET /students/{student_id}/coverage`: solid, shaky, still to come |
+
+Only the newest 50 weeks show. Older weeks stay saved but have no link here.
 
 The form says: "These are starting points. We'll calibrate after the first few activities."
 
 Why: [The weekly loop](../explanation/the-weekly-loop.md#why-math-has-its-own-grade).
+
+## `GET /students/{student_id}/coverage`
+
+Returns a list, one object per subject. Counts only: no standard ids or skill names.
+
+```json
+[{"subject": "Math", "solid": 12, "shaky": 3, "to_come": 20}]
+```
+
+| Field | Counts |
+|---|---|
+| `solid` | Mastered skills, including ones due for a refresher |
+| `shaky` | Skills that are shaky or need more work |
+| `to_come` | Whole skills at the child's grade for the subject that are neither solid nor shaky |
+
+"Shaky" and "needs more work" are defined in `classify_progress` in `src/progress_summary.py`.
+The grade for `to_come` is `math_grade` for Math and `la_grade` for every other subject (see
+[Grades in planning](#grades-in-planning)). Only whole skills count (`is_whole_skill` in
+`src/candidate_selector.py`).
+
+Subjects come in the order Math, English, Science, History, Computer Science, then the rest
+alphabetically. A subject with no counts is left out.
+
+| Status | When |
+|---|---|
+| 404 `Student not found` | The child doesn't exist, or belongs to another family |

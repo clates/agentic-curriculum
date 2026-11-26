@@ -30,6 +30,7 @@ Running the hosted app:
 - [Manage accounts and lockouts](how-to/manage-accounts.md)
 - [Invite a family](how-to/invite-a-family.md)
 - [Add a child](how-to/add-a-child.md)
+- [See how a child is doing and print an old week](how-to/see-how-a-child-is-doing.md)
 - [Run the worker and turn the weekly loop on](how-to/run-the-worker.md)
 - [Recover a dead job](how-to/recover-a-dead-job.md)
 - [Read the access log](how-to/read-the-access-log.md)
@@ -41,7 +42,7 @@ Changing the code: [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 - [Included weeks and worksheet types](reference/included-weeks.md)
 - [Development: commands, code map, API, settings](reference/development.md)
-- [Children: adding a child, fields, limits](reference/children.md)
+- [Children: adding a child, fields, limits, the child page, coverage](reference/children.md)
 - [Login: sessions, registration, lockouts, commands](reference/login.md)
 - [Worker and scheduler: commands, settings, job states, windows](reference/worker-and-scheduler.md)
 - [Friday form API](reference/friday-form.md)
