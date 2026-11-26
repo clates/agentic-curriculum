@@ -102,8 +102,7 @@ export function LoginForm() {
         onBack={() => setStep('signin')}
       />
     );
-  if (step === 'code')
-    return <CheckEmail email={username.trim()} password={password} next={next} />;
+  if (step === 'code') return <CheckEmail email={username.trim()} password={password} />;
 
   return (
     <div className="bg-background min-h-screen">

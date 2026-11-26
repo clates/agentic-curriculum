@@ -31,7 +31,7 @@ async function register(page: Page, email: string) {
 const newEmail = () => `${uniqueId('fam')}@example.com`.toLowerCase();
 
 test.describe('Creating an account', () => {
-  test('register, enter the emailed code and land on This week', async ({ page }) => {
+  test('register, enter the emailed code and land on the welcome page', async ({ page }) => {
     const email = newEmail();
     await register(page, email);
     const code = await latestCode(email);
@@ -42,7 +42,7 @@ test.describe('Creating an account', () => {
     await field.pressSequentially(`${code.slice(0, 3)} -${code.slice(3)}9`); // typed, one extra digit
     await expect(field).toHaveValue(code);
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
     expect((await sessionCookie(page.context()))?.httpOnly).toBe(true);
   });
 
@@ -55,7 +55,7 @@ test.describe('Creating an account', () => {
     await expect(page.locator('#main').getByRole('alert')).toHaveText('That code didn’t work');
     await page.getByLabel('6-digit code').fill(code);
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('"Send a new code" confirms and mails another code', async ({ page }) => {
@@ -68,7 +68,7 @@ test.describe('Creating an account', () => {
     await expect(page.getByRole('status')).toHaveText('A new code is on its way.');
     await page.getByLabel('6-digit code').fill(await latestCode(email));
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('signing in to an unverified account shows the code step', async ({ page }) => {
@@ -79,7 +79,7 @@ test.describe('Creating an account', () => {
     await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
     await page.getByLabel('6-digit code').fill(await latestCode(email));
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('a bad invite code gets a plain message and no account', async ({ page }) => {

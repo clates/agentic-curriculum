@@ -2,7 +2,15 @@
  * Login (M7 stopgap): runs on the phone against a backend started with AUTH_REQUIRED=1.
  * Accounts are made with the real command line tool; every test has its own account and address.
  */
-import { test, expect, signIn, sessionCookie, PASSWORD, COOKIE } from '../fixtures/auth';
+import {
+  test,
+  familyTest,
+  expect,
+  signIn,
+  sessionCookie,
+  PASSWORD,
+  COOKIE,
+} from '../fixtures/auth';
 import { expectNoViolations, expectNoBannedWords } from '../fixtures/parent';
 import { shot } from '../fixtures/shots';
 
@@ -25,8 +33,8 @@ test.describe('Landing and signing in', () => {
   test('signing in lands on This week', async ({ page, account }) => {
     await page.goto('/');
     await signIn(page, account);
-    await expect(page).toHaveURL(/\/week$/);
-    await expect(page.getByRole('heading', { name: 'No children yet' })).toBeVisible();
+    await expect(page).toHaveURL(/\/welcome$/);
+    await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
     const cookie = await sessionCookie(page.context());
     expect(cookie?.httpOnly).toBe(true);
     expect(cookie?.sameSite).toBe('Lax');
@@ -36,7 +44,7 @@ test.describe('Landing and signing in', () => {
   test('the username ignores capital letters and spaces around it', async ({ page, account }) => {
     await page.goto('/login');
     await signIn(page, { ...account, username: `  ${account.username.toUpperCase()} ` });
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('a wrong password gets a calm message, keeps the username and returns focus', async ({
@@ -80,7 +88,7 @@ test.describe('Landing and signing in', () => {
     await expect(page.getByLabel('Password', { exact: true })).toBeFocused();
     await page.keyboard.type(account.password);
     await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('loading: the button is disabled and says so while the sign-in is sent', async ({
@@ -100,7 +108,7 @@ test.describe('Landing and signing in', () => {
     await expectNoViolations(page);
     await shot(page, 'm7-login-loading');
     release();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('error with retry: a failed call says so plainly and Try again works', async ({
@@ -120,7 +128,7 @@ test.describe('Landing and signing in', () => {
     await shot(page, 'm7-login-error');
     fail = false;
     await page.getByRole('button', { name: 'Try again' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 });
 
@@ -164,7 +172,7 @@ test.describe('Going to a page you were not signed in for', () => {
       await page.context().clearCookies();
       await page.goto(`/login?next=${bad}`);
       await signIn(page, account);
-      await expect(page).toHaveURL(`${baseURL}/week`);
+      await expect(page).toHaveURL(`${baseURL}/welcome`);
       expect(new URL(page.url()).origin).toBe(new URL(baseURL!).origin);
     }
   });
@@ -197,47 +205,47 @@ test.describe('Going to a page you were not signed in for', () => {
     await expect(page).toHaveURL(/\/login\?next=%2Fweek$/);
     await expect(page.getByLabel('Username')).toBeVisible();
     await signIn(page, account);
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
-  test('a session that ends on the server while a page is open goes back to the login', async ({
-    page,
-    account,
-    playwright,
-    baseURL,
-  }) => {
-    await page.goto('/login');
-    await signIn(page, account);
-    await expect(page.getByRole('heading', { name: 'No children yet' })).toBeVisible();
-    const token = (await sessionCookie(page.context()))!.value;
-    // End that session from the side, as the owner disabling the account would.
-    const side = await playwright.request.newContext({ baseURL });
-    const out = await side.post('/api/auth/logout', { headers: { cookie: `${COOKIE}=${token}` } });
-    expect(out.ok()).toBe(true);
-    await side.dispose();
-    await page.getByRole('link', { name: 'How it’s going' }).first().click();
-    await expect(page).toHaveURL(/\/login\?next=/);
-    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
-  });
+  familyTest(
+    'a session that ends on the server while a page is open goes back to the login',
+    async ({ page, account, playwright, baseURL }) => {
+      await page.goto('/login');
+      await signIn(page, account);
+      await expect(page.getByRole('heading', { name: 'This week' })).toBeVisible();
+      const token = (await sessionCookie(page.context()))!.value;
+      // End that session from the side, as the owner disabling the account would.
+      const side = await playwright.request.newContext({ baseURL });
+      const out = await side.post('/api/auth/logout', {
+        headers: { cookie: `${COOKIE}=${token}` },
+      });
+      expect(out.ok()).toBe(true);
+      await side.dispose();
+      await page.getByRole('link', { name: 'How it’s going' }).first().click();
+      await expect(page).toHaveURL(/\/login\?next=/);
+      await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+    }
+  );
 });
 
 test.describe('Signing out', () => {
-  test('Sign out ends the session and the next visit needs the login again', async ({
-    page,
-    account,
-  }) => {
-    await page.goto('/login');
-    await signIn(page, account);
-    await expect(page).toHaveURL(/\/week$/);
-    await expectNoViolations(page);
-    await expectNoBannedWords(page);
-    await shot(page, 'm7-login-sign-out-control');
-    await page.getByRole('button', { name: 'Sign out' }).click();
-    await expect(page).toHaveURL(/\/login$/);
-    expect(await sessionCookie(page.context())).toBeUndefined();
-    await page.goto('/week');
-    await expect(page).toHaveURL(/\/login\?next=%2Fweek$/);
-  });
+  familyTest(
+    'Sign out ends the session and the next visit needs the login again',
+    async ({ page, account }) => {
+      await page.goto('/login');
+      await signIn(page, account);
+      await expect(page).toHaveURL(/\/week$/);
+      await expectNoViolations(page);
+      await expectNoBannedWords(page);
+      await shot(page, 'm7-login-sign-out-control');
+      await page.getByRole('button', { name: 'Sign out' }).click();
+      await expect(page).toHaveURL(/\/login$/);
+      expect(await sessionCookie(page.context())).toBeUndefined();
+      await page.goto('/week');
+      await expect(page).toHaveURL(/\/login\?next=%2Fweek$/);
+    }
+  );
 });
 
 test.describe('Too many wrong tries', () => {
@@ -262,7 +270,7 @@ test.describe('Too many wrong tries', () => {
     await page.getByLabel('Password', { exact: true }).fill(account.password);
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('the API answers 429 with a Retry-After, and never says whether the name exists', async ({
@@ -350,7 +358,7 @@ test.describe('Busy and oversized requests', () => {
     await shot(page, 'm7-login-busy');
     busy = false;
     await page.getByRole('button', { name: 'Try again' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('a sign-in body over 16 KiB is refused with 413 before it is read', async ({ request }) => {

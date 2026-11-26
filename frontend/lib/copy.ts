@@ -82,6 +82,32 @@ export const copy = {
     offlineBody: 'We can’t reach the server right now. Check your connection and try again.',
     retry: 'Try again',
   },
+  welcome: {
+    title: 'Welcome',
+    intro:
+      'Each week we plan one next step for every child. You check in on how it went, and we plan what comes next.',
+    intro2: 'Start by telling us about your first child.',
+  },
+  childForm: {
+    addTitle: 'Add a child',
+    addIntro: 'Tell us about your child and we will plan their first week.',
+    name: 'First name',
+    interests: 'Interests (optional)',
+    interestsHint: 'What they love, separated by commas, such as dinosaurs, baking, soccer.',
+    mathGrade: 'Math grade',
+    laGrade: 'Reading and writing grade',
+    gradeOption: (grade: number) => (grade === 0 ? 'K' : String(grade)),
+    notes: 'Anything else we should know? (optional)',
+    // prettier-ignore
+    calibrate: 'These are starting points. We\'ll calibrate after the first few activities.',
+    aiNote:
+      'An AI service reads what you write here to plan activities. Please leave out last names, addresses and anything private.',
+    submit: 'Save and plan the week',
+    submitting: 'Saving…',
+    tooMany: 'You can add up to five children. To add another, please remove one first.',
+    failed: 'We couldn\u2019t save this just now. Please try again.',
+    addButton: 'Add a child',
+  },
   thisWeek: {
     title: 'This week',
     intro: 'One next step for each child.',

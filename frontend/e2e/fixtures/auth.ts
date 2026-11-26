@@ -26,19 +26,43 @@ export interface Account {
   password: string;
 }
 
-/** Make an account the way the owner does on the server: with the command line tool. */
+/** Make a family of its own (accounts made with the command line tool share one by default). */
+function createFamily(): string {
+  const out = execFileSync(
+    `${ROOT}/venv/bin/python`,
+    [
+      '-c',
+      'from auth import store; c = store.connect(); print(store.create_family(c, "E2E")); c.commit()',
+    ],
+    {
+      cwd: `${ROOT}/src`,
+      env: { ...process.env, PYTHONPATH: `${ROOT}/src`, CURRICULUM_DB_PATH: DB_FILE },
+      encoding: 'utf8',
+    }
+  );
+  return out.trim();
+}
+
+/**
+ * Make an account the way the owner does on the server: with the command line tool. Each one gets
+ * its own family, so children one test adds never show up in another test.
+ */
 export function createAccount(prefix = 'parent'): Account {
   const username = uniqueId(prefix).toLowerCase();
-  execFileSync(`${ROOT}/venv/bin/python`, ['-m', 'auth', 'create-user', username], {
-    cwd: `${ROOT}/src`,
-    env: {
-      ...process.env,
-      PYTHONPATH: `${ROOT}/src`,
-      CURRICULUM_DB_PATH: DB_FILE,
-      AUTH_NEW_PASSWORD: PASSWORD,
-    },
-    stdio: 'pipe',
-  });
+  execFileSync(
+    `${ROOT}/venv/bin/python`,
+    ['-m', 'auth', 'create-user', username, '--family', createFamily()],
+    {
+      cwd: `${ROOT}/src`,
+      env: {
+        ...process.env,
+        PYTHONPATH: `${ROOT}/src`,
+        CURRICULUM_DB_PATH: DB_FILE,
+        AUTH_NEW_PASSWORD: PASSWORD,
+      },
+      stdio: 'pipe',
+    }
+  );
   return { username, password: PASSWORD };
 }
 
@@ -112,6 +136,39 @@ export const test = base.extend<{ account: Account; clientIp: string }>({
 });
 
 export { expect };
+
+const FRONTEND = `http://localhost:${process.env.E2E_AUTH_FRONTEND_PORT ?? 3003}`;
+
+/** Give an account its first child, through the API, signed in as that account. */
+async function addFirstChild(account: Account, ip: string) {
+  const headers = { 'content-type': 'application/json', 'x-forwarded-for': ip };
+  const login = await fetch(`${FRONTEND}/api/auth/login`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(account),
+  });
+  const cookie = login.headers
+    .getSetCookie()
+    .map((c) => c.split(';')[0])
+    .join('; ');
+  const res = await fetch(`${FRONTEND}/api/children`, {
+    method: 'POST',
+    headers: { ...headers, cookie },
+    body: JSON.stringify({ name: 'Sam', interests: [], math_grade: 1, la_grade: 1, notes: '' }),
+  });
+  expect(res.status).toBe(201);
+}
+
+/**
+ * Like `test`, but the account already has a child. A family with none is sent to /welcome, so
+ * specs that need the parent shell (This week, the Admin link) use this one.
+ */
+export const familyTest = test.extend({
+  account: async ({ account, clientIp }, use) => {
+    await addFirstChild(account, clientIp);
+    await use(account);
+  },
+});
 
 /** Type the credentials and press Sign in. */
 export async function signIn(page: Page, who: { username: string; password: string }) {

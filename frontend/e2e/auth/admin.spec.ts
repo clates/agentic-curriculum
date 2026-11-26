@@ -2,7 +2,7 @@
  * The admin panel and the Admin link: only an account with the admin permission sees them.
  * Runs in the login project (AUTH_REQUIRED=1); accounts are made and granted with the real CLI.
  */
-import { test, expect, signIn, grant } from '../fixtures/auth';
+import { familyTest as test, expect, signIn, grant } from '../fixtures/auth';
 import { expectNoViolations } from '../fixtures/parent';
 import { expectNoHorizontalScroll } from '../fixtures/e2e-hardening';
 
