@@ -116,6 +116,28 @@ def test_solid_shaky_and_to_come_split(db):
     assert math == {"subject": "Math", "solid": 1, "shaky": 2, "to_come": 1}
 
 
+def test_mastered_skill_due_for_review_still_counts_as_solid(db):
+    progress = json.dumps(
+        {
+            "mastered_standards": ["Ma.3.1"],
+            "developing_standards": [],
+            "standard_metadata": {
+                "Ma.3.1": {
+                    "last_feedback": "MASTERED",
+                    "last_seen": "2020-01-01T10:00:00Z",
+                    "cooldown_weeks": 1,
+                }
+            },
+        }
+    )
+    from review_policy import review_due
+
+    assert [r["standard_id"] for r in review_due(progress)] == ["Ma.3.1"]  # it is due
+    _child(db, {"math_grade": 3, "la_grade": 3}, progress)
+    math = next(r for r in _get().json() if r["subject"] == "Math")
+    assert math == {"subject": "Math", "solid": 1, "shaky": 0, "to_come": 3}
+
+
 def test_progress_outside_the_grade_counts_without_breaking_to_come(db):
     # Science has no skills at grade 3, and a grade-2 Math skill is mastered at grade 3.
     progress = _progress(mastered=["Sc.2.1", "Ma.2.1"], developing=["Sc.2.2"])

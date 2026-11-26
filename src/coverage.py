@@ -7,24 +7,15 @@ import sqlite3
 from typing import Any
 
 try:
-    from .candidate_selector import _SUB_ITEM, MIN_DESCRIPTION_CHARS
+    from .candidate_selector import is_whole_skill
     from .model_context import build_model_context
     from .progress_summary import classify_progress
-    from .review_policy import review_due
 except ImportError:  # imported as a top-level module (src/ on sys.path)
-    from candidate_selector import _SUB_ITEM, MIN_DESCRIPTION_CHARS
+    from candidate_selector import is_whole_skill
     from model_context import build_model_context
     from progress_summary import classify_progress
-    from review_policy import review_due
 
 SUBJECT_ORDER = ("Math", "English", "Science", "History", "Computer Science")
-
-
-def _whole_skill(standard_id: str, description: str | None) -> bool:
-    """The candidate selector's rule: a real description, and not a bullet sub-point."""
-    return bool(
-        description and len(description.strip()) >= MIN_DESCRIPTION_CHARS
-    ) and not _SUB_ITEM.search(standard_id)
 
 
 def build_coverage(
@@ -37,17 +28,13 @@ def build_coverage(
 ) -> list[dict[str, Any]]:
     """``[{subject, solid, shaky, to_come}]``, only subjects with a count.
 
-    solid: mastered and not due for a review. shaky: still developing (shaky or needing more work)
-    or due for a review. to_come: whole skills at the child's grade for the subject that are neither.
+    solid: mastered (a review coming due does not change it). shaky: still developing (shaky or
+    needing more work). to_come: whole skills at the child's grade for the subject that are neither.
     """
     progress = json.loads(progress_blob) if isinstance(progress_blob, str) else progress_blob or {}
     context = build_model_context(metadata_blob, plan_rules_blob, fallback_grade=fallback_grade)
-    due = {r["standard_id"] for r in review_due(progress)}
-    solid_ids, shaky_ids, needs_work_ids = classify_progress(progress, due)
-    solid = set(solid_ids)
-    shaky = (
-        set(shaky_ids) | set(needs_work_ids) | (due & set(progress.get("mastered_standards", [])))
-    )
+    solid_ids, shaky_ids, needs_work_ids = classify_progress(progress, set())  # due ones stay solid
+    solid, shaky = set(solid_ids), set(shaky_ids) | set(needs_work_ids)
 
     conn = sqlite3.connect(db_path)
     try:
@@ -61,7 +48,7 @@ def build_coverage(
 
     counts: dict[str, dict[str, int]] = {}
     for sid, subject, grade, description in rows:
-        if not subject or not _whole_skill(sid, description):
+        if not subject or not is_whole_skill(sid, description):
             continue
         row = counts.setdefault(subject, {"solid": 0, "shaky": 0, "to_come": 0})
         if sid in solid:

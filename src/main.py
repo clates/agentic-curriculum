@@ -1001,13 +1001,14 @@ def get_student_coverage(
     profile = get_student_profile(student_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Student not found")
-    conn = sqlite3.connect(get_db_path())
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
     try:
         fallback = pick_service._latest_packet_grade(conn, family, student_id)
     finally:
         conn.close()
     return build_coverage(
-        get_db_path(),
+        db_path,
         profile.get("metadata_blob"),
         profile.get("plan_rules_blob"),
         profile["progress_blob"],
