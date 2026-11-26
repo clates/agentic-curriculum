@@ -233,7 +233,8 @@ account get an admin panel that leads to the loop console.
    the number of that subject's skills at the child's grade for the subject (math grade for Math,
    language arts grade otherwise) that are neither.
 8. **First week.** Onboarding starts the current week if the child is added Monday to Wednesday,
-   otherwise next week. A family can have at most 6 children (409 with a plain message after that).
+   otherwise next week. A family can have at most 5 children (the owner's limit on an axis parents
+   can see; 409 with a plain message after that).
 9. **Password reset** is out of scope today. The operator resets with `python -m auth set-password`.
 
 ## Left to the builder
