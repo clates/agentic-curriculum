@@ -49,9 +49,12 @@ def _item(standards: Mapping[str, Mapping[str, Any]], sid: str, **extra: Any) ->
 def classify_progress(
     progress: Mapping[str, Any], due_ids: set[str]
 ) -> tuple[list[str], list[str], list[str]]:
-    """Sorted standard ids: solid (mastered, not due), shaky, needing more work.
+    """Sorted standard ids: solid (mastered and not in ``due_ids``), shaky, needing more work.
 
-    The one place these words are defined, so the summary and the dashboard coverage agree.
+    The one place these words are defined. The progress summary passes the skills due for review,
+    so it counts them apart from solid. The dashboard coverage (``coverage.build_coverage``) passes
+    an empty set, so there a mastered skill due for review still counts as solid, and coverage
+    folds "needing more work" into shaky.
     """
     meta = progress.get("standard_metadata") or {}
     solid = sorted(set(progress.get("mastered_standards", [])) - due_ids)

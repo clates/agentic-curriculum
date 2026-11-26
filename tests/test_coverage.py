@@ -186,3 +186,15 @@ def test_another_familys_child_is_404_with_login_on(db, tmp_path, monkeypatch):
     r = b.get(f"/students/{KID}/coverage")
     assert r.status_code == 404
     assert r.json() == b.get("/students/no_such/coverage").json() == {"detail": "Student not found"}
+
+
+def test_empty_progress_blob_is_no_progress(db):
+    _child(db, {"math_grade": 3, "la_grade": 2}, progress="")
+    r = _get()
+    assert r.status_code == 200
+    assert next(row for row in r.json() if row["subject"] == "Math") == {
+        "subject": "Math",
+        "solid": 0,
+        "shaky": 0,
+        "to_come": 4,
+    }

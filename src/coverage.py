@@ -31,7 +31,9 @@ def build_coverage(
     solid: mastered (a review coming due does not change it). shaky: still developing (shaky or
     needing more work). to_come: whole skills at the child's grade for the subject that are neither.
     """
-    progress = json.loads(progress_blob) if isinstance(progress_blob, str) else progress_blob or {}
+    progress = (
+        json.loads(progress_blob or "{}") if isinstance(progress_blob, str) else progress_blob or {}
+    )
     context = build_model_context(metadata_blob, plan_rules_blob, fallback_grade=fallback_grade)
     solid_ids, shaky_ids, needs_work_ids = classify_progress(progress, set())  # due ones stay solid
     solid, shaky = set(solid_ids), set(shaky_ids) | set(needs_work_ids)
