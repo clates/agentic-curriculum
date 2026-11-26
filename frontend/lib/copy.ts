@@ -120,7 +120,7 @@ export const copy = {
     attention: 'We\u2019re taking a closer look at this one. You don\u2019t need to do anything.',
     weekOf: 'Week of',
     pastWeeks: 'Past weeks',
-    howItsGoing: 'How it\u2019s going',
+    skillsBySubject: 'Skills by subject',
     actions: {
       check_in: {
         title: (name: string) => `How was ${name}\u2019s week?`,
@@ -220,6 +220,7 @@ export const copy = {
     unknownChild: 'We couldn\u2019t find that child',
   },
   childPage: {
+    tabTitle: 'Your child',
     unknownChild: 'We couldn\u2019t find that child',
     back: 'Back to this week',
     pastWeeksTitle: 'Past weeks',
@@ -230,10 +231,12 @@ export const copy = {
     guide: 'Teacher guide',
     prep: 'Prep sheet',
     docAria: (doc: string, week: string) => `${doc}, ${week} (opens in a new tab)`,
-    coverageTitle: 'How it\u2019s going',
+    weekCheckedIn: 'Checked in',
+    weekNotCheckedIn: 'Not checked in yet',
+    coverageTitle: 'Skills by subject',
     coverageIntro: 'What is solid, what is shaky, and what is still to come in each subject.',
     coverageEmpty: 'Nothing to show yet',
-    coverageEmptyBody: 'As weeks are checked in, the skills your child has learned show up here.',
+    coverageEmptyBody: 'We don\u2019t have any skills listed for your child\u2019s grades yet.',
     solid: (n: number) => `${n} solid`,
     shaky: (n: number) => `${n} shaky`,
     toCome: (n: number) => `${n} still to come`,

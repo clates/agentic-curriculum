@@ -7,6 +7,7 @@ Usage:
   python scripts/e2e_seed.py set_progress <student_id>
   python scripts/e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>
   python scripts/e2e_seed.py create_week <student_id> <packet_id>
+  python scripts/e2e_seed.py check_in <student_id> <packet_id>
   python scripts/e2e_seed.py create_plan <student_id> <loop_status> [week_start]
   python scripts/e2e_seed.py expire_plan <student_id>
   python scripts/e2e_seed.py loop_events <student_id>
@@ -308,6 +309,14 @@ def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
     print(f"backdated feedback for {packet_id} to {iso_timestamp}")
 
 
+def check_in(student_id: str, packet_id: str) -> None:
+    """Store a feedback row for the week, without the API's follow-on plan generation."""
+    from packet_store import save_packet_feedback  # noqa: E402
+
+    save_packet_feedback(student_id, packet_id, None, 0)
+    print(f"checked in {packet_id} for student {student_id}")
+
+
 def llm_usage(student_id: str) -> None:
     """Print the llm_usage ledger rows for a student as JSON."""
     conn = sqlite3.connect(_db_path())
@@ -356,6 +365,12 @@ if __name__ == "__main__":
             print("Usage: e2e_seed.py create_week <student_id> <packet_id> [week_of]")
             sys.exit(1)
         create_week(*sys.argv[2:])
+
+    elif cmd == "check_in":
+        if len(sys.argv) != 4:
+            print("Usage: e2e_seed.py check_in <student_id> <packet_id>")
+            sys.exit(1)
+        check_in(sys.argv[2], sys.argv[3])
 
     elif cmd == "expire_plan":
         expire_plan(sys.argv[2])

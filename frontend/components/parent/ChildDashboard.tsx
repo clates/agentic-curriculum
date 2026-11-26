@@ -4,10 +4,7 @@ import { copy } from '@/lib/copy';
 import { printUrl, usePrintInfo, weekRange, type PrintDoc } from '@/lib/print';
 import { useCoverage, usePastWeeks, type SubjectCoverage } from '@/lib/child';
 import type { WeeklyPacketSummary } from '@/lib/api';
-import { EmptyState, QueryState } from '@/components/parent/states';
-
-const linkClass =
-  'text-primary-700 inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
+import { EmptyState, QueryState, linkClass } from '@/components/parent/states';
 
 function PastWeek({
   name,
@@ -28,6 +25,9 @@ function PastWeek({
   return (
     <li data-testid="past-week" className="rounded-md border border-neutral-200 bg-white p-4">
       <p className="text-foreground font-medium">{range}</p>
+      <p data-testid="past-week-status" className="text-sm text-neutral-700">
+        {week.has_feedback ? copy.childPage.weekCheckedIn : copy.childPage.weekNotCheckedIn}
+      </p>
       {info.data?.title ? <p className="text-sm text-neutral-700">{info.data.title}</p> : null}
       {info.data ? (
         <ul

@@ -3,7 +3,7 @@
  * a plain-words picture of what the child knows. Reached from the This week card.
  */
 import { test, expect } from '../fixtures/test';
-import { createStudent, seedProgress, seedWeek } from '../fixtures/api';
+import { createStudent, seedCheckIn, seedProgress, seedWeek } from '../fixtures/api';
 import { expectNoHorizontalScroll, newChild } from '../fixtures/e2e-hardening';
 import { expectNoBannedWords, expectNoViolations, uniqueId } from '../fixtures/parent';
 
@@ -18,6 +18,7 @@ test.describe('A page for each child', () => {
     const kid = await newChild(request, 'cp');
     seedWeek(kid.id, `${kid.packetId}_old`, OLDER);
     seedWeek(kid.id, `${kid.packetId}_new`, NEWER);
+    seedCheckIn(kid.id, `${kid.packetId}_old`);
     await page.goto(`/children/${kid.id}`);
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(kid.name, {
@@ -29,6 +30,10 @@ test.describe('A page for each child', () => {
     await expect(weeks.nth(0)).toContainText('January 12');
     await expect(weeks.nth(1)).toContainText('January 5');
     await expect(weeks.nth(0)).toContainText('Weather Week');
+    await expect(page.getByTestId('past-week-status')).toHaveText([
+      'Not checked in yet',
+      'Checked in',
+    ]);
     for (const [i, pk] of [`${kid.packetId}_new`, `${kid.packetId}_old`].entries()) {
       const row = weeks.nth(i);
       await expect(row.getByRole('link')).toHaveText([
@@ -71,7 +76,12 @@ test.describe('A page for each child', () => {
     await page.goto(`/children/${kid.id}`);
     await expect(page.getByTestId('past-weeks-empty')).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId('past-week')).toHaveCount(0);
-    await expect(page.getByTestId('coverage-subject').first()).not.toContainText(/[1-9] solid/);
+    const rows = page.getByTestId('coverage-subject');
+    await expect(rows.first()).toBeVisible();
+    for (const text of await rows.allInnerTexts()) {
+      expect(text).toMatch(/0 solid, 0 shaky, [1-9]\d* still to come/);
+    }
+    await expect(page.getByText('Nothing to show yet')).toHaveCount(0);
     await expectNoViolations(page);
   });
 
@@ -99,13 +109,31 @@ test.describe('A page for each child', () => {
     await page.goto('/week');
     const card = page.locator('[data-testid="child-card"]', { hasText: kid.name });
     await expect(card).toBeVisible({ timeout: 20_000 });
-    await expect(card.getByRole('link', { name: 'How it’s going' })).toHaveAttribute(
+    await expect(card.getByRole('link', { name: 'Skills by subject' })).toHaveAttribute(
       'href',
       `/children/${kid.id}#coverage`
     );
     await card.getByRole('link', { name: 'Past weeks' }).click();
     await expect(page).toHaveURL(new RegExp(`/children/${kid.id}#past-weeks$`));
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(kid.name);
+  });
+
+  test('“Skills by subject” on the This week card lands on the coverage section', async ({
+    page,
+    request,
+  }) => {
+    // A short window and a few written weeks put the section well below the fold.
+    await page.setViewportSize({ width: 390, height: 500 });
+    const kid = await newChild(request, 'cpjump', { plan: 'ready' });
+    for (const week of ['2025-12-01', '2025-12-08', '2025-12-15', OLDER, NEWER])
+      seedWeek(kid.id, `${kid.packetId}_${week}`, week);
+    await page.goto('/week');
+    const card = page.locator('[data-testid="child-card"]', { hasText: kid.name });
+    await expect(card).toBeVisible({ timeout: 20_000 });
+    await card.getByRole('link', { name: 'Skills by subject' }).click();
+    await expect(page).toHaveURL(new RegExp(`/children/${kid.id}#coverage$`));
+    await expect(page.getByTestId('coverage-subject').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: 'Skills by subject' })).toBeInViewport();
   });
 
   test('/children/new still shows the add-a-child form', async ({ page }) => {

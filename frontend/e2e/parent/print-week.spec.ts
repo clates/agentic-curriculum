@@ -112,9 +112,7 @@ test.describe('Print screen: the happy path (real week, real API)', () => {
     const done = page.locator('[data-testid="child-card"]', { hasText: kid.name });
     await expect(done).toHaveAttribute('data-next-action', 'done', { timeout: 20_000 });
     await expect(done.getByRole('heading')).toHaveText(`${kid.name} is all set`);
-    await expect(
-      done.getByRole('link').filter({ hasNotText: /^(Past weeks|How it’s going)$/ })
-    ).toHaveCount(0);
+    await expect(done.getByRole('link')).toHaveText(['Past weeks', 'Skills by subject']);
     await shot(page, 'm10-7-this-week-all-set');
   });
 

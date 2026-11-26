@@ -1,10 +1,7 @@
 import Link from 'next/link';
 import { copy } from '@/lib/copy';
 import type { ChildCard as Card } from '@/lib/thisWeek';
-import { primaryButton } from './states';
-
-const linkClass =
-  'text-primary-700 inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
+import { linkClass, primaryButton } from './states';
 
 function weekLabel(iso: string): string {
   const d = new Date(`${iso}T12:00:00`);
@@ -47,7 +44,7 @@ export function ChildCard({ card }: { card: Card }) {
           {copy.thisWeek.pastWeeks}
         </Link>
         <Link href={`/children/${card.student_id}#coverage`} className={linkClass}>
-          {copy.thisWeek.howItsGoing}
+          {copy.thisWeek.skillsBySubject}
         </Link>
       </p>
     </li>

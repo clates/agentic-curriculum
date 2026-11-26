@@ -107,6 +107,11 @@ export function seedWeek(studentId: string, packetId: string, weekOf?: string): 
   seedScript('create_week', studentId, packetId, ...(weekOf ? [weekOf] : []));
 }
 
+/** Mark a seeded week as checked in (a stored feedback row), with no follow-on plan generation. */
+export function seedCheckIn(studentId: string, packetId: string): void {
+  seedScript('check_in', studentId, packetId);
+}
+
 export interface LlmUsageRow {
   task: string;
   model: string;

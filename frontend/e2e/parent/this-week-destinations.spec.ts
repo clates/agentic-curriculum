@@ -67,9 +67,7 @@ test.describe('This week: where each card’s button leads', () => {
       await expect(card).toHaveAttribute('data-next-action', s.action);
 
       if (!s.button) {
-        await expect(
-          card.getByRole('link').filter({ hasNotText: /^(Past weeks|How it’s going)$/ })
-        ).toHaveCount(0);
+        await expect(card.getByRole('link')).toHaveText(['Past weeks', 'Skills by subject']);
         await expect(card.getByRole('button')).toHaveCount(0);
         return;
       }

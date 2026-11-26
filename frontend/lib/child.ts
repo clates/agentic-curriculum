@@ -40,8 +40,9 @@ export function usePastWeeks(studentId: string) {
   return useQuery({
     queryKey: ['past-weeks', studentId],
     queryFn: async () => {
+      // The server lists them newest first (week_of DESC).
       const { items } = await studentsApi.listWeeklyPackets(studentId, { page_size: 50 });
-      return [...items].sort((a, b) => b.week_of.localeCompare(a.week_of));
+      return items;
     },
     ...PARENT_QUERY,
   });
