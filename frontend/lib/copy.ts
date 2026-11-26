@@ -104,6 +104,8 @@ export const copy = {
       'An AI service reads what you write here to plan activities. Please leave out last names, addresses and anything private.',
     submit: 'Save and plan the week',
     submitting: 'Saving…',
+    tooManyInterests: 'Please list up to 8 interests.',
+    interestTooLong: 'Each interest can be up to 40 characters. Please shorten the longest one.',
     tooMany: 'You can add up to five children. To add another, please remove one first.',
     failed: 'We couldn\u2019t save this just now. Please try again.',
     addButton: 'Add a child',

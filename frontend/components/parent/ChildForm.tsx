@@ -10,6 +10,8 @@ import { primaryButton } from '@/components/parent/states';
 
 const field =
   'mt-1 block min-h-11 w-full rounded-md border border-neutral-400 bg-white px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
+const MAX_INTERESTS = 8;
+const MAX_INTEREST_LENGTH = 40;
 const GRADES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
 /** "a, b ,, c" -> ["a", "b", "c"]: trimmed, blanks dropped. The server checks the limits. */
@@ -53,16 +55,29 @@ export function ChildForm() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState('');
+  const [interestsProblem, setInterestsProblem] = useState('');
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (saving) return;
+    const items = splitInterests(interests);
+    const tooLong = items.some((item) => item.length > MAX_INTEREST_LENGTH);
+    if (items.length > MAX_INTERESTS || tooLong) {
+      setInterestsProblem(
+        items.length > MAX_INTERESTS
+          ? copy.childForm.tooManyInterests
+          : copy.childForm.interestTooLong
+      );
+      document.getElementById('child-interests')?.focus();
+      return;
+    }
+    setInterestsProblem('');
     setSaving(true);
     setProblem('');
     try {
       await apiClient.post('/children', {
         name: name.trim(),
-        interests: splitInterests(interests),
+        interests: items,
         math_grade: mathGrade,
         la_grade: laGrade,
         notes: notes.trim(),
@@ -104,11 +119,22 @@ export function ChildForm() {
         <input
           id="child-interests"
           type="text"
-          aria-describedby="child-interests-hint"
+          aria-describedby={
+            interestsProblem ? 'child-interests-hint child-interests-error' : 'child-interests-hint'
+          }
+          aria-invalid={interestsProblem ? true : undefined}
           value={interests}
-          onChange={(e) => setInterests(e.target.value)}
-          className={field}
+          onChange={(e) => {
+            setInterests(e.target.value);
+            setInterestsProblem('');
+          }}
+          className={interestsProblem ? `${field} border-2 border-neutral-900` : field}
         />
+        {interestsProblem ? (
+          <p id="child-interests-error" className="mt-1 text-neutral-900">
+            {interestsProblem}
+          </p>
+        ) : null}
       </div>
       <GradeSelect label={copy.childForm.mathGrade} value={mathGrade} onChange={setMathGrade} />
       <GradeSelect label={copy.childForm.laGrade} value={laGrade} onChange={setLaGrade} />

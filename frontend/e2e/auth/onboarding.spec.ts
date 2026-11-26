@@ -65,6 +65,43 @@ test.describe('Welcome and adding children', () => {
     await expect(page.getByTestId('child-card').filter({ hasText: 'Maya' })).toBeVisible();
   });
 
+  test('interests over the limits get a specific message and send nothing', async ({ page }) => {
+    await signedInFamily(page);
+    await page.goto('/welcome');
+    let posts = 0;
+    page.on('request', (r) => {
+      if (r.method() === 'POST' && r.url().endsWith('/children')) posts += 1;
+    });
+    await page.getByLabel('First name').fill('Maya');
+    const interests = page.getByLabel('Interests');
+    const save = page.getByRole('button', { name: 'Save and plan the week' });
+
+    await interests.fill('a, b, c, d, e, f, g, h, i');
+    await save.click();
+    await expect(page.getByText('Please list up to 8 interests.')).toBeVisible();
+    await expect(interests).toHaveAttribute('aria-invalid', 'true');
+    await expect(interests).toHaveAttribute('aria-describedby', /child-interests-error/);
+    await expectNoViolations(page);
+
+    await interests.fill(`dinosaurs, ${'x'.repeat(41)}`);
+    await save.click();
+    await expect(page.getByText(/Each interest can be up to 40 characters/)).toBeVisible();
+    await expect(interests).toHaveAttribute('aria-invalid', 'true');
+    expect(posts).toBe(0);
+
+    await interests.fill('dinosaurs, baking');
+    await expect(interests).not.toHaveAttribute('aria-invalid', 'true');
+    await save.click();
+    await expect(page).toHaveURL(/\/week$/);
+  });
+
+  test('a new family can sign out from /welcome', async ({ page }) => {
+    await signedInFamily(page);
+    await page.goto('/welcome');
+    await page.getByRole('button', { name: 'Sign out' }).click();
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
   test('a signed-in family with no children is sent to /welcome from This week', async ({
     page,
   }) => {
