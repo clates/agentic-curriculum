@@ -124,7 +124,12 @@ def create_student(
 
 
 def add_child(
-    conn: sqlite3.Connection, student_id: str, metadata: dict, family_id: str, limit: int
+    conn: sqlite3.Connection,
+    student_id: str,
+    metadata: dict,
+    family_id: str,
+    limit: int,
+    plan_rules: dict | None = None,
 ) -> dict:
     """Add a child unless the family already has ``limit``; TooManyChildren if it does.
 
@@ -139,7 +144,7 @@ def add_child(
         ).fetchone()
         if count >= limit:
             raise TooManyChildren(family_id)
-        row = insert_student(conn, student_id, metadata, {}, family_id)
+        row = insert_student(conn, student_id, metadata, plan_rules or {}, family_id)
         conn.commit()
         return row
     except BaseException:

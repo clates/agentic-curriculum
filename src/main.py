@@ -427,8 +427,24 @@ def get_students(family: str = Depends(current_family)):
 
 @app.post("/students", response_model=StudentResponse, status_code=201)
 def create_student_endpoint(request: CreateStudentRequest, family: str = Depends(current_family)):
-    """Create a new student profile. With login on (or no id given) the server picks the id."""
-    client_id = None if auth_required() else request.student_id
+    """Create a new student profile. With login on the server picks the id and the family may
+    have at most MAX_CHILDREN (the same locked count-and-insert as POST /children)."""
+    if auth_required():
+        conn = jobs.connect(get_db_path())
+        try:
+            return add_child(
+                conn,
+                new_student_id(),
+                request.metadata.model_dump(),
+                family,
+                MAX_CHILDREN,
+                plan_rules=request.plan_rules,
+            )
+        except TooManyChildren:
+            raise HTTPException(status_code=409, detail="too_many_children") from None
+        finally:
+            conn.close()
+    client_id = request.student_id
     try:
         return create_student(
             student_id=client_id or new_student_id(),

@@ -336,3 +336,79 @@ def test_the_limit_is_per_family(families, db):
     assert a.post("/children", json=CHILD).status_code == 409
     assert b.post("/children", json=CHILD).status_code == 201
     assert len(kids(db, fam_a)) == 5 and len(kids(db, fam_b)) == 1
+
+
+# --- the legacy POST /students obeys the same cap with login on ------------------------------
+
+LEGACY = {"metadata": {"name": "Bo", "birthday": "2019-05-06"}}
+
+
+def test_login_on_sixth_child_via_students_is_refused(families, db):
+    fam_a, _ = families
+    a = signed_in("parenta")
+    for _ in range(5):
+        r = a.post("/students", json=LEGACY)
+        assert r.status_code == 201, r.text
+    before = rows(db, "SELECT * FROM student_profiles")
+    r = a.post("/students", json=LEGACY)
+    assert r.status_code == 409
+    assert r.json() == {"detail": "too_many_children"}
+    assert rows(db, "SELECT * FROM student_profiles") == before
+    assert len(kids(db, fam_a)) == 5
+
+
+def test_login_on_students_keeps_its_response_and_plan_rules(families, db):
+    fam_a, _ = families
+    r = signed_in("parenta").post(
+        "/students", json={**LEGACY, "student_id": "mine", "plan_rules": {"x": 1}}
+    )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["student_id"].startswith("stu_")  # the client's id is ignored with login on
+    assert json.loads(body["plan_rules_blob"]) == {"x": 1}
+    assert kids(db, fam_a) == [body["student_id"]]
+
+
+def test_login_on_a_mix_of_routes_cannot_exceed_five(families, db):
+    fam_a, _ = families
+    a = signed_in("parenta")
+    for i in range(5):
+        path, body = ("/children", CHILD) if i % 2 else ("/students", LEGACY)
+        assert a.post(path, json=body).status_code == 201
+    assert a.post("/children", json=CHILD).status_code == 409
+    assert a.post("/students", json=LEGACY).status_code == 409
+    assert len(kids(db, fam_a)) == 5
+
+
+def test_login_on_simultaneous_mixed_requests_never_make_six(families, db):
+    fam_a, _ = families
+    clients = [signed_in("parenta") for _ in range(6)]
+    for _ in range(4):
+        assert clients[0].post("/students", json=LEGACY).status_code == 201
+    go = threading.Barrier(6)
+    codes: list[int] = []
+
+    def add(i: int):
+        go.wait()
+        path, body = ("/children", CHILD) if i % 2 else ("/students", LEGACY)
+        codes.append(clients[i].post(path, json=body).status_code)
+
+    threads = [threading.Thread(target=add, args=(i,)) for i in range(6)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sorted(codes) == [201] + [409] * 5
+    assert len(kids(db, fam_a)) == 5
+
+
+def test_login_off_students_is_unchanged(db):
+    """Self-hosters: no cap on the legacy route, and the client's id is still honoured."""
+    c = TestClient(main.app)
+    for i in range(6):
+        r = c.post("/students", json={**LEGACY, "student_id": f"kid_{i}"})
+        assert r.status_code == 201, r.text
+        assert r.json()["student_id"] == f"kid_{i}"
+    assert c.post("/students", json=LEGACY).status_code == 201  # no id: server picks one
+    assert c.post("/students", json={**LEGACY, "student_id": "kid_0"}).status_code == 400
+    assert len(kids(db)) == 7
