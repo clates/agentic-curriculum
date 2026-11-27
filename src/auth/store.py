@@ -49,7 +49,7 @@ class User:
     password_hash: str
     family_id: str
     disabled: bool
-    verified: bool = True  # False until a self-registered account confirms its email
+    verified: bool  # False until a self-registered account confirms its email
 
 
 def _user(row) -> User | None:
@@ -220,7 +220,8 @@ def resolve_session(conn: sqlite3.Connection, token: str | None) -> tuple[User, 
     now = clock.now()
     row = conn.execute(
         "SELECT s.id, s.expires_at, s.last_seen_at, u.id, u.username, u.password_hash, "
-        "u.family_id, u.disabled FROM auth_session s JOIN app_user u ON u.id = s.user_id "
+        "u.family_id, u.disabled, u.email_verified_at IS NOT NULL "
+        "FROM auth_session s JOIN app_user u ON u.id = s.user_id "
         "WHERE s.token_hash=?",
         (token_hash(token),),
     ).fetchone()
@@ -232,7 +233,7 @@ def resolve_session(conn: sqlite3.Connection, token: str | None) -> tuple[User, 
             "UPDATE auth_session SET last_seen_at=?, expires_at=? WHERE id=?",
             (now, now + SESSION_LIFETIME_S, row[0]),
         )
-    return User(row[3], row[4], row[5], row[6], bool(row[7])), refreshed
+    return User(row[3], row[4], row[5], row[6], bool(row[7]), bool(row[8])), refreshed
 
 
 def delete_session(conn: sqlite3.Connection, token: str | None) -> None:

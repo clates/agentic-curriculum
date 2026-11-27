@@ -215,6 +215,16 @@ def test_operator_made_users_are_verified():
     assert rows("SELECT email_verified_at IS NOT NULL FROM app_user") == [(1,)]
 
 
+def test_the_session_lookup_reads_the_verified_flag():
+    conn = store.connect()
+    try:
+        made = store.insert_user(conn, "new@x.com", store.hash_password(PW), "fam_local", False)
+        token = store.create_session(conn, made, None)
+        assert store.resolve_session(conn, token)[0].verified is False
+    finally:
+        conn.close()
+
+
 # --- code guessing ---------------------------------------------------------------------------
 
 
