@@ -134,9 +134,10 @@ def add_child(
     """Add a child unless the family already has ``limit``; TooManyChildren if it does.
 
     The count and the insert run in ONE write transaction (BEGIN IMMEDIATE takes the write lock
-    before counting), so two requests at once cannot both see room for the last place."""
+    before counting), so two requests at once cannot both see room for the last place. ``conn``
+    must have no open transaction: this never commits work the caller started."""
     if conn.in_transaction:
-        conn.commit()
+        raise RuntimeError("add_child needs a connection with no open transaction")
     conn.execute("BEGIN IMMEDIATE")
     try:
         (count,) = conn.execute(
