@@ -20,6 +20,8 @@ from packet_store import (
 )
 from trio_generator import generate_trio_for_student
 from db_utils import (
+    TooManyChildren,
+    add_child,
     get_db_path,
     create_student,
     delete_student,
@@ -55,6 +57,7 @@ from progress_summary import build_progress_summary
 from week_store import get_week
 from print_week import PlanNotReady, mark_printed, print_info
 from week_plan import PlanNotFound
+import jobs
 import loop_integration
 from admin_api import router as admin_api_router
 from loop_admin import router as loop_admin_router
@@ -70,13 +73,13 @@ from functools import lru_cache
 from datetime import UTC, datetime
 from email.utils import formatdate
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StringConstraints
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
@@ -231,6 +234,28 @@ class CreateStudentRequest(BaseModel):
     student_id: str | None = None  # honoured only with login off; otherwise server-generated
     metadata: StudentMetadata
     plan_rules: dict[str, Any] = Field(default_factory=dict)
+
+
+MAX_CHILDREN = 5
+ChildText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+Grade = Annotated[StrictInt, Field(ge=0, le=8)]  # 0 = kindergarten
+
+
+class AddChildRequest(BaseModel):
+    """The add-a-child form. Strict: unknown fields, "3", 3.0 and true are all refused."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: ChildText  # first name
+    interests: list[ChildText] = Field(default_factory=list, max_length=8)
+    math_grade: Grade
+    la_grade: Grade
+    notes: Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)] = ""
+
+
+def utc_now() -> datetime:
+    """The clock for routes that care about the date (tests override it)."""
+    return datetime.now(UTC)
 
 
 class UpdateStudentRequest(BaseModel):
@@ -402,8 +427,24 @@ def get_students(family: str = Depends(current_family)):
 
 @app.post("/students", response_model=StudentResponse, status_code=201)
 def create_student_endpoint(request: CreateStudentRequest, family: str = Depends(current_family)):
-    """Create a new student profile. With login on (or no id given) the server picks the id."""
-    client_id = None if auth_required() else request.student_id
+    """Create a new student profile. With login on the server picks the id and the family may
+    have at most MAX_CHILDREN (the same locked count-and-insert as POST /children)."""
+    if auth_required():
+        conn = jobs.connect(get_db_path())
+        try:
+            return add_child(
+                conn,
+                new_student_id(),
+                request.metadata.model_dump(),
+                family,
+                MAX_CHILDREN,
+                plan_rules=request.plan_rules,
+            )
+        except TooManyChildren:
+            raise HTTPException(status_code=409, detail="too_many_children") from None
+        finally:
+            conn.close()
+    client_id = request.student_id
     try:
         return create_student(
             student_id=client_id or new_student_id(),
@@ -413,6 +454,26 @@ def create_student_endpoint(request: CreateStudentRequest, family: str = Depends
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/children", status_code=201)
+def add_child_endpoint(
+    request: AddChildRequest,
+    now: Annotated[datetime, Depends(utc_now)],
+    family: str = Depends(current_family),
+):
+    """Add a child to the caller's family (at most MAX_CHILDREN) and start its first week."""
+    metadata = {**request.model_dump(), "grade_level": request.la_grade}
+    conn = jobs.connect(get_db_path())
+    try:
+        try:
+            row = add_child(conn, new_student_id(), metadata, family, MAX_CHILDREN)
+        except TooManyChildren:
+            raise HTTPException(status_code=409, detail="too_many_children") from None
+        week_start = loop_integration.begin_first_week(conn, row["student_id"], family, now)
+    finally:
+        conn.close()
+    return {"student_id": row["student_id"], "week_start": week_start}
 
 
 @app.put("/student/{student_id}", response_model=StudentResponse)

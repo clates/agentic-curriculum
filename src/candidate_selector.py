@@ -107,6 +107,7 @@ def select_week_standards(
     standards: Iterable[StandardInfo],
     prereqs: Mapping[str, Collection[str]] | None = None,
     grade: int,
+    grade_by_subject: Mapping[str, int] | None = None,
     seed: str,
     now: str | None = None,
     per_set: int = PER_SET,
@@ -117,6 +118,11 @@ def select_week_standards(
     progress = progress or {}
     prereqs = prereqs or {}
     by_id = {s.standard_id: s for s in standards}
+    grades = grade_by_subject or {}
+
+    def offset(s: StandardInfo) -> int:
+        """How far the skill sits from the grade the child works at in its subject."""
+        return s.grade - grades.get(s.subject, grade)
 
     mastered = set(progress.get("mastered_standards") or [])
     developing = set(progress.get("developing_standards") or [])
@@ -139,13 +145,13 @@ def select_week_standards(
     def order_key(s: StandardInfo):
         return (0 if s.standard_id in weak else 1, _digest(seed, s.standard_id))
 
-    eligible: dict[int, list[StandardInfo]] = {}
+    eligible: dict[int, list[StandardInfo]] = {}  # keyed by offset from the subject's grade
     for s in by_id.values():
         if s.standard_id in mastered or s.standard_id in cooling or s.standard_id in review_set:
             continue
         if blocked(s.standard_id):
             continue
-        eligible.setdefault(s.grade, []).append(s)
+        eligible.setdefault(offset(s), []).append(s)
     for pool in eligible.values():
         pool.sort(key=order_key)
 
@@ -164,20 +170,21 @@ def select_week_standards(
     room = per_set - step_up
     gap = sorted(
         [s for g in sorted(eligible) for s in eligible[g] if s.standard_id in weak],
-        key=lambda s: (abs(s.grade - grade), order_key(s)),
+        key=lambda s: (abs(offset(s)), order_key(s)),
     )
     add(gap, min(MAX_GAP, room - len(chosen)))
-    add(pool(grade) + pool(grade - 1) + pool(grade + 1), room - len(chosen))
+    add(pool(0) + pool(-1) + pool(1), room - len(chosen))
     before = len(chosen)
-    add(pool(grade + 1), step_up)
+    add(pool(1), step_up)
     step_up_ids = {s.standard_id for s in chosen[before:]}
 
     everything = [s for g in sorted(eligible) for s in eligible[g]] + [
         by_id[sid] for sid in due_ids
     ]
-    everything.sort(key=lambda s: (abs(s.grade - grade), order_key(s)))
+    everything.sort(key=lambda s: (abs(offset(s)), order_key(s)))
     if not everything:
-        raise NoCandidates(f"no standards available near grade {grade}")
+        by_subject = "".join(f", {subject} at grade {g}" for subject, g in sorted(grades.items()))
+        raise NoCandidates(f"no standards available near grade {grade}{by_subject}")
     if not chosen:  # a week must never be empty: borrow from anywhere
         chosen = _round_robin(everything, per_set)
 
@@ -200,17 +207,20 @@ MIN_DESCRIPTION_CHARS = 40
 
 
 def load_candidate_inputs(
-    db_path: str, grade: int, *, span: int = 2
+    db_path: str, grade: int, *, span: int = 2, extra_grades: Iterable[int] = ()
 ) -> tuple[list[StandardInfo], dict[str, set[str]]]:
     """Standards near ``grade`` (whole skills, not their bullet sub-points) and their prerequisites."""
     import sqlite3
 
+    centres = sorted({grade, *extra_grades})
+    where = " OR ".join("grade_level BETWEEN ? AND ?" for _ in centres)
+    params = [v for c in centres for v in (c - span, c + span)]
     conn = sqlite3.connect(db_path)
     try:
         rows = conn.execute(
             "SELECT standard_id, subject, grade_level, description FROM standards "
-            "WHERE grade_level BETWEEN ? AND ? ORDER BY standard_id",
-            (grade - span, grade + span),
+            f"WHERE {where} ORDER BY standard_id",
+            params,
         ).fetchall()
     except sqlite3.OperationalError:
         return [], {}

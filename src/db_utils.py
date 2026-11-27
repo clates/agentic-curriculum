@@ -81,43 +81,76 @@ def list_students(family_id: str | None = None) -> list[dict]:
     return _query_profiles(" WHERE family_id = ?", (family_id,))
 
 
+class TooManyChildren(Exception):
+    """The family already has as many children as it may."""
+
+
+def insert_student(
+    conn: sqlite3.Connection, student_id: str, metadata: dict, plan_rules: dict, family_id: str
+) -> dict:
+    """Insert a profile with empty progress on ``conn`` (the caller commits)."""
+    progress_blob = json.dumps({"mastered_standards": [], "developing_standards": []})
+    plan_rules_blob = json.dumps(plan_rules)
+    metadata_blob = json.dumps(metadata)
+    conn.execute(
+        "INSERT INTO student_profiles "
+        "(student_id, progress_blob, plan_rules_blob, metadata_blob, family_id) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (student_id, progress_blob, plan_rules_blob, metadata_blob, family_id),
+    )
+    return {
+        "student_id": student_id,
+        "progress_blob": progress_blob,
+        "plan_rules_blob": plan_rules_blob,
+        "metadata_blob": metadata_blob,
+    }
+
+
 def create_student(
     student_id: str, metadata: dict, plan_rules: dict, family_id: str = "fam_local"
 ) -> dict:
     """Create a student profile with empty progress; ValueError if the id is taken."""
     conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-
     try:
-        cursor.execute(
-            "SELECT student_id FROM student_profiles WHERE student_id = ?",
-            (student_id,),
-        )
-        if cursor.fetchone():
+        if conn.execute(
+            "SELECT student_id FROM student_profiles WHERE student_id = ?", (student_id,)
+        ).fetchone():
             raise ValueError(f"Student with ID '{student_id}' already exists")
-
-        progress_blob = json.dumps({"mastered_standards": [], "developing_standards": []})
-        plan_rules_blob = json.dumps(plan_rules)
-        metadata_blob = json.dumps(metadata)
-
-        cursor.execute(
-            """
-            INSERT INTO student_profiles
-            (student_id, progress_blob, plan_rules_blob, metadata_blob, family_id)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (student_id, progress_blob, plan_rules_blob, metadata_blob, family_id),
-        )
+        row = insert_student(conn, student_id, metadata, plan_rules, family_id)
         conn.commit()
-
-        return {
-            "student_id": student_id,
-            "progress_blob": progress_blob,
-            "plan_rules_blob": plan_rules_blob,
-            "metadata_blob": metadata_blob,
-        }
+        return row
     finally:
         conn.close()
+
+
+def add_child(
+    conn: sqlite3.Connection,
+    student_id: str,
+    metadata: dict,
+    family_id: str,
+    limit: int,
+    plan_rules: dict | None = None,
+) -> dict:
+    """Add a child unless the family already has ``limit``; TooManyChildren if it does.
+
+    The count and the insert run in ONE write transaction (BEGIN IMMEDIATE takes the write lock
+    before counting), so two requests at once cannot both see room for the last place. ``conn``
+    must have no open transaction: this never commits work the caller started."""
+    if conn.in_transaction:
+        raise RuntimeError("add_child needs a connection with no open transaction")
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        (count,) = conn.execute(
+            "SELECT COUNT(*) FROM student_profiles WHERE family_id = ?", (family_id,)
+        ).fetchone()
+        if count >= limit:
+            raise TooManyChildren(family_id)
+        row = insert_student(conn, student_id, metadata, plan_rules or {}, family_id)
+        conn.commit()
+        return row
+    except BaseException:
+        conn.rollback()
+        raise
 
 
 def update_student(

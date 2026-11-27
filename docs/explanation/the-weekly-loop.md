@@ -73,6 +73,28 @@ in a state the real schedule would never produce. It's also where a written week
 before anyone prints it: **Review this week** reports reading levels, word counts and skill
 coverage, without calling a model.
 
+## Why math has its own grade
+
+Children are often ahead in one subject and level in another, so a family gives two grades when
+adding a child: one for math, one for reading and writing. The planner picks Math skills near the
+math grade and every other subject near the reading and writing grade. A single grade would
+under-challenge one subject or overwhelm the other.
+
+Parents guess at a grade, and a guess is rough. The grades are starting points. The stored
+grades don't change afterwards: calibration happens through mastery. The first check-ins show what
+the child already knows, those skills move, and feed forward picks the next ones from there rather
+than by changing the grades. The form says so, so a wrong first guess doesn't feel like a mistake
+to fix.
+
+## Why a family has at most five children
+
+Five is the owner's limit, set on something a parent can see and understand: how many children are
+in the family. It isn't a spending limit. It counts the children a family has now, so deleting a
+child frees a place, and a family that adds and deletes children can plan for more than five over
+time. Spending is the job of the per-family monthly model cap, when the operator sets one
+([`LLM_CAP_FAMILY_MONTH_USD`](../reference/development.md)). It counts what was actually spent,
+and the spending record outlives a deleted child, so deleting doesn't reset it.
+
 ## What's not there yet
 
 Notices are still a stub that only logs, so no parent is emailed yet. Dead-job email is built but
@@ -80,3 +102,4 @@ off until a mail relay is configured.
 
 Facts and numbers: [Worker and scheduler reference](../reference/worker-and-scheduler.md).
 Turning it on: [Run the worker](../how-to/run-the-worker.md).
+Adding a child: [How-to](../how-to/add-a-child.md), [reference](../reference/children.md).

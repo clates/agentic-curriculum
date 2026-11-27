@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { isAxiosError } from 'axios';
 import { apiClient } from '@/lib/api';
-import { safeNext } from '@/lib/auth';
+import { NEW_FAMILY_LANDING, safeNext } from '@/lib/auth';
 import { copy } from '@/lib/copy';
 import { primaryButton } from '@/components/parent/states';
 import { CheckEmail, CreateAccount, WrongEmail } from '@/components/parent/SignUp';
@@ -27,7 +27,10 @@ const field =
 
 /** The default landing page when a login is needed: username, password, and a calm way in. */
 export function LoginForm() {
-  const next = safeNext(useSearchParams().get('next'));
+  const asked = useSearchParams().get('next');
+  const next = safeNext(asked);
+  // After confirming the email: the page they were sent from, else a new family's welcome page.
+  const nextAfterVerify = safeNext(asked, NEW_FAMILY_LANDING);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [visible, setVisible] = useState(false);
@@ -107,7 +110,7 @@ export function LoginForm() {
       <CheckEmail
         email={username.trim()}
         password={password}
-        next={next}
+        next={nextAfterVerify}
         onWrongEmail={() => {
           setPassword('');
           setStep('wrongEmail');

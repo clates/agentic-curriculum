@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
-import { apiClient } from '@/lib/api';
+import type { ReactNode } from 'react';
+import { SignOutButton } from '@/components/parent/SignOutButton';
 import { copy } from '@/lib/copy';
 import { useMe } from '@/lib/useMe';
 
@@ -24,21 +24,12 @@ const TABS = [
 /** Phone-first shell: a title bar, the page, and a thumb-reachable tab bar (top links on desktop). */
 export function ParentShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [leaving, setLeaving] = useState(false);
   // Sign-out only shows when a login is in use. The Admin link shows to anyone allowed to admin:
   // with login off that is the operator, who is the only user.
   const { data: me } = useMe();
   const signedIn = Boolean(me?.auth_required && me.user);
   const isAdmin = Boolean(me?.permissions.includes('admin'));
 
-  async function signOut() {
-    setLeaving(true);
-    try {
-      await apiClient.post('/auth/logout');
-    } finally {
-      window.location.assign('/login');
-    }
-  }
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
@@ -68,14 +59,7 @@ export function ParentShell({ children }: { children: ReactNode }) {
               </Link>
             ) : null}
             {signedIn ? (
-              <button
-                type="button"
-                onClick={signOut}
-                disabled={leaving}
-                className="min-h-11 px-2 text-sm text-neutral-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-              >
-                {leaving ? copy.login.signingOut : copy.login.signOut}
-              </button>
+              <SignOutButton className="min-h-11 px-2 text-sm text-neutral-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" />
             ) : null}
           </div>
         </div>

@@ -275,5 +275,10 @@ def test_seed_demo_and_start_week_are_safe_to_repeat_and_carry_no_real_data(conn
     assert kind_jobs(conn, "outline") == [f"outlines:{plan.plan_id}"]
     assert loop_integration.next_monday(date(2026, 1, 8)) == "2026-01-12"  # Thursday
     assert loop_integration.next_monday(date(2026, 1, 12)) == "2026-01-19"  # Monday
-    with pytest.raises(SystemExit):
+    with pytest.raises(LookupError):
         loop_integration.start_week(conn, "nobody", "2026-01-12")
+
+
+def test_the_cli_exits_with_a_message_for_a_missing_child(db_path):
+    with pytest.raises(SystemExit, match="no child 'nobody'"):
+        loop_integration.main(["start-week", "nobody", "--week", "2026-01-12"])

@@ -78,7 +78,7 @@ Full spec: [`api_reference.yaml`](../../api_reference.yaml), also at
 
 | Area | Routes |
 |---|---|
-| Students | `GET /students`, `POST /students`, `GET\|PUT\|DELETE /student/{id}` |
+| Students | `GET /students`, `POST /students`, `POST /children` ([details](children.md)), `GET\|PUT\|DELETE /student/{id}` |
 | Planning | `POST /generate_weekly_plan`, `GET /students/{id}/weekly-packets[/{packet_id}]` |
 | Resources | `GET /students/{id}/weekly-packets/{id}/worksheets`, `GET /students/{id}/worksheet-artifacts/{id}` |
 | Feedback | `POST /students/{id}/weekly-packets/{id}/feedback` ([Friday form](friday-form.md)) |

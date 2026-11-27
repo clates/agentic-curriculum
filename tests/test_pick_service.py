@@ -395,6 +395,50 @@ def test_finish_outlining_writes_the_first_ideas_and_opens_the_pick(db):
     assert ps.regenerations_used(db, plan.plan_id) == 0  # the first set is not a regeneration
 
 
+def test_math_is_planned_at_the_math_grade_and_the_rest_at_the_language_arts_grade(
+    tmp_path, monkeypatch
+):
+    """Through the real wiring: profile -> context -> loader (extra grades) -> selector."""
+    path = tmp_path / "grades.db"
+    apply_migrations(path)
+    conn = sqlite3.connect(path)
+    # Both subjects exist at both grades, so swapping the grades or loading only one of them
+    # picks the wrong ones instead of the only ones there are.
+    for subject in ("Math", "English"):
+        for g in (1, 6):
+            for n in range(1, 6):
+                conn.execute(
+                    "INSERT INTO standards (standard_id, subject, grade_level, description) "
+                    "VALUES (?,?,?,?)",
+                    (
+                        f"VA.{subject.upper()}.{g}.{n}",
+                        subject,
+                        g,
+                        LONG.format(n=n, subject=subject),
+                    ),
+                )
+    meta = {"name": "Ada", "grade_level": 3, "math_grade": 6, "la_grade": 1}
+    conn.execute(
+        "INSERT INTO student_profiles (student_id, progress_blob, plan_rules_blob, metadata_blob, "
+        "family_id) VALUES ('kid','{}','{}',?,?)",
+        (json.dumps(meta), FAM),
+    )
+    conn.commit()
+    plan = wp.create_plan(conn, FAM, "kid", "2026-03-02")
+    seen = {}
+
+    def fake_generate(context, week_standards, **_):
+        seen["items"] = week_standards.items
+        return type("Generated", (), {"outlines": old_outlines()})()
+
+    monkeypatch.setattr(ps, "generate_outlines", fake_generate)
+    ps.make_outlines(conn, FAM, ps.get_student(conn, FAM, "kid"), plan, variant=0)
+    conn.close()
+
+    picked = {(c.subject, c.grade) for c in seen["items"]}
+    assert picked == {("Math", 6), ("English", 1)}
+
+
 # --- context and the HTTP surface --------------------------------------------------------------
 
 

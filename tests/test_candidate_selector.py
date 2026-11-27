@@ -43,7 +43,16 @@ def test_same_inputs_same_answer_and_the_seed_only_breaks_ties():
 
 def test_the_selector_takes_no_parent_input_and_no_difficulty():
     params = set(inspect.signature(select_week_standards).parameters)
-    assert params == {"progress", "standards", "prereqs", "grade", "seed", "now", "per_set"}
+    assert params == {
+        "progress",
+        "standards",
+        "prereqs",
+        "grade",
+        "grade_by_subject",
+        "seed",
+        "now",
+        "per_set",
+    }
 
 
 def test_a_new_child_gets_grade_level_skills_across_subjects_and_no_step_up():
@@ -162,6 +171,13 @@ def test_nothing_to_plan_from_is_a_clear_error():
         )
 
 
+def test_nothing_to_plan_from_names_every_grade_it_looked_at():
+    with pytest.raises(NoCandidates, match=r"near grade 1, Math at grade 6$"):
+        select_week_standards(
+            progress={}, standards=[], grade=1, grade_by_subject={"Math": 6}, seed="x", now=NOW
+        )
+
+
 def test_loader_reads_nearby_whole_skills_from_the_standards_table(tmp_path):
     import sqlite3
 
@@ -186,3 +202,48 @@ def test_loader_reads_nearby_whole_skills_from_the_standards_table(tmp_path):
     conn.close()
     standards, _prereqs = load_candidate_inputs(str(db), 3)
     assert [s.standard_id for s in standards] == ["VA.MATH.3.1"]
+
+
+def test_each_subject_is_compared_with_its_own_grade():
+    standards = [
+        std(f"{p}.{g}.{n}", sub, g)
+        for g in range(1, 6)
+        for p, sub in (("MA", "Math"), ("EN", "English"))
+        for n in range(1, 5)
+    ]
+    cs = select_week_standards(
+        progress={}, standards=standards, grade=1, grade_by_subject={"Math": 3}, seed="x", now=NOW
+    )
+    assert {c.grade for c in cs.items if c.subject == "Math"} == {3}
+    assert {c.grade for c in cs.items if c.subject == "English"} == {1}
+    assert {c.subject for c in cs.items} == {"Math", "English"}
+
+
+def test_an_empty_or_matching_grade_map_changes_nothing():
+    base = sel().ids()
+    assert sel(grade_by_subject={}).ids() == base
+    assert sel(grade_by_subject={"Math": 3, "English": 3}).ids() == base
+
+
+def test_loader_unions_the_spans_of_extra_grades(tmp_path):
+    import sqlite3
+
+    db = tmp_path / "s.db"
+    conn = sqlite3.connect(db)
+    conn.execute(
+        "CREATE TABLE standards (standard_id TEXT PRIMARY KEY, source TEXT, subject TEXT, "
+        "grade_level INTEGER, description TEXT, json_blob TEXT)"
+    )
+    long = "The student will investigate and understand a whole skill"
+    conn.executemany(
+        "INSERT INTO standards VALUES (?, 'x', 'Math', ?, ?, NULL)",
+        [("A.1", 1, long), ("B.5", 5, long), ("C.8", 8, long)],
+    )
+    conn.commit()
+    conn.close()
+
+    def ids(**kw):
+        return [s.standard_id for s in load_candidate_inputs(str(db), 1, **kw)[0]]
+
+    assert ids() == ["A.1"]
+    assert ids(extra_grades=(5,)) == ["A.1", "B.5"]

@@ -16,8 +16,8 @@ import { expectNoViolations, expectNoBannedWords, uniqueId } from '../fixtures/p
 import { expectNoHorizontalScroll } from '../fixtures/e2e-hardening';
 import type { Page } from '@playwright/test';
 
-async function register(page: Page, email: string) {
-  await page.goto('/login');
+async function register(page: Page, email: string, loginUrl = '/login') {
+  await page.goto(loginUrl);
   await page.getByRole('button', { name: 'Create an account' }).click();
   await page.getByLabel('Family name').fill('The Testers');
   await page.getByLabel('Email').fill(email);
@@ -31,7 +31,7 @@ async function register(page: Page, email: string) {
 const newEmail = () => `${uniqueId('fam')}@example.com`.toLowerCase();
 
 test.describe('Creating an account', () => {
-  test('register, enter the emailed code and land on This week', async ({ page }) => {
+  test('register, enter the emailed code and land on the welcome page', async ({ page }) => {
     const email = newEmail();
     await register(page, email);
     const code = await latestCode(email);
@@ -42,8 +42,24 @@ test.describe('Creating an account', () => {
     await field.pressSequentially(`${code.slice(0, 3)} -${code.slice(3)}9`); // typed, one extra digit
     await expect(field).toHaveValue(code);
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
     expect((await sessionCookie(page.context()))?.httpOnly).toBe(true);
+  });
+
+  test('a sign-in link to a page still leads there after the code', async ({ page }) => {
+    const email = newEmail();
+    await register(page, email, '/login?next=%2Fhow-its-going');
+    await page.getByLabel('6-digit code').fill(await latestCode(email));
+    await page.getByRole('button', { name: 'Confirm' }).click();
+    await expect(page).toHaveURL(/\/how-its-going$/);
+  });
+
+  test('a link to another site is ignored after the code', async ({ page }) => {
+    const email = newEmail();
+    await register(page, email, '/login?next=%2F%2Fevil.example');
+    await page.getByLabel('6-digit code').fill(await latestCode(email));
+    await page.getByRole('button', { name: 'Confirm' }).click();
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('a wrong code says so and the right one still works', async ({ page }) => {
@@ -55,7 +71,7 @@ test.describe('Creating an account', () => {
     await expect(page.locator('#main').getByRole('alert')).toHaveText('That code didn’t work');
     await page.getByLabel('6-digit code').fill(code);
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('"Send a new code" confirms and mails another code', async ({ page }) => {
@@ -68,7 +84,7 @@ test.describe('Creating an account', () => {
     await expect(page.getByRole('status')).toHaveText('A new code is on its way.');
     await page.getByLabel('6-digit code').fill(await latestCode(email));
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('signing in to an unverified account shows the code step', async ({ page }) => {
@@ -79,7 +95,7 @@ test.describe('Creating an account', () => {
     await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
     await page.getByLabel('6-digit code').fill(await latestCode(email));
     await page.getByRole('button', { name: 'Confirm' }).click();
-    await expect(page).toHaveURL(/\/week$/);
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('"Wrong email?" says a new invite is needed and leads back to sign in', async ({ page }) => {

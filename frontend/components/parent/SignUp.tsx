@@ -164,7 +164,8 @@ export function CreateAccount({
   );
 }
 
-/** The 6-digit code from the email. The password is only held in memory, to confirm the email. */
+/** The 6-digit code from the email. The password is only held in memory, to confirm the email.
+ * `next` is where to go once confirmed (already checked by the caller with `safeNext`). */
 export function CheckEmail({
   email,
   password,
