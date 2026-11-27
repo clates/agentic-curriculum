@@ -221,6 +221,7 @@ export const copy = {
   },
   childPage: {
     tabTitle: 'Your child',
+    noName: 'Your child',
     unknownChild: 'We couldn\u2019t find that child',
     back: 'Back to this week',
     pastWeeksTitle: 'Past weeks',
@@ -241,6 +242,8 @@ export const copy = {
     shaky: (n: number) => `${n} shaky`,
     toCome: (n: number) => `${n} still to come`,
     loadingDocs: 'Loading the documents',
+    docsFailed: 'We couldn\u2019t load the documents for this week.',
+    docsRetry: 'Try again',
   },
   print: {
     back: 'Back to this week',

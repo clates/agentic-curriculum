@@ -63,11 +63,12 @@ export default function ChildPage({ params }: { params: Promise<{ studentId: str
   }
   if (child.error || child.data == null) return <ErrorState onRetry={() => child.refetch()} />;
 
+  const name = child.data || copy.childPage.noName;
   return (
     <>
       <BackLink label={copy.childPage.back} />
-      <h1 className="text-foreground text-2xl font-semibold">{child.data}</h1>
-      <PastWeeks studentId={studentId} name={child.data} />
+      <h1 className="text-foreground text-2xl font-semibold">{name}</h1>
+      <PastWeeks studentId={studentId} name={name} />
       <Coverage studentId={studentId} />
     </>
   );

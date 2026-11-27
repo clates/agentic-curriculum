@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, parseMetadata, studentsApi } from '@/lib/api';
+import { parseMetadata, studentsApi } from '@/lib/api';
 import { PARENT_QUERY } from '@/lib/parentQuery';
 
 export interface SubjectCoverage {
@@ -15,9 +15,9 @@ export function useChildName(studentId: string) {
   return useQuery({
     queryKey: ['child-name', studentId],
     queryFn: async (): Promise<string> => {
-      const { data } = await apiClient.get(`/student/${studentId}`);
+      const data = await studentsApi.getStudent(studentId);
       const name = parseMetadata(data.metadata_blob)?.name ?? '';
-      return name.trim().split(/\s+/)[0] ?? '';
+      return name.trim().split(/\s+/)[0];
     },
     ...PARENT_QUERY,
   });
@@ -27,10 +27,7 @@ export function useChildName(studentId: string) {
 export function useCoverage(studentId: string) {
   return useQuery({
     queryKey: ['coverage', studentId],
-    queryFn: async (): Promise<SubjectCoverage[]> => {
-      const { data } = await apiClient.get(`/students/${studentId}/coverage`);
-      return data;
-    },
+    queryFn: (): Promise<SubjectCoverage[]> => studentsApi.getCoverage(studentId),
     ...PARENT_QUERY,
   });
 }

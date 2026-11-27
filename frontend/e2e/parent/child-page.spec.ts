@@ -85,6 +85,32 @@ test.describe('A page for each child', () => {
     await expectNoViolations(page);
   });
 
+  test('a week whose documents fail to load says so and can be retried', async ({
+    page,
+    request,
+  }) => {
+    const kid = await newChild(request, 'cpfail');
+    seedWeek(kid.id, `${kid.packetId}_old`, OLDER);
+    let failing = true;
+    await page.route('**/print-info', (route) =>
+      failing ? route.fulfill({ status: 500, body: '{}' }) : route.continue()
+    );
+    await page.goto(`/children/${kid.id}`);
+    const row = page.getByTestId('past-week');
+    await expect(row.getByTestId('past-week-docs-error')).toContainText(
+      'We couldn’t load the documents for this week.',
+      { timeout: 20_000 }
+    );
+    failing = false;
+    await row.getByRole('button', { name: 'Try again' }).click();
+    await expect(row.getByRole('link')).toHaveText([
+      `${kid.name}’s pages`,
+      'Teacher guide',
+      'Prep sheet',
+    ]);
+    await expect(row.getByTestId('past-week-docs-error')).toHaveCount(0);
+  });
+
   test('an unknown child says so, in plain words', async ({ page }) => {
     await page.goto('/children/no-such-child');
     await expect(page.getByRole('heading', { name: 'We couldn’t find that child' })).toBeVisible({

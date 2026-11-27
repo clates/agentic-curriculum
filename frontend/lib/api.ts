@@ -115,6 +115,14 @@ export const studentsApi = {
     await apiClient.delete(`/student/${studentId}`);
   },
 
+  getStudent: (studentId: string) => get<StudentProfile>(`/student/${studentId}`),
+
+  /** Per subject, counts of solid, shaky and still-to-come skills. */
+  getCoverage: (studentId: string) =>
+    get<{ subject: string; solid: number; shaky: number; to_come: number }[]>(
+      `/students/${studentId}/coverage`
+    ),
+
   listWeeklyPackets: (
     studentId: string,
     params?: { week_of?: string; page?: number; page_size?: number }

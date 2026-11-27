@@ -50,6 +50,17 @@ function PastWeek({
         </ul>
       ) : info.isLoading ? (
         <p className="mt-1 text-sm text-neutral-700">{copy.childPage.loadingDocs}</p>
+      ) : info.error ? (
+        <p
+          role="alert"
+          data-testid="past-week-docs-error"
+          className="mt-1 text-sm text-neutral-700"
+        >
+          {copy.childPage.docsFailed}{' '}
+          <button type="button" onClick={() => info.refetch()} className={linkClass}>
+            {copy.childPage.docsRetry}
+          </button>
+        </p>
       ) : null}
     </li>
   );
