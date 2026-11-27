@@ -241,14 +241,18 @@ def delete_session(conn: sqlite3.Connection, token: str | None) -> None:
 
 
 def clear_attempts(conn: sqlite3.Connection, username: str | None = None) -> int:
-    """Forget lockout state: one user's rows (their 'user' row and every 'user_ip' row), or all
+    """Forget lockout state: one user's rows (their 'user' row and every 'user_ip' row, for the
+    sign-in name and for the registration keys 'register:<name>' and 'verify:<name>'), or all
     rows, address locks included, when no username is given. Returns the rows removed."""
     if username is None:
         return conn.execute("DELETE FROM login_attempt").rowcount
     name = normalize_username(username)
-    prefix = name + "|"
-    return conn.execute(
-        "DELETE FROM login_attempt WHERE (scope='user' AND key=?) "
-        "OR (scope='user_ip' AND substr(key, 1, ?) = ?)",
-        (name, len(prefix), prefix),
-    ).rowcount
+    removed = 0
+    for key in (name, f"register:{name}", f"verify:{name}"):
+        prefix = key + "|"
+        removed += conn.execute(
+            "DELETE FROM login_attempt WHERE (scope='user' AND key=?) "
+            "OR (scope='user_ip' AND substr(key, 1, ?) = ?)",
+            (key, len(prefix), prefix),
+        ).rowcount
+    return removed

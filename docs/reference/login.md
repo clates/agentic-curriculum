@@ -30,7 +30,7 @@ Background: [Why the login needs HTTPS and a proxy](../explanation/login-and-htt
 | `set-password <username>` | sets the password, signs the user out everywhere, clears their lockouts |
 | `disable <username>` | locks the account and signs it out |
 | `enable <username>` | unlocks the account and clears its lockouts |
-| `unlock <username>` | clears that user's lockouts |
+| `unlock <username>` | clears that user's lockouts: sign-in, and the register and verify ones for that email |
 | `unlock` | clears every lockout, address locks included |
 | `grant <username> <permission>` | gives the user a permission. Known permissions: `admin` |
 | `revoke <username> <permission>` | takes it away |
