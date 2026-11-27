@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { copy } from '@/lib/copy';
 import type { ChildCard as Card } from '@/lib/thisWeek';
-import { primaryButton } from './states';
+import { linkClass, primaryButton } from './states';
 
 function weekLabel(iso: string): string {
   const d = new Date(`${iso}T12:00:00`);
@@ -39,6 +39,14 @@ export function ChildCard({ card }: { card: Card }) {
           {text.button}
         </Link>
       ) : null}
+      <p className="mt-3 flex flex-wrap gap-x-5">
+        <Link href={`/children/${card.student_id}#past-weeks`} className={linkClass}>
+          {copy.thisWeek.pastWeeks}
+        </Link>
+        <Link href={`/children/${card.student_id}#coverage`} className={linkClass}>
+          {copy.thisWeek.skillsBySubject}
+        </Link>
+      </p>
     </li>
   );
 }

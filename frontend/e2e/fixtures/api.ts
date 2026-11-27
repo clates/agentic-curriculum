@@ -103,8 +103,13 @@ export function seedPlan(studentId: string, status: string, weekStart = '2099-01
 }
 
 /** Seed a finished structured week with ten check-by-check prompts for the child. */
-export function seedWeek(studentId: string, packetId: string): void {
-  seedScript('create_week', studentId, packetId);
+export function seedWeek(studentId: string, packetId: string, weekOf?: string): void {
+  seedScript('create_week', studentId, packetId, ...(weekOf ? [weekOf] : []));
+}
+
+/** Mark a seeded week as checked in (a stored feedback row), with no follow-on plan generation. */
+export function seedCheckIn(studentId: string, packetId: string): void {
+  seedScript('check_in', studentId, packetId);
 }
 
 export interface LlmUsageRow {

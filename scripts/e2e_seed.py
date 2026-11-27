@@ -7,6 +7,7 @@ Usage:
   python scripts/e2e_seed.py set_progress <student_id>
   python scripts/e2e_seed.py backdate_feedback <packet_id> <iso_timestamp>
   python scripts/e2e_seed.py create_week <student_id> <packet_id>
+  python scripts/e2e_seed.py check_in <student_id> <packet_id>
   python scripts/e2e_seed.py create_plan <student_id> <loop_status> [week_start]
   python scripts/e2e_seed.py expire_plan <student_id>
   python scripts/e2e_seed.py loop_events <student_id>
@@ -100,13 +101,13 @@ def create_packet(student_id: str, packet_id: str) -> None:
     print(f"created packet {packet_id} for student {student_id}")
 
 
-def create_week(student_id: str, packet_id: str) -> None:
+def create_week(student_id: str, packet_id: str, week_of: str = "2026-01-06") -> None:
     """Seed a ready structured week (the weather-week fixture, 10 prep checks)."""
     import week_store  # noqa: E402
 
     fixture = PROJECT_ROOT / "tests" / "fixtures" / "weekdoc" / "weather_week.json"
     week = json.loads(fixture.read_text(encoding="utf-8"))
-    week_store.save_week(student_id, packet_id, week, grade_level=0, week_of="2026-01-06")
+    week_store.save_week(student_id, packet_id, week, grade_level=0, week_of=week_of)
     print(f"created structured week {packet_id} for student {student_id}")
 
 
@@ -308,6 +309,14 @@ def backdate_feedback(packet_id: str, iso_timestamp: str) -> None:
     print(f"backdated feedback for {packet_id} to {iso_timestamp}")
 
 
+def check_in(student_id: str, packet_id: str) -> None:
+    """Store a feedback row for the week, without the API's follow-on plan generation."""
+    from packet_store import save_packet_feedback  # noqa: E402
+
+    save_packet_feedback(student_id, packet_id, None, 0)
+    print(f"checked in {packet_id} for student {student_id}")
+
+
 def llm_usage(student_id: str) -> None:
     """Print the llm_usage ledger rows for a student as JSON."""
     conn = sqlite3.connect(_db_path())
@@ -352,10 +361,16 @@ if __name__ == "__main__":
         set_progress(sys.argv[2])
 
     elif cmd == "create_week":
-        if len(sys.argv) != 4:
-            print("Usage: e2e_seed.py create_week <student_id> <packet_id>")
+        if len(sys.argv) not in (4, 5):
+            print("Usage: e2e_seed.py create_week <student_id> <packet_id> [week_of]")
             sys.exit(1)
-        create_week(sys.argv[2], sys.argv[3])
+        create_week(*sys.argv[2:])
+
+    elif cmd == "check_in":
+        if len(sys.argv) != 4:
+            print("Usage: e2e_seed.py check_in <student_id> <packet_id>")
+            sys.exit(1)
+        check_in(sys.argv[2], sys.argv[3])
 
     elif cmd == "expire_plan":
         expire_plan(sys.argv[2])

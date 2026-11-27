@@ -46,6 +46,20 @@ def _item(standards: Mapping[str, Mapping[str, Any]], sid: str, **extra: Any) ->
     return item
 
 
+def classify_progress(progress: Mapping[str, Any]) -> tuple[list[str], list[str], list[str]]:
+    """Sorted standard ids: mastered, shaky, and needing more work.
+
+    The one place these words are defined. Reviews coming due are not considered here.
+    """
+    meta = progress.get("standard_metadata") or {}
+    solid = sorted(set(progress.get("mastered_standards", [])))
+    shaky, needs_work = [], []
+    for sid in sorted(set(progress.get("developing_standards", []))):
+        last = meta.get(sid, {}).get("last_feedback")
+        (needs_work if last in ("STRUGGLING", "NOT_STARTED") else shaky).append(sid)
+    return solid, shaky, needs_work
+
+
 def _sentence(first_name: str, solid: int, shaky: int, needs_work: int, due: int) -> str:
     who = first_name or "Your child"
     if not (solid or shaky or needs_work):
@@ -81,15 +95,10 @@ def build_progress_summary(
 
     due_rows = review_due(progress, now)
     due_ids = {r["standard_id"] for r in due_rows}
-
-    solid, shaky, needs_work = [], [], []
-    for sid in sorted(set(progress.get("mastered_standards", [])) - due_ids):
-        solid.append(_item(standards, sid))
-    for sid in sorted(set(progress.get("developing_standards", []))):
-        last = meta.get(sid, {}).get("last_feedback")
-        (needs_work if last in ("STRUGGLING", "NOT_STARTED") else shaky).append(
-            _item(standards, sid)
-        )
+    solid_ids, shaky_ids, needs_work_ids = classify_progress(progress)
+    solid = [_item(standards, sid) for sid in solid_ids if sid not in due_ids]
+    shaky = [_item(standards, sid) for sid in shaky_ids]
+    needs_work = [_item(standards, sid) for sid in needs_work_ids]
 
     due = [
         _item(standards, r["standard_id"], why=_REVIEW_WORDS.get(r["reason"], "Time to revisit"))

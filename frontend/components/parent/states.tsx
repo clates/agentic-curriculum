@@ -7,6 +7,10 @@ import { copy } from '@/lib/copy';
 export const primaryButton =
   'inline-flex min-h-11 items-center justify-center rounded-md bg-primary-600 px-6 py-3 font-medium text-white hover:bg-primary-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
 
+/** An underlined text link with a 44px tap target. */
+export const linkClass =
+  'text-primary-700 inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
+
 export const secondaryButton =
   'inline-flex min-h-11 items-center justify-center rounded-md border-2 border-primary-600 bg-white px-6 py-3 font-medium text-primary-700 hover:bg-primary-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
 

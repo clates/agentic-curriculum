@@ -112,7 +112,7 @@ test.describe('Pick one of three: the happy path', () => {
     await expect(after.getByRole('heading', { level: 2 })).toHaveText(
       `Writing ${kid.name}’s next week`
     );
-    await expect(after.getByRole('link')).toHaveCount(0);
+    await expect(after.getByRole('link')).toHaveText(['Past weeks', 'Skills by subject']);
     await shot(page, 'm10-6-writing');
     expect(posts).toBe(1);
 

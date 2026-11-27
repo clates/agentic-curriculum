@@ -1,0 +1,51 @@
+import { isAxiosError } from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import { parseMetadata, studentsApi } from '@/lib/api';
+import { PARENT_QUERY } from '@/lib/parentQuery';
+
+export interface SubjectCoverage {
+  subject: string;
+  solid: number;
+  shaky: number;
+  to_come: number;
+}
+
+/** The child's first name. A missing or someone else's child answers 404, so `data` stays empty. */
+export function useChildName(studentId: string) {
+  return useQuery({
+    queryKey: ['child-name', studentId],
+    queryFn: async (): Promise<string> => {
+      const data = await studentsApi.getStudent(studentId);
+      const name = parseMetadata(data.metadata_blob)?.name ?? '';
+      return name.trim().split(/\s+/)[0];
+    },
+    ...PARENT_QUERY,
+  });
+}
+
+/** Per subject, counts of solid, shaky and still-to-come skills. */
+export function useCoverage(studentId: string) {
+  return useQuery({
+    queryKey: ['coverage', studentId],
+    queryFn: (): Promise<SubjectCoverage[]> => studentsApi.getCoverage(studentId),
+    ...PARENT_QUERY,
+  });
+}
+
+/** The weeks already written, newest first. A week still being written is not listed. */
+export function usePastWeeks(studentId: string) {
+  return useQuery({
+    queryKey: ['past-weeks', studentId],
+    queryFn: async () => {
+      // The server lists them newest first (week_of DESC).
+      const { items } = await studentsApi.listWeeklyPackets(studentId, { page_size: 50 });
+      return items;
+    },
+    ...PARENT_QUERY,
+  });
+}
+
+/** True when the server said "no such child" (missing, or another family's). */
+export function isNotFound(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 404;
+}

@@ -206,6 +206,13 @@ _SUB_ITEM = re.compile(r"\.[a-z]$")
 MIN_DESCRIPTION_CHARS = 40
 
 
+def is_whole_skill(standard_id: str, description: str | None) -> bool:
+    """A real description and not a bullet sub-point: what counts as one skill."""
+    return bool(
+        description and len(description.strip()) >= MIN_DESCRIPTION_CHARS
+    ) and not _SUB_ITEM.search(standard_id)
+
+
 def load_candidate_inputs(
     db_path: str, grade: int, *, span: int = 2, extra_grades: Iterable[int] = ()
 ) -> tuple[list[StandardInfo], dict[str, set[str]]]:
@@ -229,10 +236,7 @@ def load_candidate_inputs(
     standards = [
         StandardInfo(sid, subject or "", int(g), " ".join(desc.split()))
         for sid, subject, g, desc in rows
-        if desc
-        and len(desc.strip()) >= MIN_DESCRIPTION_CHARS
-        and not _SUB_ITEM.search(sid)
-        and g is not None
+        if is_whole_skill(sid, desc) and g is not None
     ]
     ids = {s.standard_id for s in standards}
     prereqs: dict[str, set[str]] = {}
