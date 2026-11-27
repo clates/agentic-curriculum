@@ -89,20 +89,21 @@ def _open() -> sqlite3.Connection:
     return jobs.connect(get_db_path())
 
 
-def admin_student(student_id: str) -> tuple[str, sqlite3.Row]:
+def admin_student(student_id: str) -> str:
     """Path dependency for the console only (behind the router's admin check): the child's own
-    family and profile row, in any family. 404 exactly as ``owned_student_id`` for a missing one."""
+    family id, in any family. 404 exactly as ``owned_student_id`` for a missing one. It opens its
+    own connection, like ``owned_student_id``, because the route-inventory test looks for it as a
+    dependency."""
     conn = _open()
     try:
         row = conn.execute(
-            "SELECT student_id, family_id, metadata_blob FROM student_profiles WHERE student_id=?",
-            (student_id,),
+            "SELECT family_id FROM student_profiles WHERE student_id=?", (student_id,)
         ).fetchone()
     finally:
         conn.close()
     if row is None:
         raise HTTPException(status_code=404, detail="Student not found")
-    return row["family_id"], row
+    return row[0]
 
 
 Student = Depends(admin_student)
@@ -426,13 +427,13 @@ def _look(
 
 @router.get("/students/{student_id}/feed-forward")
 def feed_forward(
+    student_id: str,
     request: Request,
     week: str | None = None,
-    found: tuple[str, sqlite3.Row] = Student,
+    family: str = Student,
     own: str = Family,
 ):
     """What the engine would pick for this child's next week, from mastery alone. No model call."""
-    family, student_id = found[0], found[1]["student_id"]
     conn = _open()
     try:
         _look(conn, request, own, family, "console.view", student_id)
@@ -500,10 +501,9 @@ def _run_record(packet_id: str) -> dict[str, Any] | None:
 
 @router.get("/students/{student_id}/weeks/{plan_id}/review")
 def review(
-    plan_id: str, request: Request, found: tuple[str, sqlite3.Row] = Student, own: str = Family
+    student_id: str, plan_id: str, request: Request, family: str = Student, own: str = Family
 ):
     """Is this week well formed and well curated? Facts and flags from the saved week, no model call."""
-    family, student_id = found[0], found[1]["student_id"]
     conn = _open()
     try:
         _look(conn, request, own, family, "console.view", student_id)
@@ -574,14 +574,14 @@ def _require(plan: wp.WeekPlan | None, *statuses: str) -> wp.WeekPlan:
 
 @router.post("/students/{student_id}/actions/{action}")
 def act(
+    student_id: str,
     action: str,
     request: Request,
     body: ActionBody | None = None,
-    found: tuple[str, sqlite3.Row] = Student,
+    family: str = Student,
     own: str = Family,
 ):
     body = body or ActionBody()
-    family, student_id = found[0], found[1]["student_id"]
     if action not in ACTIONS:  # before the audit row, so only a known name is ever recorded
         raise _refuse(404, "Unknown action.")
     conn = _open()
