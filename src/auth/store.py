@@ -112,15 +112,18 @@ def insert_user(
     return user_id
 
 
-def create_invite(conn: sqlite3.Connection, created_by: str | None, days: int = INVITE_DAYS) -> str:
-    """Make a single-use invite code. Returns the plain code: only its hash is stored."""
+def create_invite(
+    conn: sqlite3.Connection, created_by: str | None, days: int = INVITE_DAYS
+) -> tuple[str, float]:
+    """Make a single-use invite code. Returns the plain code (only its hash is stored) and when it
+    expires, in unix seconds."""
     code = "".join(secrets.choice(INVITE_ALPHABET) for _ in range(INVITE_LENGTH))
     now = clock.now()
     conn.execute(
         "INSERT INTO invite (code_hash, created_by, created_at, expires_at) VALUES (?,?,?,?)",
-        (token_hash(code), created_by, now, now + days * 86400),
+        (token_hash(code), created_by, now, expires_at := now + days * 86400),
     )
-    return code
+    return code, expires_at
 
 
 def consume_invite(conn: sqlite3.Connection, code: str, user_id: str | None) -> bool:

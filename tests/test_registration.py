@@ -73,7 +73,7 @@ def rows(sql, *args):
 def invite(days=14):
     conn = store.connect()
     try:
-        return store.create_invite(conn, None, days)
+        return store.create_invite(conn, None, days)[0]
     finally:
         conn.close()
 

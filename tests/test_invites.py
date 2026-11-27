@@ -43,13 +43,13 @@ def conn():
 
 
 def test_code_has_the_alphabet_and_length(conn):
-    codes = {store.create_invite(conn, None) for _ in range(20)}
+    codes = {store.create_invite(conn, None)[0] for _ in range(20)}
     assert len(codes) == 20 and all(CODE_RE.match(c) for c in codes)
 
 
 def test_consume_works_once(conn):
     user = store.create_user(conn, "ana", PW)
-    code = store.create_invite(conn, user.id)
+    code, _ = store.create_invite(conn, user.id)
     assert store.consume_invite(conn, code, user.id) is True
     assert store.consume_invite(conn, code, user.id) is False
     assert store.consume_invite(conn, "NOSUCHCODE", user.id) is False
@@ -57,13 +57,14 @@ def test_consume_works_once(conn):
 
 def test_expired_code_is_refused(conn):
     user = store.create_user(conn, "ana", PW)
-    code = store.create_invite(conn, user.id, days=1)
+    code, expires = store.create_invite(conn, user.id, days=1)
+    assert expires == conn.execute("SELECT expires_at FROM invite").fetchone()[0]
     clock.set_source(lambda: __import__("time").time() + 2 * 86400)
     assert store.consume_invite(conn, code, user.id) is False
 
 
 def test_only_a_hash_is_stored(conn):
-    code = store.create_invite(conn, None)
+    code, _ = store.create_invite(conn, None)
     dump = repr(conn.execute("SELECT * FROM invite").fetchall())
     assert code not in dump
     assert conn.execute("SELECT code_hash FROM invite").fetchone() == (store.token_hash(code),)
