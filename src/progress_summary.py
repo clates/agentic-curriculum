@@ -46,18 +46,13 @@ def _item(standards: Mapping[str, Mapping[str, Any]], sid: str, **extra: Any) ->
     return item
 
 
-def classify_progress(
-    progress: Mapping[str, Any], due_ids: set[str]
-) -> tuple[list[str], list[str], list[str]]:
-    """Sorted standard ids: solid (mastered and not in ``due_ids``), shaky, needing more work.
+def classify_progress(progress: Mapping[str, Any]) -> tuple[list[str], list[str], list[str]]:
+    """Sorted standard ids: mastered, shaky, and needing more work.
 
-    The one place these words are defined. The progress summary passes the skills due for review,
-    so it counts them apart from solid. The dashboard coverage (``coverage.build_coverage``) passes
-    an empty set, so there a mastered skill due for review still counts as solid, and coverage
-    folds "needing more work" into shaky.
+    The one place these words are defined. Reviews coming due are not considered here.
     """
     meta = progress.get("standard_metadata") or {}
-    solid = sorted(set(progress.get("mastered_standards", [])) - due_ids)
+    solid = sorted(set(progress.get("mastered_standards", [])))
     shaky, needs_work = [], []
     for sid in sorted(set(progress.get("developing_standards", []))):
         last = meta.get(sid, {}).get("last_feedback")
@@ -99,10 +94,9 @@ def build_progress_summary(
     first_name = (student_name or "").split(" ")[0]
 
     due_rows = review_due(progress, now)
-    solid_ids, shaky_ids, needs_work_ids = classify_progress(
-        progress, {r["standard_id"] for r in due_rows}
-    )
-    solid = [_item(standards, sid) for sid in solid_ids]
+    due_ids = {r["standard_id"] for r in due_rows}
+    solid_ids, shaky_ids, needs_work_ids = classify_progress(progress)
+    solid = [_item(standards, sid) for sid in solid_ids if sid not in due_ids]
     shaky = [_item(standards, sid) for sid in shaky_ids]
     needs_work = [_item(standards, sid) for sid in needs_work_ids]
 

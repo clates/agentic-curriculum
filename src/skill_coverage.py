@@ -19,7 +19,7 @@ SUBJECT_ORDER = ("Math", "English", "Science", "History", "Computer Science")
 
 
 def build_coverage(
-    db_path: str,
+    conn: sqlite3.Connection,
     metadata_blob: Any,
     plan_rules_blob: Any,
     progress_blob: Any,
@@ -31,22 +31,22 @@ def build_coverage(
     solid: mastered (a review coming due does not change it). shaky: still developing (shaky or
     needing more work). to_come: whole skills at the child's grade for the subject that are neither.
     """
-    progress = (
-        json.loads(progress_blob or "{}") if isinstance(progress_blob, str) else progress_blob or {}
-    )
+    progress = json.loads(progress_blob or "{}")
     context = build_model_context(metadata_blob, plan_rules_blob, fallback_grade=fallback_grade)
-    solid_ids, shaky_ids, needs_work_ids = classify_progress(progress, set())  # due ones stay solid
+    solid_ids, shaky_ids, needs_work_ids = classify_progress(progress)  # due ones stay solid
     solid, shaky = set(solid_ids), set(shaky_ids) | set(needs_work_ids)
+    grades = {context.grade_for(subject) for subject in SUBJECT_ORDER}
 
-    conn = sqlite3.connect(db_path)
+    # Only rows that can count: the child's own skills (any grade) and their grades' to-come ones.
     try:
         rows = conn.execute(
             "SELECT standard_id, subject, grade_level, description FROM standards"
+            " WHERE standard_id IN (SELECT value FROM json_each(?))"
+            " OR grade_level IN (SELECT value FROM json_each(?))",
+            (json.dumps(sorted(solid | shaky)), json.dumps(sorted(grades))),
         ).fetchall()
     except sqlite3.OperationalError:
         return []
-    finally:
-        conn.close()
 
     counts: dict[str, dict[str, int]] = {}
     for sid, subject, grade, description in rows:

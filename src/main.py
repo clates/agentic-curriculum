@@ -54,7 +54,7 @@ from this_week import this_week_cards, first_name_of
 import pick_service
 from prep_check_cards import check_cards
 from progress_summary import build_progress_summary
-from coverage import build_coverage
+from skill_coverage import build_coverage
 from week_store import get_week
 from print_week import PlanNotReady, mark_printed, print_info
 from week_plan import PlanNotFound
@@ -1001,19 +1001,15 @@ def get_student_coverage(
     profile = get_student_profile(student_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Student not found")
-    db_path = get_db_path()
-    conn = sqlite3.connect(db_path)
-    try:
+    with _local_db() as conn:
         fallback = pick_service._latest_packet_grade(conn, family, student_id)
-    finally:
-        conn.close()
-    return build_coverage(
-        db_path,
-        profile.get("metadata_blob"),
-        profile.get("plan_rules_blob"),
-        profile["progress_blob"],
-        fallback_grade=fallback,
-    )
+        return build_coverage(
+            conn,
+            profile.get("metadata_blob"),
+            profile.get("plan_rules_blob"),
+            profile["progress_blob"],
+            fallback_grade=fallback,
+        )
 
 
 # --- Pick one of three (M6.4) and fresh ideas (M6.6) -------------------------------------------
