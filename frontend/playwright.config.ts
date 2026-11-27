@@ -10,6 +10,7 @@ const AUTH_DB_FILE = process.env.E2E_AUTH_DB_FILE ?? `/tmp/playwright-auth-${AUT
 // A small scale so a lockout lasts seconds, not minutes (test-only; production leaves it unset).
 // E2E_SKIP_AUTH=1 leaves out the login project and both of its servers (CI always runs them).
 const SKIP_AUTH = !!process.env.E2E_SKIP_AUTH;
+const AUTH_OUTBOX = process.env.E2E_AUTH_OUTBOX ?? `/tmp/e2e-outbox-${AUTH_BACKEND_PORT}.jsonl`;
 const AUTH_BACKOFF_SCALE = process.env.E2E_AUTH_BACKOFF_SCALE ?? '0.2';
 
 const authServers = [
@@ -17,8 +18,9 @@ const authServers = [
     // Login backend: fresh database, login required, short lockouts. Never reused, so the
     // database and the backoff scale are always the ones set here.
     command:
-      `rm -f ${AUTH_DB_FILE} ${AUTH_DB_FILE}-wal ${AUTH_DB_FILE}-shm && cd ../src && ` +
+      `rm -f ${AUTH_DB_FILE} ${AUTH_DB_FILE}-wal ${AUTH_DB_FILE}-shm ${AUTH_OUTBOX} && cd ../src && ` +
       `CURRICULUM_DB_PATH=${AUTH_DB_FILE} AUTH_REQUIRED=1 AUTH_BACKOFF_SCALE=${AUTH_BACKOFF_SCALE} ` +
+      `MAILER_OUTBOX=${AUTH_OUTBOX} ` +
       `LLM_BASE_URL=http://127.0.0.1:9/v1 OPENROUTER_API_KEY=e2e-stub-not-a-real-key ` +
       `OPENAI_API_KEY=e2e-stub-not-a-real-key ` +
       `../venv/bin/uvicorn main:app --port ${AUTH_BACKEND_PORT} --timeout-keep-alive 120`,

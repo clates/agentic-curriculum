@@ -2,6 +2,7 @@
 
 import logging
 import random
+import smtplib
 import time
 from datetime import UTC, datetime, timedelta
 
@@ -107,6 +108,34 @@ def test_each_dead_job_is_reported_once_and_email_is_off_by_default(conn, mail, 
     assert job_alerts.send_digest(conn) == 0 and len(mail) == 1  # off: nothing sent, not marked
     monkeypatch.setenv("ALERT_EMAIL_TO", "me@example.com")
     assert job_alerts.send_digest(conn) == 1  # turned on later: still reported
+
+
+def test_alert_mail_falls_back_to_the_first_recipient_as_sender(monkeypatch):
+    sent = []
+
+    class FakeSMTP:
+        def __init__(self, host, port, timeout=None):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def starttls(self, context=None):
+            pass
+
+        def send_message(self, msg, to_addrs=None):
+            sent.append((msg["From"], to_addrs))
+
+    for k in ("SMTP_USER", "SMTP_FROM", "SMTP_PORT", "MAILER_OUTBOX"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("SMTP_HOST", "smtp.example.com")
+    monkeypatch.setenv("ALERT_EMAIL_TO", "me@example.com, you@example.com")
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
+    job_alerts._send_email("S", "B")
+    assert sent == [("me@example.com", ["me@example.com", "you@example.com"])]
 
 
 def test_a_failed_send_is_retried_next_digest(conn, monkeypatch):

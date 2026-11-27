@@ -7,6 +7,7 @@
  * X-Forwarded-For into the Next proxy, which forwards it to the backend.
  */
 import { execFileSync } from 'child_process';
+import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import type { BrowserContext, Page } from '@playwright/test';
 import { test as base, expect } from './test';
@@ -14,6 +15,7 @@ import { uniqueId } from './parent';
 
 const BACKEND_PORT = Number(process.env.E2E_AUTH_BACKEND_PORT ?? 8184);
 const DB_FILE = process.env.E2E_AUTH_DB_FILE ?? `/tmp/playwright-auth-${BACKEND_PORT}.db`;
+const OUTBOX = process.env.E2E_AUTH_OUTBOX ?? `/tmp/e2e-outbox-${BACKEND_PORT}.jsonl`;
 const ROOT = resolve(__dirname, '../../..');
 
 export const PASSWORD = 'correct horse battery';
@@ -47,6 +49,46 @@ export function grant(username: string, permission = 'admin') {
     env: { ...process.env, PYTHONPATH: `${ROOT}/src`, CURRICULUM_DB_PATH: DB_FILE },
     stdio: 'pipe',
   });
+}
+
+/** Make a one-time invite code the way the owner does: `python -m auth invite`. */
+export function createInvite(): string {
+  const out = execFileSync(`${ROOT}/venv/bin/python`, ['-m', 'auth', 'invite'], {
+    cwd: `${ROOT}/src`,
+    env: { ...process.env, PYTHONPATH: `${ROOT}/src`, CURRICULUM_DB_PATH: DB_FILE },
+    encoding: 'utf8',
+  });
+  return out.trim().split(/\s+/).pop()!;
+}
+
+function mailTo(email: string): { body: string }[] {
+  if (!existsSync(OUTBOX)) return [];
+  return readFileSync(OUTBOX, 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line))
+    .filter((m) => m.to.includes(email));
+}
+
+/** How many messages the backend has "sent" to this address (it writes them to the outbox). */
+export const mailCount = (email: string) => mailTo(email).length;
+
+/** The 6-digit code in the newest message to this address; waits for it (mail goes out after the reply). */
+export async function latestCode(email: string): Promise<string> {
+  let code = '';
+  await expect
+    .poll(
+      () =>
+        (code =
+          mailTo(email)
+            .at(-1)
+            ?.body.match(/\b\d{6}\b/)?.[0] ?? ''),
+      {
+        message: `a code mailed to ${email}`,
+      }
+    )
+    .not.toBe('');
+  return code;
 }
 
 /** A made-up client address, unique to one test. */

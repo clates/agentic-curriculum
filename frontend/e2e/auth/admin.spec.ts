@@ -65,4 +65,20 @@ test.describe('Admin', () => {
     await page.setViewportSize({ width: 360, height: 800 });
     await expectNoHorizontalScroll(page);
   });
+
+  test('an admin makes an invite code and sees it once', async ({ page, account }) => {
+    grant(account.username, 'admin');
+    await page.goto('/login');
+    await signIn(page, account);
+    await expect(page).toHaveURL(/\/week$/);
+    await page.goto('/admin');
+    await expect(page.getByRole('heading', { name: 'Invite a family' })).toBeVisible();
+    await page.getByRole('button', { name: 'Make an invite code' }).click();
+    const code = page.getByTestId('invite-result').locator('p').first();
+    await expect(code).toHaveText(/^[ABCDEFGHJKMNPQRSTVWXYZ23456789]{10}$/);
+    await expect(page.getByText('This code is shown only once. Copy it now.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy' })).toBeVisible();
+    await page.reload(); // gone for good: the server kept only a hash
+    await expect(page.getByTestId('invite-result')).toHaveCount(0);
+  });
 });

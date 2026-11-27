@@ -50,8 +50,8 @@ If that isn't enough, clear every lockout, including those on addresses:
 <prefix> python -m auth create-user <username>
 ```
 
-To put the new account in an existing family, add `--family <id>`. There's no command to create a
-family yet; families come with registration.
+To put the new account in an existing family, add `--family <id>`. To bring in a new
+family, [invite it](invite-a-family.md) instead.
 
 ## Make someone an admin
 

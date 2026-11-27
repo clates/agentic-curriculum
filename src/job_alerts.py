@@ -11,7 +11,8 @@ kind, a short hash of the family id, attempts and the exception class name. Neve
 never the error text (handler errors can quote prompts).
 
 Env: ALERT_EMAIL_TO (comma-separated), SMTP_HOST, SMTP_PORT (587; 465 uses implicit TLS),
-SMTP_USER, SMTP_PASSWORD, SMTP_FROM (default SMTP_USER). The password is never logged.
+SMTP_USER, SMTP_PASSWORD, SMTP_FROM (default SMTP_USER, then the first ALERT_EMAIL_TO address).
+The password is never logged.
 """
 
 from __future__ import annotations
@@ -19,14 +20,13 @@ from __future__ import annotations
 import logging
 import os
 import re
-import smtplib
 import sqlite3
-import ssl
-from email.message import EmailMessage
 
 try:
+    from . import mailer  # type: ignore
     from .jobs import Job, family_hash, get_job, iso, utcnow  # type: ignore
 except ImportError:
+    import mailer  # type: ignore
     from jobs import Job, family_hash, get_job, iso, utcnow  # type: ignore
 
 logger = logging.getLogger(__name__)
@@ -68,27 +68,9 @@ def build_message(dead: list[Job]) -> tuple[str, str]:
     return subject, body
 
 
-def _send_email(subject: str, body: str) -> None:  # the transport; faked in tests
-    host = os.environ["SMTP_HOST"].strip()
-    port = int(os.environ.get("SMTP_PORT", "587") or 587)
-    user = os.environ.get("SMTP_USER", "").strip()
-    password = os.environ.get("SMTP_PASSWORD", "")
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = os.environ.get("SMTP_FROM", "").strip() or user or recipients()[0]
-    msg["To"] = ", ".join(recipients())
-    msg.set_content(body)
-    context = ssl.create_default_context()
-    if port == 465:
-        server: smtplib.SMTP = smtplib.SMTP_SSL(host, port, timeout=15, context=context)
-    else:
-        server = smtplib.SMTP(host, port, timeout=15)
-    with server:
-        if port != 465:
-            server.starttls(context=context)
-        if user:
-            server.login(user, password)
-        server.send_message(msg)
+def _send_email(subject: str, body: str) -> None:  # faked in tests
+    to = recipients()
+    mailer.send(to, subject, body, fallback_from=to[0])  # the maintainer mails themselves
 
 
 def send_digest(conn: sqlite3.Connection) -> int:

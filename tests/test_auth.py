@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import db_utils  # noqa: E402
 from auth import clock, lockout, passwords, service, store  # noqa: E402
 from auth.web import COOKIE_NAME, PUBLIC_PATHS, current_family  # noqa: E402
+from loop_admin import admin_student  # noqa: E402
 from main import app  # noqa: E402
 from migrations import apply_migrations  # noqa: E402
 from tenancy import owned_student_id  # noqa: E402
@@ -497,7 +498,10 @@ def test_every_route_is_public_on_purpose_or_protected(required, client):
             else:
                 assert r.status_code == 401, f"{method} {path} answered {r.status_code} anonymously"
     assert ("GET", "/students") in seen and ("POST", "/auth/login") in seen
-    assert PUBLIC_PATHS == {"/auth/login", "/auth/logout", "/health", "/version"}
+    assert PUBLIC_PATHS == {
+        "/auth/login", "/auth/logout", "/auth/register", "/auth/verify", "/auth/resend",
+        "/health", "/version",
+    }  # fmt: skip
 
 
 def _reaches(dependant, call) -> bool:
@@ -528,10 +532,17 @@ def test_every_route_declares_its_family():
             continue
         checked.add(path)
         assert _reaches(route.dependant, current_family), f"{path} does not ask for the family"
-        if "{student_id}" in path:
-            assert _reaches(route.dependant, owned_student_id), f"{path} skips the ownership check"
-        if path.startswith("/loop-admin/"):
+        console = path.startswith("/loop-admin/")
+        if path.startswith(("/loop-admin/", "/admin-api/")):
             assert _reaches_admin(route.dependant), f"{path} is not admin-only"
+        # the console may act on any family's child, through admin_student and only behind admin
+        if _reaches(route.dependant, admin_student):
+            assert console and _reaches_admin(route.dependant), f"{path} reaches admin_student"
+        if "{student_id}" in path:
+            allowed = (owned_student_id, admin_student) if console else (owned_student_id,)
+            assert any(
+                _reaches(route.dependant, d) for d in allowed
+            ), f"{path} skips the ownership check"
     assert {"/students", "/this-week", "/generate_weekly_plan", "/student/{student_id}"} <= checked
 
 
@@ -718,6 +729,18 @@ def test_clear_attempts_matches_the_exact_username_prefix(user):
     assert left == {"al_b|1.1.1.1", "alb|1.1.1.1", "a%|1.1.1.1"}
     assert store.clear_attempts(conn) > 0
     assert conn.execute("SELECT COUNT(*) FROM login_attempt").fetchone() == (0,)
+    conn.close()
+
+
+def test_clear_attempts_also_clears_the_registration_lockouts(user):
+    conn = store.connect()
+    for key in ("register:a@b.co", "verify:a@b.co", "register:a@b.com", "verify:xa@b.co"):
+        lockout.reserve(conn, key, "1.1.1.1", clock.now())
+    store.clear_attempts(conn, "A@b.co")
+    left = {r[0] for r in conn.execute("SELECT key FROM login_attempt WHERE scope='user_ip'")}
+    assert left == {"register:a@b.com|1.1.1.1", "verify:xa@b.co|1.1.1.1"}
+    users = {r[0] for r in conn.execute("SELECT key FROM login_attempt WHERE scope='user'")}
+    assert users == {"register:a@b.com", "verify:xa@b.co"}
     conn.close()
 
 

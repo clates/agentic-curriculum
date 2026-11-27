@@ -117,12 +117,20 @@ export interface LoopQueue {
   ready_now: number;
   running: number;
   worker_may_be_down: boolean;
-  dead: { id: number; kind: string; attempts: number; last_error: string }[];
+  dead: { id: number; kind: string; attempts: number; last_error: string | null }[];
+}
+
+export interface LoopFamily {
+  family_id: string;
+  name: string;
+  own: boolean;
+  children: LoopChild[];
 }
 
 export interface LoopOverview {
   loop_switch: boolean;
-  children: LoopChild[];
+  /** Every family with children, the admin's own first. */
+  families: LoopFamily[];
   queue: LoopQueue;
 }
 

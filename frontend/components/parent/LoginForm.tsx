@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { safeNext } from '@/lib/auth';
 import { copy } from '@/lib/copy';
 import { primaryButton } from '@/components/parent/states';
+import { CheckEmail, CreateAccount, WrongEmail } from '@/components/parent/SignUp';
 
 type Problem =
   | { kind: 'wrong' }
@@ -32,6 +33,7 @@ export function LoginForm() {
   const [visible, setVisible] = useState(false);
   const [sending, setSending] = useState(false);
   const [waiting, setWaiting] = useState(false);
+  const [step, setStep] = useState<'signin' | 'create' | 'code' | 'wrongEmail'>('signin');
   const [problem, setProblem] = useState<Problem>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -57,7 +59,9 @@ export function LoginForm() {
     } catch (error) {
       const response = isAxiosError(error) ? error.response : undefined;
       const status = response?.status;
-      if (status === 401) {
+      if (status === 403 && response?.data?.detail === 'email_not_verified') {
+        setStep('code'); // the password stays in this component: confirming the email needs it
+      } else if (status === 401) {
         setProblem({ kind: 'wrong' });
         setPassword('');
         passwordRef.current?.focus();
@@ -86,6 +90,31 @@ export function LoginForm() {
       : problem
         ? MESSAGES[problem.kind]
         : null;
+
+  if (step === 'create')
+    return (
+      <CreateAccount
+        onRegistered={(email, typed) => {
+          setUsername(email);
+          setPassword(typed);
+          setStep('code');
+        }}
+        onBack={() => setStep('signin')}
+      />
+    );
+  if (step === 'code')
+    return (
+      <CheckEmail
+        email={username.trim()}
+        password={password}
+        next={next}
+        onWrongEmail={() => {
+          setPassword('');
+          setStep('wrongEmail');
+        }}
+      />
+    );
+  if (step === 'wrongEmail') return <WrongEmail onBack={() => setStep('signin')} />;
 
   return (
     <div className="bg-background min-h-screen">
@@ -167,6 +196,13 @@ export function LoginForm() {
             ) : null}
           </div>
         </form>
+        <button
+          type="button"
+          onClick={() => setStep('create')}
+          className="text-primary-700 mt-6 min-h-11 font-medium underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+        >
+          {copy.login.createLink}
+        </button>
       </main>
     </div>
   );

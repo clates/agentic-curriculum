@@ -22,6 +22,9 @@ SESSION_REFRESH_S = 3600
 USERNAME_MAX = 64
 USER_AGENT_MAX = 200
 PERMISSIONS = frozenset({"admin"})
+INVITE_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789"  # no 0 O 1 I L U
+INVITE_LENGTH = 10
+INVITE_DAYS = 14
 
 
 def connect() -> sqlite3.Connection:
@@ -46,13 +49,14 @@ class User:
     password_hash: str
     family_id: str
     disabled: bool
+    verified: bool  # False until a self-registered account confirms its email
 
 
 def _user(row) -> User | None:
-    return User(row[0], row[1], row[2], row[3], bool(row[4])) if row else None
+    return User(row[0], row[1], row[2], row[3], bool(row[4]), bool(row[5])) if row else None
 
 
-_COLS = "id, username, password_hash, family_id, disabled"
+_COLS = "id, username, password_hash, family_id, disabled, email_verified_at IS NOT NULL"
 
 
 def get_user(conn: sqlite3.Connection, username: str) -> User | None:
@@ -80,7 +84,8 @@ def create_family(conn: sqlite3.Connection, name: str) -> str:
 def create_user(
     conn: sqlite3.Connection, username: str, password: str, family_id: str = DEFAULT_FAMILY
 ) -> User | None:
-    """Create a user. Returns None (and changes nothing) when the username already exists."""
+    """Create a user (operator-made, so verified). Returns None (and changes nothing) when the
+    username already exists."""
     name = normalize_username(username)
     if not name or any(ch.isspace() for ch in name):
         raise UserError("Username must be a single word with no spaces.")
@@ -89,14 +94,49 @@ def create_user(
         return None
     if not conn.execute("SELECT 1 FROM family WHERE family_id=?", (family_id,)).fetchone():
         raise UserError(f"No such family: {family_id}")
-    user_id = f"usr_{uuid.uuid4().hex[:16]}"
-    conn.execute(
-        "INSERT INTO app_user (id, username, password_hash, family_id, created_at) "
-        "VALUES (?,?,?,?,?)",
-        (user_id, name, hash_password(password), family_id,
-         datetime.now(UTC).isoformat(timespec="seconds")),
-    )  # fmt: skip
+    insert_user(conn, name, hash_password(password), family_id, verified=True)
     return get_user(conn, name)
+
+
+def insert_user(
+    conn: sqlite3.Connection, name: str, password_hash: str, family_id: str, verified: bool
+) -> str:
+    """Insert an already-validated user row; returns its id."""
+    user_id = f"usr_{uuid.uuid4().hex[:16]}"
+    stamp = datetime.now(UTC).isoformat(timespec="seconds")
+    conn.execute(
+        "INSERT INTO app_user (id, username, password_hash, family_id, created_at, "
+        "email_verified_at) VALUES (?,?,?,?,?,?)",
+        (user_id, name, password_hash, family_id, stamp, stamp if verified else None),
+    )
+    return user_id
+
+
+def create_invite(
+    conn: sqlite3.Connection, created_by: str | None, days: int = INVITE_DAYS
+) -> tuple[str, float]:
+    """Make a single-use invite code. Returns the plain code (only its hash is stored) and when it
+    expires, in unix seconds."""
+    code = "".join(secrets.choice(INVITE_ALPHABET) for _ in range(INVITE_LENGTH))
+    now = clock.now()
+    conn.execute(
+        "INSERT INTO invite (code_hash, created_by, created_at, expires_at) VALUES (?,?,?,?)",
+        (token_hash(code), created_by, now, expires_at := now + days * 86400),
+    )
+    return code, expires_at
+
+
+def consume_invite(conn: sqlite3.Connection, code: str, user_id: str | None) -> bool:
+    """Spend a code. True only for an unused, unexpired one (atomic: the UPDATE decides)."""
+    now = clock.now()
+    return (
+        conn.execute(
+            "UPDATE invite SET used_at=?, used_by=? "
+            "WHERE code_hash=? AND used_at IS NULL AND expires_at > ?",
+            (now, user_id, token_hash(code.strip().upper()), now),
+        ).rowcount
+        == 1
+    )
 
 
 def permissions(conn: sqlite3.Connection, user_id: str) -> frozenset[str]:
@@ -183,7 +223,8 @@ def resolve_session(conn: sqlite3.Connection, token: str | None) -> tuple[User, 
     now = clock.now()
     row = conn.execute(
         "SELECT s.id, s.expires_at, s.last_seen_at, u.id, u.username, u.password_hash, "
-        "u.family_id, u.disabled FROM auth_session s JOIN app_user u ON u.id = s.user_id "
+        "u.family_id, u.disabled, u.email_verified_at IS NOT NULL "
+        "FROM auth_session s JOIN app_user u ON u.id = s.user_id "
         "WHERE s.token_hash=?",
         (token_hash(token),),
     ).fetchone()
@@ -195,7 +236,7 @@ def resolve_session(conn: sqlite3.Connection, token: str | None) -> tuple[User, 
             "UPDATE auth_session SET last_seen_at=?, expires_at=? WHERE id=?",
             (now, now + SESSION_LIFETIME_S, row[0]),
         )
-    return User(row[3], row[4], row[5], row[6], bool(row[7])), refreshed
+    return User(row[3], row[4], row[5], row[6], bool(row[7]), bool(row[8])), refreshed
 
 
 def delete_session(conn: sqlite3.Connection, token: str | None) -> None:
@@ -204,14 +245,18 @@ def delete_session(conn: sqlite3.Connection, token: str | None) -> None:
 
 
 def clear_attempts(conn: sqlite3.Connection, username: str | None = None) -> int:
-    """Forget lockout state: one user's rows (their 'user' row and every 'user_ip' row), or all
+    """Forget lockout state: one user's rows (their 'user' row and every 'user_ip' row, for the
+    sign-in name and for the registration keys 'register:<name>' and 'verify:<name>'), or all
     rows, address locks included, when no username is given. Returns the rows removed."""
     if username is None:
         return conn.execute("DELETE FROM login_attempt").rowcount
     name = normalize_username(username)
-    prefix = name + "|"
-    return conn.execute(
-        "DELETE FROM login_attempt WHERE (scope='user' AND key=?) "
-        "OR (scope='user_ip' AND substr(key, 1, ?) = ?)",
-        (name, len(prefix), prefix),
-    ).rowcount
+    removed = 0
+    for key in (name, f"register:{name}", f"verify:{name}"):
+        prefix = key + "|"
+        removed += conn.execute(
+            "DELETE FROM login_attempt WHERE (scope='user' AND key=?) "
+            "OR (scope='user_ip' AND substr(key, 1, ?) = ?)",
+            (key, len(prefix), prefix),
+        ).rowcount
+    return removed

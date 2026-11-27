@@ -28,6 +28,7 @@ Running the hosted app:
 - [Set up a new server with HTTPS](how-to/set-up-a-server.md)
 - [Turn on the login](how-to/turn-on-login.md)
 - [Manage accounts and lockouts](how-to/manage-accounts.md)
+- [Invite a family](how-to/invite-a-family.md)
 - [Run the worker and turn the weekly loop on](how-to/run-the-worker.md)
 - [Recover a dead job](how-to/recover-a-dead-job.md)
 - [Read the access log](how-to/read-the-access-log.md)
@@ -39,7 +40,7 @@ Changing the code: [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 - [Included weeks and worksheet types](reference/included-weeks.md)
 - [Development: commands, code map, API, settings](reference/development.md)
-- [Login: sessions, lockouts, commands](reference/login.md)
+- [Login: sessions, registration, lockouts, commands](reference/login.md)
 - [Worker and scheduler: commands, settings, job states, windows](reference/worker-and-scheduler.md)
 - [Friday form API](reference/friday-form.md)
 - [Hosted images](reference/hosted-images.md)
@@ -55,7 +56,7 @@ Changing the code: [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 - [Why a week is a script](explanation/why-a-week-is-a-script.md)
 - [The weekly loop](explanation/the-weekly-loop.md)
-- [Why the login needs HTTPS and a proxy](explanation/login-and-https.md)
+- [Why the login needs HTTPS and a proxy, and why invites](explanation/login-and-https.md)
 - [Why hosted weeks are data](explanation/hosted-weeks-are-data.md)
 - [Dependencies and test isolation](explanation/dependencies-and-test-isolation.md)
 - [Worksheet pedagogy: what each type is good and bad at](explanation/worksheet-pedagogy.md)
