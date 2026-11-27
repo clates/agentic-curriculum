@@ -58,6 +58,7 @@ export const copy = {
     badCode: 'That code didn\u2019t work',
     resend: 'Send a new code',
     resent: 'A new code is on its way.',
+    differentEmail: 'Use a different email',
   },
   admin: {
     link: 'Admin',

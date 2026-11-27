@@ -34,6 +34,7 @@ export function LoginForm() {
   const [sending, setSending] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [step, setStep] = useState<'signin' | 'create' | 'code'>('signin');
+  const [codeFrom, setCodeFrom] = useState<'signin' | 'create'>('signin'); // where "back" goes
   const [problem, setProblem] = useState<Problem>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -60,6 +61,7 @@ export function LoginForm() {
       const response = isAxiosError(error) ? error.response : undefined;
       const status = response?.status;
       if (status === 403 && response?.data?.detail === 'email_not_verified') {
+        setCodeFrom('signin');
         setStep('code'); // the password stays in this component: confirming the email needs it
       } else if (status === 401) {
         setProblem({ kind: 'wrong' });
@@ -97,13 +99,24 @@ export function LoginForm() {
         onRegistered={(email, typed) => {
           setUsername(email);
           setPassword(typed);
+          setCodeFrom('create');
           setStep('code');
         }}
         onBack={() => setStep('signin')}
       />
     );
   if (step === 'code')
-    return <CheckEmail email={username.trim()} password={password} next={next} />;
+    return (
+      <CheckEmail
+        email={username.trim()}
+        password={password}
+        next={next}
+        onBack={() => {
+          setPassword('');
+          setStep(codeFrom);
+        }}
+      />
+    );
 
   return (
     <div className="bg-background min-h-screen">

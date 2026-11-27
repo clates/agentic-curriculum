@@ -167,10 +167,12 @@ export function CheckEmail({
   email,
   password,
   next,
+  onBack,
 }: {
   email: string;
   password: string;
   next: string;
+  onBack: () => void;
 }) {
   const [code, setCode] = useState('');
   const [sending, setSending] = useState(false);
@@ -228,6 +230,9 @@ export function CheckEmail({
       </form>
       <button type="button" onClick={resend} className={`${linkButton} mt-6`}>
         {copy.signUp.resend}
+      </button>
+      <button type="button" onClick={onBack} className={`${linkButton} mt-2 block`}>
+        {copy.signUp.differentEmail}
       </button>
     </Page>
   );

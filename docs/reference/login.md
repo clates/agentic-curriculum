@@ -47,7 +47,8 @@ public.
 ## Registration
 
 On the sign-in page, "Create an account" asks for a family name, an email, a password twice and an
-invite code. Then "Check your email" asks for the 6-digit code.
+invite code. Then "Check your email" asks for the 6-digit code. "Use a different email" there goes
+back to the form it came from (a new registration needs a new invite).
 
 | Route | Body | Answer |
 |---|---|---|
