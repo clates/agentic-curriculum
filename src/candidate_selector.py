@@ -183,7 +183,8 @@ def select_week_standards(
     ]
     everything.sort(key=lambda s: (abs(offset(s)), order_key(s)))
     if not everything:
-        raise NoCandidates(f"no standards available near grade {grade}")
+        by_subject = "".join(f", {subject} at grade {g}" for subject, g in sorted(grades.items()))
+        raise NoCandidates(f"no standards available near grade {grade}{by_subject}")
     if not chosen:  # a week must never be empty: borrow from anywhere
         chosen = _round_robin(everything, per_set)
 

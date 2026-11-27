@@ -162,8 +162,17 @@ export function CreateAccount({
   );
 }
 
-/** The 6-digit code from the email. The password is only held in memory, to confirm the email. */
-export function CheckEmail({ email, password }: { email: string; password: string }) {
+/** The 6-digit code from the email. The password is only held in memory, to confirm the email.
+ * `next` is where to go once confirmed (already checked by the caller with `safeNext`). */
+export function CheckEmail({
+  email,
+  password,
+  next,
+}: {
+  email: string;
+  password: string;
+  next: string;
+}) {
   const [code, setCode] = useState('');
   const [sending, setSending] = useState(false);
   const [problem, setProblem] = useState('');
@@ -177,8 +186,7 @@ export function CheckEmail({ email, password }: { email: string; password: strin
     setResent(false);
     try {
       await apiClient.post('/auth/verify', { email, code, password });
-      // A full load, so the new cookie is on the next request. A new family starts at /welcome.
-      window.location.assign('/welcome');
+      window.location.assign(next); // a full load, so the new cookie is on the next request
     } catch (error) {
       setProblem(problemFor(error, () => copy.signUp.badCode));
       setSending(false);

@@ -174,16 +174,26 @@ test.describe('Welcome and adding children', () => {
     await expect(page.getByLabel('First name')).toHaveCount(0);
   });
 
-  test('from the Children tab, adding a child goes to /children/new', async ({ page, account }) => {
+  test('from the Children tab, adding a child goes to /children/new and back to Children', async ({
+    page,
+    account,
+  }) => {
     await signedInFamily(page, account);
     await addChildViaApi(page, 'Ada');
     await page.goto('/week');
     await page.getByTestId('tab-bar').getByRole('link', { name: 'Children' }).click();
     await expect(page).toHaveURL(/\/students$/);
     await page.getByRole('link', { name: 'Add a child' }).first().click();
-    await expect(page).toHaveURL(/\/children\/new$/);
+    await expect(page).toHaveURL(/\/children\/new\?from=students$/);
     await expect(page.getByLabel('Math grade')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Add Student' })).toHaveCount(0);
+    await expect(page.locator('#main').getByRole('link', { name: 'Children' })).toHaveAttribute(
+      'href',
+      '/students'
+    );
+    await fillChild(page, 'Ben');
+    await expect(page).toHaveURL(/\/students$/);
+    await expect(page.getByRole('heading', { name: 'Ben', exact: true })).toBeVisible();
   });
 
   test('a family with children opening /welcome is sent to This week', async ({

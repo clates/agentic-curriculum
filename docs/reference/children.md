@@ -47,7 +47,7 @@ week fails, the child is still saved and "This week" makes the plan on its next 
 - At most 5 children per family. The count and the insert happen in one write transaction.
 - With the login on, `POST /students` has the same limit and also returns 409 `too_many_children`.
 - On a self-hosted server without login, `POST /children` applies the same limit.
-- The limit counts children now. Deleting a child frees a place, so it doesn't cap spending.
+- The limit counts the children the family has now. Deleting a child frees a place.
 
 ## Grades in planning
 
@@ -63,7 +63,8 @@ A child with no `math_grade` or `la_grade` (an older profile) is planned at its 
 | Page | Shows |
 |---|---|
 | `/welcome` | The form, for a family with no children. Sends a family that has children to `/week` |
-| `/children/new` | The form, or a notice when the family has 5 |
+| `/children/new` | The form, or a notice when the family has 5. Returns to `/week` after saving; with `?from=students`, to `/students` |
+| `/students` | With login on, "Add a child" opens `/children/new?from=students` |
 | `/week` | An "Add a child" button when login is on and the family has fewer than 5. Each child's card links to "Past weeks" and "Skills by subject" |
 | `/children/{student_id}` | The child's page, headed by the child's first name ("Your child" when the name is empty): "Past weeks", then "Skills by subject". "We couldn't find that child" for an unknown child. The browser tab reads "Your child" |
 
@@ -78,7 +79,8 @@ Only the newest 50 weeks show. Older weeks stay saved but have no link here.
 
 The form says: "These are starting points. We'll calibrate after the first few activities."
 
-Why: [The weekly loop](../explanation/the-weekly-loop.md#why-math-has-its-own-grade).
+Why: [The weekly loop](../explanation/the-weekly-loop.md#why-math-has-its-own-grade),
+[why at most five](../explanation/the-weekly-loop.md#why-a-family-has-at-most-five-children).
 
 ## `GET /students/{student_id}/coverage`
 

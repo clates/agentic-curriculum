@@ -5,6 +5,8 @@
  * Banned words are listed in `lib/bannedWords.ts`; the lint reads this file and every parent
  * screen, and a browser test also checks the text that actually renders.
  */
+import { MAX_INTERESTS, MAX_TEXT_LENGTH } from './childLimits';
+
 export const copy = {
   // The product name, in one place: change it here and every screen and page title follows.
   app: { name: 'CurricuLearn' },
@@ -104,8 +106,8 @@ export const copy = {
       'An AI service reads what you write here to plan activities. Please leave out last names, addresses and anything private.',
     submit: 'Save and plan the week',
     submitting: 'Saving…',
-    tooManyInterests: 'Please list up to 8 interests.',
-    interestTooLong: 'Each interest can be up to 40 characters. Please shorten the longest one.',
+    tooManyInterests: `Please list up to ${MAX_INTERESTS} interests.`,
+    interestTooLong: `Each interest can be up to ${MAX_TEXT_LENGTH} characters. Please shorten the longest one.`,
     tooMany: 'You can add up to five children. To add another, please remove one first.',
     failed: 'We couldn\u2019t save this just now. Please try again.',
     invalid: 'Something in the form needs fixing. Please check each answer and save again.',

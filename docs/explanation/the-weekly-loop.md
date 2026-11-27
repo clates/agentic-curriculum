@@ -86,6 +86,15 @@ the child already knows, those skills move, and feed forward picks the next ones
 than by changing the grades. The form says so, so a wrong first guess doesn't feel like a mistake
 to fix.
 
+## Why a family has at most five children
+
+Five is the owner's limit, set on something a parent can see and understand: how many children are
+in the family. It isn't a spending limit. It counts the children a family has now, so deleting a
+child frees a place, and a family that adds and deletes children can plan for more than five over
+time. Spending is the job of the per-family monthly model cap, when the operator sets one
+([`LLM_CAP_FAMILY_MONTH_USD`](../reference/development.md)). It counts what was actually spent,
+and the spending record outlives a deleted child, so deleting doesn't reset it.
+
 ## What's not there yet
 
 Notices are still a stub that only logs, so no parent is emailed yet. Dead-job email is built but

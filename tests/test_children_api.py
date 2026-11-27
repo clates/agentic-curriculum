@@ -135,13 +135,13 @@ def test_a_timezone_that_does_not_load_keeps_the_child(db):
     assert r.json()["week_start"] == "2026-11-23"  # the UTC date (a Wednesday)
 
 
-def test_a_start_week_that_exits_keeps_the_child(db, monkeypatch):
+def test_a_start_week_that_finds_no_child_keeps_the_child(db, monkeypatch):
     monkeypatch.setenv("LOOP_JOBS_ENABLED", "1")
 
-    def exits(*args, **kwargs):
-        raise SystemExit("no child")
+    def missing(*args, **kwargs):
+        raise LookupError("no child")
 
-    monkeypatch.setattr(loop_integration, "start_week", exits)
+    monkeypatch.setattr(loop_integration, "start_week", missing)
     r = TestClient(main.app).post("/children", json=CHILD)
     assert r.status_code == 201, r.text
     assert kids(db) == [r.json()["student_id"]]
@@ -208,6 +208,22 @@ def test_the_limit_holds_under_a_race_at_the_db_level(db):
         t.join()
     assert sorted(results) == ["full"] * 7 + ["ok"] * 5
     assert len(kids(db)) == 5
+
+
+def test_add_child_never_commits_work_the_caller_left_open(db):
+    import db_utils
+
+    conn = sqlite3.connect(db)  # the default isolation level opens a transaction on a write
+    try:
+        conn.execute("UPDATE family SET name='changed' WHERE family_id='fam_local'")
+        assert conn.in_transaction
+        with pytest.raises(RuntimeError, match="no open transaction"):
+            db_utils.add_child(conn, "stu_open000001", {"name": "X"}, "fam_local", limit=5)
+        conn.rollback()
+    finally:
+        conn.close()
+    assert kids(db) == []
+    assert rows(db, "SELECT name FROM family WHERE family_id='fam_local'") != [("changed",)]
 
 
 @pytest.mark.parametrize(

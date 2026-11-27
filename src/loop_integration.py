@@ -157,7 +157,7 @@ def begin_first_week(
     Loop on: start the week (skip the check-in, queue the outlines). Loop off: only make the plan,
     as the This week page would, so nothing is queued or paid for. Never raises: the child is
     already saved, and This week makes a missing plan on its next read. A timezone that does not
-    load falls back to the UTC date. SystemExit is caught too: start_week raises it."""
+    load falls back to the UTC date."""
     week = first_week_start(now.astimezone(UTC).date())
     try:
         week = first_week_start(now.astimezone(scheduler.family_tz(conn, family_id)).date())
@@ -165,7 +165,7 @@ def begin_first_week(
             start_week(conn, student_id, week, family_id=family_id)
         else:
             wp.create_plan(conn, family_id, student_id, week)
-    except (Exception, SystemExit):
+    except Exception:
         if conn.in_transaction:
             conn.rollback()
         logger.exception("loop: could not start the first week for a new child")
@@ -176,7 +176,8 @@ def start_week(
     conn: sqlite3.Connection, student_id: str, week_start: str, family_id: str = LOCAL_FAMILY_ID
 ) -> wp.WeekPlan:
     """Start this child's week now instead of waiting for Friday: make the plan if it is missing,
-    skip the check-in, and queue the outlines. Safe to repeat."""
+    skip the check-in, and queue the outlines. Safe to repeat. Raises LookupError when the family
+    has no such child."""
     conn.row_factory = sqlite3.Row
     row = conn.execute(
         "SELECT plan_id FROM week_plan WHERE family_id=? AND student_id=? AND week_start=?",
@@ -187,7 +188,7 @@ def start_week(
             "SELECT 1 FROM student_profiles WHERE family_id=? AND student_id=?",
             (family_id, student_id),
         ).fetchone():
-            raise SystemExit(f"no child {student_id!r} in family {family_id}")
+            raise LookupError(f"no child {student_id!r} in family {family_id}")
         plan = wp.create_plan(conn, family_id, student_id, week_start)
     else:
         plan = wp.get_plan(conn, family_id, row["plan_id"])
@@ -225,7 +226,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "seed-demo":
             print(f"child {seed_demo(conn)} is in the family. Next: start-week {DEMO_STUDENT}")
         else:
-            plan = start_week(conn, args.student_id, args.week or next_monday(date.today()))
+            try:
+                plan = start_week(conn, args.student_id, args.week or next_monday(date.today()))
+            except LookupError as exc:
+                raise SystemExit(str(exc)) from exc
             print(f"plan {plan.plan_id} for week {plan.week_start}: {plan.status}")
             if plan.status == "outlining":
                 print("outline job queued; the worker writes the three ideas (LOOP_JOBS_ENABLED=1)")

@@ -23,6 +23,10 @@ MAX_READING_CHARS = 200
 GRADE_LABELS = {0: "Kindergarten"} | {n: f"Grade {n}" for n in range(1, 13)}
 
 
+def _label(grade: int) -> str:
+    return GRADE_LABELS.get(grade, f"Grade {grade}")
+
+
 @dataclass(frozen=True)
 class ModelStudentContext:
     first_name: str
@@ -33,22 +37,34 @@ class ModelStudentContext:
     math_grade: int | None = None
     la_grade: int | None = None
 
+    @property
+    def non_math_grade(self) -> int:
+        """The grade every subject except math is planned at: the language arts grade, else the
+        single grade."""
+        return self.grade if self.la_grade is None else self.la_grade
+
     def grade_for(self, subject: str) -> int:
         """The grade the planner uses for a subject: math has its own, the rest follow language arts."""
-        own = self.math_grade if subject == "Math" else self.la_grade
-        return self.grade if own is None else own
+        if subject != "Math":
+            return self.non_math_grade
+        return self.grade if self.math_grade is None else self.math_grade
+
+    @property
+    def has_subject_grades(self) -> bool:
+        return self.math_grade is not None or self.la_grade is not None
 
     @property
     def grade_label(self) -> str:
-        return GRADE_LABELS.get(self.grade, f"Grade {self.grade}")
+        return _label(self.grade)
 
     def prompt_lines(self) -> str:
         """The child's facts as prompt text. This is the only text about the child that leaves."""
-        lines = [f"First name: {self.first_name}", f"Grade: {self.grade_label}"]
-        if self.math_grade is not None:
-            lines.append(f"Math grade: {GRADE_LABELS.get(self.math_grade)}")
-        if self.la_grade is not None:
-            lines.append(f"Language arts grade: {GRADE_LABELS.get(self.la_grade)}")
+        lines = [f"First name: {self.first_name}"]
+        if self.has_subject_grades:  # one line per subject grade, never a third "Grade:" line
+            lines.append(f"Math grade: {_label(self.grade_for('Math'))}")
+            lines.append(f"Language arts grade: {_label(self.non_math_grade)}")
+        else:
+            lines.append(f"Grade: {self.grade_label}")
         if self.reading_level:
             lines.append(f"Reading level: {self.reading_level}")
         if self.interests:
