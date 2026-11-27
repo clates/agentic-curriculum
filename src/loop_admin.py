@@ -134,11 +134,11 @@ def _audit(
     conn.commit()
 
 
-def _error(text: str | None, own: bool) -> str | None:
+def _error(text: str | None, is_own: bool) -> str | None:
     """A job's error, cut short. Another family's shows only the exception type: the message can
     quote the child's data or a model's output about them."""
     text = (text or "")[:300]
-    if own:
+    if is_own:
         return text
     m = re.match(r"[\w.]+(?=:)", text)
     return m.group(0) if m else ""
@@ -203,7 +203,7 @@ ACTIONS = frozenset(a["id"] for a in _actions(None))
 
 
 def _plan_jobs(
-    conn: sqlite3.Connection, family: str, plan_id: str, own: bool
+    conn: sqlite3.Connection, family: str, plan_id: str, is_own: bool
 ) -> list[dict[str, Any]]:
     rows = conn.execute(
         "SELECT id, kind, state, attempts, max_attempts, last_error, run_after FROM jobs "
@@ -211,7 +211,7 @@ def _plan_jobs(
         "ORDER BY id DESC LIMIT 6",
         (family, f"outlines:{plan_id}%", f"author:{plan_id}:%"),
     ).fetchall()
-    return [{**dict(r), "last_error": _error(r["last_error"], own) or None} for r in rows]
+    return [{**dict(r), "last_error": _error(r["last_error"], is_own) or None} for r in rows]
 
 
 def _skill_info(conn: sqlite3.Connection, ids) -> dict[str, dict[str, str]]:
@@ -251,7 +251,7 @@ def _idea(o, info: dict[str, dict[str, str]]) -> dict[str, Any]:
 
 
 def _plan_view(
-    conn: sqlite3.Connection, family: str, plan: wp.WeekPlan, own: bool
+    conn: sqlite3.Connection, family: str, plan: wp.WeekPlan, is_own: bool
 ) -> dict[str, Any]:
     options = plan.outlines.options if plan.outlines else []
     info = _skill_info(conn, [s for o in options for s in o.standard_ids])
@@ -264,7 +264,7 @@ def _plan_view(
         "needs_attention": plan.needs_attention,
         "pick_deadline": plan.pick_deadline,
         "outlines": [_idea(o, info) for o in options],
-        "jobs": _plan_jobs(conn, family, plan.plan_id, own),
+        "jobs": _plan_jobs(conn, family, plan.plan_id, is_own),
     }
 
 
@@ -322,7 +322,7 @@ def _weeks(
 
 
 def _child(
-    conn: sqlite3.Connection, family: str, student_id: str, metadata_blob: str | None, own: bool
+    conn: sqlite3.Connection, family: str, student_id: str, metadata_blob: str | None, is_own: bool
 ) -> dict[str, Any]:
     meta = _meta(metadata_blob)
     plan = wp.latest_plan_for_student(conn, family, student_id)
@@ -331,24 +331,26 @@ def _child(
         "name": (meta.get("name") or student_id).split()[0],
         "grade": _grade(conn, family, student_id),
         "demo": student_id == loop_integration.demo_student_id(family),
-        "plan": _plan_view(conn, family, plan, own) if plan else None,
+        "plan": _plan_view(conn, family, plan, is_own) if plan else None,
         "weeks": _weeks(conn, family, student_id),
         "steps": _steps(plan.status if plan else None),
         "actions": _actions(plan),
     }
 
 
-def _child_row(conn: sqlite3.Connection, family: str, student_id: str, own: bool) -> dict[str, Any]:
+def _child_row(
+    conn: sqlite3.Connection, family: str, student_id: str, is_own: bool
+) -> dict[str, Any]:
     row = conn.execute(
         "SELECT metadata_blob FROM student_profiles WHERE family_id=? AND student_id=?",
         (family, student_id),
     ).fetchone()
     if row is None:
         raise _refuse(404, "No such child.")
-    return _child(conn, family, student_id, row[0], own)
+    return _child(conn, family, student_id, row[0], is_own)
 
 
-def _queue(conn: sqlite3.Connection, own_family: str) -> dict[str, Any]:
+def _queue(conn: sqlite3.Connection, admin_family: str) -> dict[str, Any]:
     """The whole queue (every family's jobs)."""
     st = jobs.status(conn)
     waited = None
@@ -364,14 +366,14 @@ def _queue(conn: sqlite3.Connection, own_family: str) -> dict[str, Any]:
         # work is waiting, nothing is running and it has waited a while: the worker may be down
         "worker_may_be_down": bool(st["ready_now"] and not st["running"] and (waited or 0) > 90),
         "dead": [
-            {**d, "last_error": _error(d["last_error"], d["family_id"] == own_family)}
+            {**d, "last_error": _error(d["last_error"], d["family_id"] == admin_family)}
             for d in st["dead"]
         ],
     }
 
 
 @router.get("/overview")
-def overview(request: Request, family: str = Family):
+def overview(request: Request, admin_family: str = Family):
     """Every family with children, by name, the admin's own first (and shown even when empty)."""
     conn = _open()
     try:
@@ -380,23 +382,23 @@ def overview(request: Request, family: str = Family):
             "LEFT JOIN student_profiles s ON s.family_id = f.family_id "
             "WHERE f.family_id = ? OR s.student_id IS NOT NULL "
             "ORDER BY f.family_id != ?, f.name, f.family_id, s.student_id",
-            (family, family),
+            (admin_family, admin_family),
         ).fetchall()
         families: dict[str, dict[str, Any]] = {}
         for fid, name, sid, blob in rows:
-            own = fid == family
+            is_own = fid == admin_family
             group = families.setdefault(
-                fid, {"family_id": fid, "name": name or fid, "own": own, "children": []}
+                fid, {"family_id": fid, "name": name or fid, "own": is_own, "children": []}
             )
             if sid is not None:
-                group["children"].append(_child(conn, fid, sid, blob, own))
-        others = len(families) - (family in families)
+                group["children"].append(_child(conn, fid, sid, blob, is_own))
+        others = len(families) - (admin_family in families)
         if others and not _overview_audited_lately(conn, request):
             _audit(conn, request, None, "console.overview", None, {"families": others})
         return {
             "loop_switch": loop_integration.enabled(),
             "families": list(families.values()),
-            "queue": _queue(conn, family),
+            "queue": _queue(conn, admin_family),
         }
     finally:
         conn.close()
@@ -418,10 +420,15 @@ def _overview_audited_lately(conn: sqlite3.Connection, request: Request) -> bool
 
 
 def _look(
-    conn: sqlite3.Connection, request: Request, own: str, theirs: str, action: str, target: str
+    conn: sqlite3.Connection,
+    request: Request,
+    admin_family: str,
+    theirs: str,
+    action: str,
+    target: str,
 ) -> None:
     """Audit a console request about another family's child or job (none for the admin's own)."""
-    if theirs != own:
+    if theirs != admin_family:
         _audit(conn, request, theirs, action, target)
 
 
@@ -431,12 +438,12 @@ def feed_forward(
     request: Request,
     week: str | None = None,
     family: str = Student,
-    own: str = Family,
+    admin_family: str = Family,
 ):
     """What the engine would pick for this child's next week, from mastery alone. No model call."""
     conn = _open()
     try:
-        _look(conn, request, own, family, "console.view", student_id)
+        _look(conn, request, admin_family, family, "console.view", student_id)
         try:
             student = pick_service.get_student(conn, family, student_id)
         except pick_service.PickError as exc:
@@ -501,12 +508,16 @@ def _run_record(packet_id: str) -> dict[str, Any] | None:
 
 @router.get("/students/{student_id}/weeks/{plan_id}/review")
 def review(
-    student_id: str, plan_id: str, request: Request, family: str = Student, own: str = Family
+    student_id: str,
+    plan_id: str,
+    request: Request,
+    family: str = Student,
+    admin_family: str = Family,
 ):
     """Is this week well formed and well curated? Facts and flags from the saved week, no model call."""
     conn = _open()
     try:
-        _look(conn, request, own, family, "console.view", student_id)
+        _look(conn, request, admin_family, family, "console.view", student_id)
         try:
             plan = wp.get_plan(conn, family, plan_id)
         except wp.PlanNotFound as exc:
@@ -579,14 +590,14 @@ def act(
     request: Request,
     body: ActionBody | None = None,
     family: str = Student,
-    own: str = Family,
+    admin_family: str = Family,
 ):
     body = body or ActionBody()
     if action not in ACTIONS:  # before the audit row, so only a known name is ever recorded
         raise _refuse(404, "Unknown action.")
     conn = _open()
     try:
-        _look(conn, request, own, family, f"console.{action}", student_id)
+        _look(conn, request, admin_family, family, f"console.{action}", student_id)
         plan = wp.latest_plan_for_student(conn, family, student_id)
         try:
             _run(conn, family, student_id, plan, action, body)
@@ -596,7 +607,7 @@ def act(
             raise _refuse(409, str(exc)) from exc
         except print_week.PlanNotReady as exc:
             raise _refuse(409, f"Not possible while the week is “{exc.status}”.") from exc
-        return {"child": _child_row(conn, family, student_id, family == own)}
+        return {"child": _child_row(conn, family, student_id, family == admin_family)}
     finally:
         conn.close()
 
@@ -684,15 +695,15 @@ def seed_demo(family: str = Family):
 
 
 @router.post("/jobs/{job_id}/retry")
-def retry_job(job_id: int, request: Request, family: str = Family):
+def retry_job(job_id: int, request: Request, admin_family: str = Family):
     conn = _open()
     try:
         job = jobs.get_job(conn, job_id)
         if job is None:
             raise _refuse(404, "No such job.")
-        _look(conn, request, family, job.family_id, "console.retry", f"job:{job_id}")
+        _look(conn, request, admin_family, job.family_id, "console.retry", f"job:{job_id}")
         if not jobs.retry_dead(conn, job_id):
             raise _refuse(409, "Only a job that gave up can be retried.")
-        return {"queue": _queue(conn, family)}
+        return {"queue": _queue(conn, admin_family)}
     finally:
         conn.close()
