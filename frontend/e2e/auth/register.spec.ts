@@ -94,6 +94,18 @@ test.describe('Creating an account', () => {
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
   });
 
+  test('a busy answer on the code step says busy, not unreachable', async ({ page }) => {
+    await register(page, newEmail());
+    await page.route('**/api/auth/verify', (route) =>
+      route.fulfill({ status: 503, json: { detail: 'busy', retry_after: 3 } })
+    );
+    await page.getByLabel('6-digit code').fill('123456');
+    await page.getByRole('button', { name: 'Confirm' }).click();
+    await expect(page.locator('#main').getByRole('alert')).toHaveText(
+      'Busy right now. Please try again in a moment.'
+    );
+  });
+
   test('a bad invite code gets a plain message and no account', async ({ page }) => {
     await page.goto('/login');
     await page.getByRole('button', { name: 'Create an account' }).click();

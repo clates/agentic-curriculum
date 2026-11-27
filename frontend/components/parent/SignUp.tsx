@@ -11,7 +11,8 @@ const field =
 const linkButton =
   'text-primary-700 min-h-11 font-medium underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
 
-/** What to tell the person for a refused call. A 400 may carry a plain sentence from the server. */
+/** What to tell the person for a refused call. A 400 may carry a plain sentence from the server;
+ * a 503 means the server is up but busy, which is not the same as not reaching it. */
 function problemFor(error: unknown, whenBad: (detail: unknown) => string): string {
   const response = isAxiosError(error) ? error.response : undefined;
   if (response?.status === 400) return whenBad(response.data?.detail);
@@ -19,6 +20,7 @@ function problemFor(error: unknown, whenBad: (detail: unknown) => string): strin
     const header = Number(response.headers?.['retry-after']);
     return copy.login.wait(Number.isFinite(header) && header > 0 ? Math.ceil(header) : 15);
   }
+  if (response?.status === 503) return copy.login.busy;
   return copy.login.couldNotReach;
 }
 
