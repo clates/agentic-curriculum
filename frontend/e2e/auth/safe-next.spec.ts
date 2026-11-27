@@ -1,6 +1,6 @@
 /** `safeNext` decides where sign-in sends you next. Pure function, no browser page needed. */
 import { test, expect } from '@playwright/test';
-import { safeNext, DEFAULT_LANDING } from '../../lib/auth';
+import { safeNext, DEFAULT_LANDING, NEW_FAMILY_LANDING } from '../../lib/auth';
 
 const hostile = [
   '//evil.example',
@@ -46,5 +46,10 @@ test.describe('safeNext', () => {
     expect(safeNext('/week/check-in/abc')).toBe('/week/check-in/abc');
     expect(safeNext('/how-its-going?child=abc#top')).toBe('/how-its-going?child=abc#top');
     expect(safeNext('/a/../week')).toBe('/week');
+  });
+
+  test('a given fallback replaces the default landing page for every refusal', () => {
+    for (const bad of hostile) expect(safeNext(bad, NEW_FAMILY_LANDING)).toBe(NEW_FAMILY_LANDING);
+    expect(safeNext('/how-its-going', NEW_FAMILY_LANDING)).toBe('/how-its-going');
   });
 });

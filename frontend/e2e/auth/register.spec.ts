@@ -16,8 +16,8 @@ import { expectNoViolations, expectNoBannedWords, uniqueId } from '../fixtures/p
 import { expectNoHorizontalScroll } from '../fixtures/e2e-hardening';
 import type { Page } from '@playwright/test';
 
-async function register(page: Page, email: string) {
-  await page.goto('/login');
+async function register(page: Page, email: string, loginUrl = '/login') {
+  await page.goto(loginUrl);
   await page.getByRole('button', { name: 'Create an account' }).click();
   await page.getByLabel('Family name').fill('The Testers');
   await page.getByLabel('Email').fill(email);
@@ -44,6 +44,22 @@ test.describe('Creating an account', () => {
     await page.getByRole('button', { name: 'Confirm' }).click();
     await expect(page).toHaveURL(/\/welcome$/);
     expect((await sessionCookie(page.context()))?.httpOnly).toBe(true);
+  });
+
+  test('a sign-in link to a page still leads there after the code', async ({ page }) => {
+    const email = newEmail();
+    await register(page, email, '/login?next=%2Fhow-its-going');
+    await page.getByLabel('6-digit code').fill(await latestCode(email));
+    await page.getByRole('button', { name: 'Confirm' }).click();
+    await expect(page).toHaveURL(/\/how-its-going$/);
+  });
+
+  test('a link to another site is ignored after the code', async ({ page }) => {
+    const email = newEmail();
+    await register(page, email, '/login?next=%2F%2Fevil.example');
+    await page.getByLabel('6-digit code').fill(await latestCode(email));
+    await page.getByRole('button', { name: 'Confirm' }).click();
+    await expect(page).toHaveURL(/\/welcome$/);
   });
 
   test('a wrong code says so and the right one still works', async ({ page }) => {

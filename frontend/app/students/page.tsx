@@ -145,7 +145,7 @@ export default function StudentsPage() {
   const activeMutation = isEditing ? updateMutation : createMutation;
   // Login on: a new child goes through the parent form (two grades, first week), not this one.
   const addButton = me.data?.auth_required ? (
-    <Link href="/children/new" className={primaryButton}>
+    <Link href="/children/new?from=students" className={primaryButton}>
       {copy.childForm.addButton}
     </Link>
   ) : (

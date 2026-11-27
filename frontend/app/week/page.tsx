@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { copy } from '@/lib/copy';
 import { useThisWeek } from '@/lib/thisWeek';
 import { useMe } from '@/lib/useMe';
-import { MAX_CHILDREN } from '@/components/parent/useChildGate';
+import { MAX_CHILDREN } from '@/lib/childLimits';
 import { ChildCard } from '@/components/parent/ChildCard';
 import { EmptyState, QueryState, primaryButton, secondaryButton } from '@/components/parent/states';
 
@@ -38,10 +38,7 @@ export default function ThisWeekPage() {
             title={copy.thisWeek.emptyTitle}
             body={copy.thisWeek.emptyBody}
             action={
-              <Link
-                href={me?.auth_required ? '/children/new' : '/students'}
-                className={primaryButton}
-              >
+              <Link href="/students" className={primaryButton}>
                 {copy.thisWeek.emptyAction}
               </Link>
             }

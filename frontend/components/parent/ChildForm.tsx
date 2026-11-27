@@ -6,12 +6,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { apiClient } from '@/lib/api';
 import { copy } from '@/lib/copy';
+import { MAX_INTERESTS, MAX_NOTES_LENGTH, MAX_TEXT_LENGTH } from '@/lib/childLimits';
 import { primaryButton } from '@/components/parent/states';
 
 const field =
   'mt-1 block min-h-11 w-full rounded-md border border-neutral-400 bg-white px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600';
-const MAX_INTERESTS = 8;
-const MAX_INTEREST_LENGTH = 40;
 const GRADES = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
 /** "a, b ,, c" -> ["a", "b", "c"]: trimmed, blanks dropped. The form checks the interest limits
@@ -45,8 +44,9 @@ function GradeSelect(props: { label: string; value: number; onChange: (grade: nu
   );
 }
 
-/** Name, interests, two grades and notes. Saving starts the child's first week, then shows This week. */
-export function ChildForm() {
+/** Name, interests, two grades and notes. Saving starts the child's first week, then goes to
+ * `doneHref` (This week unless given). */
+export function ChildForm({ doneHref = '/week' }: { doneHref?: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
@@ -62,7 +62,7 @@ export function ChildForm() {
     event.preventDefault();
     if (saving) return;
     const items = splitInterests(interests);
-    const tooLong = items.some((item) => item.length > MAX_INTEREST_LENGTH);
+    const tooLong = items.some((item) => item.length > MAX_TEXT_LENGTH);
     if (items.length > MAX_INTERESTS || tooLong) {
       setInterestsProblem(
         items.length > MAX_INTERESTS
@@ -85,7 +85,7 @@ export function ChildForm() {
       });
       await queryClient.invalidateQueries({ queryKey: ['this-week'] });
       await queryClient.invalidateQueries({ queryKey: ['students'] });
-      router.push('/week');
+      router.push(doneHref);
     } catch (error) {
       const status = isAxiosError(error) ? error.response?.status : undefined;
       setProblem(
@@ -109,7 +109,7 @@ export function ChildForm() {
           id="child-name"
           type="text"
           required
-          maxLength={40}
+          maxLength={MAX_TEXT_LENGTH}
           autoComplete="off"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -152,7 +152,7 @@ export function ChildForm() {
         <textarea
           id="child-notes"
           rows={3}
-          maxLength={500}
+          maxLength={MAX_NOTES_LENGTH}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           className={field}
