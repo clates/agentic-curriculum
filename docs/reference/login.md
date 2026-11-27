@@ -125,7 +125,8 @@ wait. After that, the reply is "Busy right now" and no wrong try is counted.
 ## Families
 
 - Every account belongs to one family and sees only that family's children, packets, weeks, plans
-  and jobs.
+  and jobs. The exception is an admin in the loop console, which shows every family's children,
+  plans and jobs (see [The loop console and the audit log](#the-loop-console-and-the-audit-log)).
 - Another family's record answers 404 with the same body as a missing record, never 403.
 - With login off, every request acts for `fam_local`.
 - With login on, new child ids are server-generated: `stu_` plus 10 characters. The add-child form
@@ -155,7 +156,8 @@ The console lists every family, the admin's own first. For another family's data
   `console.<action>`) and the child or job id.
 - Loading the overview writes a `console.overview` row with the number of other families, at most
   once per admin per 10 minutes.
-- Rows hold ids and the action only, never names or content.
+- Rows hold ids and the action only, never names or content. The `console.overview` row also
+  holds `{"families": N}`.
 - A job's error shows only its exception type.
 
 Looks at the admin's own family are not logged. The demo child is always the admin's own.
