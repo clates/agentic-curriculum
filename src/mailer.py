@@ -1,7 +1,8 @@
 """Outgoing email: SMTP in production, a JSON-lines outbox file in dev and tests.
 
 Env: SMTP_HOST, SMTP_PORT (587 STARTTLS; 465 implicit TLS), SMTP_USER, SMTP_PASSWORD, SMTP_FROM
-(default SMTP_USER; with neither, sending over SMTP raises MailError), MAILER_OUTBOX (path; every
+(default SMTP_USER, then the caller's ``fallback_from`` if it gave one; with none of them,
+sending over SMTP raises MailError), MAILER_OUTBOX (path; every
 message is appended as one JSON line). With neither SMTP_HOST nor MAILER_OUTBOX set, nothing is
 sent. Mail goes only to the given recipients. The password and message bodies are never logged.
 """
@@ -26,7 +27,7 @@ def enabled() -> bool:
     return bool(os.environ.get("SMTP_HOST", "").strip())
 
 
-def send(to: str | list[str], subject: str, body: str) -> None:
+def send(to: str | list[str], subject: str, body: str, fallback_from: str | None = None) -> None:
     recipients = [to] if isinstance(to, str) else list(to)
     outbox = os.environ.get("MAILER_OUTBOX", "").strip()
     if outbox:
@@ -39,7 +40,7 @@ def send(to: str | list[str], subject: str, body: str) -> None:
     host = os.environ["SMTP_HOST"].strip()
     port = int(os.environ.get("SMTP_PORT", "587") or 587)
     user = os.environ.get("SMTP_USER", "").strip()
-    sender = os.environ.get("SMTP_FROM", "").strip() or user
+    sender = os.environ.get("SMTP_FROM", "").strip() or user or (fallback_from or "").strip()
     if not sender:
         raise MailError("mail not sent: set SMTP_FROM or SMTP_USER")
     msg = EmailMessage()

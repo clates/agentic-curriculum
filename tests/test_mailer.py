@@ -101,6 +101,17 @@ def test_no_from_address_raises_and_never_uses_the_recipient(monkeypatch):
     assert FakeSMTP.instances == []  # nothing was connected to
 
 
+def test_fallback_from_is_used_only_when_smtp_from_and_user_are_unset(monkeypatch):
+    FakeSMTP.instances.clear()
+    monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setenv("SMTP_HOST", "smtp.example.com")
+    mailer.send("a@x.com", "S", "B", fallback_from="me@x.com")
+    assert FakeSMTP.instances[-1].msg["From"] == "me@x.com"
+    monkeypatch.setenv("SMTP_USER", "user@x.com")
+    mailer.send("a@x.com", "S", "B", fallback_from="me@x.com")
+    assert FakeSMTP.instances[-1].msg["From"] == "user@x.com"
+
+
 def test_transport_failure_raises_mailerror_without_password(monkeypatch):
     monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
     monkeypatch.setenv("SMTP_HOST", "smtp.example.com")
