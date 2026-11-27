@@ -30,7 +30,7 @@ Running the hosted app:
 - [Manage accounts and lockouts](how-to/manage-accounts.md)
 - [Invite a family](how-to/invite-a-family.md)
 - [Add a child](how-to/add-a-child.md)
-- [See how a child is doing and print an old week](how-to/see-how-a-child-is-doing.md)
+- [Print an old week](how-to/print-an-old-week.md)
 - [Run the worker and turn the weekly loop on](how-to/run-the-worker.md)
 - [Recover a dead job](how-to/recover-a-dead-job.md)
 - [Read the access log](how-to/read-the-access-log.md)
