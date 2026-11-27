@@ -79,6 +79,7 @@ def _new_code(conn, email: str, now: float) -> str | None:
     ).fetchone()
     if issued >= CODES_PER_DAY:
         return None
+    # Defensive only: _use_code reads just the newest code, so older ones are already unusable.
     conn.execute(
         f"UPDATE auth_challenge SET expires_at=MIN(CAST(expires_at AS REAL), ?) WHERE {mine}",
         (now, PURPOSE, email),
@@ -189,9 +190,7 @@ def _use_code(conn, address, code, password_ok, user, now, user_agent) -> str | 
     ).fetchone()
     # The account must be the one whose password was checked (not replaced since).
     live = user is not None and store.get_user(conn, address) == user and not user.disabled
-    if not (row and live and row[2] < MAX_ATTEMPTS and float(row[3]) > now):
-        return None
-    if not password_ok:
+    if not (password_ok and row and live and row[2] < MAX_ATTEMPTS and float(row[3]) > now):
         return None
     if not hmac.compare_digest(row[1], store.token_hash(code.strip())):
         conn.execute(
