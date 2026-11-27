@@ -59,9 +59,9 @@ next.
 With login off there is one family, `fam_local`, and nothing changes for a self-hoster.
 
 Admin powers follow the same rule. A non-admin gets 404 from the admin routes, so the console's
-existence isn't revealed either, and the console acts only on the admin's own family. Permissions
-are read on every request, so taking one away takes effect at once rather than when a session
-ends.
+existence isn't revealed either. The console reaches every family, so each look at another
+family's data leaves a row in the audit log. Permissions are read on every request, so taking one
+away takes effect at once rather than when a session ends.
 
 ## Why sign-up needs an invite
 

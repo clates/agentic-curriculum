@@ -49,7 +49,7 @@ class User:
     password_hash: str
     family_id: str
     disabled: bool
-    verified: bool = True  # False until a self-registered account confirms its email
+    verified: bool  # False until a self-registered account confirms its email
 
 
 def _user(row) -> User | None:
@@ -112,15 +112,18 @@ def insert_user(
     return user_id
 
 
-def create_invite(conn: sqlite3.Connection, created_by: str | None, days: int = INVITE_DAYS) -> str:
-    """Make a single-use invite code. Returns the plain code: only its hash is stored."""
+def create_invite(
+    conn: sqlite3.Connection, created_by: str | None, days: int = INVITE_DAYS
+) -> tuple[str, float]:
+    """Make a single-use invite code. Returns the plain code (only its hash is stored) and when it
+    expires, in unix seconds."""
     code = "".join(secrets.choice(INVITE_ALPHABET) for _ in range(INVITE_LENGTH))
     now = clock.now()
     conn.execute(
         "INSERT INTO invite (code_hash, created_by, created_at, expires_at) VALUES (?,?,?,?)",
-        (token_hash(code), created_by, now, now + days * 86400),
+        (token_hash(code), created_by, now, expires_at := now + days * 86400),
     )
-    return code
+    return code, expires_at
 
 
 def consume_invite(conn: sqlite3.Connection, code: str, user_id: str | None) -> bool:
@@ -220,7 +223,8 @@ def resolve_session(conn: sqlite3.Connection, token: str | None) -> tuple[User, 
     now = clock.now()
     row = conn.execute(
         "SELECT s.id, s.expires_at, s.last_seen_at, u.id, u.username, u.password_hash, "
-        "u.family_id, u.disabled FROM auth_session s JOIN app_user u ON u.id = s.user_id "
+        "u.family_id, u.disabled, u.email_verified_at IS NOT NULL "
+        "FROM auth_session s JOIN app_user u ON u.id = s.user_id "
         "WHERE s.token_hash=?",
         (token_hash(token),),
     ).fetchone()
@@ -232,7 +236,7 @@ def resolve_session(conn: sqlite3.Connection, token: str | None) -> tuple[User, 
             "UPDATE auth_session SET last_seen_at=?, expires_at=? WHERE id=?",
             (now, now + SESSION_LIFETIME_S, row[0]),
         )
-    return User(row[3], row[4], row[5], row[6], bool(row[7])), refreshed
+    return User(row[3], row[4], row[5], row[6], bool(row[7]), bool(row[8])), refreshed
 
 
 def delete_session(conn: sqlite3.Connection, token: str | None) -> None:
@@ -241,14 +245,18 @@ def delete_session(conn: sqlite3.Connection, token: str | None) -> None:
 
 
 def clear_attempts(conn: sqlite3.Connection, username: str | None = None) -> int:
-    """Forget lockout state: one user's rows (their 'user' row and every 'user_ip' row), or all
+    """Forget lockout state: one user's rows (their 'user' row and every 'user_ip' row, for the
+    sign-in name and for the registration keys 'register:<name>' and 'verify:<name>'), or all
     rows, address locks included, when no username is given. Returns the rows removed."""
     if username is None:
         return conn.execute("DELETE FROM login_attempt").rowcount
     name = normalize_username(username)
-    prefix = name + "|"
-    return conn.execute(
-        "DELETE FROM login_attempt WHERE (scope='user' AND key=?) "
-        "OR (scope='user_ip' AND substr(key, 1, ?) = ?)",
-        (name, len(prefix), prefix),
-    ).rowcount
+    removed = 0
+    for key in (name, f"register:{name}", f"verify:{name}"):
+        prefix = key + "|"
+        removed += conn.execute(
+            "DELETE FROM login_attempt WHERE (scope='user' AND key=?) "
+            "OR (scope='user_ip' AND substr(key, 1, ?) = ?)",
+            (key, len(prefix), prefix),
+        ).rowcount
+    return removed

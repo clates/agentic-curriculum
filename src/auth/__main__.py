@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             print(f"{args.cmd.capitalize()}: {args.permission} for {args.username}.")
         elif args.cmd == "invite":
-            code = store.create_invite(conn, None, args.days)
+            code, _ = store.create_invite(conn, None, args.days)
             print(f"Invite code (shown once, valid {args.days} days): {code}")
         elif args.cmd == "list-users":
             rows = conn.execute(

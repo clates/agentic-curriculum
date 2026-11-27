@@ -545,7 +545,8 @@ export function LoopConsole() {
           <ul className="space-y-1 text-sm text-neutral-800">
             {data.queue.dead.map((d) => (
               <li key={d.id}>
-                #{d.id} {d.kind} · {d.attempts} attempts · {d.last_error}
+                #{d.id} {d.kind} · {d.attempts} attempts
+                {d.last_error ? ` · ${d.last_error}` : ''}
               </li>
             ))}
           </ul>
