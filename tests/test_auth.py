@@ -732,6 +732,18 @@ def test_clear_attempts_matches_the_exact_username_prefix(user):
     conn.close()
 
 
+def test_clear_attempts_also_clears_the_registration_lockouts(user):
+    conn = store.connect()
+    for key in ("register:a@b.co", "verify:a@b.co", "register:a@b.com", "verify:xa@b.co"):
+        lockout.reserve(conn, key, "1.1.1.1", clock.now())
+    store.clear_attempts(conn, "A@b.co")
+    left = {r[0] for r in conn.execute("SELECT key FROM login_attempt WHERE scope='user_ip'")}
+    assert left == {"register:a@b.com|1.1.1.1", "verify:xa@b.co|1.1.1.1"}
+    users = {r[0] for r in conn.execute("SELECT key FROM login_attempt WHERE scope='user'")}
+    assert users == {"register:a@b.com", "verify:xa@b.co"}
+    conn.close()
+
+
 def test_cli_unlock_one_user_or_everything(tmp_path):
     run_cli(tmp_path, "create-user", "mama", password=PASSWORD)
     for _ in range(5):

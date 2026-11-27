@@ -30,7 +30,7 @@ Background: [Why the login needs HTTPS and a proxy](../explanation/login-and-htt
 | `set-password <username>` | sets the password, signs the user out everywhere, clears their lockouts |
 | `disable <username>` | locks the account and signs it out |
 | `enable <username>` | unlocks the account and clears its lockouts |
-| `unlock <username>` | clears that user's lockouts |
+| `unlock <username>` | clears that user's lockouts: sign-in, and the register and verify ones for that email |
 | `unlock` | clears every lockout, address locks included |
 | `grant <username> <permission>` | gives the user a permission. Known permissions: `admin` |
 | `revoke <username> <permission>` | takes it away |
@@ -47,7 +47,8 @@ public.
 ## Registration
 
 On the sign-in page, "Create an account" asks for a family name, an email, a password twice and an
-invite code. Then "Check your email" asks for the 6-digit code.
+invite code. Then "Check your email" asks for the 6-digit code. "Wrong email?" there says that a
+different email needs a new invite code, and links back to sign-in.
 
 | Route | Body | Answer |
 |---|---|---|
@@ -125,7 +126,8 @@ wait. After that, the reply is "Busy right now" and no wrong try is counted.
 ## Families
 
 - Every account belongs to one family and sees only that family's children, packets, weeks, plans
-  and jobs.
+  and jobs. The exception is an admin in the loop console, which shows every family's children,
+  plans and jobs (see [The loop console and the audit log](#the-loop-console-and-the-audit-log)).
 - Another family's record answers 404 with the same body as a missing record, never 403.
 - With login off, every request acts for `fam_local`.
 - With login on, new child ids are server-generated: `stu_` plus 10 characters. The add-child form
@@ -152,10 +154,13 @@ The console lists every family, the admin's own first. For another family's data
 
 - Each request that shows or changes another family's child, plan or job writes one `audit_log`
   row: the family id, the admin's user id, the action (`console.view`, `console.retry` or another
-  `console.<action>`) and the child or job id.
+  `console.<action>`) and the child or job id. Once the child or job is found, the row is
+  written whatever the answer, including a 404 for a week or a 409 for an action the week's state
+  doesn't allow. An unknown action name writes none.
 - Loading the overview writes a `console.overview` row with the number of other families, at most
   once per admin per 10 minutes.
-- Rows hold ids and the action only, never names or content.
+- Rows hold ids and the action only, never names or content. The `console.overview` row also
+  holds `{"families": N}`.
 - A job's error shows only its exception type.
 
 Looks at the admin's own family are not logged. The demo child is always the admin's own.

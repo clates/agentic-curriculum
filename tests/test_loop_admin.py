@@ -410,6 +410,22 @@ def test_the_overview_shows_every_family_own_first_with_one_audit_row(two_famili
     assert audits(conn) == [(None, admin, "console.overview", None, '{"families": 2}')]
 
 
+def test_another_familys_error_shows_only_its_type(two_families):
+    conn, job_id = two_families["conn"], two_families["job_id"]
+    conn.execute("UPDATE jobs SET last_error='ValueError: Ava wrote x' WHERE id=?", (job_id,))
+    conn.commit()
+    overview = signed_in("adminb").get(f"{BASE}/overview").json()
+    assert [d["last_error"] for d in overview["queue"]["dead"]] == ["ValueError"]
+    kid = next(c for f in overview["families"] for c in f["children"] if c["student_id"] == "kid")
+    assert [j["last_error"] for j in kid["plan"]["jobs"]] == ["ValueError"]
+    assert "Ava wrote" not in str(overview)
+    # the colonless one in the fixture has no type to show
+    conn.execute("UPDATE jobs SET last_error='A secret' WHERE id=?", (job_id,))
+    conn.commit()
+    overview = signed_in("adminb").get(f"{BASE}/overview").json()
+    assert [d["last_error"] for d in overview["queue"]["dead"]] == [None]
+
+
 def test_the_overview_is_audited_at_most_once_per_admin_per_ten_minutes(two_families):
     conn, fam_a = two_families["conn"], two_families["fam_a"]
     b = signed_in("adminb")

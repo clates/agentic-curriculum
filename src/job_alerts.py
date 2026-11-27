@@ -11,7 +11,8 @@ kind, a short hash of the family id, attempts and the exception class name. Neve
 never the error text (handler errors can quote prompts).
 
 Env: ALERT_EMAIL_TO (comma-separated), SMTP_HOST, SMTP_PORT (587; 465 uses implicit TLS),
-SMTP_USER, SMTP_PASSWORD, SMTP_FROM (default SMTP_USER). The password is never logged.
+SMTP_USER, SMTP_PASSWORD, SMTP_FROM (default SMTP_USER, then the first ALERT_EMAIL_TO address).
+The password is never logged.
 """
 
 from __future__ import annotations
@@ -68,7 +69,8 @@ def build_message(dead: list[Job]) -> tuple[str, str]:
 
 
 def _send_email(subject: str, body: str) -> None:  # faked in tests
-    mailer.send(recipients(), subject, body)
+    to = recipients()
+    mailer.send(to, subject, body, fallback_from=to[0])  # the maintainer mails themselves
 
 
 def send_digest(conn: sqlite3.Connection) -> int:
