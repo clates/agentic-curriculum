@@ -427,7 +427,10 @@ def _look(
     action: str,
     target: str,
 ) -> None:
-    """Audit a console request about another family's child or job (none for the admin's own)."""
+    """Audit a console request about another family's child or job (none for the admin's own).
+
+    Called before the request's own 404 and 409 checks on purpose: a refusal still tells the admin
+    something about that family (a 409 names the week's status), so a refused look is logged too."""
     if theirs != admin_family:
         _audit(conn, request, theirs, action, target)
 

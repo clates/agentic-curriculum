@@ -153,7 +153,9 @@ The console lists every family, the admin's own first. For another family's data
 
 - Each request that shows or changes another family's child, plan or job writes one `audit_log`
   row: the family id, the admin's user id, the action (`console.view`, `console.retry` or another
-  `console.<action>`) and the child or job id.
+  `console.<action>`) and the child or job id. Once the child or job is found, the row is
+  written whatever the answer, including a 404 for a week or a 409 for an action the week's state
+  doesn't allow. An unknown action name writes none.
 - Loading the overview writes a `console.overview` row with the number of other families, at most
   once per admin per 10 minutes.
 - Rows hold ids and the action only, never names or content. The `console.overview` row also
