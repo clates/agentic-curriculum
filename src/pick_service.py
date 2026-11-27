@@ -255,8 +255,10 @@ def make_outlines(
         fallback_grade=_latest_packet_grade(conn, family_id, student.student_id),
     )
     # Math is planned at the math grade, everything else at the language arts grade.
-    la_grade, math_grade = context.grade_for("English"), context.grade_for("Math")
-    standards, prereqs = load_candidate_inputs(_db_path(conn), la_grade, extra_grades=(math_grade,))
+    base_grade, math_grade = context.non_math_grade, context.grade_for("Math")
+    standards, prereqs = load_candidate_inputs(
+        _db_path(conn), base_grade, extra_grades=(math_grade,)
+    )
     # The engine alone picks the skills (mastery, review dates, grade). ``variant`` is not in the
     # seed: fresh ideas are new topics around the same skills.
     seed = f"{student.student_id}:{plan.week_start}"
@@ -265,7 +267,7 @@ def make_outlines(
             progress=student.progress_blob,
             standards=standards,
             prereqs=prereqs,
-            grade=la_grade,
+            grade=base_grade,
             grade_by_subject={"Math": math_grade},
             seed=seed,
         )

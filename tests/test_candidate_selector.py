@@ -171,6 +171,13 @@ def test_nothing_to_plan_from_is_a_clear_error():
         )
 
 
+def test_nothing_to_plan_from_names_every_grade_it_looked_at():
+    with pytest.raises(NoCandidates, match=r"near grade 1, Math at grade 6$"):
+        select_week_standards(
+            progress={}, standards=[], grade=1, grade_by_subject={"Math": 6}, seed="x", now=NOW
+        )
+
+
 def test_loader_reads_nearby_whole_skills_from_the_standards_table(tmp_path):
     import sqlite3
 
