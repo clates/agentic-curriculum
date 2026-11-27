@@ -82,15 +82,16 @@ test.describe('Creating an account', () => {
     await expect(page).toHaveURL(/\/week$/);
   });
 
-  test('"Use a different email" goes back to the form it came from', async ({ page }) => {
-    const email = newEmail();
-    await register(page, email);
-    await page.getByRole('button', { name: 'Use a different email' }).click();
-    await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
-    await page.goto('/login');
-    await signIn(page, { username: email, password: PASSWORD });
-    await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
-    await page.getByRole('button', { name: 'Use a different email' }).click();
+  test('"Wrong email?" says a new invite is needed and leads back to sign in', async ({ page }) => {
+    await register(page, newEmail());
+    await page.getByRole('button', { name: 'Wrong email?' }).click();
+    await expect(page.getByRole('heading', { name: 'Need a different email?' })).toBeVisible();
+    await expect(page.locator('#main')).toContainText(
+      'ask the person who invited you for a new invite code'
+    );
+    await expectNoViolations(page);
+    await expectNoBannedWords(page);
+    await page.getByRole('button', { name: 'Back to sign in' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
   });
 

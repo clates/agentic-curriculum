@@ -7,7 +7,7 @@ import { apiClient } from '@/lib/api';
 import { safeNext } from '@/lib/auth';
 import { copy } from '@/lib/copy';
 import { primaryButton } from '@/components/parent/states';
-import { CheckEmail, CreateAccount } from '@/components/parent/SignUp';
+import { CheckEmail, CreateAccount, WrongEmail } from '@/components/parent/SignUp';
 
 type Problem =
   | { kind: 'wrong' }
@@ -33,8 +33,7 @@ export function LoginForm() {
   const [visible, setVisible] = useState(false);
   const [sending, setSending] = useState(false);
   const [waiting, setWaiting] = useState(false);
-  const [step, setStep] = useState<'signin' | 'create' | 'code'>('signin');
-  const [codeFrom, setCodeFrom] = useState<'signin' | 'create'>('signin'); // where "back" goes
+  const [step, setStep] = useState<'signin' | 'create' | 'code' | 'wrongEmail'>('signin');
   const [problem, setProblem] = useState<Problem>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -61,7 +60,6 @@ export function LoginForm() {
       const response = isAxiosError(error) ? error.response : undefined;
       const status = response?.status;
       if (status === 403 && response?.data?.detail === 'email_not_verified') {
-        setCodeFrom('signin');
         setStep('code'); // the password stays in this component: confirming the email needs it
       } else if (status === 401) {
         setProblem({ kind: 'wrong' });
@@ -99,7 +97,6 @@ export function LoginForm() {
         onRegistered={(email, typed) => {
           setUsername(email);
           setPassword(typed);
-          setCodeFrom('create');
           setStep('code');
         }}
         onBack={() => setStep('signin')}
@@ -111,12 +108,13 @@ export function LoginForm() {
         email={username.trim()}
         password={password}
         next={next}
-        onBack={() => {
+        onWrongEmail={() => {
           setPassword('');
-          setStep(codeFrom);
+          setStep('wrongEmail');
         }}
       />
     );
+  if (step === 'wrongEmail') return <WrongEmail onBack={() => setStep('signin')} />;
 
   return (
     <div className="bg-background min-h-screen">

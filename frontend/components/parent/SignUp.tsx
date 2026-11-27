@@ -169,12 +169,12 @@ export function CheckEmail({
   email,
   password,
   next,
-  onBack,
+  onWrongEmail,
 }: {
   email: string;
   password: string;
   next: string;
-  onBack: () => void;
+  onWrongEmail: () => void;
 }) {
   const [code, setCode] = useState('');
   const [sending, setSending] = useState(false);
@@ -233,8 +233,19 @@ export function CheckEmail({
       <button type="button" onClick={resend} className={`${linkButton} mt-6`}>
         {copy.signUp.resend}
       </button>
-      <button type="button" onClick={onBack} className={`${linkButton} mt-2 block`}>
-        {copy.signUp.differentEmail}
+      <button type="button" onClick={onWrongEmail} className={`${linkButton} mt-2 block`}>
+        {copy.signUp.wrongEmail}
+      </button>
+    </Page>
+  );
+}
+
+/** A different email is a new registration, and the first one already used the invite code. */
+export function WrongEmail({ onBack }: { onBack: () => void }) {
+  return (
+    <Page title={copy.signUp.wrongEmailTitle} intro={copy.signUp.wrongEmailBody}>
+      <button type="button" onClick={onBack} className={`${linkButton} mt-6`}>
+        {copy.signUp.backToSignIn}
       </button>
     </Page>
   );
