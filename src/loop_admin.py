@@ -139,9 +139,9 @@ def _error(text: str | None, is_own: bool) -> str | None:
     quote the child's data or a model's output about them."""
     text = (text or "")[:300]
     if is_own:
-        return text
+        return text or None
     m = re.match(r"[\w.]+(?=:)", text)
-    return m.group(0) if m else ""
+    return m.group(0) if m else None
 
 
 def _refuse(status: int, message: str) -> HTTPException:
@@ -211,7 +211,7 @@ def _plan_jobs(
         "ORDER BY id DESC LIMIT 6",
         (family, f"outlines:{plan_id}%", f"author:{plan_id}:%"),
     ).fetchall()
-    return [{**dict(r), "last_error": _error(r["last_error"], is_own) or None} for r in rows]
+    return [{**dict(r), "last_error": _error(r["last_error"], is_own)} for r in rows]
 
 
 def _skill_info(conn: sqlite3.Connection, ids) -> dict[str, dict[str, str]]:

@@ -117,7 +117,7 @@ export interface LoopQueue {
   ready_now: number;
   running: number;
   worker_may_be_down: boolean;
-  dead: { id: number; kind: string; attempts: number; last_error: string }[];
+  dead: { id: number; kind: string; attempts: number; last_error: string | null }[];
 }
 
 export interface LoopFamily {
